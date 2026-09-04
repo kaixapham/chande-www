@@ -82,6 +82,28 @@ window.CHANDE_LOADING = {
 Module bật `html.cl-done` khi xong, để trang tự style mà không cần JS.
 Sự kiện: `document` → `chande-loading:done`.
 
+### Block reveal cho chữ
+
+Mỗi **từ** được bọc riêng thành `.cl__w > (.cl__wt chữ + .cl__wb khối)`. Khối màu
+quét ngang từ trái phủ kín từ, chữ bật lên dưới khối, rồi khối quét tiếp sang phải
+biến mất. Các từ lệch nhau `stagger` ms.
+
+Bốn chỗ phải để ý:
+
+- **Chạy trên đồng hồ chung, không dùng `setTimeout`.** Cả module tua được hai
+  chiều; hiệu ứng mà đặt bằng timer thì kéo thanh timeline là lệch ngay.
+- **`transform-origin` đổi left → right ngay đoạn `scaleX` đang bằng 1.** Lúc đó
+  scale là identity nên origin có nội suy dần cũng không thấy được — tránh phải
+  tách thành hai animation tranh nhau cùng thuộc tính `transform`.
+- **Easing đặt trên từng keyframe, không đặt ở `options`.** `options.easing` áp
+  cho cả lượt chạy và sẽ bóp méo các mốc `offset`.
+- **Khoảng trắng giữ nguyên là text node**, không nhét vào hộp nào, để dòng chữ
+  vẫn ngắt và giãn y như cũ. Hộp từ là `inline-block` với `vertical-align`
+  baseline — đổi sang `top`/`middle` là lệch mất phần bù cap-height.
+
+Mặt chữ **sau** của các ô cuộn (HANOI / GALLERY / ABOUT) bị bỏ qua: lúc loading
+chúng đang bị che, tới bước dock mới lật lên nên không cần reveal.
+
 ### Effect Dither
 
 Ordered dithering ma trận Bayer, vẽ lên canvas phủ nền. Nền là màu phẳng `bg`,

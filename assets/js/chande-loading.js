@@ -88,6 +88,22 @@
       [1, 1],
     ],
 
+    // ---- Block reveal cho chữ ----------------------------------------------
+    // Mỗi TỪ được bọc riêng: một khối màu quét ngang từ trái sang phủ kín, chữ
+    // hiện ra dưới khối, rồi khối quét tiếp sang phải biến mất.
+    // Chạy trên cùng đồng hồ với phần còn lại (Web Animations, pause + gán
+    // currentTime) nên tua thanh timeline vẫn đúng.
+    textReveal: {
+      enabled: true,
+      color: '#68f12b', // màu khối quét
+      startDelay: 120, // ms — sau khi thanh đã hiện xong
+      stagger: 55, // ms giữa các từ
+      inDuration: 320, // khối quét vào
+      hold: 90, // giữ kín
+      outDuration: 380, // khối quét ra
+      ease: 'cubic-bezier(0.86, 0, 0.07, 1)',
+    },
+
     // ---- Hình học (px của bản thiết kế khổ 1920) ----------------------------
     barHeight: 80,
     cellPad: 24, // padding ô trái
@@ -281,6 +297,15 @@
 .cl__t{display:flow-root; font-size:${em(S.fontSize)}; line-height:${S.lineHeight};
   white-space:nowrap; font-variant-numeric:tabular-nums}
 .cl__t > span{display:block}
+/* Mỗi từ là một hộp inline-block để khối quét có chỗ bám. vertical-align phải
+   là baseline (mặc định) — đổi sang top/middle là lệch mất phần bù cap-height. */
+.cl__w{position:relative; display:inline-block}
+.cl__wt{display:inline-block}
+.cl__wb{
+  position:absolute; inset:0; background:${S.textReveal.color};
+  transform:scaleX(0); transform-origin:left center; pointer-events:none;
+}
+
 /* bù cap-height: cắt ở MÉP TRÊN dòng đầu và MÉP DƯỚI dòng cuối.
    Hai lượng này KHÔNG bằng nhau — trên = half-leading + (ascent - cap),
    dưới = descent + half-leading — nên phải đo, đoán đối xứng là cắt mất chữ. */
@@ -400,6 +425,46 @@
   </div>`
   }
 
+  /* ----------------------------------------------------------- tách từ ----
+   * Bọc từng từ thành .cl__w > (.cl__wt chữ + .cl__wb khối quét). Khoảng trắng
+   * giữa các từ giữ nguyên là text node, không nhét vào hộp nào, để dòng chữ
+   * vẫn ngắt và giãn y như cũ.
+   *
+   * Bỏ qua mặt chữ SAU của các ô cuộn (HANOI / GALLERY / ABOUT): lúc loading
+   * chúng bị che, tới lúc dock mới lật lên nên không cần reveal.
+   */
+  function wordify(el) {
+    const text = el.textContent
+    if (!text.trim()) return
+    el.textContent = ''
+    // Giữ lại cả dấu cách bằng cách split có capture group.
+    for (const part of text.split(/(\s+)/)) {
+      if (!part) continue
+      if (!part.trim()) {
+        el.appendChild(document.createTextNode(part))
+        continue
+      }
+      const w = document.createElement('span')
+      w.className = 'cl__w'
+      const t = document.createElement('span')
+      t.className = 'cl__wt'
+      t.textContent = part
+      const b = document.createElement('span')
+      b.className = 'cl__wb'
+      w.append(t, b)
+      el.appendChild(w)
+    }
+  }
+
+  function wordifyAll() {
+    if (!S.textReveal.enabled) return
+    for (const t of root.querySelectorAll('.cl__t')) {
+      // mặt chữ sau của flipper = .cl__flip-face cuối cùng
+      if (t.closest('.cl__flip-face')?.matches(':last-child')) continue
+      for (const lineEl of t.children) wordify(lineEl)
+    }
+  }
+
   /* ------------------------------------------------------------ gắn vào ---- */
   const style = document.createElement('style')
   style.setAttribute('data-chande-loading', '')
@@ -426,6 +491,7 @@
     nav2: $('.cl__cell--nav2'),
     fill: $('.cl__fill'),
     menu: $('.cl__menu'),
+    // Sau wordifyAll(), chữ của hai ô này nằm trong .cl__wt — resolve lại ở boot.
     pct: $('.cl__pct'),
     clock: $('.cl__clock'),
     brandFlip: $('.cl__cell--brand .cl__flip-in'),
@@ -504,6 +570,49 @@
     if (!S.becomeHeader) {
       step(el.bar, [{ opacity: 1 }, { opacity: 0 }], M.done, S.tail, 'linear')
     }
+
+    buildRevealSteps()
+  }
+
+  /* --------------------------------------------- block reveal từng từ ------
+   * Một animation cho khối quét, một cho chữ, cùng delay/duration nên chúng
+   * khớp nhau tuyệt đối khi tua.
+   *
+   * transform-origin đổi từ left sang right ngay đoạn scaleX đang bằng 1 —
+   * lúc đó scale là identity nên việc origin nội suy dần không hề thấy được.
+   * Easing đặt TRÊN TỪNG KEYFRAME chứ không đặt ở options: options.easing áp
+   * cho cả lượt chạy và sẽ bóp méo các mốc offset.
+   */
+  function buildRevealSteps() {
+    const R = S.textReveal
+    if (!R.enabled) return
+
+    const words = [...root.querySelectorAll('.cl__w')]
+    const total = R.inDuration + R.hold + R.outDuration
+    const a = R.inDuration / total
+    const b = (R.inDuration + R.hold) / total
+    const base = M.enterEnd + R.startDelay
+
+    words.forEach((w, i) => {
+      const at = base + i * R.stagger
+      const block = w.querySelector('.cl__wb')
+      const text = w.querySelector('.cl__wt')
+
+      step(block, [
+        { transform: 'scaleX(0)', transformOrigin: 'left center', offset: 0, easing: R.ease },
+        { transform: 'scaleX(1)', transformOrigin: 'left center', offset: a, easing: 'linear' },
+        { transform: 'scaleX(1)', transformOrigin: 'right center', offset: b, easing: R.ease },
+        { transform: 'scaleX(0)', transformOrigin: 'right center', offset: 1 },
+      ], at, total, 'linear')
+
+      // Chữ bật lên đúng lúc khối phủ kín — một bước nhảy, không mờ dần.
+      step(text, [
+        { opacity: 0, offset: 0 },
+        { opacity: 0, offset: a },
+        { opacity: 1, offset: Math.min(1, a + 0.0001) },
+        { opacity: 1, offset: 1 },
+      ], at, total, 'linear')
+    })
   }
 
   /* ----------------------------------------------- đo metric thật của font --
@@ -766,6 +875,9 @@
   /* ------------------------------------------------------------- khởi động - */
   async function boot() {
     document.body.appendChild(root)
+    wordifyAll()
+    el.pct = $('.cl__pct .cl__wt') || $('.cl__pct')
+    el.clock = $('.cl__clock .cl__wt') || $('.cl__clock')
     clockNow()
     setInterval(clockNow, 20000)
     lock(true)

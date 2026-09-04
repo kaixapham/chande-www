@@ -98,6 +98,16 @@
     { tab: 'loading', mod: 'loading', title: 'Nền',
       items: [{ path: 'bg', label: 'Background', type: 'color' }] },
     { tab: 'loading', mod: 'loading', title: 'Dither', items: DITHER('dither') },
+    { tab: 'loading', mod: 'loading', title: 'Block reveal chữ',
+      items: [
+        { path: 'textReveal.enabled', label: 'Bật', type: 'bool' },
+        { path: 'textReveal.color', label: 'Màu khối', type: 'color' },
+        { path: 'textReveal.startDelay', label: 'Bắt đầu trễ (ms)', type: 'range', min: 0, max: 1200, step: 10 },
+        { path: 'textReveal.stagger', label: 'Cách nhau (ms)', type: 'range', min: 0, max: 300, step: 5 },
+        { path: 'textReveal.inDuration', label: 'Quét vào (ms)', type: 'range', min: 60, max: 1200, step: 10 },
+        { path: 'textReveal.hold', label: 'Giữ kín (ms)', type: 'range', min: 0, max: 600, step: 10 },
+        { path: 'textReveal.outDuration', label: 'Quét ra (ms)', type: 'range', min: 60, max: 1200, step: 10 },
+      ] },
     { tab: 'loading', mod: 'loading', title: 'Element — lúc loading',
       items: [
         { path: 'stroke', label: 'Stroke', type: 'color' },
