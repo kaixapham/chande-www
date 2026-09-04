@@ -1,0 +1,66 @@
+/* =============================================================================
+ * chande-www — CSS dùng chung cho 3 trang demo
+ * Thang đo giống hệt file hiệu ứng: px của bản thiết kế khổ 1920 ÷ 16 = rem,
+ * vì :root đặt font-size = clamp(1440px, 100vw, 1920px) / 120.
+ * ========================================================================== */
+:root{
+  --cream:#f4f3eb;
+  --panel:#1b2625;
+  --green:#245535;
+  --lime:#68f12b;
+  --ink:#0f1513;
+  --bar:5rem;                 /* 80px của bản thiết kế khổ 1920 */
+  font-size:calc(clamp(1440px, 100vw, 1920px) / 120);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--cream); color:var(--green);
+  font-family:'Phudu',ui-sans-serif,system-ui,sans-serif; font-weight:600;
+  text-transform:uppercase; -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+
+/* Trang bắt đầu ngay dưới thanh header (thanh do chande-loading.js dựng). */
+.page{min-height:100vh; padding-top:var(--bar)}
+
+/* ---- Home: khung nền frame Step 3 ---- */
+.home{display:flex; min-height:calc(100vh - var(--bar))}
+.home__dark{width:50%; background:var(--panel); position:relative}
+.home__light{width:50%; background:var(--cream); position:relative}
+.home__note{
+  position:absolute; left:1.5rem; bottom:1.5rem; max-width:26rem;
+  color:#f5f0e3; font-size:1.25rem; line-height:1.15;
+  opacity:0; transform:translateY(1rem);
+  transition:opacity .5s ease .1s, transform .5s cubic-bezier(.76,0,.24,1) .1s;
+}
+/* html.cl-done do chande-loading.js bật khi loading xong. */
+.cl-done .home__note{opacity:.6; transform:none}
+
+/* ---- Page A / Page B: khung ảnh demo ---- */
+/* Ảnh do bảng devtools nạp vào, ghi lên hai biến này ở :root nên sống sót qua
+   mọi lần Barba swap container. */
+.shot{
+  min-height:calc(100vh - var(--bar));
+  background:var(--panel) center/cover no-repeat;
+  display:flex; align-items:center; justify-content:center;
+}
+.shot--a{background-image:var(--shot-a, none)}
+.shot--b{background-image:var(--shot-b, none); background-color:var(--cream)}
+/* Nhãn chỉ hiện khi CHƯA nạp ảnh. Cờ đặt ở <html> nên sống sót qua Barba swap. */
+.shot__ph{
+  font-size:3rem; line-height:1; letter-spacing:-.01em; opacity:.35;
+  padding:1.5rem; text-align:center;
+}
+.shot--a .shot__ph{color:#f5f0e3}
+.shot--b .shot__ph{color:var(--green)}
+[data-shot-a] .shot--a .shot__ph,
+[data-shot-b] .shot--b .shot__ph{display:none}
+
+/* ---- Responsive cơ bản, cùng mốc với hiệu ứng: 900 / 600 ---- */
+@media (max-width:899px){
+  :root{font-size:11px}
+  .home__dark{width:100%}
+  .home__light{display:none}
+  .shot__ph{font-size:2rem}
+}
+@media (max-width:599px){ :root{font-size:10px} }

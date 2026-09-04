@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Gallery — Chande Bootcamp</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/img/logo.svg">
+<link rel="stylesheet" href="assets/vendor/lenis.css">
+<link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body data-barba="wrapper">
+
+<!-- Rèm chuyển trang mount vào đây: nằm trong wrapper, NGOÀI container. -->
+<div data-transition-wrap></div>
+
+<main data-barba="container" data-barba-namespace="gallery">
+  <div class="page">
+    <div class="shot shot--a" data-shot="a">
+      <p class="shot__ph">Page A — Gallery<br>nạp ảnh demo ở bảng dưới</p>
+    </div>
+  </div>
+</main>
+
+<!-- Vendor: bản offline của đúng mấy thẻ CDN trong README (barba 2.10.3,
+     lenis 1.3.17, gsap 3.15). -->
+<script src="assets/vendor/barba.umd.min.js"></script>
+<script src="assets/vendor/lenis.min.js"></script>
+<script src="assets/vendor/gsap.min.js"></script>
+<script src="assets/vendor/CustomEase.min.js"></script>
+
+<script src="assets/js/chande-loading.js"></script>
+<script src="assets/js/chande-transition.js"></script>
+<!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
+<script src="assets/js/chande-devtools.js"></script>
+</body>
+</html>
