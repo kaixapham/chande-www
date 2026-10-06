@@ -2,15 +2,17 @@
  * CHANDE — Con trỏ nhân vật (Figma node 513:34052)
  * -----------------------------------------------------------------------------
  * Nhân vật chạy theo chuột, trễ một nhịp (lerp) và nghiêng theo hướng đi.
- * Con trỏ thật của hệ điều hành vẫn giữ nguyên — nhân vật là bạn đồng hành, không
- * thay thế nó, nên bấm link vẫn chính xác. Trỏ vào link / nút thì nhân vật phóng
- * to một chút.
+ * Con trỏ thật vẫn là con trỏ của trình duyệt (bấm link chính xác, không trễ)
+ * nhưng đổi HÌNH sang kiểu Figma: mũi tên tam giác không đuôi, bo góc, nền
+ * `arrowColor` viền `arrowStroke` — bằng CSS cursor: url(svg). Ô gõ chữ vẫn
+ * là con trỏ chữ I. Trỏ vào link / nút thì nhân vật phóng to một chút.
  *
  * Không chồng lên Bubble (chande-bubble.js): nhân vật là một hình tròn, mỗi khung
  * bị đẩy ra khỏi mọi cầu của giọt (đầu + vệt đuôi) cộng thêm khoảng hở `gap` —
  * giọt to cỡ nào nhân vật cũng nằm ngoài, đi nhanh thì bị vệt đuôi hất ra.
  *
- * Chỉ bật với chuột thật (pointer: fine) và khi không reduced-motion. Mỗi khung
+ * Nhân vật chỉ bật với chuột thật (pointer: fine) và khi không reduced-motion
+ * (con trỏ Figma thì chỉ cần chuột thật). Mỗi khung
  * chỉ ghi một transform lên một phần tử; đứng yên đủ gần thì tự dừng rAF.
  *
  * API: window.CHANDE_CURSOR = { config, defaults, refresh() }
@@ -30,6 +32,10 @@
     gap: 6, // px — khoảng hở tối thiểu giữa nhân vật và mép giọt
     body: 0.38, // bán kính "thân" nhân vật để va chạm, theo tỉ lệ size
     src: 'assets/img/cursor-mascot.webp',
+    figma: true, // con trỏ hình mũi tên kiểu Figma
+    arrowColor: '#000000',
+    arrowStroke: '#ffffff',
+    arrowSize: 24, // px
   }
   // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
   window.CHANDE_SETTINGS_APPLY?.('cursor', CONFIG)
@@ -37,8 +43,40 @@
 
   const fine = matchMedia('(pointer: fine)')
   const reduced = matchMedia('(prefers-reduced-motion: reduce)')
+
+  /* ---------------------------------------------- con trỏ mũi tên Figma ---- */
+  // Mũi tên đầu nhọn ở (3, 3) của viewBox 24 — cũng là điểm bấm (hotspot).
+  const ARROW =
+    'M3.6 2.9C3.2 2.7 2.7 3.2 2.9 3.6L9.3 20.3C9.5 20.9 10.4 20.9 10.6 20.3L12.9 13.5' +
+    'C13 13.2 13.2 13 13.5 12.9L20.3 10.6C20.9 10.4 20.9 9.5 20.3 9.3Z'
+  const arrowStyle = document.createElement('style')
+  function arrowCss() {
+    if (!CONFIG.figma || !fine.matches) return ''
+    const n = Math.round(CONFIG.arrowSize)
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${n}" height="${n}" viewBox="0 0 24 24">` +
+      `<path d="${ARROW}" transform="translate(.6 .9)" fill="rgba(0,0,0,.25)"/>` + // bóng đổ mềm
+      `<path d="${ARROW}" fill="${CONFIG.arrowColor}" stroke="${CONFIG.arrowStroke}" stroke-width="1.5" stroke-linejoin="round"/></svg>`
+    const hot = Math.round((3 * n) / 24)
+    const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}") ${hot} ${hot}, auto`
+    // !important để thắng các cursor:pointer rải rác trong CSS của trang.
+    return (
+      `html, html *{cursor:${url} !important}` +
+      `html :is(textarea, [contenteditable=""], [contenteditable=true],` +
+      ` input:not([type=range], [type=checkbox], [type=radio], [type=color], [type=button], [type=submit], [type=file])){cursor:text !important}`
+    )
+  }
+  arrowStyle.textContent = arrowCss()
+  document.head.appendChild(arrowStyle)
+
   if (!fine.matches || reduced.matches) {
-    window.CHANDE_CURSOR = { config: CONFIG, defaults: DEFAULTS, refresh() {} }
+    window.CHANDE_CURSOR = {
+      config: CONFIG,
+      defaults: DEFAULTS,
+      refresh() {
+        arrowStyle.textContent = arrowCss()
+      },
+    }
     return
   }
 
@@ -108,6 +146,7 @@
   }
 
   function refresh() {
+    arrowStyle.textContent = arrowCss()
     el.style.setProperty('--cm-size', `${CONFIG.size}px`)
     el.style.display = CONFIG.enabled ? '' : 'none'
     kick()

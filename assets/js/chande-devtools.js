@@ -233,6 +233,13 @@
         { path: 'tilt', label: 'Nghiêng theo hướng đi', type: 'range', min: 0, max: 2, step: 0.05 },
         { path: 'hoverScale', label: 'Phóng khi trỏ link', type: 'range', min: 1, max: 2, step: 0.05 },
       ] },
+    { tab: 'cursor', mod: 'cursor', title: 'Mũi tên kiểu Figma',
+      items: [
+        { path: 'figma', label: 'Dùng mũi tên Figma', type: 'bool' },
+        { path: 'arrowSize', label: 'Cỡ (px)', type: 'range', min: 16, max: 40, step: 1 },
+        { path: 'arrowColor', label: 'Màu nền', type: 'color' },
+        { path: 'arrowStroke', label: 'Màu viền', type: 'color' },
+      ] },
     { tab: 'cursor', mod: 'cursor', title: 'Né bubble',
       items: [
         { path: 'avoidBubble', label: 'Không chồng lên giọt', type: 'bool' },

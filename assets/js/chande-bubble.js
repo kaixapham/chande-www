@@ -561,7 +561,21 @@ void main () {
     lens.style.visibility = on ? 'visible' : 'hidden'
     if (!on) return
     buildLens()
-    lens.style.transform = `translate3d(${headX - lensR}px, ${headY - lensR}px, 0) scale(${presence})`
+    // Thấu kính dựng sẵn bằng giọt lúc gom lại; mỗi khung co theo độ dày THẬT của
+    // giọt quanh đầu (cùng công thức với pooledRadius() nhưng có khoảng cách tới
+    // từng cầu đuôi). Kéo dài thì đầu giọt mỏng đi, thấu kính nhỏ lại theo — không
+    // còn một vòng tròn cứng lơ lửng to hơn giọt.
+    const c = count()
+    const half = Math.min(innerWidth, innerHeight) / 2
+    const k = Math.max(CONFIG.blend, 0.5)
+    const r0 = (Math.max(CONFIG.size, 4) * presence) / half
+    let m = 0
+    for (let i = 0; i < c; i++) {
+      const d = Math.hypot(trailX[i] - headX, trailY[i] - headY) / half
+      m += Math.exp(k * ((r0 * (c - i)) / c - d) - k * r0)
+    }
+    const local = Math.max(0, (r0 + Math.log(m) / k) * half * CONFIG.lensScale)
+    lens.style.transform = `translate3d(${headX - lensR}px, ${headY - lensR}px, 0) scale(${(local / lensR).toFixed(4)})`
   }
 
   function start() {
