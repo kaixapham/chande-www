@@ -23,18 +23,218 @@ a{color:inherit}
 /* Trang bắt đầu ngay dưới thanh header (thanh do chande-loading.js dựng). */
 .page{min-height:100vh; padding-top:var(--bar)}
 
-/* ---- Home: khung nền frame Step 3 ---- */
-.home{display:flex; min-height:calc(100vh - var(--bar))}
-.home__dark{width:50%; background:var(--panel); position:relative}
-.home__light{width:50%; background:var(--cream); position:relative}
-.home__note{
-  position:absolute; left:1.5rem; bottom:1.5rem; max-width:26rem;
-  color:#f5f0e3; font-size:1.25rem; line-height:1.15;
-  opacity:0; transform:translateY(1rem);
-  transition:opacity .5s ease .1s, transform .5s cubic-bezier(.76,0,.24,1) .1s;
+/* ---- Font riêng của hero ----
+   Phudu SemiBold / Bold do hai file hiệu ứng tự khai báo; hero cần thêm Medium
+   (500), Geist Mono cho nhãn VIDEO RECAP, và Google Sans Flex chỉ cho ký tự ©
+   (file đã cắt subset còn đúng một glyph). */
+@font-face{font-family:'Phudu';font-style:normal;font-weight:500;font-display:swap;
+  src:url('../fonts/Phudu-Medium-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Phudu';font-style:normal;font-weight:500;font-display:swap;
+  src:url('../fonts/Phudu-Medium-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Phudu';font-style:normal;font-weight:500;font-display:swap;
+  src:url('../fonts/Phudu-Medium-vietnamese.woff2') format('woff2');
+  unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB}
+@font-face{font-family:'Geist Mono';font-style:normal;font-weight:500;font-display:swap;
+  src:url('../fonts/GeistMono-Medium-latin.woff2') format('woff2')}
+@font-face{font-family:'Google Sans Flex';font-style:normal;font-weight:700;font-display:swap;
+  src:url('../fonts/GoogleSansFlex-Bold-copyright.woff2') format('woff2'); unicode-range:U+00A9}
+
+/* =============================================================================
+ * HERO — Figma node 513:33865 ("Full Hero" 1920×1277, "1 Viewport" 1920×1080)
+ *
+ * Hình học: `--u` = 1px của bản thiết kế khổ 1920, tính theo bề rộng hero
+ * (100cqw), nên các cột luôn thẳng hàng với 4 ô header vốn chia theo %.
+ * Chữ vẫn dùng rem như phần còn lại của site.
+ * Toạ độ y ở đây = y Figma - 80 (stage bắt đầu ngay dưới header).
+ *
+ *   cột   0 ─ 258 ─ 492 ─ 726 ─ 960 ─ 1194 ──────── 1920   (lưới 8 cột, lề 24)
+ *   MỌI mép dọc đi theo đúng lưới này và trùng mép 4 ô header (492/960/1428);
+ *   Figma lẫn 493 / 961 / 235 / 233 do làm tròn — dùng số đó là lệch 1–2px.
+ *   ảnh 1 [258..492]  y 0      ảnh H + tên 56      (H = --img % viewport, 25% = 270)
+ *   ảnh 2 [492..726]  y H      = mép trên thanh tên ảnh 1
+ *   ảnh 3 [726..960]  y 2H     = mép trên thanh tên ảnh 2
+ *   ảnh 4 [960..1194] y 3H     = mép trên thanh tên ảnh 3
+ *   (cùng một rule cho cả 4 ảnh; mảng xanh phải + đáy nửa kem bám mép trên ảnh 4)
+ * H chỉnh được trong bảng setting (phím H) -> tab Hero home.
+ * ========================================================================== */
+.hero{container-type:inline-size; position:relative; background:var(--cream)}
+.hero__stage{
+  --u:calc(100cqw / 1920);
+  --fold:calc(100svh - var(--bar));       /* phần hero lộ ra ở viewport đầu */
+  /* Chiều cao ẢNH (không tính thanh tên 56), chung cho cả 4 ô, tính bằng % chiều
+     cao viewport đầu. 25% = 270 / 1080 như Figma. chande-hero.js ghi đè từ
+     CONFIG.imageHeight; mọi vị trí bên dưới đều suy ra từ số này. */
+  --img:25; --cap:56;
+  --hi:calc(var(--img) * 1svh);
+  --y3:calc(2 * var(--hi));   /* mép trên ảnh 3 + nền tối + thanh process */
+  --y4:calc(3 * var(--hi));   /* mép trên ảnh 4 + mảng xanh phải */
+  position:relative;
+  /* Ít nhất đủ chỗ cho ảnh 4; thường thì cao hơn viewport đầu đúng 197 như Figma. */
+  height:max(
+    calc(4 * var(--hi) + var(--cap) * var(--u)),
+    calc(var(--fold) + 197 * var(--u)));
 }
-/* html.cl-done do chande-loading.js bật khi loading xong. */
-.cl-done .home__note{opacity:.6; transform:none}
+.hero img{display:block}
+
+/* ---- Nền ---- */
+/* ---- Effect xanh (chande-field.js) ----
+   Canvas WebGL vẽ preset gradient-studio. Ảnh tĩnh làm nền dự phòng khi không có
+   WebGL: luôn khớp BỀ RỘNG (đủ 7 cột), chỉ lặp/cắt theo chiều dọc. */
+.field{
+  position:relative; overflow:hidden;
+  background:#000 url('../img/home/field-tile.webp') center top / 100% auto repeat-y;
+}
+.field__gl{position:absolute; inset:0; width:100%; height:100%; display:block; pointer-events:none}
+/* Gộp canvas: một canvas phủ cả root, vẽ mọi vùng [data-field] bên trong. Khi
+   canvas đã chạy, các vùng thành ô trong suốt để lộ canvas phía dưới. */
+.field-root.is-live .field{background:none}
+
+.hero__field{position:absolute}
+.hero__field--a{left:0; top:0; width:calc(492 * var(--u)); height:var(--y3)}
+.hero__field--b{left:calc(492 * var(--u)); top:0; width:calc(468 * var(--u)); height:var(--y3)}
+/* Mảng xanh phải phủ cả cột ảnh 4 (nằm dưới ảnh): ảnh 4 sticky đi lên thì chỗ nó
+   để lại vẫn là effect xanh, không lộ nền kem. */
+.hero__field--c{left:calc(960 * var(--u)); right:0; top:var(--y4); bottom:0}
+/* Mảng B lật dọc như node Figma. */
+.hero__field--b{transform:scaleY(-1)}
+
+/* Hai mảng tối có Dither (Bayer 16×16, 8 mức) — chande-hero.js gắn tile 2x vào
+   background-image; chưa có JS thì vẫn là màu phẳng. */
+.hero__dark{
+  position:absolute; left:0; top:var(--y3); bottom:0; width:calc(960 * var(--u));
+  background-color:#182220;
+}
+.hero__dark--col{width:calc(492 * var(--u)); background-color:#131313}
+
+/* ---- Cột sticky ----
+   Mỗi cột chạy từ chỗ của nó tới đáy hero; con bên trong `sticky`, nên khi cuộn
+   4 ảnh bậc thang lần lượt dừng dưới header thành một hàng, rồi theo đáy hero
+   đi ra. */
+.hero__col{position:absolute; bottom:0; pointer-events:none}
+.hero__col > *{pointer-events:auto}
+.hero__col--1{left:calc(258 * var(--u)); width:calc(234 * var(--u)); top:0}
+.hero__col--2{left:calc(492 * var(--u)); width:calc(234 * var(--u)); top:var(--hi)}
+.hero__col--3{left:calc(726 * var(--u)); width:calc(234 * var(--u)); top:var(--y3)}
+.hero__col--4{left:calc(960 * var(--u)); width:calc(234 * var(--u)); top:var(--y4)}
+.hero__col--1 > *, .hero__col--2 > *, .hero__col--3 > *, .hero__col--4 > *{position:sticky; top:var(--bar)}
+
+/* ---- Ô ảnh ---- */
+.hero-card{margin:0; --cap-bg:#236c3c; --cap-ink:#e9e2c8}
+.hero__col--1 .hero-card{--cap-bg:#182220}
+.hero__col--3 .hero-card{--cap-bg:#68f12b; --cap-ink:#102a19}
+.hero-card__media{position:relative; height:var(--hi); overflow:hidden; background:#fff}
+.hero-card__media > img,
+.hero-card__media > canvas{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.hero-card__cap{
+  display:flex; align-items:center; gap:calc(16 * var(--u));
+  height:calc(var(--cap) * var(--u)); padding:0 calc(26 * var(--u));
+  background:var(--cap-bg); color:var(--cap-ink);
+  font-weight:500; font-size:.875rem; line-height:.98; letter-spacing:-.02em;
+  white-space:nowrap; overflow:hidden;
+}
+.hero-card__cap > span{display:block}
+/* Block reveal khi đổi người (chande-hero.js swapCaption): khối lime như màn
+   loading; trên thanh tên nền lime thì khối dùng màu chữ tối cho thấy được. */
+.cap-w{position:relative}
+.cap-w__b{position:absolute; inset:-.18em -.12em; background:var(--cap-block, var(--lime)); transform:scaleX(0); pointer-events:none}
+.hero__col--3 .hero-card{--cap-block:#102a19}
+
+/* ---- Thanh process: nằm yên ở mép trên nền tối, cuộn theo trang (không sticky) ---- */
+.hero__col--progress{left:0; top:var(--y3); bottom:auto; width:calc(492 * var(--u))}
+.hero__progress{
+  position:relative;
+  height:calc(56 * var(--u)); background:#1c2e22; overflow:hidden;
+}
+.hero__progress > span{
+  position:absolute; inset:0; background:var(--lime);
+  transform-origin:0 50%; transform:scaleX(.8171);   /* 402 / 492 như Figma */
+}
+
+/* ---- Cụm chữ trái + video recap ----
+   Khung cao đúng phần hero lộ ra ở viewport đầu, chữ dồn đáy cách 24px.
+   760 chặn dưới để màn quá thấp chữ không đè lên mảng xanh. */
+.hero__intro{
+  position:absolute; left:calc(24 * var(--u)); top:0; width:calc(234 * var(--u));
+  height:max(var(--fold), calc(760 * var(--u)));
+  display:flex; flex-direction:column; justify-content:flex-end;
+  padding-bottom:calc(24 * var(--u));
+}
+.hero__intro-text{
+  display:flex; flex-direction:column; gap:1.5rem;
+  /* Figma dùng mix-blend difference trên nền #131313 phẳng = đúng màu #e1e0d8.
+     Ghi thẳng màu đó, khỏi tốn một lớp hoà trộn phải ghép lại mỗi khung cuộn. */
+  color:#e1e0d8;
+  font-weight:500; font-size:1rem; line-height:calc(.98em + 2px); letter-spacing:-.02em;
+  white-space:nowrap;
+}
+.hero__intro-text p{margin:0; text-box:trim-both cap alphabetic}
+.hero__recap{
+  position:absolute; left:0; top:calc(100% + 28 * var(--u)); /* 52 - 24 đệm đáy */
+  width:100%; height:calc(140 * var(--u)); margin:0; overflow:hidden;
+}
+.hero__recap img{width:100%; height:100%; object-fit:cover; object-position:50% 33%}
+.hero__recap figcaption{
+  position:absolute; left:0; bottom:0; padding:.5rem;
+  background:var(--lime); color:var(--ink);
+  font-family:'Geist Mono',ui-monospace,monospace; font-weight:500;
+  font-size:.875rem; line-height:.96; letter-spacing:-.02em;
+  text-box:trim-both cap alphabetic;
+}
+
+/* ---- SCROLL MORE: bám đáy viewport cách 24px cho tới khi hết hero ---- */
+.hero__col--scroll{
+  left:calc(726 * var(--u)); top:var(--y3);
+  display:flex; flex-direction:column; justify-content:flex-end;
+  padding-bottom:calc(24 * var(--u));
+}
+.hero__scroll{
+  position:sticky; bottom:calc(24 * var(--u));
+  display:flex; align-items:center; gap:1rem;
+  color:var(--cream); font-weight:500; font-size:1rem; line-height:.98; letter-spacing:-.02em;
+  white-space:nowrap;
+}
+.hero__scroll > span:first-child{text-box:trim-both cap alphabetic}
+.hero__dots{
+  display:flex; align-items:center; gap:.5rem; height:.6875rem; padding:0 .5rem;
+  border:1px solid rgba(244,243,235,.2); border-radius:999px;
+}
+.hero__dots img{width:.25rem; height:.25rem; animation:hero-dot 1.6s ease-in-out infinite}
+.hero__dots img:nth-child(2){animation-delay:.2s}
+.hero__dots img:nth-child(3){animation-delay:.4s}
+@keyframes hero-dot{0%,60%,100%{opacity:1} 30%{opacity:.25}}
+
+/* ---- Nửa phải: logo + tiêu đề, padding 32 ---- */
+.hero__panel{
+  position:absolute; left:calc(960 * var(--u)); right:0; top:0; height:var(--y4);
+  display:flex; flex-direction:column; justify-content:space-between;
+  padding:calc(40 * var(--u)) calc(32 * var(--u)) calc(32 * var(--u));
+}
+.hero__mark{width:calc(104 * var(--u)); height:auto}
+.hero__headline{display:flex; align-items:flex-end; justify-content:space-between; gap:1rem}
+.hero__title,
+.hero__year{
+  margin:0; color:#000; font-weight:700;
+  font-size:6.6687rem; line-height:.72; letter-spacing:-.04em;
+  text-box:trim-both cap alphabetic;
+}
+.hero__year{white-space:nowrap}
+.hero__year span{
+  font-family:'Google Sans Flex','Phudu',sans-serif; font-size:.645em; letter-spacing:0;
+  /* © nằm treo: đỉnh glyph (ascent .73 của cỡ nhỏ) chạm đỉnh cap của số 26
+     (.712em cỡ lớn) -> nâng (.712 - .645 × .733) / .645 ≈ .37em */
+  vertical-align:.37em;
+}
+.hero__sub{
+  margin:2.5rem 0 0; color:#102a19;
+  font-weight:500; font-size:1rem; line-height:.98; letter-spacing:-.02em;
+  text-box:trim-both cap alphabetic;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .hero__dots img{animation:none}
+}
 
 /* ---- Page A / Page B: khung ảnh demo ---- */
 /* Ảnh do bảng devtools nạp vào, ghi lên hai biến này ở :root nên sống sót qua
@@ -59,8 +259,32 @@ a{color:inherit}
 /* ---- Responsive cơ bản, cùng mốc với hiệu ứng: 900 / 600 ---- */
 @media (max-width:899px){
   :root{font-size:11px}
-  .home__dark{width:100%}
-  .home__light{display:none}
   .shot__ph{font-size:2rem}
+
+  /* Hero: Figma chưa có bản mobile — tạm xếp dọc: tiêu đề, lưới 2×2 ảnh,
+     thanh process, cụm chữ trên nền tối. Bỏ sticky và hai mảng xanh trên. */
+  .hero__stage{
+    height:auto; display:grid; grid-template-columns:1fr 1fr;
+    background:#182220;
+  }
+  .hero__stage > *{position:relative; inset:auto; width:auto; height:auto}
+  .hero__field--a, .hero__field--b, .hero__dark, .hero__col--scroll{display:none}
+  .hero__panel{
+    grid-column:1 / -1; order:-1; background:var(--cream);
+    gap:3rem; padding:2rem 1.5rem;
+  }
+  .hero__mark{width:4.5rem}
+  .hero__headline{flex-wrap:wrap}
+  .hero__title, .hero__year{font-size:clamp(3rem, 12vw, 6rem)}
+  .hero__col{position:relative; top:auto; bottom:auto; left:auto; width:auto; height:auto}
+  .hero__col > *{position:static}
+  .hero-card__media{height:auto; aspect-ratio:235 / 271}
+  .hero-card__cap{height:3.5rem; padding:0 1.25rem; gap:1rem}
+  .hero__col--1, .hero__col--2, .hero__col--3, .hero__col--4{order:1}
+  .hero__col--progress{grid-column:1 / -1; order:2}
+  .hero__progress{position:relative; top:auto; height:.75rem}
+  .hero__intro{grid-column:1 / -1; order:3; height:auto; padding:2rem 1.5rem; gap:2rem; background:#131313}
+  .hero__recap{position:relative; top:auto; width:min(100%, 20rem); height:auto; aspect-ratio:234 / 140}
+  .hero__field--c{grid-column:1 / -1; order:4; height:auto; aspect-ratio:726 / 328}
 }
 @media (max-width:599px){ :root{font-size:10px} }

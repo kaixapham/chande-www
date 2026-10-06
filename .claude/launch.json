@@ -4,9 +4,21 @@
     {
       "name": "chande-www",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["serve.mjs"],
+      "runtimeArgs": [
+        "serve.mjs"
+      ],
       "port": 3120,
       "autoPort": true
+    },
+    {
+      "name": "profile-reveal",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd tools/profile-reveal && npm run dev"
+      ],
+      "port": 3116,
+      "autoPort": false
     }
   ]
 }

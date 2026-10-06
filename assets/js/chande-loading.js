@@ -123,7 +123,9 @@
     dotsGap: 8,
 
     // Bề rộng 4 ô, % của 1920 (493 / 467 / 468 / 492)
-    cellWidths: [25.6771, 24.3229, 24.375, 25.625],
+    // Đúng lưới 8 cột: 492 | 468 | 468 | 492 (mốc 492 / 960 / 1428). Figma ghi
+    // 493 / 467 do làm tròn — để vậy là header lệch hero 1px ở mọi mép dọc.
+    cellWidths: [25.625, 24.375, 24.375, 25.625],
 
     // ---- Màu ----------------------------------------------------------------
     bg: '#182220', // nền lúc loading (và nền khởi điểm của 4 ô)
@@ -180,6 +182,9 @@
 
   if (!CONFIG.enabled) return
 
+  // Bản sao SÂU: `{ ...CONFIG }` dùng chung object lồng (dither, textReveal…) với
+  // config, sửa config là defaults đổi theo -> Reset vô tác dụng.
+  const DEFAULTS = structuredClone(CONFIG)
   const S = { ...CONFIG }
   const em = (px) => `${(px / 16).toFixed(4)}em`
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v)
@@ -850,7 +855,7 @@
   /* ------------------------------------------------------------------ API -- */
   window.CHANDE_LOADING = {
     config: S,
-    defaults: { ...CONFIG },
+    defaults: DEFAULTS,
     state,
     duration: DURATION,
     marks: M,

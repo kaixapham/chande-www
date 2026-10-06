@@ -1,13 +1,17 @@
 /* =============================================================================
  * CHANDE — Devtools (CHỈ DÙNG LÚC LÀM VIỆC)
  * -----------------------------------------------------------------------------
- * Một bảng duy nhất ở đáy màn, hai tab:
+ * Một bảng duy nhất ở góc phải trên, giao diện theo bảng Controls của
+ * Toolcraft. ẨN SẴN — bấm phím H để bật / tắt. Các mục (chọn ở ô "Mục"):
  *   • Loading    — play / pause / tua timeline + màu nền, dither, màu element
- *   • Transition — chạy thử rèm, đi Home / Page A / Page B, màu 4 cột, nhịp
+ *   • Hero home  — chiều cao ảnh (% viewport, chung 4 ô), nhịp vòng đổi ảnh,
+ *                  kiểu đổi ảnh + thứ tự + độ lệch giữa 4 ô
+ *   • Shape reveal — màu 5 lớp, nhịp, easing của đoàn shape (chande-reveal.js)
+ *   • Rèm …      — chạy thử rèm, đi Home / Page A / Page B, màu 4 cột, nhịp
  *                  chuyển động, và NẠP ẢNH DEMO cho page A / page B
  *
- * Bảng chỉ nói chuyện với API công khai của hai file hiệu ứng; hai file đó không
- * biết gì về bảng này. Bàn giao cho dev = xoá đúng một thẻ
+ * Bảng chỉ nói chuyện với API công khai của các file hiệu ứng; các file đó
+ * không biết gì về bảng này. Bàn giao cho dev = xoá đúng một thẻ
  * <script src="assets/js/chande-devtools.js">.
  *
  * Giá trị đã chỉnh lưu ở localStorage khoá 'chande-devtools' (ảnh demo ở
@@ -19,7 +23,11 @@
 
   const CL = window.CHANDE_LOADING
   const CT = window.CHANDE_TRANSITION
-  if (!CL && !CT) return
+  const CH = window.CHANDE_HERO
+  const CM = window.CHANDE_MOSAIC
+  const CR = window.CHANDE_REVEAL
+  const CF = window.CHANDE_FIELD
+  if (!CL && !CT && !CH && !CM && !CR && !CF) return
 
   const KEY = 'chande-devtools'
   const KEY_SHOTS = 'chande-devtools-shots'
@@ -30,6 +38,10 @@
   // chuyển tab là đổi luôn biến thể rèm sẽ chạy khi bấm link.
   const TABS = [
     CL && { id: 'loading', label: 'Loading', mod: 'loading' },
+    CH && { id: 'hero', label: 'Hero home', mod: 'hero' },
+    CR && { id: 'reveal', label: 'Shape reveal', mod: 'reveal' },
+    CM && { id: 'mosaic', label: 'Mosaic', mod: 'mosaic' },
+    CF && { id: 'field', label: 'Effect xanh', mod: 'field' },
     CT && { id: 'sweep', label: 'Rèm quét', mod: 'transition', variant: 'sweep' },
     CT && { id: 'split', label: 'Rèm chẻ', mod: 'transition', variant: 'split' },
     CT && { id: 'stack', label: 'Trượt thẻ', mod: 'transition', variant: 'stack' },
@@ -123,6 +135,119 @@
         { path: 'navDone', label: 'Ô nav 02', type: 'color' },
       ] },
 
+    // ---- Hero trang chủ ----
+    { tab: 'hero', mod: 'hero', title: 'Ảnh',
+      items: [
+        { path: 'imageHeight', label: 'Chiều cao 4 ảnh (% viewport)', type: 'range', min: 10, max: 50, step: 0.5 },
+      ] },
+    { tab: 'hero', mod: 'hero', title: 'Thanh tên · block reveal',
+      items: [
+        { path: 'capReveal.stagger', label: 'Lệch số ↔ tên (ms)', type: 'range', min: 0, max: 300, step: 5 },
+        { path: 'capReveal.inDuration', label: 'Quét vào (ms)', type: 'range', min: 60, max: 1200, step: 10 },
+        { path: 'capReveal.hold', label: 'Giữ kín (ms)', type: 'range', min: 0, max: 600, step: 10 },
+        { path: 'capReveal.outDuration', label: 'Quét ra (ms)', type: 'range', min: 60, max: 1200, step: 10 },
+      ] },
+    { tab: 'hero', mod: 'hero', title: 'Vòng đổi ảnh',
+      items: [
+        { path: 'cycle', label: 'Thanh process (ms)', type: 'range', min: 1500, max: 15000, step: 100 },
+        { path: 'effect', label: 'Kiểu đổi ảnh', type: 'select', options: ['shapes', 'wipe'] },
+        { path: 'order', label: 'Thứ tự 4 ô', type: 'select', options: ['bottomUp', 'topDown', 'random'] },
+        { path: 'revealStagger', label: 'Shapes · lệch giữa 4 ô (ms, 0 = cùng lúc)', type: 'range', min: 0, max: 1000, step: 10 },
+        { path: 'swapDuration', label: 'Wipe · ảnh quét lên (ms)', type: 'range', min: 0, max: 2000, step: 10 },
+        { path: 'swapStagger', label: 'Wipe · lệch giữa 4 ô (ms)', type: 'range', min: 0, max: 400, step: 5 },
+        { path: 'retract', label: 'Thanh rút về (ms)', type: 'range', min: 0, max: 1500, step: 10 },
+      ] },
+
+    // ---- Shape reveal: đoàn shape đổi ảnh của hero (chande-reveal.js) ----
+    { tab: 'reveal', mod: 'reveal', title: 'Màu 5 lớp (lớp 1 vào trước)',
+      items: [0, 1, 2, 3, 4].map((i) => ({ path: `colors.${i}`, label: `Lớp ${i + 1}`, type: 'color' })) },
+    { tab: 'reveal', mod: 'reveal', title: 'Chuyển động',
+      items: [
+        { path: 'speed', label: 'Speed (×)', type: 'range', min: 0.1, max: 2, step: 0.05 },
+        { path: 'duration', label: 'Duration gốc (ms)', type: 'range', min: 200, max: 2000, step: 10 },
+        { path: 'coverHold', label: 'Dừng lúc phủ kín (ms)', type: 'range', min: 0, max: 1500, step: 10 },
+        { path: 'gap', label: 'Khoảng hở giữa lớp', type: 'range', min: 0.05, max: 0.6, step: 0.01 },
+        { path: 'gapFalloff', label: 'Dồn dần về sau', type: 'range', min: 0.2, max: 1, step: 0.01 },
+        { path: 'easing', label: 'Easing', type: 'select',
+          options: ['linear', 'sine', 'power2', 'power3', 'power4', 'expo', 'circ', 'back'] },
+        { path: 'easeMode', label: 'Kiểu ease', type: 'select', options: ['inOut', 'in', 'out', 'hold'] },
+        { path: 'carFit', label: 'Ảnh mới', type: 'select', options: ['scale', 'crop'] },
+        { path: 'dither', label: 'Dither shape', type: 'bool' },
+      ] },
+
+    // ---- Effect xanh: preset gradient-studio (chande-field.js) ----
+    { tab: 'field', mod: 'field', title: 'Bảng màu (tối → sáng)',
+      items: [0, 1, 2, 3].map((i) => ({ path: `colors.${i}`, label: `Màu ${i + 1}`, type: 'color' })) },
+    { tab: 'field', mod: 'field', title: 'Cột (Slats)',
+      items: [
+        { path: 'columns', label: 'Số cột', type: 'range', min: 2, max: 24, step: 1 },
+        { path: 'lineOffset', label: 'Lệch giữa cột', type: 'range', min: 0, max: 0.4, step: 0.01 },
+        { path: 'lineOrder', label: 'Thứ tự (0 giữa ra · 1 quét · 2 xen · 3 hội tụ · 4 ngẫu nhiên)', type: 'range', min: 0, max: 4, step: 1 },
+        { path: 'softness', label: 'Độ mềm dải màu', type: 'range', min: 0, max: 1, step: 0.01 },
+      ] },
+    { tab: 'field', mod: 'field', title: 'Ô khảm',
+      items: [
+        { path: 'mosaic', label: 'Bật ô khảm', type: 'bool' },
+        { path: 'tiles', label: 'Số ô theo chiều ngang', type: 'range', min: 8, max: 120, step: 1 },
+        { path: 'gap', label: 'Khe', type: 'range', min: 0, max: 0.4, step: 0.01 },
+        { path: 'corners', label: 'Bo góc', type: 'range', min: 0, max: 0.5, step: 0.01 },
+        { path: 'bevel', label: 'Gờ', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'studs', label: 'Núm', type: 'range', min: 0, max: 1, step: 0.01 },
+      ] },
+    { tab: 'field', mod: 'field', title: 'Grade',
+      items: [
+        { path: 'contrast', label: 'Contrast', type: 'range', min: 0.4, max: 2, step: 0.01 },
+        { path: 'saturation', label: 'Saturation', type: 'range', min: 0, max: 2, step: 0.01 },
+        { path: 'vignette', label: 'Vignette', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'grain', label: 'Grain (noise)', type: 'range', min: 0, max: 0.4, step: 0.005 },
+        { path: 'grainSize', label: 'Cỡ hạt grain', type: 'range', min: 0.5, max: 4, step: 0.1 },
+      ] },
+    { tab: 'field', mod: 'field', title: 'Chạy',
+      items: [
+        { path: 'loop', label: 'Một vòng (s)', type: 'range', min: 1, max: 20, step: 0.5 },
+        { path: 'fps', label: 'Khung hình / giây', type: 'range', min: 10, max: 60, step: 1 },
+        { path: 'maxDpr', label: 'Độ nét tối đa (DPR)', type: 'range', min: 0.5, max: 2, step: 0.05 },
+      ] },
+
+    // ---- Mosaic: các mảng xanh của hero (chande-mosaic.js) ----
+    { tab: 'mosaic', mod: 'mosaic', title: 'Nhịp chung',
+      items: [
+        { path: 'period', label: 'Một vòng (s)', type: 'range', min: 4, max: 60, step: 0.5 },
+        { path: 'octaves', label: 'Độ chi tiết', type: 'range', min: 1, max: 6, step: 1 },
+        { path: 'holdOut', label: 'Phanh khi đổi ảnh (ms)', type: 'range', min: 0, max: 1500, step: 10 },
+        { path: 'holdIn', label: 'Nhả sau khi đổi (ms)', type: 'range', min: 0, max: 2500, step: 10 },
+      ] },
+    { tab: 'mosaic', mod: 'mosaic', title: 'Viên gạch',
+      items: [
+        { path: 'brick.gap', label: 'Khe', type: 'range', min: 0, max: 0.4, step: 0.01 },
+        { path: 'brick.corners', label: 'Bo góc', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'brick.bevel', label: 'Độ phồng', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'brick.stud', label: 'Núm giữa', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'brick.seam', label: 'Độ sáng khe', type: 'range', min: 0, max: 1, step: 0.01 },
+      ] },
+    CM && { tab: 'mosaic', mod: 'mosaic', title: 'Dải màu (tối -> sáng)',
+      items: CM.config.ramp.flatMap((_, i) => [
+        { path: `ramp.${i}.color`, label: `Màu ${i + 1}`, type: 'color' },
+        { path: `ramp.${i}.pos`, label: `Vị trí ${i + 1}`, type: 'range', min: 0, max: 1, step: 0.01 },
+      ]) },
+    ...(CM ? Object.keys(CM.config.fields) : []).map((k) => ({
+      tab: 'mosaic', mod: 'mosaic', title: `Vùng ${k.toUpperCase()}`,
+      items: [
+        { path: `fields.${k}.tile`, label: 'Cỡ viên (px)', type: 'range', min: 4, max: 40, step: 0.5 },
+        { path: `fields.${k}.scale`, label: 'Cỡ mảng loang', type: 'range', min: 80, max: 1600, step: 10 },
+        { path: `fields.${k}.offsetX`, label: 'Dời ngang', type: 'range', min: -20, max: 20, step: 0.1 },
+        { path: `fields.${k}.offsetY`, label: 'Dời dọc', type: 'range', min: -20, max: 20, step: 0.1 },
+        { path: `fields.${k}.tiltAngle`, label: 'Hướng sáng (°, 0 = lên)', type: 'range', min: 0, max: 360, step: 1 },
+        { path: `fields.${k}.tilt`, label: 'Độ chuyển sáng tối', type: 'range', min: 0, max: 2.5, step: 0.01 },
+        { path: `fields.${k}.noise`, label: 'Độ loang', type: 'range', min: 0, max: 1.5, step: 0.01 },
+        { path: `fields.${k}.warp`, label: 'Độ uốn', type: 'range', min: 0, max: 2, step: 0.01 },
+        { path: `fields.${k}.blocks`, label: 'Khối pixel thô', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: `fields.${k}.blockSize`, label: 'Cỡ khối thô (viên)', type: 'range', min: 2, max: 16, step: 1 },
+        { path: `fields.${k}.level`, label: 'Sáng / tối cả vùng', type: 'range', min: -0.6, max: 0.6, step: 0.01 },
+        { path: `fields.${k}.contrast`, label: 'Tương phản', type: 'range', min: 0.2, max: 2.5, step: 0.01 },
+        { path: `fields.${k}.phase`, label: 'Lệch pha (°)', type: 'range', min: 0, max: 360, step: 1 },
+      ] })),
+
     // ---- Rèm quét: 4 cột trôi từ trên xuống rồi ra khỏi mép dưới ----
     { tab: 'sweep', mod: 'transition', title: 'Màu 4 cột', items: COLORS('sweep.colors') },
     { tab: 'sweep', mod: 'transition', title: 'Dither cột', items: DITHER('sweep.dither') },
@@ -156,6 +281,7 @@
     { tab: 'stack', mod: 'transition', title: 'Tấm giữa',
       items: [
         { path: 'stack.color', label: 'Màu', type: 'color' },
+        { path: 'stack.bg', label: 'Nền lúc chuyển', type: 'color' },
         { path: 'stack.radius', label: 'Bo góc (em)', type: 'range', min: 0, max: 4, step: 0.05 },
         { path: 'stack.label', label: 'Chữ', type: 'text' },
         { path: 'stack.labelAlign', label: 'Căn dọc', type: 'select', options: ALIGN },
@@ -188,7 +314,7 @@
       ]) },
   ]
 
-  const MODS = { loading: CL, transition: CT }
+  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF }
   const get = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o)
   const set = (o, p, v) => {
     const k = p.split('.')
@@ -196,7 +322,7 @@
     k.reduce((a, x) => a[x], o)[last] = v
   }
   const live = (g) => MODS[g.mod]
-  const groups = () => GROUPS.filter((g) => live(g))
+  const groups = () => GROUPS.filter((g) => g && live(g))
 
   /* ------------------------------------------------------------ lưu trữ ---- */
   function loadSettings() {
@@ -204,6 +330,7 @@
     try { saved = JSON.parse(localStorage.getItem(KEY) || 'null') } catch (e) {}
     if (!saved) return
     if (saved.__tab && TABS.some((t) => t.id === saved.__tab)) tab = saved.__tab
+    if (saved.__open) shown = true
     const touched = new Set()
     for (const g of groups())
       for (const f of g.items) {
@@ -219,9 +346,15 @@
   }
 
   function saveSettings() {
-    const out = { __tab: tab }
+    const out = { __tab: tab, __open: shown }
+    // Chỉ lưu giá trị KHÁC mặc định — lưu hết thì sau này đổi mặc định trong code
+    // sẽ bị bản lưu cũ đè mất (đã dính với lenis.lerp).
     for (const g of groups())
-      for (const f of g.items) out[`${g.mod}.${f.path}`] = get(live(g).config, f.path)
+      for (const f of g.items) {
+        const v = get(live(g).config, f.path)
+        const d = live(g).defaults ? get(live(g).defaults, f.path) : undefined
+        if (JSON.stringify(v) !== JSON.stringify(d)) out[`${g.mod}.${f.path}`] = v
+      }
     try { localStorage.setItem(KEY, JSON.stringify(out)) } catch (e) {}
   }
 
@@ -273,118 +406,195 @@
   }
 
   /* ---------------------------------------------------------------- CSS ---- */
+  // Giao diện chép theo bảng Controls của Toolcraft: tấm kính tối 300px góc phải,
+  // Inter, nhãn trên – ô dưới, slider track 1px + núm vuông 9px, ô cao 28.
   const style = document.createElement('style')
   style.textContent = `
 .cdev{
-  position:fixed; left:50%; bottom:20px; transform:translateX(-50%); z-index:10000;
-  width:min(1060px, calc(100vw - 40px));
-  background:#f5f0e3; color:#245535; border:1px solid rgba(36,85,53,.22);
-  font:600 12px/1.2 'Phudu',ui-sans-serif,system-ui,sans-serif;
-  text-transform:uppercase; letter-spacing:.02em;
-  display:flex; flex-direction:column;
+  --fg:#fafafa; --fg-60:rgba(250,250,250,.6); --fg-75:rgba(250,250,250,.75);
+  --muted:#b4b4b4; --line:rgba(250,250,250,.12); --fill:rgba(250,250,250,.05);
+  --fill-2:rgba(250,250,250,.1); --track:rgba(180,180,180,.38); --accent:#0c8ce9;
+  position:fixed; top:10px; right:10px; z-index:10000;
+  width:300px; max-height:calc(100vh - 20px);
+  display:flex; flex-direction:column; overflow:hidden;
+  /* Toolcraft dùng kính mờ blur(40px), nhưng trên trang cuộn mượt nó bắt GPU làm
+     mờ lại cả dải phía sau ở MỖI khung hình — nguồn lag lớn. Nền gần đặc thay thế. */
+  background:rgba(23,23,23,.94); color:var(--fg);
+  border:1px solid var(--line); border-radius:8px;
+  font:500 12px/1.375 'Inter Variable',Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;
+  letter-spacing:normal; text-transform:none; -webkit-font-smoothing:antialiased;
+  color-scheme:dark;
 }
-.cdev button{
-  font:inherit; color:#245535; background:transparent;
-  border:1px solid rgba(36,85,53,.28); padding:8px 10px; cursor:pointer; white-space:nowrap;
-  transition:background .16s ease,color .16s ease,border-color .16s ease;
-}
-.cdev button:hover{background:#68f12b; color:#0f1513; border-color:#68f12b}
-.cdev button:focus-visible{outline:2px solid #68f12b; outline-offset:2px}
-.cdev button[aria-pressed=true]{background:#245535; color:#f5f0e3; border-color:#245535}
+.cdev.is-hidden{display:none}
+.cdev *{box-sizing:border-box}
+.cdev button,.cdev input,.cdev select{font:inherit; color:inherit; letter-spacing:inherit}
+.cdev button{cursor:pointer}
+.cdev :focus-visible{outline:2px solid rgba(140,140,140,.6); outline-offset:1px}
 
-.cdev__bar{display:flex; align-items:center; gap:10px; padding:10px; flex-wrap:wrap}
-.cdev__tabs{display:flex; gap:5px}
-.cdev__ctrl{display:flex; align-items:center; gap:8px; flex:1; min-width:180px}
-.cdev__play{min-width:78px}
-.cdev__range{flex:1; appearance:none; -webkit-appearance:none; height:5px; min-width:80px;
-  background:rgba(36,85,53,.18); cursor:pointer}
-.cdev__range::-webkit-slider-thumb{-webkit-appearance:none; width:10px; height:17px;
-  background:#245535; border:0; cursor:grab}
-.cdev__range::-moz-range-thumb{width:10px; height:17px; background:#245535; border:0; border-radius:0}
-.cdev__time{font-variant-numeric:tabular-nums; min-width:88px; text-align:right}
+/* ---- đầu bảng ---- */
+.cdev__head{display:flex; align-items:center; justify-content:space-between; gap:12px;
+  height:36px; padding:0 4px 0 12px; flex-shrink:0}
+.cdev__title{margin:0; font-size:13px; line-height:18px; font-weight:500}
+.cdev__icons{display:flex; gap:4px}
+.cdev__icon{display:inline-grid; place-items:center; width:28px; height:28px; padding:0;
+  background:transparent; border:1px solid transparent; border-radius:8px; color:var(--fg)}
+.cdev__icon:hover{background:var(--fill-2)}
+.cdev__icon svg{width:14px; height:14px}
+.cdev.is-closed .cdev__icon[data-fold] svg{transform:rotate(180deg)}
+.cdev.is-closed .cdev__body{display:none}
 
-.cdev__panel{
-  border-bottom:1px solid rgba(36,85,53,.18); padding:4px 10px 12px;
-  max-height:44vh; overflow:auto;
-  display:grid; grid-template-columns:repeat(auto-fill, minmax(238px, 1fr)); gap:0 20px;
-}
-.cdev.is-closed .cdev__panel{display:none}
-.cdev__g{margin-top:10px; break-inside:avoid}
-.cdev__g > h4{margin:0 0 6px; font-size:10px; opacity:.55; letter-spacing:.08em}
-.cdev__r{display:flex; align-items:center; gap:8px; padding:3px 0}
-.cdev__r > label{flex:1; font-size:11px; text-transform:none}
-.cdev__r input[type=color]{width:30px; height:22px; padding:0;
-  border:1px solid rgba(36,85,53,.28); background:none; cursor:pointer}
-.cdev__txt{
-  font:inherit; font-size:11px; text-transform:uppercase; letter-spacing:.02em;
-  width:108px; padding:3px 5px; color:#245535; background:#fff;
-  border:1px solid rgba(36,85,53,.28);
-}
-.cdev__txt:focus{outline:2px solid #68f12b; outline-offset:-1px}
-.cdev__hex{
-  font:inherit; font-size:11px; text-transform:uppercase; letter-spacing:.04em;
-  width:72px; padding:3px 5px; color:#245535; background:#fff;
-  border:1px solid rgba(36,85,53,.28);
-}
-.cdev__hex:focus{outline:2px solid #68f12b; outline-offset:-1px}
-.cdev__r input[type=range]{width:92px; accent-color:#245535}
-.cdev__r select{font:inherit; font-size:11px; text-transform:none; color:#245535;
-  background:#fff; border:1px solid rgba(36,85,53,.28); padding:2px 4px}
-.cdev__v{width:36px; text-align:right; font-variant-numeric:tabular-nums; font-size:11px}
-.cdev__file{display:flex; align-items:center; gap:6px}
-.cdev__file input{display:none}
-.cdev__file .cdev__pick{padding:4px 8px; font-size:11px}
-.cdev__note{font-size:10px; text-transform:none; opacity:.55;
-  max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.cdev__body{overflow:auto; scrollbar-width:thin; scrollbar-color:rgba(250,250,250,.1) transparent}
+.cdev__body::-webkit-scrollbar{width:4px}
+.cdev__body::-webkit-scrollbar-thumb{background:rgba(250,250,250,.1); border-radius:999px}
 
-@media (max-width:899px){
-  .cdev{bottom:12px; width:calc(100vw - 24px)}
-  .cdev__ctrl{order:3; flex-basis:100%}
-  .cdev__panel{grid-template-columns:1fr; max-height:52vh}
+/* ---- section ---- */
+.cdev__sec{padding:12px; border-top:1px solid rgba(250,250,250,.05); display:flex; flex-direction:column; gap:12px}
+.cdev__sec:first-child{border-top:0; padding-top:4px}
+.cdev__sec > h4{margin:0; min-height:24px; display:flex; align-items:center;
+  font-size:11px; line-height:11px; font-weight:600; text-transform:uppercase; color:var(--fg-75)}
+
+/* ---- một dòng điều khiển: nhãn trên, ô dưới ---- */
+.cdev__f{display:flex; flex-direction:column; gap:4px}
+.cdev__lab{display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:20px}
+.cdev__lab > label,.cdev__lab > span:first-child{color:var(--fg-60); font-size:12px; font-weight:500}
+.cdev__v{color:var(--muted); font-weight:400; font-variant-numeric:tabular-nums}
+
+.cdev__in,.cdev__sel{height:28px; width:100%; padding:2px 8px; border-radius:8px;
+  background:var(--fill); border:1px solid var(--line); font-weight:400; outline:0}
+.cdev__in:focus,.cdev__sel:focus{border-color:rgba(250,250,250,.3)}
+.cdev__in.is-upper{text-transform:uppercase}
+.cdev__sel{appearance:none; -webkit-appearance:none; cursor:pointer; font-weight:500;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2 3.5l3 3 3-3' fill='none' stroke='%23b4b4b4' stroke-width='1.2'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 8px center; padding-right:24px}
+.cdev__sel option{background:#262626}
+
+/* slider: track 1px, phần đã kéo màu trắng, núm vuông 9px bo 2 */
+.cdev__rg{appearance:none; -webkit-appearance:none; width:100%; height:18px; margin:0;
+  background:linear-gradient(var(--fg),var(--fg)) 0 50% / var(--p,0%) 1px no-repeat,
+             linear-gradient(var(--track),var(--track)) 0 50% / 100% 1px no-repeat;
+  cursor:pointer}
+.cdev__rg::-webkit-slider-thumb{-webkit-appearance:none; width:9px; height:9px; border-radius:2px; background:var(--fg); border:0}
+.cdev__rg::-moz-range-thumb{width:9px; height:9px; border-radius:2px; background:var(--fg); border:0}
+
+/* màu: ô swatch + ô hex dính nhau như Toolcraft */
+.cdev__col{display:flex}
+.cdev__sw{position:relative; width:28px; height:28px; flex-shrink:0; display:grid; place-items:center;
+  background:var(--fill); border:1px solid var(--line); border-right:0; border-radius:8px 0 0 8px}
+.cdev__sw > span{width:12px; height:12px; border-radius:3px; box-shadow:inset 0 0 0 1px rgba(250,250,250,.2)}
+.cdev__sw > input{position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0}
+.cdev__col .cdev__in{border-radius:0 6px 6px 0; text-transform:uppercase}
+
+/* switch 28×16, bật = xanh */
+.cdev__tg{display:flex; align-items:center; gap:8px; min-height:20px; cursor:pointer}
+.cdev__tg > span{color:var(--fg-60)}
+.cdev__tg > input{appearance:none; -webkit-appearance:none; position:relative; flex-shrink:0;
+  width:28px; height:16px; margin:0; border-radius:999px; background:rgba(250,250,250,.2);
+  cursor:pointer; transition:background .15s}
+.cdev__tg > input::after{content:''; position:absolute; top:1px; left:1px; width:14px; height:14px;
+  border-radius:50%; background:#0a0a0a; transition:transform .15s}
+.cdev__tg > input:checked{background:var(--accent)}
+.cdev__tg > input:checked::after{transform:translateX(12px); background:var(--fg)}
+
+/* nút */
+.cdev__btns{display:flex; gap:8px; flex-wrap:wrap}
+.cdev__btn{height:28px; padding:0 10px; border-radius:8px; flex:1 1 auto;
+  background:var(--fill-2); border:1px solid var(--line); font-size:13px; font-weight:500; white-space:nowrap}
+.cdev__btn:hover{background:rgba(250,250,250,.16)}
+.cdev__btn[aria-pressed=true]{background:var(--fg); color:#171717; border-color:var(--fg)}
+
+/* timeline loading */
+.cdev__tl{display:flex; flex-direction:column; gap:4px}
+.cdev__time{color:var(--muted); font-weight:400; font-variant-numeric:tabular-nums}
+
+/* ảnh demo */
+.cdev__file{display:flex; align-items:center; gap:8px}
+.cdev__file input[type=file]{display:none}
+.cdev__note{flex:1; min-width:0; color:var(--muted); font-weight:400;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+.cdev__foot{flex-shrink:0; padding:8px 12px; border-top:1px solid rgba(250,250,250,.05);
+  color:var(--muted); font-weight:400; font-size:11px}
+.cdev__foot kbd{font:inherit; font-weight:500; color:var(--fg); padding:1px 5px;
+  border:1px solid var(--line); border-radius:4px; background:var(--fill)}
+
+@media (max-width:599px){
+  .cdev{left:10px; width:auto; max-height:60vh}
 }`
   document.head.appendChild(style)
 
   /* ---------------------------------------------------------------- DOM ---- */
+  const ICON = {
+    reset:
+      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9"/><path d="M2.5 2.5v3h3"/></svg>',
+    chevron:
+      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l4-4 4 4"/></svg>',
+  }
+
   const dev = document.createElement('div')
-  dev.className = 'cdev is-closed'
+  dev.className = 'cdev'
+  dev.setAttribute('role', 'dialog')
+  dev.setAttribute('aria-label', 'Settings')
   dev.innerHTML = `
-  <div class="cdev__panel"></div>
-  <div class="cdev__bar">
-    <div class="cdev__tabs">
-      ${TABS.map((t) => `<button type="button" data-tab="${t.id}">${t.label}</button>`).join('')}
+  <div class="cdev__head">
+    <p class="cdev__title">Settings</p>
+    <div class="cdev__icons">
+      <button type="button" class="cdev__icon" data-reset title="Reset tab này" aria-label="Reset tab này">${ICON.reset}</button>
+      <button type="button" class="cdev__icon" data-fold title="Thu gọn" aria-label="Thu gọn" aria-expanded="true">${ICON.chevron}</button>
     </div>
-    <div class="cdev__ctrl"></div>
-    <button type="button" data-reset>Reset</button>
-    <button type="button" data-fold>Settings</button>
-  </div>`
+  </div>
+  <div class="cdev__body">
+    <section class="cdev__sec">
+      <div class="cdev__f">
+        <div class="cdev__lab"><label for="cdev-tab">Mục</label></div>
+        <select id="cdev-tab" class="cdev__sel" data-tabsel>
+          ${TABS.map((t) => `<option value="${t.id}">${t.label}</option>`).join('')}
+        </select>
+      </div>
+      <div class="cdev__ctrl"></div>
+    </section>
+    <div class="cdev__panel"></div>
+  </div>
+  <div class="cdev__foot"><kbd>H</kbd> ẩn / hiện bảng</div>`
   const panel = dev.querySelector('.cdev__panel')
   const ctrl = dev.querySelector('.cdev__ctrl')
+  const tabSel = dev.querySelector('[data-tabsel]')
 
   let tab = TABS[0].id
+  let shown = false // cả bảng ẩn cho tới khi bấm H
 
   /* ------------------------------------------------------------- các ô ---- */
+  const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+  const pct = (el) =>
+    el.style.setProperty('--p', `${((el.value - el.min) / (el.max - el.min)) * 100}%`)
+
   function row(g, f) {
     const cfg = live(g).config
     const v = get(cfg, f.path)
     const r = document.createElement('div')
-    r.className = 'cdev__r'
+    r.className = 'cdev__f'
     const id = `cdev-${g.mod}-${f.path.replace(/\./g, '-')}`
-    let input
-    if (f.type === 'color')
-      input =
-        `<input class="cdev__hex" type="text" maxlength="7" spellcheck="false" ` +
-        `value="${v}" aria-label="Mã màu ${f.label}">` +
-        `<input id="${id}" type="color" value="${v}">`
+
+    if (f.type === 'bool')
+      r.innerHTML = `<label class="cdev__tg"><input id="${id}" type="checkbox" ${v ? 'checked' : ''}><span>${f.label}</span></label>`
+    else if (f.type === 'color')
+      r.innerHTML =
+        `<div class="cdev__lab"><label for="${id}-hex">${f.label}</label></div>` +
+        `<div class="cdev__col"><span class="cdev__sw"><span style="background:${v}"></span>` +
+        `<input id="${id}" type="color" value="${v}" aria-label="Chọn màu ${f.label}"></span>` +
+        `<input id="${id}-hex" class="cdev__in" type="text" maxlength="7" spellcheck="false" value="${v}"></div>`
     else if (f.type === 'text')
-      input = `<input id="${id}" class="cdev__txt" type="text" value="${String(v).replace(/"/g, '&quot;')}" placeholder="—">`
-    else if (f.type === 'bool') input = `<input id="${id}" type="checkbox" ${v ? 'checked' : ''}>`
+      r.innerHTML =
+        `<div class="cdev__lab"><label for="${id}">${f.label}</label></div>` +
+        `<input id="${id}" class="cdev__in is-upper" type="text" value="${esc(v)}" placeholder="—">`
     else if (f.type === 'select')
-      input = `<select id="${id}">${f.options
-        .map((o) => `<option ${o === v ? 'selected' : ''}>${o}</option>`).join('')}</select>`
+      r.innerHTML =
+        `<div class="cdev__lab"><label for="${id}">${f.label}</label></div>` +
+        `<select id="${id}" class="cdev__sel">${f.options
+          .map((o) => `<option ${o === v ? 'selected' : ''}>${o}</option>`).join('')}</select>`
     else
-      input = `<input id="${id}" type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${v}">` +
-              `<span class="cdev__v">${v}</span>`
-    r.innerHTML = `<label for="${id}">${f.label}</label>${input}`
+      r.innerHTML =
+        `<div class="cdev__lab"><label for="${id}">${f.label}</label><span class="cdev__v">${v}</span></div>` +
+        `<input id="${id}" class="cdev__rg" type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${v}">`
 
     const out = r.querySelector('.cdev__v')
     const commit = (nv) => {
@@ -396,10 +606,12 @@
 
     if (f.type === 'color') {
       // Hai ô cùng sửa một giá trị: bảng chọn màu và ô gõ/dán mã hex.
-      const hex = r.querySelector('.cdev__hex')
+      const hex = r.querySelector('.cdev__in')
       const pick = r.querySelector('input[type=color]')
+      const chip = r.querySelector('.cdev__sw > span')
       pick.addEventListener('input', () => {
         hex.value = pick.value
+        chip.style.background = pick.value
         commit(pick.value)
       })
       const fromHex = () => {
@@ -411,12 +623,12 @@
             : t
         if (!/^[0-9a-f]{6}$/i.test(full)) {
           hex.value = get(cfg, f.path) // gõ sai thì trả về giá trị đang dùng
-          hex.classList.remove('is-bad')
           return
         }
         const nv = `#${full.toLowerCase()}`
         hex.value = nv
         pick.value = nv
+        chip.style.background = nv
         commit(nv)
       }
       hex.addEventListener('change', fromHex)
@@ -426,27 +638,29 @@
     }
 
     const el = r.querySelector('input,select')
-    el.addEventListener('input', () =>
+    if (f.type === 'range') pct(el)
+    el.addEventListener('input', () => {
+      if (f.type === 'range') pct(el)
       commit(f.type === 'bool' ? el.checked : f.type === 'range' ? parseFloat(el.value) : el.value)
-    )
+    })
     return r
   }
 
   function shotRow(slot, label) {
     const r = document.createElement('div')
-    r.className = 'cdev__r'
+    r.className = 'cdev__f'
     r.innerHTML = `
-      <label>${label}</label>
-      <span class="cdev__note"></span>
-      <span class="cdev__file">
-        <button class="cdev__pick" type="button">Chọn</button>
-        <button class="cdev__pick" type="button" data-clear>✕</button>
+      <div class="cdev__lab"><span>${label}</span></div>
+      <div class="cdev__file">
+        <span class="cdev__note">Chưa nạp</span>
+        <button class="cdev__btn" type="button" data-pick>Chọn ảnh</button>
+        <button class="cdev__icon" type="button" data-clear aria-label="Bỏ ảnh">✕</button>
         <input type="file" accept="image/*">
-      </span>`
+      </div>`
     const note = r.querySelector('.cdev__note')
     const file = r.querySelector('input[type=file]')
-    const say = (t) => (note.textContent = t)
-    r.querySelectorAll('.cdev__pick')[0].addEventListener('click', () => file.click())
+    const say = (t) => (note.textContent = t || 'Chưa nạp')
+    r.querySelector('[data-pick]').addEventListener('click', () => file.click())
     r.querySelector('[data-clear]').addEventListener('click', () => {
       applyShot(slot, null); saveShot(slot, null); file.value = ''; say('')
     })
@@ -454,26 +668,29 @@
       const f = file.files?.[0]
       if (f) readShot(slot, f, say)
     })
-    if (document.documentElement.dataset[slot === 'a' ? 'shotA' : 'shotB']) say('đã nạp')
+    if (document.documentElement.dataset[slot === 'a' ? 'shotA' : 'shotB']) say('Đã nạp')
     return r
+  }
+
+  function section(title) {
+    const box = document.createElement('section')
+    box.className = 'cdev__sec'
+    const h = document.createElement('h4')
+    h.textContent = title
+    box.appendChild(h)
+    return box
   }
 
   function buildPanel() {
     panel.textContent = ''
     for (const g of groups()) {
       if (g.tab !== tab) continue
-      const box = document.createElement('div')
-      box.className = 'cdev__g'
-      const h = document.createElement('h4')
-      h.textContent = g.title
-      box.appendChild(h)
+      const box = section(g.title)
       for (const f of g.items) box.appendChild(row(g, f))
       panel.appendChild(box)
     }
     if (TAB(tab).mod === 'transition' && CT) {
-      const box = document.createElement('div')
-      box.className = 'cdev__g'
-      box.innerHTML = '<h4>Ảnh demo</h4>'
+      const box = section('Ảnh demo')
       box.appendChild(shotRow('a', 'Page A — Gallery'))
       box.appendChild(shotRow('b', 'Page B — About'))
       panel.appendChild(box)
@@ -490,49 +707,69 @@
 
     if (tab === 'loading' && CL) {
       ctrl.innerHTML = `
-        <button class="cdev__play" type="button" data-toggle>▶ Play</button>
-        <button type="button" data-restart>Restart</button>
-        <input class="cdev__range" type="range" min="0" max="1000" value="0" step="1"
-               aria-label="Tua timeline">
-        <span class="cdev__time">0.00 / 0.00s</span>`
-      const range = ctrl.querySelector('.cdev__range')
+        <div class="cdev__btns">
+          <button class="cdev__btn" type="button" data-toggle>▶ Play</button>
+          <button class="cdev__btn" type="button" data-restart>Restart</button>
+        </div>
+        <div class="cdev__tl" style="margin-top:12px">
+          <div class="cdev__lab"><label for="cdev-tl">Timeline</label><span class="cdev__time">0.00 / 0.00s</span></div>
+          <input id="cdev-tl" class="cdev__rg" type="range" min="0" max="1000" value="0" step="1">
+        </div>`
+      const range = ctrl.querySelector('.cdev__rg')
       const timeEl = ctrl.querySelector('.cdev__time')
-      const playEl = ctrl.querySelector('.cdev__play')
+      const playEl = ctrl.querySelector('[data-toggle]')
       const secs = (ms) => (ms / 1000).toFixed(2)
       let dragging = false
       range.addEventListener('pointerdown', () => (dragging = true))
       range.addEventListener('pointerup', () => (dragging = false))
-      range.addEventListener('input', () => CL.seekTime((range.value / 1000) * CL.duration))
+      range.addEventListener('input', () => {
+        pct(range)
+        CL.seekTime((range.value / 1000) * CL.duration)
+      })
       unbind = CL.onUpdate((s) => {
-        if (!dragging) range.value = Math.round((s.time / CL.duration) * 1000)
+        if (!dragging) {
+          range.value = Math.round((s.time / CL.duration) * 1000)
+          pct(range)
+        }
         timeEl.textContent = `${secs(s.time)} / ${secs(CL.duration)}s`
         playEl.textContent = s.playing ? '❚❚ Pause' : '▶ Play'
       })
+    } else if (tab === 'hero' || tab === 'mosaic' || tab === 'reveal') {
+      // Tab Mosaic dùng chung nút này: đổi ảnh là cách thử phanh / nhả của mosaic.
+      const here = !!document.querySelector('[data-hero]')
+      ctrl.innerHTML = `<div class="cdev__btns">${
+        here
+          ? '<button class="cdev__btn" type="button" data-hero-next>Đổi ảnh ngay</button>'
+          : '<button class="cdev__btn" type="button" data-go="index.html">Về Home để xem</button>'
+      }</div>`
     } else if (CT) {
       const canPlay = CT.canPlayInPlace ? CT.canPlayInPlace() : true
       ctrl.innerHTML = `
-        ${canPlay ? '<button class="cdev__play" type="button" data-play-ct>▶ Chạy rèm</button>' : ''}
-        <button type="button" data-go="index.html">Home</button>
-        <button type="button" data-go="gallery.html">Page A</button>
-        <button type="button" data-go="about.html">Page B</button>`
+        <div class="cdev__btns">
+          ${canPlay ? '<button class="cdev__btn" type="button" data-play-ct>▶ Chạy rèm</button>' : ''}
+          <button class="cdev__btn" type="button" data-go="index.html">Home</button>
+          <button class="cdev__btn" type="button" data-go="gallery.html">Page A</button>
+          <button class="cdev__btn" type="button" data-go="about.html">Page B</button>
+        </div>`
     }
   }
 
   /* ------------------------------------------------------------- sự kiện -- */
+  tabSel.addEventListener('change', () => {
+    tab = tabSel.value
+    const t = TAB(tab)
+    if (t.variant) CT.setVariant(t.variant)
+    buildCtrl()
+    buildPanel()
+    saveSettings()
+  })
+
   dev.addEventListener('click', (e) => {
     const b = e.target.closest('button')
     if (!b) return
-    if (b.dataset.tab) {
-      tab = b.dataset.tab
-      const t = TAB(tab)
-      if (t.variant) CT.setVariant(t.variant)
-      syncTabs()
-      buildCtrl()
-      buildPanel()
-      saveSettings()
-    } else if (b.hasAttribute('data-fold')) {
+    if (b.hasAttribute('data-fold')) {
       dev.classList.toggle('is-closed')
-      b.setAttribute('aria-pressed', String(!dev.classList.contains('is-closed')))
+      b.setAttribute('aria-expanded', String(!dev.classList.contains('is-closed')))
     } else if (b.hasAttribute('data-reset')) {
       for (const g of groups())
         if (g.tab === tab)
@@ -544,27 +781,44 @@
     } else if (b.hasAttribute('data-toggle')) CL.toggle()
     else if (b.hasAttribute('data-restart')) CL.restart()
     else if (b.hasAttribute('data-play-ct')) CT.play()
+    else if (b.hasAttribute('data-hero-next')) CH?.next()
     else if (b.dataset.go) CT.go(b.dataset.go)
   })
 
   function syncTabs() {
-    dev.querySelectorAll('[data-tab]').forEach((t) =>
-      t.setAttribute('aria-pressed', String(t.dataset.tab === tab))
-    )
+    tabSel.value = tab
+  }
+
+  function setShown(v) {
+    shown = v
+    dev.classList.toggle('is-hidden', !shown)
+    // Bật bằng H là để chỉnh: mở luôn phần setting chứ không chỉ đầu bảng.
+    if (shown) {
+      dev.classList.remove('is-closed')
+      dev.querySelector('[data-fold]').setAttribute('aria-expanded', 'true')
+    }
+    saveSettings()
   }
 
   addEventListener('keydown', (e) => {
-    if (e.target.matches('input,textarea,select')) return
-    if (!CL) return
+    if (e.target.matches('input,textarea,select,[contenteditable]')) return
+    if (e.metaKey || e.ctrlKey || e.altKey) return
+    if (e.code === 'KeyH') return void setShown(!shown)
+    // Phím tắt timeline chỉ sống khi bảng đang hiện — không thì Space cuộn trang.
+    if (!CL || !shown) return
     if (e.code === 'Space') { e.preventDefault(); CL.toggle() }
     else if (e.code === 'ArrowRight') CL.seekTime(CL.state.time + 100)
     else if (e.code === 'ArrowLeft') CL.seekTime(CL.state.time - 100)
   })
 
+  // Nút của tab Hero tuỳ trang đang đứng có hero hay không.
+  window.barba?.hooks?.afterEnter(() => tab === 'hero' && buildCtrl())
+
   /* ----------------------------------------------------------- khởi động - */
   loadSettings()
   loadShots()
   document.body.appendChild(dev)
+  dev.classList.toggle('is-hidden', !shown)
   syncTabs()
   buildCtrl()
   buildPanel()

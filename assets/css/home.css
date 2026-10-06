@@ -1,0 +1,296 @@
+/* =============================================================================
+ * HOME — các section sau hero. Figma "Home-001" (node 336:7199), khổ 1920.
+ *
+ * Cùng quy ước với hero: `--u` = 1px thiết kế theo bề rộng trang (100cqw / 1920),
+ * mọi toạ độ là số px của Figma nhân --u, nên bố cục co giãn y như bản vẽ.
+ * Chữ to (display) cũng tính theo --u để giữ đúng chỗ xuống dòng; chữ nhỏ dùng
+ * rem như phần còn lại của site.
+ *
+ * Toạ độ y trong từng section = y trên trang Figma - mép trên của section.
+ * File phải nạp ở CẢ BA trang (Barba không thay <head>).
+ * ========================================================================== */
+.page{container-type:inline-size}
+.hs{--u:calc(100cqw / 1920); position:relative; overflow:clip}
+.hs img{display:block}
+.hs .abs{position:absolute}
+
+/* Chữ dùng chung */
+.d106{font-weight:700; font-size:calc(106 * var(--u)); line-height:.78; letter-spacing:-.04em; text-transform:uppercase; text-box:trim-both cap alphabetic}
+.d48{font-weight:700; font-size:calc(48 * var(--u)); line-height:.78; letter-spacing:-.02em; text-transform:uppercase; text-box:trim-both cap alphabetic}
+.b16{font-weight:500; font-size:1rem; line-height:.98; letter-spacing:-.02em; text-transform:uppercase}
+.mono{font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; line-height:.96; letter-spacing:-.02em; text-transform:uppercase; text-box:trim-both cap alphabetic}
+.dash{height:1px; background:repeating-linear-gradient(90deg, var(--dash, rgba(0,0,0,.15)) 0 4px, transparent 4px 8px)}
+
+/* Viên thuốc (nút / tab) */
+.pills{display:flex; gap:2px}
+.pill{display:grid; place-items:center; width:calc(144 * var(--u)); min-width:7rem; height:calc(56 * var(--u)); min-height:2.6rem;
+  border-radius:99px; font-size:.875rem; text-decoration:none; color:var(--ink); background:var(--cream); border:0; cursor:pointer}
+.pill--lime{background:var(--lime)}
+.pill--green{background:#236c3c; color:#f5f0e3}
+.pill[aria-selected=false]{background:#f5f0e3}
+.pill[aria-selected=true]{background:var(--lime)}
+
+/* Dải viên thuốc chạy ngang (marquee) — chỉ dịch transform, không đụng layout */
+.pillrun{overflow:hidden}
+.pillrun__track{display:flex; gap:2px; width:max-content; animation:hs-pills 2.92s linear infinite}
+.pillrun__track > i{flex:none; width:calc(144 * var(--u)); height:calc(56 * var(--u)); border-radius:99px; background:#f5f0e3}
+.pillrun__track > i:nth-child(even){background:var(--lime)}
+.pillrun--sm .pillrun__track{gap:calc(1.188 * var(--u))}
+.pillrun--sm .pillrun__track > i{width:calc(85.5 * var(--u)); height:calc(33.25 * var(--u))}
+@keyframes hs-pills{from{transform:translateX(calc(-292 * var(--u)))} to{transform:none}}
+.pillrun--sm .pillrun__track{animation-name:hs-pills-sm}
+@keyframes hs-pills-sm{from{transform:translateX(calc(-173.38 * var(--u)))} to{transform:none}}
+
+/* Dải tròn đen/trắng chạy ngang — chu kỳ 2 hình tròn = 332 */
+.dotrun{overflow:hidden}
+.dotrun__track{height:100%; width:calc(100% + 332 * var(--u));
+  /* Ô lặp 332 × 164: tròn tối ở cx 82, tròn trắng ở cx 248, bán kính 82 —
+     đúng số đo trong dots-band.svg (chu kỳ 2 hình tròn). */
+  --r:calc(82 * var(--u));
+  background:
+    radial-gradient(circle at calc(82 * var(--u)) 50%, var(--dot-a, #112020) calc(var(--r) - .5px), transparent var(--r)),
+    radial-gradient(circle at calc(248 * var(--u)) 50%, var(--dot-b, #fff) calc(var(--r) - .5px), transparent var(--r));
+  background-size:calc(332 * var(--u)) 100%;
+  background-repeat:repeat-x;
+  animation:hs-dots 3.32s linear infinite}
+@keyframes hs-dots{from{transform:translateX(calc(-332 * var(--u)))} to{transform:none}}
+/* Ngoài màn hình thì dừng marquee (chande-home.js gắn .is-off) */
+.is-off .pillrun__track, .is-off .dotrun__track{animation-play-state:paused}
+
+/* ---------------------------------------------------------------- 1. INTRO */
+.hs-intro{height:calc(675 * var(--u))}
+.hs-intro__a{left:calc(492 * var(--u)); top:calc(328 * var(--u)); width:calc(861 * var(--u)); margin:0; color:#000}
+.hs-intro__a span{display:block; white-space:nowrap}
+.hs-intro__a span:last-child{padding-left:calc(216 * var(--u))}
+.hs-intro__b{left:calc(1426 * var(--u)); top:calc(494 * var(--u)); margin:0; color:#000; white-space:nowrap}
+.hs-intro__b span{display:block}
+.chip{position:absolute; height:calc(74 * var(--u)); border-radius:999px}
+.chip::after{content:''; position:absolute; inset:calc(10 * var(--u)) calc(12 * var(--u)); border-radius:999px; background:var(--cream)}
+.chip--green{left:calc(492 * var(--u)); top:calc(577 * var(--u)); width:calc(208 * var(--u)); background:var(--lime)}
+.chip--yellow{left:calc(995 * var(--u)); top:calc(494 * var(--u)); width:calc(302 * var(--u)); background:#fab700}
+.chip--orange{left:calc(1669 * var(--u)); top:calc(494 * var(--u)); width:calc(128 * var(--u)); background:#f65500}
+.hs-intro__eye{left:calc(1698 * var(--u)); top:calc(510 * var(--u)); width:calc(70 * var(--u)); height:calc(42 * var(--u)); overflow:hidden; z-index:1}
+.hs-intro__eye img{position:absolute; left:-146.48%; top:-441.67%; width:396.48%; height:1190.48%; max-width:none}
+
+/* ---------------------------------------------------------------- 2. STORY */
+.hs-story{height:calc(1308 * var(--u)); color:#fff}
+.hs-story__band{left:calc(492 * var(--u)); right:0; top:0; height:calc(280 * var(--u)); background:#121212}
+.hs-story__band::before{content:''; position:absolute; left:0; top:0; bottom:0; width:calc(936 * var(--u)); background:#182220}
+.hs-story__media{left:calc(492 * var(--u)); top:calc(280 * var(--u)); width:calc(936 * var(--u)); height:calc(1028 * var(--u)); background:#0f1513; overflow:hidden}
+.hs-story__photo{left:0; top:0; width:calc(933 * var(--u)); height:100%; object-fit:cover}
+.hs-story__card{left:calc(201 * var(--u)); top:calc(143 * var(--u)); width:calc(558 * var(--u)); height:calc(743 * var(--u)); object-fit:cover; object-position:0 74%}
+.hs-story__small{left:calc(449 * var(--u)); top:calc(473 * var(--u)); width:calc(62 * var(--u)); height:calc(83 * var(--u)); object-fit:cover; object-position:33% 50%}
+.hs-story__dots{left:calc(458 * var(--u)); top:calc(993 * var(--u)); display:flex; gap:8px; align-items:center; height:11px; padding:0 8px;
+  border:1px solid rgba(244,243,235,.2); border-radius:999px}
+.hs-story__dots img{width:4px; height:4px}
+.hs-story__col{right:0; bottom:0; width:calc(492 * var(--u))}
+.hs-story__panel{position:relative; height:calc(514 * var(--u)); padding:calc(40 * var(--u)) calc(32 * var(--u)); display:flex; flex-direction:column; justify-content:space-between}
+.hs-story__panel:first-child{background:#161d1d; justify-content:flex-start; gap:calc(218 * var(--u))}
+.hs-story__panel:last-child{background:#192423}
+.hs-story__panel h3{margin:0; color:#5c6161}
+.hs-story__text{width:calc(360 * var(--u)); min-width:16rem; min-height:calc(216 * var(--u)); display:flex; flex-direction:column; justify-content:space-between; gap:1.5rem}
+.hs-story__text p{margin:0; font-size:1rem; opacity:.3}
+.hs-story__text div{display:flex; flex-direction:column; gap:calc(32 * var(--u))}
+.hs-story__text a{color:inherit; text-decoration:underline}
+
+/* --------------------------------------------------------- 3. SCHEME (đảo) */
+.scheme{display:flex; flex-direction:column}
+.scheme > i{height:calc(60 * var(--u))}
+.scheme > i:nth-child(1){background:#000}
+.scheme > i:nth-child(2){background:#0d1712}
+.scheme > i:nth-child(3){background:#1c2e22}
+.scheme > i:nth-child(4){background:#2e4a39}
+.scheme > i:nth-child(5){background:#3f6b4c}
+.scheme > i:nth-child(6){background:#97a180}
+.scheme > i:nth-child(7){background:#dad0a7}
+.scheme > i:nth-child(8){background:#e9e2c8}
+.scheme > i:nth-child(9){background:#f5f0e3}
+.scheme--rev{flex-direction:column-reverse}
+.hs-scheme{height:calc(540 * var(--u))}
+.hs-scheme .scheme{position:absolute; left:calc(492 * var(--u)); right:0; top:0}
+
+/* ---------------------------------------------------------------- 4. STRIP */
+.hs-strip{height:calc(200 * var(--u))}
+.strip{position:absolute; left:0; right:0; height:calc(96 * var(--u)); display:flex}
+.strip__field{width:50%; height:100%}
+.strip__run{width:50%; height:100%; background:#1b2524; position:relative}
+.strip__run .pillrun{position:absolute; left:calc(24 * var(--u)); top:calc(20 * var(--u)); width:calc(911 * var(--u)); height:calc(56 * var(--u))}
+
+/* ---------------------------------------------------------------- 5. LAND */
+.hs-land{height:calc(1028 * var(--u)); overflow:visible; z-index:1}
+.hs-land__bg{inset:0; width:100%; height:100%; object-fit:cover}
+.hs-land .tilt{display:grid; place-items:center}
+.hs-land .tilt > img{max-width:none; object-fit:cover}
+.hs-land__receipt{left:calc(-28 * var(--u)); top:calc(-66 * var(--u)); width:calc(930.79 * var(--u)); height:calc(1113.82 * var(--u))}
+.hs-land__receipt > img{width:calc(825.14 * var(--u)); height:calc(1031.43 * var(--u)); transform:rotate(-6.14deg)}
+.hs-land__atom{left:calc(550 * var(--u)); top:calc(435 * var(--u)); width:calc(476.43 * var(--u)); height:calc(476.43 * var(--u))}
+.hs-land__atom > img{width:calc(405.48 * var(--u)); height:calc(405.48 * var(--u)); transform:rotate(11.19deg)}
+.hs-land__stickers{left:calc(1277.74 * var(--u)); top:calc(554.46 * var(--u)); width:calc(572.58 * var(--u))}
+/* Vòng % — tiến độ cuộn trang (chande-home.js ghi số) */
+.loader{left:calc(32 * var(--u)); top:calc(895 * var(--u)); width:calc(100 * var(--u)); height:calc(100 * var(--u)); color:#f9e1c9}
+.loader img{position:absolute; left:calc(-11.76 * var(--u)); top:calc(-11.79 * var(--u)); width:calc(124.21 * var(--u)); height:calc(124.21 * var(--u)); max-width:none; transition:transform .2s linear}
+.loader b{position:absolute; inset:0; display:grid; place-items:center; font-weight:700; font-size:max(.75rem, calc(16 * var(--u))); letter-spacing:.02em}
+.loader b small{font-size:.8em}
+
+/* ---------------------------------------------------------------- 6. ABOUT */
+.hs-about{height:calc(3090 * var(--u)); color:#0e1813}
+.hs-about__statement{left:calc(32 * var(--u)); top:calc(40 * var(--u)); width:calc(1629 * var(--u)); margin:0; color:#000;
+  font-size:calc(106.699 * var(--u)); line-height:.8}
+/* Mỗi câu là một đoạn, tự xuống dòng trong bề rộng 1629 như Figma (chữ và khung
+   cùng theo --u nên chỗ xuống dòng giữ nguyên ở mọi khổ). */
+.hs-about__statement span{display:block}
+.hs-about__statement .gap{height:.8em}
+.hs-about__grass{left:calc(960 * var(--u)); top:calc(721 * var(--u)); width:calc(359 * var(--u)); height:calc(269 * var(--u)); object-fit:cover}
+.hs-about__note{left:calc(1662 * var(--u)); top:calc(942 * var(--u)); margin:0; white-space:nowrap}
+.hs-about__note span{display:block}
+.hs-about .dash{position:absolute; left:calc(24 * var(--u)); width:calc(1872 * var(--u))}
+.circles{left:calc(24 * var(--u)); top:calc(1030 * var(--u)); width:calc(1872 * var(--u)); display:flex; justify-content:space-between}
+.circles > div{display:flex}
+.circle{position:relative; width:calc(468 * var(--u)); height:calc(468 * var(--u))}
+.circle img{position:absolute}
+.circle .ring{inset:0; width:100%; height:100%}
+.circle .tex{left:calc(8 * var(--u)); top:calc(8 * var(--u)); width:calc(452 * var(--u)); height:calc(452 * var(--u))}
+.circle .tex--dim{opacity:.2}
+.circle .core{left:calc(72 * var(--u)); top:calc(72 * var(--u)); width:calc(324 * var(--u)); height:calc(324 * var(--u))}
+.hs-about__who{left:calc(492 * var(--u)); top:calc(1538 * var(--u)); margin:0; white-space:nowrap}
+.hs-about__who span{display:block}
+.hs-about__friends{left:calc(492 * var(--u)); top:calc(1603 * var(--u)); width:calc(234 * var(--u)); height:calc(311 * var(--u)); object-fit:cover}
+.hs-about__roots{left:calc(24 * var(--u)); top:calc(1798 * var(--u)); width:calc(234 * var(--u)); margin:0; font-size:1rem; color:#000; opacity:.3}
+.hs-about__roles{left:calc(960 * var(--u)); top:calc(1538 * var(--u)); width:calc(368 * var(--u)); margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:calc(4 * var(--u))}
+.hs-about__roles li{white-space:nowrap}
+.hs-about__count{left:calc(1848 * var(--u)); top:calc(1614 * var(--u)); margin:0}
+.hs-about__pills{left:calc(492 * var(--u)); top:calc(2230 * var(--u))}
+.hs-about__scheme{left:0; top:calc(2310 * var(--u)); width:calc(492 * var(--u))}
+.hs-about__rock{left:calc(492 * var(--u)); top:calc(2310 * var(--u)); width:calc(468 * var(--u)); height:calc(540 * var(--u)); object-fit:cover; object-position:40% 55%}
+.hs-about__field{right:0; top:calc(2310 * var(--u)); width:calc(960 * var(--u)); height:calc(540 * var(--u))}
+.hs-about__band{left:0; right:0; top:calc(2850 * var(--u)); height:calc(240 * var(--u)); background:#112020; display:flex; align-items:center; gap:calc(32 * var(--u))}
+.hs-about__band .dotrun{position:relative; width:calc(960 * var(--u)); height:100%; background:var(--lime)}
+.hs-about__band .dotrun__track{position:absolute; left:calc(48 * var(--u)); top:calc(38 * var(--u)); height:calc(164 * var(--u))}
+.hs-about__band h2{margin:0; color:#fffef8; width:calc(723 * var(--u))}
+.hs-about__band h2 span{display:block}
+
+/* --------------------------------------------------------------- 7. POSTER */
+.hs-poster{height:calc(1080 * var(--u)); background:#fffef8; border-bottom:1px solid #e1e1e1}
+.hs-poster img{width:100%; height:100%; object-fit:cover}
+
+/* --------------------------------------------------------------- 8. AGENDA */
+.hs-agenda{height:calc(3160 * var(--u)); background:#fff; color:#112020; overflow:visible}
+.agenda{position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:calc(48 * var(--u)); padding-top:calc(24 * var(--u))}
+.agenda__head{margin:0; text-align:center; white-space:nowrap}
+.agenda__head span{display:block}
+.agenda__head .hot{color:var(--lime)}
+.agenda__head--wrap{white-space:normal; width:calc(723 * var(--u))}
+.agenda__shot{position:relative; width:calc(685 * var(--u))}
+.agenda__shot > img:first-child{width:100%; height:calc(576 * var(--u)); object-fit:cover}
+.agenda__shot > .field{height:calc(136 * var(--u))}
+.agenda__poster{position:absolute; left:calc(6.5 * var(--u)); top:calc(6 * var(--u)); width:calc(418 * var(--u)); height:calc(564 * var(--u)); object-fit:cover}
+.agenda__sign{position:absolute; left:calc(34 * var(--u)); top:calc(246 * var(--u)); width:calc(319.62 * var(--u)); height:calc(251.62 * var(--u)); display:grid; place-items:center}
+.agenda__sign img{width:calc(300.46 * var(--u)); height:calc(225.34 * var(--u)); max-width:none; transform:rotate(5.19deg); object-fit:cover}
+.agenda__pair{position:relative; display:flex; width:calc(1255 * var(--u))}
+.agenda__house{position:relative; width:calc(570 * var(--u)); height:calc(712 * var(--u)); overflow:hidden}
+.agenda__house > img{width:100%; height:100%; object-fit:cover; object-position:35% 50%}
+.agenda__house .bar{position:absolute; left:0; top:0; right:0; height:calc(57 * var(--u)); background:#1b2524}
+.agenda__house .pillrun{position:absolute; left:calc(14.25 * var(--u)); top:calc(11.88 * var(--u)); width:calc(540.9 * var(--u)); height:calc(33.25 * var(--u))}
+.agenda__stamp{position:absolute; left:calc(613 * var(--u)); top:calc(356 * var(--u)); width:calc(144 * var(--u)); height:calc(144 * var(--u)); z-index:1}
+.agenda__dates{left:calc(24 * var(--u)); right:calc(24 * var(--u)); top:calc(-380 * var(--u)); bottom:0; pointer-events:none}
+.agenda__dates > div{position:sticky; top:0; height:calc(752 * var(--u))}
+.agenda__dates p{position:absolute; top:calc(563 * var(--u)); margin:0; white-space:nowrap}
+.agenda__dates p span{display:block}
+.agenda__dates p:last-child{right:0; text-align:right}
+.agenda__nav{top:calc(2610 * var(--u)); width:calc(64 * var(--u)); height:calc(64 * var(--u)); min-width:2.5rem; min-height:2.5rem; display:grid; place-items:center;
+  background:#f5f0e3; border:0; cursor:pointer; z-index:2}
+.agenda__nav img{width:37.5%; height:37.5%}
+.agenda__nav--prev{left:calc(269 * var(--u))}
+.agenda__nav--prev img{transform:rotate(180deg)}
+.agenda__nav--next{left:calc(1588 * var(--u))}
+
+/* ----------------------------------------------------------------- 9. WALL */
+.hs-wall{height:calc(1556 * var(--u)); background:#000}
+.hs-wall .dotrun{left:0; right:0; top:0; height:calc(240 * var(--u)); background:#40ce00}
+.hs-wall .dotrun__track{position:absolute; left:calc(48 * var(--u)); top:calc(38 * var(--u)); height:calc(164 * var(--u))}
+.hs-wall__line{left:calc(24 * var(--u)); right:calc(24 * var(--u)); top:1px; --dash:rgba(244,243,235,.3)}
+/* Lưới nét đứt 96 × 96 (#212121, nét 4 cách 4 — như Line 22/23 của Figma):
+   một ô SVG lặp lại, nét trên + nét trái. */
+.hs-wall__grid{left:0; right:0; top:calc(322 * var(--u)); bottom:calc(96 * var(--u));
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cpath d='M0 .5H96M.5 0V96' stroke='%23212121' stroke-dasharray='4 4'/%3E%3C/svg%3E") 0 0 / calc(96 * var(--u)) calc(96 * var(--u))}
+.hs-wall__collage{left:calc(120 * var(--u)); top:calc(293 * var(--u)); width:calc(1696 * var(--u))}
+.hs-wall__93{left:calc(157 * var(--u)); top:calc(1048 * var(--u)); width:calc(281 * var(--u))}
+.hs-wall .strip{top:calc(1460 * var(--u))}
+
+/* ---------------------------------------------------------------- 10. QUOTE */
+.hs-quote{height:calc(1028 * var(--u)); background:#000; color:#fffef8}
+.hs-quote__strip{left:0; top:0; width:calc(492 * var(--u)); height:100%; object-fit:cover; transform:scaleX(-1)}
+.hs-quote__text{left:calc(540 * var(--u)); top:calc(120 * var(--u)); width:calc(1340 * var(--u)); margin:0;
+  font-weight:700; font-size:calc(80 * var(--u)); line-height:.78; letter-spacing:-.02em; text-transform:uppercase; text-box:trim-both cap alphabetic}
+.hs-quote__card{left:calc(57 * var(--u)); top:calc(250 * var(--u)); width:calc(377.48 * var(--u))}
+.hs-quote__card img{width:100%; height:calc(437.16 * var(--u)); object-fit:cover}
+.hs-quote__card p{margin:0; height:calc(90.34 * var(--u)); padding:0 calc(41.94 * var(--u)); display:flex; align-items:center; gap:calc(25.81 * var(--u));
+  background:#236c3c; color:#e9e2c8; font-weight:500; font-size:max(.875rem, calc(22.58 * var(--u))); line-height:.98; letter-spacing:-.02em; text-transform:uppercase; white-space:nowrap}
+.hs-quote__by{left:calc(540 * var(--u)); top:calc(884 * var(--u)); display:flex; align-items:center; gap:calc(24 * var(--u))}
+.hs-quote__by::before{content:''; width:2px; height:calc(40 * var(--u)); min-height:1.5rem; background:var(--lime)}
+.hs-quote__by div{display:flex; flex-direction:column; gap:12px}
+.hs-quote__by p{margin:0; font-size:1rem; color:#fff; opacity:.3}
+.hs-quote__bar{left:calc(492 * var(--u)); top:calc(972 * var(--u)); width:calc(1316 * var(--u)); height:calc(56 * var(--u)); background:#1c2e22; overflow:hidden}
+.hs-quote__bar span{position:absolute; inset:0; background:var(--lime); transform-origin:0 50%; animation:hs-bar 6s linear infinite}
+@keyframes hs-bar{from{transform:scaleX(0)} to{transform:scaleX(1)}}
+.is-off .hs-quote__bar span{animation-play-state:paused}
+.hs-quote__nav{top:calc(972 * var(--u)); width:calc(56 * var(--u)); height:calc(56 * var(--u)); display:grid; place-items:center; background:var(--lime); border:0; cursor:pointer}
+.hs-quote__nav img{width:calc(24 * var(--u)); height:calc(24 * var(--u)); min-width:14px; min-height:14px}
+.hs-quote__nav--prev{left:calc(1807 * var(--u))}
+.hs-quote__nav--prev img{transform:rotate(180deg)}
+.hs-quote__nav--next{left:calc(1864 * var(--u))}
+
+/* --------------------------------------------------------------- 11. COLORS */
+.hs-colors .scheme > i{height:calc(60 * var(--u))}
+
+/* --------------------------------------------------------------- 12. FOOTER */
+.hs-foot{height:calc(1080 * var(--u)); background:#000; color:#838b89}
+.names{display:flex; flex-direction:column; gap:calc(4.788 * var(--u)); width:calc(441.7 * var(--u)); margin:0;
+  font-weight:600; font-size:calc(19.153 * var(--u)); line-height:.9; letter-spacing:-.02em; text-transform:uppercase; white-space:nowrap}
+.names span{display:block; text-box:trim-both cap alphabetic}
+.hs-foot__n1{left:calc(32 * var(--u)); top:calc(32 * var(--u))}
+.hs-foot__n2{left:calc(30 * var(--u)); top:calc(157 * var(--u)); gap:calc(20.11 * var(--u))}
+.hs-foot__n2 .pair{display:flex; justify-content:space-between; width:calc(303.8 * var(--u))}
+.hs-foot__n2 > div{display:flex; flex-direction:column; gap:calc(4.788 * var(--u))}
+.hs-foot__n3{left:calc(32 * var(--u)); top:calc(660 * var(--u))}
+.hs-foot__face{left:calc(32 * var(--u)); top:calc(356 * var(--u)); width:calc(235 * var(--u)); height:calc(272 * var(--u)); overflow:hidden;
+  clip-path:inset(100% 0 0 0); transition:clip-path .45s cubic-bezier(.76,0,.24,1)}
+.hs-foot__face.is-on{clip-path:inset(0)}
+.hs-foot__face img{width:100%; height:100%; object-fit:cover}
+/* Tên hover được (chande-home.js bọc từng tên thành .nm) */
+.names .nm{display:inline; cursor:default; transition:color .15s}
+.names .nm:hover, .names .nm.is-active{color:#fff}
+.hs-foot__logo{left:calc(1018 * var(--u)); top:calc(28 * var(--u)); width:calc(870 * var(--u)); height:auto}
+.hs-foot__field{left:0; top:calc(752 * var(--u)); width:calc(726 * var(--u)); height:calc(328 * var(--u))}
+.hs-foot__panel{left:calc(726 * var(--u)); top:calc(752 * var(--u)); right:0; height:calc(328 * var(--u)); background:#192121}
+.cta{display:flex; align-items:center; height:calc(92 * var(--u)); color:#fff; text-decoration:none; font-weight:600; font-size:max(.875rem, calc(20 * var(--u))); line-height:.9; text-transform:uppercase}
+/* 2 hàng chấm (SVG 20×6, chấm ở x 3 và 17) cách nhau 8 -> tâm cách 14 cả ngang lẫn dọc = 4 chấm thành hình vuông như Figma */
+.cta i{flex:none; width:calc(92 * var(--u)); height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; background:var(--lime)}
+.cta i img{width:20px; height:6px}
+.cta span{display:flex; flex-direction:column; gap:4px; padding-left:calc(24 * var(--u)); white-space:nowrap}
+.cta span small{font-size:1em; font-feature-settings:"numr" 1}
+.cta:hover i{background:#fff}
+.hs-foot__cta1{left:calc(726 * var(--u)); top:calc(660 * var(--u)); width:calc(597 * var(--u)); background:#236c3c}
+.hs-foot__cta2{left:calc(1323 * var(--u)); top:calc(660 * var(--u)); width:calc(597 * var(--u)); background:#2c3a38}
+.links{display:flex; justify-content:space-between; width:calc(533 * var(--u)); font-size:.875rem}
+.links .mono{color:#fff; opacity:.3; margin:0; white-space:nowrap}
+.links ul{margin:calc(32 * var(--u)) 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px}
+.links a{color:#5e6464; text-decoration:none; font-weight:500; line-height:.98; letter-spacing:-.02em; text-transform:uppercase}
+.links a:hover, .links .mono a:hover{color:var(--lime); opacity:1}
+.links .mono a{color:inherit; text-decoration:none}
+.hs-foot__social{left:calc(758 * var(--u)); top:calc(784 * var(--u))}
+.hs-foot__index{left:calc(1355 * var(--u)); top:calc(784 * var(--u))}
+.hs-foot__hr{left:calc(726 * var(--u)); right:0; top:calc(1021 * var(--u)); height:1px; background:rgba(255,255,255,.08)}
+.hs-foot__vr{left:calc(1323 * var(--u)); top:calc(752 * var(--u)); width:1px; height:calc(269 * var(--u)); background:rgba(255,255,255,.08)}
+.hs-foot__legal{left:calc(758 * var(--u)); top:calc(1045 * var(--u)); width:calc(1130 * var(--u)); display:flex; justify-content:space-between; font-size:.875rem; color:#fff}
+.hs-foot__legal p{margin:0; opacity:.3}
+
+/* -------------------------------------------------------------- Responsive */
+/* Dưới 900px Figma chưa có bản — giữ bố cục desktop co theo bề rộng, chỉ nới
+   chữ nhỏ cho đọc được (rem đã có sàn 10–11px ở site.css). */
+@media (max-width:899px){
+  .hs-about__statement span, .agenda__head, .hs-intro__a span{white-space:normal}
+}
+@media (prefers-reduced-motion:reduce){
+  .pillrun__track, .dotrun__track, .hs-quote__bar span{animation:none}
+}

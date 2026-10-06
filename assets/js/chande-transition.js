@@ -46,7 +46,7 @@
     // ---- Dùng chung cho cả hai biến thể -------------------------------------
     // null = bám theo 4 ô của thanh loading. Đặt mảng % để tách rời.
     widths: null,
-    fallbackWidths: [25.6771, 24.3229, 24.375, 25.625],
+    fallbackWidths: [25.625, 24.375, 24.375, 25.625],
     ease: '0.625, 0.05, 0, 1', // CustomEase
     zIndex: 9997, // < 9998 của thanh loading -> rèm chạy DƯỚI header
     fontDir: 'assets/fonts/',
@@ -107,6 +107,9 @@
     //   wrapper (trang cũ) z3  >  tấm giữa z2  >  trang mới z1
     stack: {
       color: '#ef6322', // màu tấm giữa
+      // Nền lộ ra phía sau lúc ba lớp co nhỏ lại. Mặc định trùng nền trang nên
+      // không đổi gì so với trước; chỉnh để lấy màu khác hẳn lúc chuyển trang.
+      bg: '#f4f3eb',
       radius: 1, // em — bo góc lúc ba lớp co lại
       label: '', // chữ trên tấm giữa, để rỗng thì không có
       labelAlign: 'center',
@@ -154,7 +157,9 @@
     timeout: 7000,
 
     // ---- Lenis --------------------------------------------------------------
-    lenis: { enabled: true, lerp: 0.3, wheelMultiplier: 1.25 },
+    // lerp càng nhỏ càng mượt / trôi lâu (0.1 = mặc định của Lenis); 0.3 gần như
+    // cuộn thẳng, không thấy smooth.
+    lenis: { enabled: true, lerp: 0.1, wheelMultiplier: 1 },
   }
 
   if (!CONFIG.enabled) return
@@ -407,7 +412,8 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
 [data-transition-set="bottom"] > [data-transition-column]{top:100%}
 [data-transition-column]{
   position:relative; height:100%; flex:0 0 auto; overflow:hidden;
-  will-change:transform;
+  /* Không đặt will-change thường trực: 4 cột cao bằng màn hình sẽ nằm trên GPU
+     suốt đời trang. GSAP tự nâng lớp (force3D) trong lúc tween. */
   image-rendering:pixelated; image-rendering:crisp-edges; background-repeat:repeat;
 }
 `
@@ -572,6 +578,7 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
       transformStyle: 'preserve-3d',
       overflow: 'clip',
       minHeight: '100vh',
+      backgroundColor: v.bg,
     })
 
     gsap.set(wrapper, {
@@ -616,7 +623,9 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
     const tl = gsap.timeline({
       onComplete: () => {
         wrapper.remove()
-        gsap.set(parent, { clearProps: 'perspective,transformStyle,overflow,minHeight' })
+        gsap.set(parent, {
+          clearProps: 'perspective,transformStyle,overflow,minHeight,backgroundColor',
+        })
         gsap.set(next, {
           clearProps:
             'position,inset,top,left,right,width,height,overflow,zIndex,transformStyle,willChange,backfaceVisibility,transform,clipPath',

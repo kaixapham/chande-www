@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "profile-reveal",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "npm run dev"
+      ],
+      "port": 3116,
+      "autoPort": false
+    }
+  ]
+}

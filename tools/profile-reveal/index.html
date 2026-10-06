@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Profile Reveal — hiệu ứng shape chéo chuyển ảnh profile</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <nav id="library" class="surface" aria-label="Thư viện ảnh">
+      <div class="library-head">Ảnh</div>
+      <div id="library-list"></div>
+      <button id="library-add" class="library-add" type="button">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span>Thêm ảnh</span>
+      </button>
+    </nav>
+
+    <main id="canvas">
+      <div id="tabbar" class="surface">
+        <div id="tablist"></div>
+        <button id="tab-add" class="icon-btn" type="button" title="Thêm bộ mới" aria-label="Thêm bộ mới">
+          <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div id="stage"><canvas id="view"></canvas></div>
+
+      <div id="transport" class="surface">
+        <button id="play" class="icon-btn" type="button" title="Phát / dừng (Space)" aria-label="Phát">
+          <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M5 3.5v9l7-4.5-7-4.5Z" fill="currentColor"/></svg>
+        </button>
+        <button id="restart" class="icon-btn" type="button" title="Về đầu (R)" aria-label="Về đầu">
+          <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M8 3.2A4.8 4.8 0 1 0 12.8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M8 1.2v4h4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="divider"></div>
+        <input id="scrub" class="range" type="range" min="0" max="1" step="0.0005" value="0" aria-label="Tua timeline" />
+        <output id="scrub-label">0.0s</output>
+      </div>
+
+      <div id="toast" hidden></div>
+
+      <div id="export-overlay" hidden>
+        <div class="export-card">
+          <strong id="export-title">Đang quay video…</strong>
+          <div class="export-bar"><i id="export-fill"></i></div>
+          <span id="export-note">Tool quay theo thời gian thực, giữ tab này ở phía trước.</span>
+          <button id="export-cancel" class="btn" type="button">Huỷ</button>
+        </div>
+      </div>
+    </main>
+
+    <aside id="panel" class="surface">
+      <header id="panel-head">
+        <h1>Profile Reveal</h1>
+        <button id="reset-all" class="icon-btn" type="button" title="Khôi phục toàn bộ mặc định" aria-label="Khôi phục mặc định">
+          <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M8 3.2A4.8 4.8 0 1 0 12.8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M8 1.2v4h4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </header>
+
+      <div id="panel-body"></div>
+
+      <footer id="panel-foot">
+        <button id="save-frame" class="btn" type="button">Ảnh PNG</button>
+        <button id="do-export" class="btn" data-variant="primary" type="button">Xuất video</button>
+      </footer>
+    </aside>
+
+    <div id="drop-hint" hidden><div>Thả ảnh <b>JPG / PNG / WebP</b> vào đây</div></div>
+    <input id="file-input" type="file" accept="image/*" multiple hidden />
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -26,11 +26,22 @@ serve.mjs                      server tĩnh, có clean URL (/gallery -> gallery.
 assets/css/site.css            CSS dùng chung 3 trang
 assets/js/chande-loading.js    HIỆU ỨNG loading  — tự chạy, CONFIG ở đầu file
 assets/js/chande-transition.js HIỆU ỨNG chuyển trang — tự chạy, CONFIG ở đầu file
+assets/js/chande-hero.js       hero trang chủ: vòng đổi 4 ảnh — nhúng ở CẢ BA trang
+assets/js/chande-field.js      effect xanh (port gradient-studio: Slats 7 cột + ô khảm) — cả ba trang
+assets/js/chande-home.js       các section sau hero: marquee, vòng %, tab, back to top — cả ba trang
+assets/js/chande-cursor.js     nhân vật chạy theo chuột — cả ba trang
+assets/css/home.css            CSS các section sau hero — link ở cả ba trang
+assets/js/chande-reveal.js     player đoàn shape đổi ảnh (bản phát lại của tools/profile-reveal)
+tools/profile-reveal/          công cụ chỉnh hiệu ứng shape — Vite, port 3116, có CLAUDE.md riêng
 assets/js/chande-devtools.js   bảng điều khiển (chỉ lúc làm việc)
 assets/vendor/                 barba 2.10.3, lenis 1.3.17, gsap 3.15 + CustomEase
 assets/fonts/Phudu-*.woff2     Phudu SemiBold 600 + Bold 700 (latin / latin-ext / vietnamese)
 assets/img/logo.svg            logo export từ Figma
 assets/img/menu-dots.svg       icon menu export từ Figma
+assets/img/home/               ảnh hero (chân dung, 3 mảng nền xanh, video recap, logo lớn)
+assets/fonts/Phudu-Medium-*    Phudu 500 cho chữ thân của hero
+assets/fonts/GeistMono-*       nhãn VIDEO RECAP
+assets/fonts/GoogleSansFlex-*  chỉ một glyph © của (©26)
 ```
 
 **Bàn giao = xoá đúng một thẻ `<script src="assets/js/chande-devtools.js">`.**
@@ -191,6 +202,10 @@ ghim `top: -scrollY` để trông như đứng yên đúng chỗ đang cuộn. B
 rồi cùng co lại, sau đó wrapper trượt xuống, tấm giữa theo sau trễ `middleLag`,
 trang mới phóng lên cỡ thật.
 
+Nền lộ ra phía sau lúc ba lớp co nhỏ chính là nền của `parent` (thường là
+`body`). `stack.bg` đặt màu đó trong lúc chuyển trang rồi `clearProps` trả lại
+khi xong — mặc định trùng nền trang nên không đổi gì cho tới khi bạn chỉnh.
+
 Hai chỗ phải xử lý riêng, không có trong bản tham khảo:
 
 - **`parent` phải ghim `min-height: 100vh`.** Trang cũ vừa bị nhấc ra khỏi luồng
@@ -264,6 +279,118 @@ Sự kiện: `document` → `chande-transition:cover`, `chande-transition:done`.
 
 ---
 
+## 3. Hero trang chủ
+
+Figma node `513:33865` — hai frame *Full Hero* (1920×1277) và *1 Viewport*
+(1920×1080). Dựng hình trong `site.css` (`.hero*`), hành vi trong
+`chande-hero.js`.
+
+**Đơn vị.** `--u = 100cqw / 1920` — 1px thiết kế tính theo bề rộng hero, để
+các cột luôn thẳng hàng với 4 ô header (header chia theo %). Chữ vẫn dùng rem
+như phần còn lại. Toạ độ y trong CSS = y Figma − 80 vì stage bắt đầu dưới header.
+
+**Lưới.** Ảnh rộng đúng một cột của lưới 8 cột (234), đứng ở cột 2 / 3 / 4 / 5.
+Ảnh dưới bắt đầu đúng ở mép trên thanh tên của ảnh trên (y 0 → H → 2H → 3H)
+— áp cho cả 4 ảnh, kể cả ảnh 4 (Figma vẽ ảnh 4 dính đáy hero, đã đổi theo rule).
+Mảng xanh bên phải và đáy nửa kem bám mép trên ảnh 4. Chiều cao ảnh `H` chung
+cho cả 4 ô và tính theo **% chiều cao viewport** (`--img`, mặc định 25% = 270
+ở màn 1080) — bề rộng theo cột, nên tỉ lệ ảnh đổi theo hình dạng màn.
+
+**Chiều cao** `= max(đủ chỗ cho ảnh 4, viewport-đầu + 197u)` — luôn dài hơn màn đầu đúng
+197 như Figma. Cụm chữ trái bám đáy *viewport đầu* cách 24; video recap nằm
+dưới mép màn.
+
+**Sticky** (chép từ scroll behavior của Figma): mỗi ảnh nằm trong một cột chạy
+tới đáy hero, nên lúc cuộn bốn ảnh bậc thang lần lượt dừng dưới header thành một
+hàng rồi theo đáy hero đi ra. SCROLL MORE cũng sticky — bám đáy viewport cách
+24 cho tới khi hết hero. Thanh process thì **không** sticky: nằm yên ở mép trên
+nền tối và cuộn theo trang. **Không đặt `overflow:
+hidden` lên tổ tiên nào của hero**, sticky sẽ chết.
+
+**Dither.** Shader "Dither" của Figma cần WebGPU + HTML-in-Canvas nên không
+chạy được ở trình duyệt thật. `chande-hero.js` chép đúng phép tính nhánh
+*ordered* của shader đó (Bayer 16×16, cùng thứ tự góc phần tư) và vẽ bằng
+canvas 2D, ở **2× cỡ CSS** — đo bản export của Figma thì nó cũng dither ở 2x
+rồi thu nhỏ, nên hạt mịn chứ không lộ ô. Mức: ảnh 6 / 4 / 4 / 6, nền tối 8.
+
+**Ba mảng nền xanh** dùng chung một ảnh preset khảm ô (`field-tile.webp`,
+object-fit: cover), mảng B lật dọc bằng CSS giống node Figma. Đổi preset = thay
+đúng file đó.
+
+**Vòng đổi ảnh.** Thanh process chạy `cycle` ms; đầy thì 4 ô nhận 4 người kế
+tiếp trong `<script type="application/json" data-hero-people>` ở `index.html`
+(≤ 4 người thì xoay từng người một). Ảnh mới hiện ra bằng **đoàn shape**
+(xem dưới), tên lật lên đúng lúc khung bị phủ kín, thanh rút về phải; cả 4 ô xong
+thì thanh chạy lượt mới. Chỉ bắt đầu sau `chande-loading:done`.
+Thêm người = thêm một dòng JSON, `pos` là `object-position` của ảnh.
+
+**Đoàn shape — `chande-reveal.js`.** Bản phát lại của công cụ
+`tools/profile-reveal` (kiểu chạy `train`): 5 khối màu ùa ra từ góc dưới-phải,
+toa cuối là ảnh người mới. Chỉnh hiệu ứng ở tool (port 3116) hoặc tab *Shape
+reveal* của devtools, rồi chép số vào `CONFIG` đầu file. Bốn ô chạy **lần lượt
+từ ô thấp nhất lên ô cao nhất** (`order: 'bottomUp'`, đo theo vị trí thật trên
+màn), ô sau trễ `revealStagger` ms. `effect: 'wipe'` trả về kiểu quét cũ.
+
+Ba điều không được phá (bài học của tool, chi tiết ở
+`tools/profile-reveal/CLAUDE.md`): ảnh mới là toa **cuối** đoàn; mỗi lớp là
+**khối góc** bám góc xa — trượt nguyên hình cỡ khung thì hở hai góc đối; chỉ
+tách chặng vào / ra khi `coverHold > 0`, không thì đoàn khựng giữa chừng.
+Shape dither Bayer 16×16 cùng số mức với ảnh của ô. Kiểm khe hở bằng
+`CHANDE_REVEAL.renderAt()`: ảnh cũ tô `#FF00FF`, quét cả timeline, sau mốc
+`coverAt` phải còn 0 pixel magenta, frame cuối trùng ảnh mới (đã đạt với mặc
+định, coverHold 400, gap .42/.55, back out, crop).
+
+**Barba.** Mount ở `beforeEnter` (để rèm mở ra là đã có dither), gỡ ở
+`afterLeave` — và chỉ gỡ nếu hero thuộc container cũ, vì `sync: true` khiến
+`afterLeave` tới *sau* `beforeEnter`.
+
+```js
+window.CHANDE_HERO = { config, mount(root), destroy(), next(), pause(), play() }
+window.CHANDE_REVEAL = { config, timing(), play(box, {from, to, levels, delay}), renderAt(canvas, t, opts) }
+```
+
+Chữ dùng `text-box: trim-both cap alphabetic` (Chrome 133+, Safari 18.2+) để
+cắt hộp chữ theo cap-height như Figma; Firefox chưa hỗ trợ nên lệch vài px.
+Dưới 900px Figma chưa có bản — tạm xếp dọc: tiêu đề, lưới 2×2, thanh process,
+cụm chữ.
+
+---
+
+## 4. Effect xanh — `chande-field.js`
+
+Port từ gradient-studio (`src/app/field/field-shader.ts`), chỉ giữ nhánh preset
+dùng: form **Slats** (`columns` = 7 — "1 cục xanh 7 cột"), palette Radioactive,
+**Mosaic** 40 ô có gờ + núm, grade / vignette / grain. Bỏ fbm / warp nên nhẹ.
+
+- `[data-field]` = một vùng xanh. Đứng lẻ thì có canvas riêng.
+- `[data-field-root]` gộp nhiều vùng vào **một** canvas (vẽ từng vùng bằng
+  viewport + scissor) — chỉ dùng khi các vùng nằm sát nhau (hero). Vùng thưa thì
+  để lẻ: canvas gộp phủ cả section cao 3000px sẽ to và tốn hơn.
+- Chỉ vẽ khi trong màn hình, khoá `fps` (30), trần `maxDpr` (1.25).
+- Không có WebGL thì vùng hiện ảnh tĩnh `field-tile.webp`, khớp bề rộng (đủ 7 cột).
+- **Không bao giờ dừng giữa chừng**: hero gọi `CHANDE_FIELD.park()` khi thanh
+  process đầy; effect chạy nốt vòng, đỗ ở điểm nghỉ (phase 0) rồi shape reveal mới
+  đổi ảnh; `chande-hero:swap-end` nhả cho vòng mới chạy.
+- Chỉnh ở bảng setting (phím H) → *Effect xanh*.
+
+`chande-mosaic.js` (bản port khác, do một phiên song song viết) **không còn được
+nạp**: nó vẽ 60fps, DPR 2, hai lượt + chép canvas mỗi khung — nặng hơn hẳn.
+
+## 5. Các section sau hero — `home.css`, `chande-home.js`
+
+Figma `Home-001` (336:7199). Mỗi `section.hs` dùng `--u` như hero, toạ độ là y
+Figma trừ mép trên section. Cụm sticker / collage xuất từ Figma dạng SVG, gỡ hai
+hình chữ nhật nền rồi chụp lại bằng Chrome headless để có PNG trong suốt — bản
+PNG/JPG Figma xuất thẳng bị dán sẵn lên màu nền frame.
+
+Dải tròn chạy ngang vẽ bằng `radial-gradient` (chu kỳ 332 = 2 hình tròn), dải
+viên thuốc bằng DOM; cả hai chỉ dịch `transform` và dừng khi ra khỏi màn.
+
+**Con trỏ** (`chande-cursor.js`): nhân vật chạy theo chuột, trễ một nhịp, nghiêng
+theo hướng đi, phóng to khi trỏ vào link; con trỏ thật vẫn giữ. Chỉ bật với chuột.
+
+---
+
 ## Responsive
 
 Lưới tham chiếu của bản thiết kế: **8 cột, Stretch, margin 24, gutter 0** ở khổ
@@ -284,11 +411,19 @@ nên **px của bản thiết kế ÷ 16 = em**, không hardcode px. Dưới đ�
 
 ## Devtools
 
-Một bảng ở đáy màn, hai tab:
+Một bảng kính mờ ở góc phải trên, giao diện chép theo bảng *Controls* của
+Toolcraft (Inter, nhãn trên – ô dưới, slider track 1px). **Ẩn sẵn — bấm phím `H`
+để bật / tắt** (bỏ qua khi đang gõ
+trong ô nhập, hoặc khi giữ Cmd / Ctrl / Alt). Trạng thái bật lưu theo
+localStorage nên tải lại trang vẫn giữ. Các tab:
 
+- **Hero home** — chiều cao ảnh, một số chung cho cả 4 ô, tính bằng **% chiều
+  cao viewport đầu** (mặc định 25 = 270/1080 như Figma, không tính thanh tên);
+  ảnh dưới, mảng nền xanh / tối và thanh process tự dịch theo vì CSS suy hết từ
+  `--img`. Thêm nhịp vòng đổi ảnh và nút *Đổi ảnh ngay*.
 - **Loading** — play / pause / tua timeline; màu nền, toàn bộ tham số dither, màu
   stroke + độ mờ, màu khối loading, màu 4 ô sau finish.
-  Phím **Space** play-pause, **←/→** tua 100ms.
+  Phím **Space** play-pause, **←/→** tua 100ms — chỉ khi bảng đang hiện.
 - **Rèm quét**, **Rèm chẻ** và **Trượt thẻ** — mỗi tab là một biến thể; mở tab nào thì biến thể
   đó là cái sẽ chạy khi bấm link. Có: chạy thử rèm tại chỗ, nhảy Home / Page A /
   Page B; màu cột (rèm chẻ có cả bộ trên lẫn bộ dưới), dither của cột,
@@ -307,6 +442,11 @@ phiên.
 Giá trị đã chỉnh lưu ở `localStorage['chande-devtools']` (ảnh ở
 `chande-devtools-shots`) và **đè lên CONFIG** trong file hiệu ứng — thấy hành vi
 lạ thì đọc localStorage trước khi nghi code. Nút **Reset** trả tab hiện tại về mặc định.
+Chỉ những giá trị **khác mặc định** mới được lưu, nên đổi mặc định trong CONFIG
+vẫn có tác dụng với những ô chưa ai chỉnh.
+
+**Smooth scroll** là Lenis trong `chande-transition.js`: `lerp 0.1` (mặc định của
+Lenis — càng nhỏ càng trôi lâu), `wheelMultiplier 1`. Chỉnh ở mục rèm → *Lenis lerp*.
 
 ---
 

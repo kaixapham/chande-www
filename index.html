@@ -2,11 +2,12 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<title>Loading + page transition — Chande Bootcamp</title>
+<title>Chande Bootcamp by Mingg</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="assets/img/logo.svg">
 <link rel="stylesheet" href="assets/vendor/lenis.css">
 <link rel="stylesheet" href="assets/css/site.css">
+<link rel="stylesheet" href="assets/css/home.css">
 </head>
 <body data-barba="wrapper">
 
@@ -15,13 +16,319 @@
 
 <main data-barba="container" data-barba-namespace="home">
   <div class="page">
-    <div class="home">
-      <div class="home__dark">
-        <p class="home__note">Frame Step 3 — Finnish. Thanh loading ở trên đã hoá thành header.
-          Bấm GALLERY / ABOUT để xem rèm chuyển trang 4 cột.</p>
+    <!-- HERO — Figma node 513:33865. Toạ độ trong CSS là px khổ 1920, tính từ
+         mép dưới header (y - 80). Hành vi do assets/js/chande-hero.js. -->
+    <section class="hero" data-hero aria-label="Chande Bootcamp by Mingg">
+      <div class="hero__stage field-root" data-field-root>
+        <div class="hero__field hero__field--a field" data-field></div>
+        <div class="hero__field hero__field--b field" data-field data-field-flip="y"></div>
+        <div class="hero__dark" data-hero-dither="#182220" data-levels="8"></div>
+        <div class="hero__dark hero__dark--col" data-hero-dither="#131313" data-levels="8"></div>
+        <div class="hero__field hero__field--c field" data-field></div>
+
+        <!-- Cụm chữ: ở viewport đầu tiên cách đáy + trái 24px -->
+        <div class="hero__intro">
+          <div class="hero__intro-text">
+            <p>2-4 October<br>Ke Retreat - Hanoi, VN</p>
+            <p>A community connecting event<br>for Vietnamese designers.<br>In the most peaceful way.</p>
+          </div>
+          <figure class="hero__recap">
+            <img src="assets/img/home/recap.webp" alt="Ke Retreat, Hà Nội" width="800" height="600">
+            <figcaption>Video recap</figcaption>
+          </figure>
+        </div>
+
+        <!-- Thanh process: chạy hết thì đổi cả 4 ảnh -->
+        <div class="hero__col hero__col--progress">
+          <div class="hero__progress" role="progressbar" aria-label="Ảnh tiếp theo"
+               aria-valuemin="0" aria-valuemax="100"><span data-hero-fill></span></div>
+        </div>
+
+        <div class="hero__col hero__col--scroll">
+          <div class="hero__scroll">
+            <span>Scroll more</span>
+            <span class="hero__dots" aria-hidden="true"><img src="assets/img/home/dot.svg" alt="" width="4" height="4"><img src="assets/img/home/dot.svg" alt="" width="4" height="4"><img src="assets/img/home/dot.svg" alt="" width="4" height="4"></span>
+          </div>
+        </div>
+
+        <!-- 4 ô ảnh. Ảnh dưới luôn bắt đầu ở mép trên thanh tên của ảnh trên. -->
+        <div class="hero__col hero__col--1"><figure class="hero-card" data-hero-slot data-levels="6">
+          <div class="hero-card__media"><img src="assets/img/home/kenny.webp" alt="" style="object-position:50% 100%"></div>
+          <figcaption class="hero-card__cap"><span>01</span><span>Kenny Ho</span></figcaption>
+        </figure></div>
+        <div class="hero__col hero__col--2"><figure class="hero-card" data-hero-slot data-levels="4">
+          <div class="hero-card__media"><img src="assets/img/home/huy.webp" alt=""></div>
+          <figcaption class="hero-card__cap"><span>02</span><span>Huy Phan</span></figcaption>
+        </figure></div>
+        <div class="hero__col hero__col--3"><figure class="hero-card" data-hero-slot data-levels="4">
+          <div class="hero-card__media"><img src="assets/img/home/mingg.webp" alt=""></div>
+          <figcaption class="hero-card__cap"><span>03</span><span>Khac Mingg</span></figcaption>
+        </figure></div>
+        <div class="hero__col hero__col--4"><figure class="hero-card" data-hero-slot data-levels="6">
+          <div class="hero-card__media"><img src="assets/img/home/binh.webp" alt=""></div>
+          <figcaption class="hero-card__cap"><span>04</span><span>Bình Gold</span></figcaption>
+        </figure></div>
+
+        <div class="hero__panel">
+          <img class="hero__mark" src="assets/img/home/logo-mark.svg" alt="" width="104" height="71.7241">
+          <div class="hero__headline">
+            <div>
+              <h1 class="hero__title">Chande<br>Bootcamp<br>By. Mingg</h1>
+              <p class="hero__sub">Special event organized by<br>Mingg Patreon - Design community</p>
+            </div>
+            <p class="hero__year">(<span>©</span>26)</p>
+          </div>
+        </div>
       </div>
-      <div class="home__light"></div>
-    </div>
+
+      <!-- Danh sách người cho vòng đổi ảnh. Mỗi lượt thanh process chạy hết thì
+           4 ô nhận 4 người kế tiếp. `pos` = object-position của ảnh. -->
+      <script type="application/json" data-hero-people>
+      [
+        { "num": "01", "name": "Kenny Ho",   "img": "assets/img/home/kenny.webp", "pos": "50% 100%" },
+        { "num": "02", "name": "Huy Phan",   "img": "assets/img/home/huy.webp" },
+        { "num": "03", "name": "Khac Mingg", "img": "assets/img/home/mingg.webp" },
+        { "num": "04", "name": "Bình Gold",  "img": "assets/img/home/binh.webp" }
+      ]
+      </script>
+    </section>
+
+    <!-- ===================== 1. INTRO: An event for all designers ========= -->
+    <section class="hs hs-intro" aria-label="An event for all designers">
+      <span class="chip chip--green" aria-hidden="true"></span>
+      <span class="chip chip--yellow" aria-hidden="true"></span>
+      <span class="chip chip--orange" aria-hidden="true"></span>
+      <h2 class="abs d106 hs-intro__a"><span>An event for</span><span>all designers</span><span>to connect.</span><span>Listen &amp; share</span></h2>
+      <p class="abs d106 hs-intro__b"><span>Show</span><span>(The love)</span></p>
+      <div class="abs hs-intro__eye" aria-hidden="true"><img src="assets/img/home/eye.webp" alt=""></div>
+    </section>
+
+    <!-- ===================== 2. STORY: 06 years / Chande. ================== -->
+    <section class="hs hs-story" aria-label="Về cộng đồng">
+      <div class="abs hs-story__band"></div>
+      <div class="abs hs-story__media">
+        <img class="abs hs-story__photo" src="assets/img/home/about-photo.webp" alt="Khung cảnh Ke Retreat" loading="lazy">
+        <img class="abs hs-story__card" src="assets/img/home/about-card.webp" alt="Bộ ấn phẩm Chande" loading="lazy">
+        <img class="abs hs-story__small" src="assets/img/home/about-small.webp" alt="" loading="lazy">
+        <span class="abs hs-story__dots" aria-hidden="true"><img src="assets/img/home/about-dot.svg" alt="" width="4" height="4"><img src="assets/img/home/about-dot.svg" alt="" width="4" height="4"><img src="assets/img/home/about-dot.svg" alt="" width="4" height="4"></span>
+      </div>
+      <div class="abs hs-story__col">
+        <article class="hs-story__panel">
+          <h3 class="d48">06 years</h3>
+          <div class="hs-story__text mono">
+            <div>
+              <p>[ UIUX design community ]</p>
+              <p>The design community was founded by Khac Mingg Nguyen - a UI/UX designer living in Vietnam. We maintain a spirit of openness, sharing, and helping each other grow in our careers and even in life. The two main platforms we use are Discord and Patreon.</p>
+            </div>
+            <p><a href="#">[ Mingg Patreon ]</a></p>
+          </div>
+        </article>
+        <article class="hs-story__panel">
+          <h3 class="d48">Chande.</h3>
+          <div class="hs-story__text mono">
+            <div>
+              <p>[ Chande by Mingg Patreon ]</p>
+              <p>Chande is our community's annual event, where each year brings different formats to infuse freshness and creativity into the design community. We do not follow the beaten path; we strive for freedom and seriousness in design.</p>
+            </div>
+            <p><a href="#">[ Chande season 01 ]</a></p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ===================== 3. SCHEME (cream -> black) ==================== -->
+    <section class="hs hs-scheme" aria-hidden="true">
+      <div class="scheme scheme--rev"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </section>
+
+    <!-- ===================== 4. STRIP: field + pills ======================= -->
+    <section class="hs hs-strip" aria-hidden="true">
+      <div class="strip">
+        <div class="strip__field field" data-field></div>
+        <div class="strip__run"><div class="pillrun" data-marquee><div class="pillrun__track"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
+      </div>
+    </section>
+
+    <!-- ===================== 5. LAND: phong cảnh + sticker ================= -->
+    <section class="hs hs-land" aria-label="Khoảnh khắc ở Chande">
+      <img class="abs hs-land__bg" src="assets/img/home/land-bg.webp" alt="Đồi cỏ và núi đá" loading="lazy">
+      <div class="abs tilt hs-land__receipt"><img src="assets/img/home/land-receipt.webp" alt="" loading="lazy"></div>
+      <div class="abs tilt hs-land__atom"><img src="assets/img/home/sticker-atom.webp" alt="" loading="lazy"></div>
+      <img class="abs hs-land__stickers" src="assets/img/home/land-stickers.webp" alt="" loading="lazy">
+      <div class="abs loader" data-scroll-pct aria-hidden="true">
+        <img src="assets/img/home/land-ring.svg" alt="">
+        <b><span data-pct>0</span><small>%</small></b>
+      </div>
+    </section>
+
+    <!-- ===================== 6. ABOUT ======================================= -->
+    <section class="hs hs-about" aria-label="Tinh thần sự kiện">
+      <p class="abs d106 hs-about__statement">
+        <span>Amid the relentless (rise of AI).</span>
+        <span>we long for a space rooted in nature, a place of deep (stillness).</span>
+        <span>Here we slow down together,</span>
+        <span class="gap" aria-hidden="true"></span>
+        <span>share &amp; listen to the stories of</span>
+        <span>the past year. Design is not merely</span>
+        <span>a profession. It is a (way of life).</span>
+        <span>Cherished.</span>
+      </p>
+      <img class="abs hs-about__grass" src="assets/img/home/pin-grass.webp" alt="" loading="lazy">
+      <p class="abs b16 hs-about__note"><span>We don't say who will</span><span>be replaced (by AI).</span><span>We listen to each individual.</span></p>
+
+      <i class="dash" style="top:calc(1006 * var(--u))" aria-hidden="true"></i>
+      <div class="abs circles" aria-hidden="true">
+        <div class="circle"><img class="ring" src="assets/img/home/circle-1-ring.svg" alt=""><img class="tex" src="assets/img/home/circle-1-tex.webp" alt=""><img class="core" src="assets/img/home/circle-1-core.svg" alt=""></div>
+        <div>
+          <div class="circle"><img class="ring" src="assets/img/home/circle-2-ring.svg" alt=""><img class="tex tex--dim" src="assets/img/home/circle-2-tex.webp" alt=""><img class="core" src="assets/img/home/circle-2-core.svg" alt=""></div>
+          <div class="circle"><img class="ring" src="assets/img/home/circle-3-ring.svg" alt=""><img class="core" src="assets/img/home/circle-3-core.svg" alt=""><img class="tex tex--dim" src="assets/img/home/circle-3-tex.webp" alt=""></div>
+        </div>
+      </div>
+      <i class="dash" style="top:calc(1522 * var(--u))" aria-hidden="true"></i>
+
+      <p class="abs b16 hs-about__who"><span>Who is included</span><span>in this event</span></p>
+      <img class="abs hs-about__friends" src="assets/img/home/insta-friends.webp" alt="" loading="lazy">
+      <p class="abs mono hs-about__roots">We do not only stop at roles around UI/UX design; we believe design has a common root, and each role will have interesting perspectives and connections with one another.</p>
+      <ul class="abs d48 hs-about__roles">
+        <li>Art director</li><li>Founder studio</li><li>Gamer</li><li>Awards winner</li><li>Product designer</li>
+        <li>Planter</li><li>UI.UX designer</li><li>Motion designer</li><li>3D designer</li><li>Photographer</li>
+      </ul>
+      <p class="abs d48 hs-about__count">03</p>
+      <i class="dash" style="top:calc(1930 * var(--u))" aria-hidden="true"></i>
+
+      <nav class="abs pills hs-about__pills mono" aria-label="Xem thêm">
+        <a class="pill pill--green" href="gallery.html">Gallery</a>
+        <a class="pill pill--lime" href="about.html">About us</a>
+      </nav>
+      <div class="abs scheme hs-about__scheme" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <img class="abs hs-about__rock" src="assets/img/home/story-rock.webp" alt="Leo núi đá cùng nhau" loading="lazy">
+      <div class="abs hs-about__field field" data-field></div>
+      <div class="abs hs-about__band">
+        <div class="dotrun" data-marquee aria-hidden="true"><div class="dotrun__track"></div></div>
+        <h2 class="d106"><span>(12) Events</span><span>at bootcamp</span></h2>
+      </div>
+    </section>
+
+    <!-- ===================== 7. POSTER ====================================== -->
+    <section class="hs hs-poster" aria-label="Ấn phẩm">
+      <img src="assets/img/home/poster.webp" alt="Bộ poster Chande" loading="lazy">
+    </section>
+
+    <!-- ===================== 8. AGENDA ====================================== -->
+    <section class="hs hs-agenda" aria-label="Agenda">
+      <div class="abs agenda__dates" aria-hidden="true"><div>
+        <p class="d106"><span>02</span><span>Oct</span></p>
+        <p class="d106"><span>D-1</span><span>08H</span></p>
+      </div></div>
+      <div class="agenda">
+        <div class="pills mono" role="tablist" aria-label="Chế độ xem">
+          <button class="pill" role="tab" aria-selected="false" data-tab="agenda">Agenda</button>
+          <button class="pill" role="tab" aria-selected="true" data-tab="bootcamp">Bootcamp</button>
+        </div>
+        <h2 class="d106 agenda__head"><span>Kick-off</span><span>Settle in</span><span>Get to know each other</span><span class="hot">Workshop-001: DAS</span><span class="hot">by Lumen Stu.</span><span class="hot">Chan-party</span></h2>
+        <figure class="agenda__shot" style="margin:0">
+          <img src="assets/img/home/agenda-1.webp" alt="" loading="lazy">
+          <img class="agenda__poster" src="assets/img/home/agenda-poster.webp" alt="Poster Talk 02 — Design fundamental" loading="lazy">
+          <span class="agenda__sign" aria-hidden="true"><img src="assets/img/home/agenda-sign.webp" alt="" loading="lazy"></span>
+          <div class="field" data-field></div>
+        </figure>
+        <h2 class="d106 agenda__head agenda__head--wrap"><span>Wake up</span><span>Join me in nature</span><span>Workshop-002: AI era by Everfit</span><span>Chande-night</span></h2>
+        <div class="agenda__pair">
+          <figure class="agenda__shot" style="margin:0">
+            <img src="assets/img/home/agenda-2.webp" alt="" loading="lazy">
+            <div class="field" data-field data-field-shift="0.3"></div>
+          </figure>
+          <div class="agenda__house">
+            <img src="assets/img/home/agenda-3.webp" alt="Nhà gỗ giữa rừng" loading="lazy">
+            <div class="bar"></div>
+            <div class="pillrun pillrun--sm" data-marquee aria-hidden="true"><div class="pillrun__track"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+          </div>
+          <img class="agenda__stamp" src="assets/img/home/ag-stamp.svg" alt="" aria-hidden="true">
+        </div>
+        <h2 class="d106 agenda__head"><span>Exchange</span><span>Memory gifts</span><span>Farewell</span><span>Get back - say goodbye</span><span>to Chande</span></h2>
+      </div>
+      <button class="abs agenda__nav agenda__nav--prev" type="button" aria-label="Ngày trước"><img src="assets/img/home/ag-arrow.svg" alt=""></button>
+      <button class="abs agenda__nav agenda__nav--next" type="button" aria-label="Ngày sau"><img src="assets/img/home/ag-arrow.svg" alt=""></button>
+    </section>
+
+    <!-- ===================== 9. WALL: sticker collage ======================= -->
+    <section class="hs hs-wall" aria-label="Kỷ niệm">
+      <div class="abs dotrun" data-marquee aria-hidden="true"><div class="dotrun__track"></div></div>
+      <i class="abs dash hs-wall__line" aria-hidden="true"></i>
+      <div class="abs hs-wall__grid" aria-hidden="true"></div>
+      <img class="abs hs-wall__collage" src="assets/img/home/collage.webp" alt="Ảnh và sticker kỷ niệm Chande" loading="lazy">
+      <img class="abs hs-wall__93" src="assets/img/home/collage-93.webp" alt="" loading="lazy">
+      <div class="strip" aria-hidden="true">
+        <div class="strip__field field" data-field data-field-shift="0.6"></div>
+        <div class="strip__run"><div class="pillrun" data-marquee><div class="pillrun__track"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
+      </div>
+    </section>
+
+    <!-- ===================== 10. QUOTE ====================================== -->
+    <section class="hs hs-quote" aria-label="Cảm nhận">
+      <img class="abs hs-quote__strip" src="assets/img/home/quote-strip.webp" alt="" loading="lazy">
+      <figure class="abs hs-quote__card" style="margin:0">
+        <img src="assets/img/home/quote-card.webp" alt="Huy Phan" loading="lazy">
+        <p><span>02</span><span>Huy Phan</span></p>
+      </figure>
+      <blockquote class="abs hs-quote__text" style="margin:0">“3 days filled with memories, I am the king of creative web design in Vietnam, it's been a long time since I've felt such a sense of belonging. Thank you everyone for the memories here. These will be unforgettable memories for me. I love Chan De Bootcamp, siuuuuu.”</blockquote>
+      <div class="abs hs-quote__by mono"><div><p>[ Huy Phan ]</p><p>Awwwards jury - creative web designer</p></div></div>
+      <div class="abs hs-quote__bar" data-marquee aria-hidden="true"><span></span></div>
+      <button class="abs hs-quote__nav hs-quote__nav--prev" type="button" aria-label="Cảm nhận trước"><img src="assets/img/home/quote-arrow.svg" alt=""></button>
+      <button class="abs hs-quote__nav hs-quote__nav--next" type="button" aria-label="Cảm nhận sau"><img src="assets/img/home/quote-arrow.svg" alt=""></button>
+    </section>
+
+    <!-- ===================== 11. COLORS ===================================== -->
+    <section class="hs hs-colors" aria-hidden="true">
+      <div class="scheme"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </section>
+
+    <!-- ===================== 12. FOOTER ===================================== -->
+    <footer class="hs hs-foot">
+      <div class="abs names hs-foot__n1">
+        <span>Kenny Ho / minhsharing / HuyML / Ha Nguyen / Tam Do</span>
+        <span>Huy Ta (remote) / Hanlion / Chien Pham / Trong Motion</span>
+        <span>Beostiful / MyMy / NMD - Vua dep trai / Bum /</span>
+        <span>Leno Nguyen / Annie XP / Thu Sinh (Pháp) / Quynh</span>
+        <span>Tranglai / Kaixa / Duong Vu (Zen) / BuiXii / Yen</span>
+      </div>
+      <div class="abs names hs-foot__n2">
+        <span class="pair"><span>Dylan (5K_HA-KIBO)</span><span>(Adobe)</span></span>
+        <div>
+          <span>Tiên-Tiến / Duongg Vu / Hung (Kres) / Kao Thi / Tunz</span>
+          <span>Nash Tran (Minh) / Thinhdoo - Blacknuts / Hung (Kres) /</span>
+          <span>Hoangz - 36 / Nghia Heo - miXICON / Nguyen V.Hung /</span>
+          <span>Zung Can / Phuong Thuy / Dang Tri /</span>
+        </div>
+      </div>
+      <!-- Ô ảnh: rỗng lúc đầu, hover vào từng tên thì hiện ảnh người đó (chande-home.js).
+           data-photo trên tên nào thì dùng ảnh đó; tên chưa có ảnh riêng lấy lần lượt
+           trong data-photos — THAY bằng ảnh thật của từng người. -->
+      <figure class="abs hs-foot__face" data-name-photo
+              data-photos='["assets/img/home/kenny.webp","assets/img/home/huy.webp","assets/img/home/mingg.webp","assets/img/home/binh.webp"]'
+              style="margin:0" aria-hidden="true"><img alt=""></figure>
+      <div class="abs names hs-foot__n3">
+        <span>Ben Nguyen / Khanh Linh / Vu Hong Linh / Duc Nguyen</span>
+        <span>Billy - Tran Mau Quoc Hung / DJ Thai Hoang / Long Hai /</span>
+        <span>Nhat Anh Ng. / Trong Hung / Đinh trên đường tàu</span>
+      </div>
+      <img class="abs hs-foot__logo" src="assets/img/home/foot-logo.svg" alt="Chande" width="870" height="600" loading="lazy">
+      <div class="abs hs-foot__field field" data-field data-field-shift="0.15"></div>
+      <div class="abs hs-foot__panel"></div>
+      <a class="abs cta hs-foot__cta1" href="#"><i><img src="assets/img/home/foot-dots.svg" alt="" width="20" height="6"><img src="assets/img/home/foot-dots.svg" alt="" width="20" height="6"></i><span><small>01</small>Become a partner</span></a>
+      <a class="abs cta hs-foot__cta2" href="#"><i><img src="assets/img/home/foot-dots.svg" alt="" width="20" height="6"><img src="assets/img/home/foot-dots.svg" alt="" width="20" height="6"></i><span><small>02</small>Register for the next event</span></a>
+      <i class="abs hs-foot__hr" aria-hidden="true"></i>
+      <i class="abs hs-foot__vr" aria-hidden="true"></i>
+      <div class="abs links hs-foot__social">
+        <div><p class="mono">[ Social ]</p><ul><li><a href="#">Facebook</a></li><li><a href="#">Youtube</a></li><li><a href="#">Instagram</a></li><li><a href="#">LinkedIn</a></li></ul></div>
+        <p class="mono"><a href="#">[ Mingg Patreon ]</a></p>
+      </div>
+      <div class="abs links hs-foot__index">
+        <div><p class="mono">[ Site index ]</p><ul><li><a href="index.html">Home</a></li><li><a href="gallery.html">Gallery</a></li><li><a href="about.html">About us</a></li><li><a href="#">Contact</a></li></ul></div>
+        <p class="mono"><a href="#top" data-back-top>[ Back to top ][ → ]</a></p>
+      </div>
+      <div class="abs hs-foot__legal mono"><p>[ Chande2026. All rights reserved ]</p><p>[ Code by Chien.P ] [ Design by Kaixa ]</p></div>
+    </footer>
   </div>
 </main>
 
@@ -34,6 +341,11 @@
 
 <script src="assets/js/chande-loading.js"></script>
 <script src="assets/js/chande-transition.js"></script>
+<script src="assets/js/chande-reveal.js"></script>
+<script src="assets/js/chande-hero.js"></script>
+<script src="assets/js/chande-field.js"></script>
+<script src="assets/js/chande-home.js"></script>
+<script src="assets/js/chande-cursor.js"></script>
 <!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
 <script src="assets/js/chande-devtools.js"></script>
 </body>
