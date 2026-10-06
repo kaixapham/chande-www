@@ -28,7 +28,8 @@
   const CR = window.CHANDE_REVEAL
   const CF = window.CHANDE_FIELD
   const CB = window.CHANDE_BUBBLE
-  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB) return
+  const CC = window.CHANDE_CURSOR
+  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC) return
 
   const KEY = 'chande-devtools'
   const KEY_SHOTS = 'chande-devtools-shots'
@@ -44,6 +45,7 @@
     CM && { id: 'mosaic', label: 'Mosaic', mod: 'mosaic' },
     CF && { id: 'field', label: 'Effect xanh', mod: 'field' },
     CB && { id: 'bubble', label: 'Bubble (giọt theo chuột)', mod: 'bubble' },
+    CC && { id: 'cursor', label: 'Con trỏ nhân vật', mod: 'cursor' },
     CT && { id: 'sweep', label: 'Rèm quét', mod: 'transition', variant: 'sweep' },
     CT && { id: 'split', label: 'Rèm chẻ', mod: 'transition', variant: 'split' },
     CT && { id: 'stack', label: 'Trượt thẻ', mod: 'transition', variant: 'stack' },
@@ -190,14 +192,15 @@
     { tab: 'bubble', mod: 'bubble', title: 'Khúc xạ (thấu kính — Chrome/Edge)',
       items: [
         { path: 'refract', label: 'Bật khúc xạ nội dung bên dưới', type: 'bool' },
-        { path: 'refraction', label: 'Độ bẻ cong', type: 'range', min: 0, max: 200, step: 1 },
+        { path: 'refraction', label: 'Độ bẻ cong (âm = bẻ ra ngoài)', type: 'range', min: -200, max: 200, step: 1 },
         { path: 'dispersion', label: 'Tách màu ở mép', type: 'range', min: 0, max: 3, step: 0.05 },
+        { path: 'frost', label: 'Mờ kính (frost)', type: 'range', min: 0, max: 1, step: 0.01 },
         { path: 'lensScale', label: 'Cỡ thấu kính so với giọt', type: 'range', min: 0.5, max: 1.5, step: 0.01 },
       ] },
     { tab: 'bubble', mod: 'bubble', title: 'Bề mặt',
       items: [
         { path: 'speed', label: 'Tốc độ óng ánh', type: 'range', min: 0, max: 8, step: 0.1 },
-        { path: 'iridescence', label: 'Óng ánh', type: 'range', min: 0, max: 3, step: 0.05 },
+        { path: 'iridescence', label: 'Óng ánh', type: 'range', min: 0, max: 2, step: 0.05 },
         { path: 'intensity', label: 'Độ sáng óng ánh', type: 'range', min: 0, max: 2, step: 0.05 },
         { path: 'shine', label: 'Phản quang', type: 'range', min: 0, max: 2, step: 0.05 },
         { path: 'rim', label: 'Viền', type: 'range', min: 0, max: 2, step: 0.05 },
@@ -206,6 +209,28 @@
         { path: 'colorB', label: 'Màu óng B', type: 'color' },
         { path: 'tint', label: 'Màu phủ', type: 'color' },
         { path: 'tintStrength', label: 'Độ phủ màu', type: 'range', min: 0, max: 1, step: 0.01 },
+      ] },
+    { tab: 'bubble', mod: 'bubble', title: 'Hiệu năng',
+      items: [
+        { path: 'maxDpr', label: 'Độ phân giải tối đa (dpr)', type: 'range', min: 0.75, max: 2, step: 0.25 },
+      ] },
+
+    // ---- Con trỏ nhân vật (chande-cursor.js) ----
+    { tab: 'cursor', mod: 'cursor', title: 'Nhân vật',
+      items: [
+        { path: 'enabled', label: 'Bật nhân vật', type: 'bool' },
+        { path: 'size', label: 'Cỡ (px)', type: 'range', min: 40, max: 240, step: 1 },
+        { path: 'lerp', label: 'Bám chuột', type: 'range', min: 0.04, max: 1, step: 0.01 },
+        { path: 'offsetX', label: 'Lệch ngang (px)', type: 'range', min: -120, max: 120, step: 1 },
+        { path: 'offsetY', label: 'Lệch dọc (px)', type: 'range', min: -120, max: 120, step: 1 },
+        { path: 'tilt', label: 'Nghiêng theo hướng đi', type: 'range', min: 0, max: 2, step: 0.05 },
+        { path: 'hoverScale', label: 'Phóng khi trỏ link', type: 'range', min: 1, max: 2, step: 0.05 },
+      ] },
+    { tab: 'cursor', mod: 'cursor', title: 'Né bubble',
+      items: [
+        { path: 'avoidBubble', label: 'Không chồng lên giọt', type: 'bool' },
+        { path: 'gap', label: 'Khoảng hở với mép giọt (px)', type: 'range', min: 0, max: 60, step: 1 },
+        { path: 'body', label: 'Thân va chạm (tỉ lệ cỡ)', type: 'range', min: 0.1, max: 0.6, step: 0.01 },
       ] },
 
     // ---- Effect xanh: preset gradient-studio (chande-field.js) ----
@@ -358,7 +383,7 @@
       ]) },
   ]
 
-  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB }
+  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC }
   const get = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o)
   const set = (o, p, v) => {
     const k = p.split('.')
@@ -458,7 +483,7 @@
   --fg:#fafafa; --fg-60:rgba(250,250,250,.6); --fg-75:rgba(250,250,250,.75);
   --muted:#b4b4b4; --line:rgba(250,250,250,.12); --fill:rgba(250,250,250,.05);
   --fill-2:rgba(250,250,250,.1); --track:rgba(180,180,180,.38); --accent:#0c8ce9;
-  position:fixed; top:10px; right:10px; z-index:10000;
+  position:fixed; top:10px; right:10px; z-index:10002;
   width:300px; max-height:calc(100vh - 20px);
   display:flex; flex-direction:column; overflow:hidden;
   /* Toolcraft dùng kính mờ blur(40px), nhưng trên trang cuộn mượt nó bắt GPU làm

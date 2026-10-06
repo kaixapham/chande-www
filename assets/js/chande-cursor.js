@@ -6,6 +6,10 @@
  * thay thế nó, nên bấm link vẫn chính xác. Trỏ vào link / nút thì nhân vật phóng
  * to một chút.
  *
+ * Không chồng lên Bubble (chande-bubble.js): nhân vật là một hình tròn, mỗi khung
+ * bị đẩy ra khỏi mọi cầu của giọt (đầu + vệt đuôi) cộng thêm khoảng hở `gap` —
+ * giọt to cỡ nào nhân vật cũng nằm ngoài, đi nhanh thì bị vệt đuôi hất ra.
+ *
  * Chỉ bật với chuột thật (pointer: fine) và khi không reduced-motion. Mỗi khung
  * chỉ ghi một transform lên một phần tử; đứng yên đủ gần thì tự dừng rAF.
  *
@@ -22,6 +26,9 @@
     offsetY: 18,
     tilt: 0.6, // độ nghiêng theo vận tốc
     hoverScale: 1.25,
+    avoidBubble: true, // né giọt bubble
+    gap: 6, // px — khoảng hở tối thiểu giữa nhân vật và mép giọt
+    body: 0.38, // bán kính "thân" nhân vật để va chạm, theo tỉ lệ size
     src: 'assets/img/cursor-mascot.webp',
   }
   const DEFAULTS = structuredClone(CONFIG)
@@ -40,7 +47,7 @@
   el.className = 'cmascot'
   const style = document.createElement('style')
   style.textContent = `
-.cmascot{position:fixed; left:0; top:0; z-index:9997; pointer-events:none; user-select:none;
+.cmascot{position:fixed; left:0; top:0; z-index:10001; pointer-events:none; user-select:none;
   width:var(--cm-size); height:auto; opacity:0; transition:opacity .25s ease;
   will-change:transform}
 .cmascot.is-on{opacity:1}`
@@ -49,12 +56,59 @@
 
   const pos = { x: innerWidth / 2, y: innerHeight / 2 }
   const target = { ...pos }
+  // Lượng bị giọt đẩy ra (px), cộng vào vị trí vẽ. Giữ riêng để lerp vẫn bám
+  // chuột còn phần né thì mượt.
+  const push = { x: 0, y: 0 }
   let scale = 1
   let raf = 0
+
+  // Đẩy tâm (cx, cy) bán kính r ra khỏi các cầu của giọt. Trả về true nếu có
+  // chạm (để rAF chạy tiếp tới khi tách hẳn).
+  function avoid(cx, cy, r) {
+    const b = window.CHANDE_BUBBLE?.state
+    let wantX = 0
+    let wantY = 0
+    if (CONFIG.avoidBubble && b && b.presence > 0.02 && b.size > 0) {
+      const c = b.count
+      let x = cx
+      let y = cy
+      // vài vòng lặp để thoát cả khi bị kẹp giữa đầu và đuôi
+      for (let it = 0; it < 3; it++) {
+        let moved = false
+        for (let i = 0; i < c; i++) {
+          const sx = i === 0 ? b.x : b.trailX[i]
+          const sy = i === 0 ? b.y : b.trailY[i]
+          const R = (b.size * (c - i) / c + b.swell) * b.presence + r + CONFIG.gap
+          let dx = x - sx
+          let dy = y - sy
+          const d = Math.hypot(dx, dy)
+          if (d >= R) continue
+          if (d < 0.001) {
+            dx = 1
+            dy = 1
+          }
+          const k = R / Math.max(d, 0.001)
+          x = sx + dx * (d < 0.001 ? R / Math.SQRT2 : k)
+          y = sy + dy * (d < 0.001 ? R / Math.SQRT2 : k)
+          moved = true
+        }
+        if (!moved) break
+      }
+      wantX = x - cx
+      wantY = y - cy
+    }
+    // ra nhanh (không để lọt vào trong giọt), về chậm (không giật khi giọt co lại)
+    const out = wantX * wantX + wantY * wantY > push.x * push.x + push.y * push.y
+    const k = out ? 0.6 : 0.15
+    push.x += (wantX - push.x) * k
+    push.y += (wantY - push.y) * k
+    return Math.abs(wantX - push.x) + Math.abs(wantY - push.y) > 0.3 || !!b?.moving
+  }
 
   function refresh() {
     el.style.setProperty('--cm-size', `${CONFIG.size}px`)
     el.style.display = CONFIG.enabled ? '' : 'none'
+    kick()
   }
 
   function frame() {
@@ -66,9 +120,13 @@
     const wantScale = hovering ? CONFIG.hoverScale : 1
     scale += (wantScale - scale) * 0.2
     const rot = Math.max(-25, Math.min(25, dx * CONFIG.tilt * 0.2))
+    const half = CONFIG.size / 2
+    const x = pos.x + CONFIG.offsetX
+    const y = pos.y + CONFIG.offsetY
+    const busy = avoid(x + half, y + half, CONFIG.size * CONFIG.body * scale)
     el.style.transform =
-      `translate3d(${pos.x + CONFIG.offsetX}px, ${pos.y + CONFIG.offsetY}px, 0) rotate(${rot}deg) scale(${scale})`
-    if (Math.abs(dx) + Math.abs(dy) > 0.3 || Math.abs(wantScale - scale) > 0.01) raf = requestAnimationFrame(frame)
+      `translate3d(${x + push.x}px, ${y + push.y}px, 0) rotate(${rot}deg) scale(${scale})`
+    if (busy || Math.abs(dx) + Math.abs(dy) > 0.3 || Math.abs(wantScale - scale) > 0.01) raf = requestAnimationFrame(frame)
   }
   const kick = () => {
     if (!raf) raf = requestAnimationFrame(frame)

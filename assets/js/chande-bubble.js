@@ -22,10 +22,19 @@
  *   • Màu nhận mã hex để bảng setting chỉnh được.
  *   • Độ dính (blend) quy theo px thật — xem render(): không có thì giọt phình to
  *     theo kích thước màn hình.
- * Hiệu năng: chỉ vẽ trong vùng scissor quanh giọt; chuột rời cửa sổ thì giọt tan
- * rồi DỪNG hẳn rAF. Chỉ bật với chuột thật và khi không reduced-motion.
+ * Hiệu năng:
+ *   • Chỉ vẽ (và chỉ xoá) trong vùng scissor quanh giọt.
+ *   • Shader bỏ sớm mọi điểm ảnh chắc chắn nằm ngoài giọt (cận dưới của
+ *     smoothMin) trước khi ray-march — vùng scissor phần lớn là khoảng trống.
+ *   • Pháp tuyến 4 mẫu (tứ diện) thay vì 6.
+ *   • Độ phân giải canvas giới hạn ở maxDpr.
+ *   • Chuột đứng yên và vệt đuôi đã gom hết vào đầu -> DỪNG rAF (màng đứng hình,
+ *     thấu kính không phải tính lại backdrop). Chuột rời cửa sổ: giọt tan rồi dừng.
+ * Chỉ bật với chuột thật và khi không reduced-motion.
  *
- * API: window.CHANDE_BUBBLE = { config, defaults, refresh() }
+ * API: window.CHANDE_BUBBLE = { config, defaults, refresh(), state }
+ *   state: { x, y, size, swell, count, presence, moving, trailX, trailY } — để
+ *   con trỏ nhân vật (chande-cursor.js) né giọt.
  * ========================================================================== */
 (() => {
   'use strict'
@@ -53,6 +62,7 @@
     dispersion: 1, // tách màu R/G/B ở mép (0–3)
     lensScale: 1, // thấu kính to / nhỏ hơn giọt
     frost: 0,
+    maxDpr: 1.5, // giới hạn độ phân giải canvas — màng mỏng, 1.5 đã đủ nét
   }
   const DEFAULTS = structuredClone(CONFIG)
   const MAX_TRAIL = 24
@@ -161,11 +171,27 @@ float map (vec3 p) {
   return d;
 }
 
+// Pháp tuyến 4 mẫu (tứ diện) — gốc dùng 6 mẫu sai phân trung tâm.
 vec3 generateNormal (vec3 p) {
-  return normalize(vec3(
-    map(p + vec3(EPS, 0.0, 0.0)) - map(p + vec3(-EPS, 0.0, 0.0)),
-    map(p + vec3(0.0, EPS, 0.0)) - map(p + vec3(0.0, -EPS, 0.0)),
-    map(p + vec3(0.0, 0.0, EPS)) - map(p + vec3(0.0, 0.0, -EPS))));
+  const vec2 k = vec2(1.0, -1.0);
+  return normalize(
+    k.xyy * map(p + k.xyy * EPS) +
+    k.yyx * map(p + k.yyx * EPS) +
+    k.yxy * map(p + k.yxy * EPS) +
+    k.xxx * map(p + k.xxx * EPS));
+}
+
+// Cận dưới của map() trên cả tia: khoảng cách 2D tới cầu gần nhất trừ phần
+// smoothMin có thể kéo xuống (ln(n + 1) / blend). Lớn hơn ngưỡng phủ -> chắc
+// chắn trong suốt, khỏi ray-march.
+float lowerBound (vec2 p) {
+  float radius = uBaseRadius * float(uCount);
+  float d = 1e5;
+  for (int i = 0; i < ${MAX_TRAIL}; i++) {
+    if (i >= uCount) break;
+    d = min(d, length(p - uTrail[i]) - (radius - uBaseRadius * float(i)));
+  }
+  return d - log(float(uCount) + 1.0) / uBlend;
 }
 
 vec3 dropletColor (vec3 normal, vec3 rayDir) {
@@ -181,6 +207,10 @@ void main () {
   vec2 frag = gl_FragCoord.xy;
   float minRes = min(uResolution.x, uResolution.y);
   vec2 p = (frag * 2.0 - uResolution) / minRes;
+  if (lowerBound(p) > 3.0 / minRes) {
+    outColor = vec4(0.0);
+    return;
+  }
 
   vec3 ray = vec3(p, 1.0);
   vec3 rayDir = vec3(0.0, 0.0, -1.0);
@@ -244,8 +274,11 @@ void main () {
   output.setAttribute('aria-hidden', 'true')
   const style = document.createElement('style')
   style.textContent =
-    '.cbubble{position:fixed; inset:0; width:100vw; height:100vh; z-index:9999; pointer-events:none}' +
-    '.cbubble-lens{position:fixed; left:0; top:0; z-index:9998; border-radius:50%; pointer-events:none;' +
+    // Thứ tự lớp: header 9998 < thấu kính 9999 < màng giọt 10000 < nhân vật con
+    // trỏ 10001 < bảng setting 10002. Thấu kính PHẢI dưới màng (không thì nó bẻ
+    // cong luôn lớp màng) và cả hai PHẢI dưới nhân vật (không thì che mất nó).
+    '.cbubble{position:fixed; inset:0; width:100vw; height:100vh; z-index:10000; pointer-events:none}' +
+    '.cbubble-lens{position:fixed; left:0; top:0; z-index:9999; border-radius:50%; pointer-events:none;' +
     ' backdrop-filter:url(#cbubble-lens); visibility:hidden; will-change:transform}'
   document.head.appendChild(style)
   document.body.appendChild(output)
@@ -258,11 +291,12 @@ void main () {
   svg.style.cssText = 'position:absolute; width:0; height:0; overflow:hidden'
   svg.innerHTML = `<filter id="cbubble-lens" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
     <feImage result="map" x="0" y="0" preserveAspectRatio="none"/>
-    <feDisplacementMap in="SourceGraphic" in2="map" xChannelSelector="R" yChannelSelector="G" result="dr"/>
+    <feGaussianBlur in="SourceGraphic" stdDeviation="0" result="src"/>
+    <feDisplacementMap in="src" in2="map" xChannelSelector="R" yChannelSelector="G" result="dr"/>
     <feColorMatrix in="dr" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
-    <feDisplacementMap in="SourceGraphic" in2="map" xChannelSelector="R" yChannelSelector="G" result="dg"/>
+    <feDisplacementMap in="src" in2="map" xChannelSelector="R" yChannelSelector="G" result="dg"/>
     <feColorMatrix in="dg" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/>
-    <feDisplacementMap in="SourceGraphic" in2="map" xChannelSelector="R" yChannelSelector="G" result="db"/>
+    <feDisplacementMap in="src" in2="map" xChannelSelector="R" yChannelSelector="G" result="db"/>
     <feColorMatrix in="db" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
     <feBlend in="r" in2="g" mode="screen" result="rg"/>
     <feBlend in="rg" in2="b" mode="screen"/>
@@ -274,6 +308,7 @@ void main () {
   document.body.appendChild(lens)
   const feImage = svg.querySelector('feImage')
   const maps = svg.querySelectorAll('feDisplacementMap')
+  const blur = svg.querySelector('feGaussianBlur')
   let lensR = 0
   let lensKey = ''
 
@@ -284,7 +319,7 @@ void main () {
     const c = Math.min(Math.max(Math.round(CONFIG.trail), 1), MAX_TRAIL)
     // bán kính giọt khi gom lại ≈ size + phần phình do các cầu hoà vào nhau
     const R = Math.max(8, (CONFIG.size + (60 * Math.log(c + 1)) / Math.max(CONFIG.blend, 0.5)) * CONFIG.lensScale)
-    const key = `${R.toFixed(1)}|${CONFIG.refraction}|${CONFIG.dispersion}`
+    const key = `${R.toFixed(1)}|${CONFIG.refraction}|${CONFIG.dispersion}|${CONFIG.frost}`
     if (key === lensKey) return
     lensKey = key
     lensR = R
@@ -321,6 +356,8 @@ void main () {
     maps[0].setAttribute('scale', sc * (1 + ca))
     maps[1].setAttribute('scale', sc)
     maps[2].setAttribute('scale', sc * (1 - ca))
+    // frost 0..1 như bản gốc (gốc: mipmap LOD tới 5) -> mờ tới ~10px
+    blur.setAttribute('stdDeviation', Math.min(Math.max(CONFIG.frost, 0), 1) * 10)
     lens.style.width = lens.style.height = `${D}px`
   }
 
@@ -358,7 +395,7 @@ void main () {
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]))
 
   function sync() {
-    const dpr = Math.min(devicePixelRatio || 1, 2)
+    const dpr = Math.min(devicePixelRatio || 1, Math.max(CONFIG.maxDpr, 0.5))
     const w = Math.max(1, Math.round(innerWidth * dpr))
     const h = Math.max(1, Math.round(innerHeight * dpr))
     if (output.width !== w || output.height !== h) {
@@ -382,13 +419,30 @@ void main () {
 
   const count = () => Math.min(Math.max(Math.round(CONFIG.trail), 1), MAX_TRAIL)
 
+  // Trạng thái giọt cho chande-cursor.js (đơn vị px CSS). Cầu thứ i (0 = đầu) có
+  // bán kính ≈ (size × (count − i) / count + swell) × presence.
+  const state = { x: headX, y: headY, size: 0, swell: 0, count: 1, presence: 0, moving: false, trailX, trailY }
+  api.state = state
+
+  // Vùng đã vẽ ở khung trước — chỉ cần xoá chỗ đó chứ không xoá cả màn.
+  let drawn = null
+  function clearRect(r) {
+    if (!r) return
+    gl.enable(gl.SCISSOR_TEST)
+    gl.scissor(r[0], r[1], r[2], r[3])
+    gl.clearColor(0, 0, 0, 0)
+    gl.clear(gl.COLOR_BUFFER_BIT)
+  }
+
   function render() {
     const dpr = output.width / Math.max(innerWidth, 1)
     gl.viewport(0, 0, output.width, output.height)
-    gl.disable(gl.SCISSOR_TEST)
-    gl.clearColor(0, 0, 0, 0)
-    gl.clear(gl.COLOR_BUFFER_BIT)
-    if (presence <= 0.004 || !CONFIG.enabled) return
+    clearRect(drawn)
+    drawn = null
+    if (presence <= 0.004 || !CONFIG.enabled) {
+      gl.disable(gl.SCISSOR_TEST)
+      return
+    }
 
     const c = count()
     const minRes = Math.min(output.width, output.height)
@@ -411,8 +465,8 @@ void main () {
     const pad = headRadius + ((Math.log(c + 1) / blend) * minRes) / 2 + Math.abs(CONFIG.refraction) * dpr * 0.5 + 32 * dpr
     const sx = Math.max(0, Math.floor(minX - pad))
     const sy = Math.max(0, Math.floor(minY - pad))
-    gl.enable(gl.SCISSOR_TEST)
-    gl.scissor(sx, sy, Math.min(output.width - sx, Math.ceil(maxX - minX + pad * 2)), Math.min(output.height - sy, Math.ceil(maxY - minY + pad * 2)))
+    drawn = [sx, sy, Math.max(0, Math.min(output.width - sx, Math.ceil(maxX - minX + pad * 2))), Math.max(0, Math.min(output.height - sy, Math.ceil(maxY - minY + pad * 2)))]
+    clearRect(drawn)
 
     gl.useProgram(program)
     gl.activeTexture(gl.TEXTURE0)
@@ -469,11 +523,28 @@ void main () {
     if (presence < 0.004 && presenceTarget === 0) {
       presence = 0
       running = false
+      state.moving = false
+      return
+    }
+    // Đứng yên: đầu đã tới chuột, đuôi đã gom vào đầu, giọt đã phồng đủ -> dừng.
+    // pointermove kế tiếp gọi start() chạy lại.
+    let spread = Math.abs(targetX - headX) + Math.abs(targetY - headY) + Math.abs(presenceTarget - presence) * 100
+    const c = count()
+    for (let i = 1; i < c && spread < 0.25; i++) spread += Math.abs(trailX[i] - headX) + Math.abs(trailY[i] - headY)
+    state.moving = spread >= 0.25
+    if (!state.moving) {
+      running = false
       return
     }
     raf = requestAnimationFrame(frame)
   }
   function placeLens() {
+    state.x = headX
+    state.y = headY
+    state.size = CONFIG.enabled ? Math.max(CONFIG.size, 4) : 0
+    state.swell = (100 * Math.log(count() + 1)) / Math.max(CONFIG.blend, 0.5)
+    state.count = count()
+    state.presence = CONFIG.enabled ? presence : 0
     const on = lensOK && CONFIG.enabled && CONFIG.refract && presence > 0.02
     lens.style.visibility = on ? 'visible' : 'hidden'
     if (!on) return
@@ -520,11 +591,13 @@ void main () {
 
   api.refresh = () => {
     lensKey = ''
+    sync()
     if (!CONFIG.enabled) {
       lens.style.visibility = 'hidden'
       cancelAnimationFrame(raf)
       running = false
       presence = 0
+      state.presence = 0
       render()
       return
     }
