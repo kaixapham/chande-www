@@ -38,6 +38,10 @@
     // .hero__stage; vị trí ảnh dưới, mảng nền và thanh process đều suy ra từ
     // đây (xem site.css).
     imageHeight: 25,
+    // Thử nghiệm: khi 4 ảnh dính thành MỘT HÀNG dưới header thì nền kem bên dưới
+    // chuyển tối (html.hero-row-dark), tách hàng ra thì trở lại. Mặc định tắt
+    // để giữ nguyên giao diện cũ; bật ở bảng setting (phím H) → Hero home.
+    darkOnRow: false,
     cycle: 6000, // ms — thanh process chạy từ 0 tới đầy
     // Cách đổi ảnh: 'shapes' = đoàn shape màu bay chéo (chande-reveal.js, cấu
     // hình ở CHANDE_REVEAL.config); 'wipe' = ảnh mới quét lên như bản đầu.
@@ -258,6 +262,17 @@
     state.onVis = () => (document.hidden ? pauseFill() : resumeFill())
     document.addEventListener('visibilitychange', state.onVis)
 
+    // Nền tối khi 4 ảnh thành hàng — một listener cuộn, một rAF, chỉ đọc 4 rect.
+    state.onRowScroll = () => {
+      if (state.rowTick) return
+      state.rowTick = requestAnimationFrame(() => {
+        state.rowTick = 0
+        checkRow()
+      })
+    }
+    addEventListener('scroll', state.onRowScroll, { passive: true })
+    checkRow()
+
     const start = () => state.alive && runFill()
     const loading = window.CHANDE_LOADING
     if (!loading || loading.config?.enabled === false || document.documentElement.classList.contains('cl-done')) start()
@@ -265,6 +280,17 @@
       state.onDone = start
       document.addEventListener('chande-loading:done', start, { once: true })
     }
+  }
+
+  // Hàng ngang = mép trên 4 thẻ bằng nhau (bậc thang thì lệch nhau) và hàng còn
+  // nằm trong màn hình. Bố cục mobile (lưới 2×2) không bao giờ thoả nên tự tắt.
+  function checkRow() {
+    const root = document.documentElement
+    if (!H || !CONFIG.darkOnRow) return void root.classList.remove('hero-row-dark')
+    const rects = H.slots.map((s) => s.getBoundingClientRect())
+    const tops = rects.map((r) => r.top)
+    const row = Math.max(...tops) - Math.min(...tops) < 1.5 && rects[0].bottom > 0
+    root.classList.toggle('hero-row-dark', row)
   }
 
   function applyHeights() {
@@ -278,6 +304,7 @@
     if (!H) return
     applyHeights()
     redraw()
+    checkRow()
   }
 
   function redraw() {
@@ -295,6 +322,9 @@
     if (!H) return
     H.alive = false
     H.ro?.disconnect()
+    removeEventListener('scroll', H.onRowScroll)
+    if (H.rowTick) cancelAnimationFrame(H.rowTick)
+    document.documentElement.classList.remove('hero-row-dark')
     document.removeEventListener('visibilitychange', H.onVis)
     if (H.onDone) document.removeEventListener('chande-loading:done', H.onDone)
     H.fillAnim?.cancel()

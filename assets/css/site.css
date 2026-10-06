@@ -20,6 +20,22 @@ body{
 }
 a{color:inherit}
 
+/* ---- Thử nghiệm "nền tối khi 4 ảnh thành hàng" ----
+   chande-hero.js gắn html.hero-row-dark khi 4 ảnh hero dính thành một hàng (chỉ
+   khi bật CONFIG.darkOnRow). Nền kem -> tối, chữ tối -> kem; cụm chữ trôi giữ
+   màu sáng. Đổi màu có chuyển tiếp nên không giật. */
+body, .hero{transition:background-color .6s ease}
+.hs-intro__a, .hs-intro__b, .hero__title, .hero__year, .hero__sub, .hero__intro-text{transition:color .6s ease}
+.chip::after{transition:background-color .6s ease}
+.hero__mark{transition:filter .6s ease}
+html.hero-row-dark body, html.hero-row-dark .hero{background-color:#0f1513}
+html.hero-row-dark .hs-intro__a, html.hero-row-dark .hs-intro__b,
+html.hero-row-dark .hero__title, html.hero-row-dark .hero__year{color:var(--cream)}
+html.hero-row-dark .hero__sub{color:#c9d1cc}
+html.hero-row-dark .chip::after{background-color:#0f1513}
+html.hero-row-dark .hero__mark{filter:invert(1)}
+html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
+
 /* Trang bắt đầu ngay dưới thanh header (thanh do chande-loading.js dựng). */
 .page{min-height:100vh; padding-top:var(--bar)}
 

@@ -139,6 +139,7 @@
     { tab: 'hero', mod: 'hero', title: 'Ảnh',
       items: [
         { path: 'imageHeight', label: 'Chiều cao 4 ảnh (% viewport)', type: 'range', min: 10, max: 50, step: 0.5 },
+        { path: 'darkOnRow', label: 'Nền tối khi 4 ảnh thành hàng (thử nghiệm)', type: 'bool' },
       ] },
     { tab: 'hero', mod: 'hero', title: 'Thanh tên · block reveal',
       items: [
@@ -193,6 +194,16 @@
         { path: 'corners', label: 'Bo góc', type: 'range', min: 0, max: 0.5, step: 0.01 },
         { path: 'bevel', label: 'Gờ', type: 'range', min: 0, max: 1, step: 0.01 },
         { path: 'studs', label: 'Núm', type: 'range', min: 0, max: 1, step: 0.01 },
+      ] },
+    { tab: 'field', mod: 'field', title: 'Rê chuột',
+      items: [
+        { path: 'hover', label: 'Bật hiệu ứng rê chuột', type: 'bool' },
+        { path: 'hoverRadius', label: 'Bán kính (số ô)', type: 'range', min: 1, max: 20, step: 0.5 },
+        { path: 'hoverShrink', label: 'Co ô', type: 'range', min: 0, max: 0.9, step: 0.01 },
+        { path: 'hoverPush', label: 'Đẩy ô ra xa', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'hoverWarp', label: 'Kéo màu (thấu kính)', type: 'range', min: 0, max: 5, step: 0.05 },
+        { path: 'hoverGlow', label: 'Sáng thêm', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'hoverEase', label: 'Độ mượt (nhỏ = mượt hơn)', type: 'range', min: 0.03, max: 1, step: 0.01 },
       ] },
     { tab: 'field', mod: 'field', title: 'Grade',
       items: [

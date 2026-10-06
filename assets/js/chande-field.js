@@ -59,6 +59,14 @@
     loop: 6, // giây cho một vòng
     fps: 30,
     maxDpr: 1.25, // ô to + gờ mềm: 1.25 đủ nét trên retina, đỡ ~30% điểm ảnh so với 1.5
+    // ---- Rê chuột vào mảng xanh ---------------------------------------------
+    hover: true,
+    hoverRadius: 6, // bán kính ảnh hưởng, tính bằng số ô
+    hoverShrink: 0.45, // ô sát con trỏ co lại bao nhiêu (0..1)
+    hoverPush: 0.9, // ô trượt ra xa con trỏ, tỉ lệ khoảng trống vừa co ra
+    hoverWarp: 1.6, // màu field bị kéo về phía con trỏ (số ô)
+    hoverGlow: 0.25, // sáng thêm
+    hoverEase: 0.18, // độ bám theo chuột / bật-tắt (0..1, nhỏ = mượt hơn)
   }
   const DEFAULTS = structuredClone(CONFIG)
   const reduced = matchMedia('(prefers-reduced-motion: reduce)')
@@ -95,6 +103,13 @@ uniform float uVignette;
 uniform float uGrainAmount;
 uniform float uGrainSize;
 uniform float uFlip;
+uniform vec2 uMouse;        // vị trí chuột trong toạ độ uv của vùng (đã tính lật)
+uniform float uHover;       // 0..1, bật/tắt dần
+uniform float uHoverRadius;
+uniform float uHoverShrink;
+uniform float uHoverPush;
+uniform float uHoverWarp;
+uniform float uHoverGlow;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
 
@@ -154,9 +169,22 @@ void main() {
     vec2 grid = vec2(uMosaicDetail, max(1.0, floor(uMosaicDetail / max(aspect, 0.001))));
     vec2 cell = floor(uv * grid);
     vec2 local = fract(uv * grid) - 0.5;
-    vec3 tint = shadeAt((cell + 0.5) / grid);
+    vec2 cellUv = (cell + 0.5) / grid;
 
-    float extent = 0.5 - uMosaicGap * 0.5;
+    // Rê chuột: ô quanh con trỏ CO LẠI và TRƯỢT ra xa con trỏ trong phạm vi ô của
+    // chính nó (không tràn sang ô bên nên không bị cắt), màu field bị kéo về phía
+    // con trỏ như qua thấu kính, ô sáng lên một chút. Tính theo đơn vị ô nên tròn
+    // đều ở mọi tỉ lệ vùng.
+    vec2 dCells = (cellUv - uMouse) * grid;
+    float dist = length(dCells);
+    float infl = uHover * (1.0 - smoothstep(0.0, uHoverRadius, dist));
+    infl *= infl * (3.0 - 2.0 * infl);
+    vec2 away = dist > 1e-4 ? dCells / dist : vec2(0.0);
+    vec3 tint = shadeAt(cellUv - away / grid * infl * uHoverWarp);
+
+    float extent = (0.5 - uMosaicGap * 0.5) * (1.0 - uHoverShrink * infl);
+    float room = 0.5 - extent;
+    local -= clamp(away * room * uHoverPush * infl, -room, room);
     float radius = uMosaicCorners * extent;
     vec2 corner = max(abs(local) - (extent - radius), 0.0);
     float brickDistance = length(corner) - radius;
@@ -167,7 +195,7 @@ void main() {
     vec2 slope = local / max(extent, 0.001);
     float rim = smoothstep(0.25, 1.0, max(abs(slope.x), abs(slope.y)));
     float relief = dot(normalize(slope + vec2(1e-5)), key) * rim;
-    vec3 lit = tint * (1.0 + uMosaicBevel * relief);
+    vec3 lit = tint * (1.0 + uMosaicBevel * relief) * (1.0 + uHoverGlow * infl);
 
     if (uMosaicStuds > 0.001) {
       float studRadius = uMosaicStuds * extent * 0.62;
@@ -175,7 +203,7 @@ void main() {
       float stud = 1.0 - smoothstep(-edgeAA, edgeAA, studDistance);
       float studSlope = clamp(length(local) / max(studRadius, 0.001), 0.0, 1.0);
       float studRelief = dot(normalize(local + vec2(1e-5)), key) * studSlope;
-      lit = mix(lit, tint * (1.0 + uMosaicBevel * (0.25 + studRelief)), stud);
+      lit = mix(lit, tint * (1.0 + uMosaicBevel * (0.25 + studRelief)) * (1.0 + uHoverGlow * infl), stud);
     }
     color = mix(rampColor(0.0) * 0.3, clamp(lit, 0.0, 1.0), brick);
   } else {
@@ -196,7 +224,7 @@ void main() {
     'uResolution', 'uPhase', 'uLineCount', 'uLineOffset', 'uLineOrder', 'uSoftness',
     'uMosaicOn', 'uMosaicDetail', 'uMosaicGap', 'uMosaicCorners', 'uMosaicBevel',
     'uMosaicStuds', 'uContrast', 'uSaturation', 'uVignette', 'uGrainAmount', 'uGrainSize',
-  'uFlip',
+  'uFlip', 'uMouse', 'uHover', 'uHoverRadius', 'uHoverShrink', 'uHoverPush', 'uHoverWarp', 'uHoverGlow',
   ]
 
   const hexToRgb = (hex) => {
@@ -248,11 +276,18 @@ void main() {
         gl.clear(gl.COLOR_BUFFER_BIT)
       },
       // Một vùng: x, y tính từ góc TRÊN-trái canvas (px thiết bị).
-      draw(x, y, w, h, phase, o, pixelScale, flip) {
+      draw(x, y, w, h, phase, o, pixelScale, flip, mouse = null) {
         const gy = canvas.height - y - h // WebGL đếm từ đáy
         gl.viewport(x, gy, w, h)
         gl.scissor(x, gy, w, h)
         gl.uniform1f(u.uFlip, flip ? 1 : 0)
+        gl.uniform2f(u.uMouse, mouse ? mouse.x : -9, mouse ? mouse.y : -9)
+        gl.uniform1f(u.uHover, mouse ? mouse.on : 0)
+        gl.uniform1f(u.uHoverRadius, o.hoverRadius)
+        gl.uniform1f(u.uHoverShrink, o.hoverShrink)
+        gl.uniform1f(u.uHoverPush, o.hoverPush)
+        gl.uniform1f(u.uHoverWarp, o.hoverWarp)
+        gl.uniform1f(u.uHoverGlow, o.hoverGlow)
         o.colors.forEach((c, i) => gl.uniform3fv(uColors[i], hexToRgb(c)))
         gl.uniform2f(u.uResolution, w, h)
         gl.uniform1f(u.uPhase, phase)
@@ -365,8 +400,37 @@ void main() {
       const w = Math.round((rg.x + rg.w) * dpr) - x
       const h = Math.round((rg.y + rg.h) * dpr) - y
       const phase = (clock.phase + (+rg.el.dataset.fieldShift || 0)) % 1
-      g.r.draw(x, y, w, h, phase, regionOptions(rg.el), dpr, rg.el.dataset.fieldFlip === 'y')
+      g.r.draw(x, y, w, h, phase, regionOptions(rg.el), dpr, rg.el.dataset.fieldFlip === 'y', easeMouse(rg))
     })
+  }
+
+  // Chuột trên từng vùng: đích (target) do pointermove ghi, giá trị vẽ (m) đuổi
+  // theo mỗi khung — bật/tắt và di chuyển đều mượt. Trả null khi đã tắt hẳn để
+  // shader khỏi tính.
+  function easeMouse(rg) {
+    const t = rg.target
+    if (!t || !CONFIG.hover) return null
+    const m = (rg.m ||= { x: t.x, y: t.y, on: 0 })
+    const k = CONFIG.hoverEase
+    m.x += (t.x - m.x) * k * 1.6
+    m.y += (t.y - m.y) * k * 1.6
+    m.on += (t.on - m.on) * k
+    if (t.on === 0 && m.on < 0.003) {
+      rg.m = null
+      rg.target = null
+      return null
+    }
+    return m
+  }
+
+  function onPointer(rg, e) {
+    const r = rg.el.getBoundingClientRect()
+    const x = (e.clientX - r.left) / r.width
+    const yDom = (e.clientY - r.top) / r.height
+    // shader: vUv.y đi từ ĐÁY; vùng lật dọc thì uv.y = 1 - vUv.y = yDom
+    const y = rg.el.dataset.fieldFlip === 'y' ? yDom : 1 - yDom
+    rg.target = { x, y, on: 1 }
+    kick()
   }
 
   function loop(t) {
@@ -404,6 +468,17 @@ void main() {
     io.observe(root)
     ro.observe(root)
     regionEls.forEach((el) => el !== root && ro.observe(el))
+    if (!reduced.matches && matchMedia('(pointer: fine)').matches) {
+      g.regions.forEach((rg) => {
+        rg.onMove = (e) => onPointer(rg, e)
+        rg.onLeave = () => {
+          if (rg.target) rg.target.on = 0
+          kick()
+        }
+        rg.el.addEventListener('pointermove', rg.onMove, { passive: true })
+        rg.el.addEventListener('pointerleave', rg.onLeave)
+      })
+    }
   }
 
   function ensureRenderer(g) {
@@ -462,7 +537,11 @@ void main() {
       if (scope && !scope.contains(g.root)) return
       io?.unobserve(g.root)
       ro?.unobserve(g.root)
-      g.regions.forEach((rg) => ro?.unobserve(rg.el))
+      g.regions.forEach((rg) => {
+        ro?.unobserve(rg.el)
+        if (rg.onMove) rg.el.removeEventListener('pointermove', rg.onMove)
+        if (rg.onLeave) rg.el.removeEventListener('pointerleave', rg.onLeave)
+      })
       g.r?.dispose()
       g.canvas.remove()
       g.root.classList.remove('is-live')
