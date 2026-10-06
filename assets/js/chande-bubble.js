@@ -20,8 +20,11 @@
  *   • Một canvas cố định phủ cả màn (pointer-events: none), nghe chuột trên toàn
  *     window thay vì một phần tử.
  *   • Màu nhận mã hex để bảng setting chỉnh được.
- *   • Độ dính (blend) quy theo px thật — xem render(): không có thì giọt phình to
- *     theo kích thước màn hình.
+ *   Chuyển động, độ dính, cỡ giọt GIỐNG HỆT bản gốc: demo trên canvasui.dev cũng
+ *   là một canvas phủ cả màn, blend tính trong toạ độ chuẩn hoá theo cạnh ngắn
+ *   màn hình -> giọt gom lại to cỡ size + ~10% chiều cao màn (≈120px ở màn cao
+ *   900px) và chảy nhão khi kéo. (Từng thử quy blend theo px cho giọt nhỏ lại —
+ *   thành hòn bi kéo chuỗi hạt, không giống gốc, đã bỏ.)
  * Hiệu năng:
  *   • Chỉ vẽ (và chỉ xoá) trong vùng scissor quanh giọt.
  *   • Shader bỏ sớm mọi điểm ảnh chắc chắn nằm ngoài giọt (cận dưới của
@@ -318,9 +321,7 @@ void main () {
   // tâm không lệch, càng ra mép càng lấy mẫu từ phía trong (như tia đi qua giọt
   // nước bị bẻ vào). Ngoài hình tròn giữ 0.5 (không dịch).
   function buildLens() {
-    const c = Math.min(Math.max(Math.round(CONFIG.trail), 1), MAX_TRAIL)
-    // bán kính giọt khi gom lại ≈ size + phần phình do các cầu hoà vào nhau
-    const R = Math.max(8, (CONFIG.size + (60 * Math.log(c + 1)) / Math.max(CONFIG.blend, 0.5)) * CONFIG.lensScale)
+    const R = Math.max(8, pooledRadius() * CONFIG.lensScale)
     const key = `${R.toFixed(1)}|${CONFIG.refraction}|${CONFIG.dispersion}|${CONFIG.frost}`
     if (key === lensKey) return
     lensKey = key
@@ -421,6 +422,19 @@ void main () {
 
   const count = () => Math.min(Math.max(Math.round(CONFIG.trail), 1), MAX_TRAIL)
 
+  // Bán kính giọt khi gom lại (px CSS), tính đúng như shader: các cầu đồng tâm
+  // bán kính r_i = base·(c − i) hoà bằng smoothMin(k = blend) -> mặt giọt ở
+  // d = ln Σ e^(k·r_i) / k (toạ độ chuẩn hoá, 1 đơn vị = nửa cạnh ngắn màn).
+  function pooledRadius() {
+    const c = count()
+    const half = Math.min(innerWidth, innerHeight) / 2
+    const k = Math.max(CONFIG.blend, 0.5)
+    const r0 = Math.max(CONFIG.size, 4) / half
+    let m = 0
+    for (let i = 0; i < c; i++) m += Math.exp(k * (r0 * (c - i)) / c - k * r0)
+    return (r0 + Math.log(m) / k) * half
+  }
+
   // Trạng thái giọt cho chande-cursor.js (đơn vị px CSS). Cầu thứ i (0 = đầu) có
   // bán kính ≈ (size × (count − i) / count + swell) × presence.
   const state = { x: headX, y: headY, size: 0, swell: 0, count: 1, presence: 0, moving: false, trailX, trailY }
@@ -450,11 +464,7 @@ void main () {
     const minRes = Math.min(output.width, output.height)
     const headRadius = Math.max(CONFIG.size, 4) * dpr * presence
     const baseRadius = (headRadius * 2) / (minRes * c)
-    // Độ dính quy theo PX THẬT: shader tính trong toạ độ chuẩn hoá theo cạnh ngắn
-    // của canvas, nên 24 cầu chồng lên nhau phình thêm ln(24)/blend × (cạnh/2).
-    // Bản gốc chạy trong khung demo nhỏ; phủ cả màn 1080p thì giọt phình ~4 lần.
-    // Nhân theo cạnh canvas / (dpr × 200) để giọt giữ cùng cỡ ở mọi màn hình.
-    const blend = Math.max(CONFIG.blend, 0.5) * (minRes / (dpr * 200))
+    const blend = Math.max(CONFIG.blend, 0.5)
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
     for (let i = 0; i < c; i++) {
       const dx = trailX[i] * dpr
@@ -544,7 +554,7 @@ void main () {
     state.x = headX
     state.y = headY
     state.size = CONFIG.enabled ? Math.max(CONFIG.size, 4) : 0
-    state.swell = (100 * Math.log(count() + 1)) / Math.max(CONFIG.blend, 0.5)
+    state.swell = Math.max(0, pooledRadius() - Math.max(CONFIG.size, 4))
     state.count = count()
     state.presence = CONFIG.enabled ? presence : 0
     const on = lensOK && CONFIG.enabled && CONFIG.refract && presence > 0.02
@@ -588,6 +598,7 @@ void main () {
   addEventListener('blur', leave)
   addEventListener('resize', () => {
     sync()
+    lensKey = '' // cỡ giọt theo cạnh ngắn màn hình
     start()
   })
 
