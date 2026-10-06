@@ -187,6 +187,13 @@
         { path: 'follow', label: 'Bám chuột', type: 'range', min: 0.02, max: 1, step: 0.01 },
         { path: 'blend', label: 'Độ dính', type: 'range', min: 1, max: 40, step: 0.5 },
       ] },
+    { tab: 'bubble', mod: 'bubble', title: 'Khúc xạ (thấu kính — Chrome/Edge)',
+      items: [
+        { path: 'refract', label: 'Bật khúc xạ nội dung bên dưới', type: 'bool' },
+        { path: 'refraction', label: 'Độ bẻ cong', type: 'range', min: 0, max: 200, step: 1 },
+        { path: 'dispersion', label: 'Tách màu ở mép', type: 'range', min: 0, max: 3, step: 0.05 },
+        { path: 'lensScale', label: 'Cỡ thấu kính so với giọt', type: 'range', min: 0.5, max: 1.5, step: 0.01 },
+      ] },
     { tab: 'bubble', mod: 'bubble', title: 'Bề mặt',
       items: [
         { path: 'speed', label: 'Tốc độ óng ánh', type: 'range', min: 0, max: 8, step: 0.1 },

@@ -9,9 +9,14 @@
  *
  * Shader (ray-march metaball: đầu giọt + vệt đuôi tối đa 24 cầu hoà vào nhau)
  * chép nguyên văn. Khác bản gốc:
- *   • Không dùng html-in-canvas (API thử nghiệm, trình duyệt thường chưa có) nên
- *     luôn chạy nhánh dự phòng của chính shader: giọt màng trong suốt có viền,
- *     óng ánh và điểm phản quang — KHÔNG khúc xạ nội dung trang bên dưới.
+ *   • Không dùng html-in-canvas (API thử nghiệm — chính trang canvasui.dev trên
+ *     Chrome thường cũng không có) nên shader chạy nhánh dự phòng: lớp màng có
+ *     viền, óng ánh, phản quang.
+ *   • KHÚC XẠ THẬT thay bằng một "thấu kính" CSS đi theo đầu giọt:
+ *     backdrop-filter: url(#lọc SVG) với feDisplacementMap (bản đồ dịch chuyển
+ *     hình cầu vẽ bằng canvas) + tách 3 kênh R/G/B lệch nhau (dispersion). Chrome
+ *     / Edge có; Safari / Firefox chưa hỗ trợ backdrop-filter url() -> chỉ còn
+ *     lớp màng. Chỉ đầu giọt khúc xạ, vệt đuôi vẫn là màng.
  *   • Một canvas cố định phủ cả màn (pointer-events: none), nghe chuột trên toàn
  *     window thay vì một phần tử.
  *   • Màu nhận mã hex để bảng setting chỉnh được.
@@ -41,9 +46,12 @@
     colorA: '#4a74b8',
     colorB: '#69696a',
     fallbackOpacity: 1,
-    // giữ cho đủ uniform của shader gốc (chỉ dùng ở nhánh khúc xạ)
-    refraction: 80,
-    dispersion: 1,
+    // Thấu kính khúc xạ (CSS backdrop-filter + SVG). Shader gốc cũng nhận hai số
+    // này nhưng chỉ dùng ở nhánh html-in-canvas.
+    refract: true,
+    refraction: 80, // độ bẻ cong (px dịch tối đa ở mép thấu kính = refraction / 2)
+    dispersion: 1, // tách màu R/G/B ở mép (0–3)
+    lensScale: 1, // thấu kính to / nhỏ hơn giọt
     frost: 0,
   }
   const DEFAULTS = structuredClone(CONFIG)
@@ -235,9 +243,86 @@ void main () {
   output.className = 'cbubble'
   output.setAttribute('aria-hidden', 'true')
   const style = document.createElement('style')
-  style.textContent = '.cbubble{position:fixed; inset:0; width:100vw; height:100vh; z-index:9999; pointer-events:none}'
+  style.textContent =
+    '.cbubble{position:fixed; inset:0; width:100vw; height:100vh; z-index:9999; pointer-events:none}' +
+    '.cbubble-lens{position:fixed; left:0; top:0; z-index:9998; border-radius:50%; pointer-events:none;' +
+    ' backdrop-filter:url(#cbubble-lens); visibility:hidden; will-change:transform}'
   document.head.appendChild(style)
   document.body.appendChild(output)
+
+  /* --------------------------------------------- Thấu kính khúc xạ (CSS) --- */
+  const lensOK = CSS.supports('backdrop-filter', 'url(#a)')
+  const SVGNS = 'http://www.w3.org/2000/svg'
+  const svg = document.createElementNS(SVGNS, 'svg')
+  svg.setAttribute('aria-hidden', 'true')
+  svg.style.cssText = 'position:absolute; width:0; height:0; overflow:hidden'
+  svg.innerHTML = `<filter id="cbubble-lens" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feImage result="map" x="0" y="0" preserveAspectRatio="none"/>
+    <feDisplacementMap in="SourceGraphic" in2="map" xChannelSelector="R" yChannelSelector="G" result="dr"/>
+    <feColorMatrix in="dr" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
+    <feDisplacementMap in="SourceGraphic" in2="map" xChannelSelector="R" yChannelSelector="G" result="dg"/>
+    <feColorMatrix in="dg" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/>
+    <feDisplacementMap in="SourceGraphic" in2="map" xChannelSelector="R" yChannelSelector="G" result="db"/>
+    <feColorMatrix in="db" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
+    <feBlend in="r" in2="g" mode="screen" result="rg"/>
+    <feBlend in="rg" in2="b" mode="screen"/>
+  </filter>`
+  document.body.appendChild(svg)
+  const lens = document.createElement('div')
+  lens.className = 'cbubble-lens'
+  lens.setAttribute('aria-hidden', 'true')
+  document.body.appendChild(lens)
+  const feImage = svg.querySelector('feImage')
+  const maps = svg.querySelectorAll('feDisplacementMap')
+  let lensR = 0
+  let lensKey = ''
+
+  // Bản đồ dịch chuyển hình cầu: R/G = 0.5 + d/2, d = -(x, y)·(1 - √(1 - r²)) —
+  // tâm không lệch, càng ra mép càng lấy mẫu từ phía trong (như tia đi qua giọt
+  // nước bị bẻ vào). Ngoài hình tròn giữ 0.5 (không dịch).
+  function buildLens() {
+    const c = Math.min(Math.max(Math.round(CONFIG.trail), 1), MAX_TRAIL)
+    // bán kính giọt khi gom lại ≈ size + phần phình do các cầu hoà vào nhau
+    const R = Math.max(8, (CONFIG.size + (60 * Math.log(c + 1)) / Math.max(CONFIG.blend, 0.5)) * CONFIG.lensScale)
+    const key = `${R.toFixed(1)}|${CONFIG.refraction}|${CONFIG.dispersion}`
+    if (key === lensKey) return
+    lensKey = key
+    lensR = R
+    const S = 128
+    const cv = document.createElement('canvas')
+    cv.width = cv.height = S
+    const ctx = cv.getContext('2d')
+    const img = ctx.createImageData(S, S)
+    for (let j = 0; j < S; j++)
+      for (let i = 0; i < S; i++) {
+        const x = ((i + 0.5) / S) * 2 - 1
+        const y = ((j + 0.5) / S) * 2 - 1
+        const r2 = x * x + y * y
+        let dx = 0
+        let dy = 0
+        if (r2 < 1) {
+          const k = 1 - Math.sqrt(1 - r2)
+          dx = -x * k
+          dy = -y * k
+        }
+        const o = (j * S + i) * 4
+        img.data[o] = Math.round(127.5 + 127.5 * dx)
+        img.data[o + 1] = Math.round(127.5 + 127.5 * dy)
+        img.data[o + 2] = 128
+        img.data[o + 3] = 255
+      }
+    ctx.putImageData(img, 0, 0)
+    const D = Math.round(R * 2)
+    feImage.setAttribute('href', cv.toDataURL())
+    feImage.setAttribute('width', D)
+    feImage.setAttribute('height', D)
+    const ca = Math.max(CONFIG.dispersion, 0) * 0.08
+    const sc = CONFIG.refraction
+    maps[0].setAttribute('scale', sc * (1 + ca))
+    maps[1].setAttribute('scale', sc)
+    maps[2].setAttribute('scale', sc * (1 - ca))
+    lens.style.width = lens.style.height = `${D}px`
+  }
 
   const gl = output.getContext('webgl2', { alpha: true, depth: false, stencil: false, antialias: false, premultipliedAlpha: true })
   if (!gl) {
@@ -380,6 +465,7 @@ void main () {
     trailY[0] = headY
     presence += (presenceTarget - presence) * kScale
     render()
+    placeLens()
     if (presence < 0.004 && presenceTarget === 0) {
       presence = 0
       running = false
@@ -387,6 +473,14 @@ void main () {
     }
     raf = requestAnimationFrame(frame)
   }
+  function placeLens() {
+    const on = lensOK && CONFIG.enabled && CONFIG.refract && presence > 0.02
+    lens.style.visibility = on ? 'visible' : 'hidden'
+    if (!on) return
+    buildLens()
+    lens.style.transform = `translate3d(${headX - lensR}px, ${headY - lensR}px, 0) scale(${presence})`
+  }
+
   function start() {
     if (running || !CONFIG.enabled) return
     running = true
@@ -425,7 +519,9 @@ void main () {
   })
 
   api.refresh = () => {
+    lensKey = ''
     if (!CONFIG.enabled) {
+      lens.style.visibility = 'hidden'
       cancelAnimationFrame(raf)
       running = false
       presence = 0
