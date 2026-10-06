@@ -18,6 +18,8 @@
   <div class="page">
     <!-- HERO — Figma node 513:33865. Toạ độ trong CSS là px khổ 1920, tính từ
          mép dưới header (y - 80). Hành vi do assets/js/chande-hero.js. -->
+    <!-- Khung trôi của cụm chữ hero: từ hero tới hết dải màu kem → đen -->
+    <div class="travel">
     <section class="hero" data-hero data-cms-section="Hero" aria-label="Chande Bootcamp by Mingg">
       <div class="hero__stage field-root" data-field-root>
         <div class="hero__field hero__field--a field" data-field></div>
@@ -25,18 +27,6 @@
         <div class="hero__dark" data-hero-dither="#182220" data-levels="8"></div>
         <div class="hero__dark hero__dark--col" data-hero-dither="#131313" data-levels="8"></div>
         <div class="hero__field hero__field--c field" data-field></div>
-
-        <!-- Cụm chữ: ở viewport đầu tiên cách đáy + trái 24px -->
-        <div class="hero__intro">
-          <div class="hero__intro-text">
-            <p>2-4 October<br>Ke Retreat - Hanoi, VN</p>
-            <p>A community connecting event<br>for Vietnamese designers.<br>In the most peaceful way.</p>
-          </div>
-          <figure class="hero__recap">
-            <img data-cms="hero-recap" data-cms-label="Video recap" data-cms-w="234" src="assets/img/home/recap.webp" alt="Ke Retreat, Hà Nội" width="800" height="600">
-            <figcaption>Video recap</figcaption>
-          </figure>
-        </div>
 
         <!-- Thanh process: chạy hết thì đổi cả 4 ảnh -->
         <div class="hero__col hero__col--progress">
@@ -80,6 +70,20 @@
           </div>
         </div>
       </div>
+
+      <!-- Cụm chữ + video recap: bám đáy viewport cách 24px, trôi qua Intro / Story /
+           dải màu, tới đáy dải màu thì dừng (cột chạy hết khung .travel). Nằm trong
+           section Hero để CMS vẫn xếp ảnh recap vào Section 1. -->
+      <div class="travel__col" data-travel><div class="travel__intro">
+          <div class="hero__intro-text">
+            <p>2-4 October<br>Ke Retreat - Hanoi, VN</p>
+            <p>A community connecting event<br>for Vietnamese designers.<br>In the most peaceful way.</p>
+          </div>
+          <figure class="hero__recap">
+            <img data-cms="hero-recap" data-cms-label="Video recap" data-cms-w="234" src="assets/img/home/recap.webp" alt="Ke Retreat, Hà Nội" width="800" height="600">
+            <figcaption>Video recap</figcaption>
+          </figure>
+      </div></div>
 
       <!-- Danh sách người cho vòng đổi ảnh. Mỗi lượt thanh process chạy hết thì
            4 ô nhận 4 người kế tiếp. `pos` = object-position của ảnh. -->
@@ -140,6 +144,7 @@
     <section class="hs hs-scheme" data-cms-section="Dải màu kem → đen" aria-hidden="true">
       <div class="scheme scheme--rev"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     </section>
+    </div>
 
     <!-- ===================== 4. STRIP: field + pills ======================= -->
     <section class="hs hs-strip" data-cms-section="Dải effect + viên thuốc" aria-hidden="true">

@@ -59,7 +59,10 @@ a{color:inherit}
  *   (cùng một rule cho cả 4 ảnh; mảng xanh phải + đáy nửa kem bám mép trên ảnh 4)
  * H chỉnh được trong bảng setting (phím H) -> tab Hero home.
  * ========================================================================== */
-.hero{container-type:inline-size; position:relative; background:var(--cream)}
+/* KHÔNG đặt container-type / position ở .hero: containment biến .hero thành khung
+   chứa của mọi con absolute, cụm chữ (.travel__col) sẽ không trôi ra khỏi hero
+   được. --u tính theo .page (cùng bề rộng). */
+.hero{background:var(--cream)}
 .hero__stage{
   --u:calc(100cqw / 1920);
   --fold:calc(100svh - var(--bar));       /* phần hero lộ ra ở viewport đầu */
@@ -152,28 +155,28 @@ a{color:inherit}
   transform-origin:0 50%; transform:scaleX(.8171);   /* 402 / 492 như Figma */
 }
 
-/* ---- Cụm chữ trái + video recap ----
-   Khung cao đúng phần hero lộ ra ở viewport đầu, chữ dồn đáy cách 24px.
-   760 chặn dưới để màn quá thấp chữ không đè lên mảng xanh. */
-.hero__intro{
-  position:absolute; left:calc(24 * var(--u)); top:0; width:calc(234 * var(--u));
-  height:max(var(--fold), calc(760 * var(--u)));
-  display:flex; flex-direction:column; justify-content:flex-end;
-  padding-bottom:calc(24 * var(--u));
-}
+/* ---- Cụm chữ trái + video recap: trôi theo đáy viewport ----
+   .travel bọc hero → hết dải màu kem → đen. Cột chạy suốt khung, cụm dồn đáy cột
+   và `sticky; bottom: 24`: lúc đầu bám đáy viewport cách 24, cuộn tới khi đáy
+   khung lên tới nơi thì dừng ở đáy dải màu, vẫn cách 24. */
+.travel{position:relative}
+.travel__col{--u:calc(100cqw / 1920);
+  position:absolute; left:calc(24 * var(--u)); top:0; bottom:0; width:calc(234 * var(--u)); z-index:5;
+  display:flex; flex-direction:column; justify-content:flex-end; padding-bottom:calc(24 * var(--u));
+  pointer-events:none}
+.travel__intro{position:sticky; bottom:calc(24 * var(--u)); display:flex; flex-direction:column; gap:calc(52 * var(--u)); pointer-events:auto}
 .hero__intro-text{
   display:flex; flex-direction:column; gap:1.5rem;
   /* Figma dùng mix-blend difference trên nền #131313 phẳng = đúng màu #e1e0d8.
      Ghi thẳng màu đó, khỏi tốn một lớp hoà trộn phải ghép lại mỗi khung cuộn. */
-  color:#e1e0d8;
+  color:#e1e0d8; transition:color .25s ease;
   font-weight:500; font-size:1rem; line-height:calc(.98em + 2px); letter-spacing:-.02em;
   white-space:nowrap;
 }
 .hero__intro-text p{margin:0; text-box:trim-both cap alphabetic}
-.hero__recap{
-  position:absolute; left:0; top:calc(100% + 28 * var(--u)); /* 52 - 24 đệm đáy */
-  width:100%; height:calc(140 * var(--u)); margin:0; overflow:hidden;
-}
+/* Qua nền kem (hết hero) thì chữ tối — chande-home.js gắn .is-on-light */
+.travel__col.is-on-light .hero__intro-text{color:#0e1813}
+.hero__recap{position:relative; width:100%; height:calc(140 * var(--u)); margin:0; overflow:hidden}
 .hero__recap img{width:100%; height:100%; object-fit:cover; object-position:50% 33%}
 .hero__recap figcaption{
   position:absolute; left:0; bottom:0; padding:.5rem;
@@ -283,7 +286,8 @@ a{color:inherit}
   .hero__col--1, .hero__col--2, .hero__col--3, .hero__col--4{order:1}
   .hero__col--progress{grid-column:1 / -1; order:2}
   .hero__progress{position:relative; top:auto; height:.75rem}
-  .hero__intro{grid-column:1 / -1; order:3; height:auto; padding:2rem 1.5rem; gap:2rem; background:#131313}
+  .travel__col{position:static; width:auto; padding:2rem 1.5rem; background:#131313}
+  .travel__intro{position:static; gap:2rem}
   .hero__recap{position:relative; top:auto; width:min(100%, 20rem); height:auto; aspect-ratio:234 / 140}
   .hero__field--c{grid-column:1 / -1; order:4; height:auto; aspect-ratio:726 / 328}
 }

@@ -28,30 +28,55 @@
       io.observe(el)
     })
 
-    // Vòng %: chỉ ghi DOM khi số đổi, và xoay vòng ngoài theo tiến độ.
+    // Việc chạy theo cuộn: gom chung MỘT listener + một rAF, mỗi việc chỉ ghi DOM
+    // khi giá trị đổi.
+    const jobs = []
+
+    // Vòng %: tiến độ cuộn cả trang, xoay vòng ngoài theo.
     const pct = scope.querySelector('[data-scroll-pct]')
     if (pct) {
       const num = pct.querySelector('[data-pct]')
       const ring = pct.querySelector('img')
       let last = -1
-      let ticking = false
-      const update = () => {
-        ticking = false
+      jobs.push(() => {
         const max = document.documentElement.scrollHeight - innerHeight
         const p = max > 0 ? Math.round((scrollY / max) * 100) : 0
         if (p === last) return
         last = p
         num.textContent = p
         ring.style.transform = `rotate(${p * 3.6}deg)`
+      })
+    }
+
+    // Cụm chữ trôi của hero: tâm khối chữ qua khỏi mép dưới hero (sang nền kem)
+    // thì chữ chuyển màu tối.
+    const travel = scope.querySelector('[data-travel]')
+    const stage = scope.querySelector('.hero__stage')
+    if (travel && stage) {
+      const text = travel.querySelector('.hero__intro-text')
+      let light = null
+      jobs.push(() => {
+        const t = text.getBoundingClientRect()
+        const on = (t.top + t.bottom) / 2 > stage.getBoundingClientRect().bottom
+        if (on !== light) travel.classList.toggle('is-on-light', (light = on))
+      })
+    }
+
+    if (jobs.length) {
+      let ticking = false
+      const run = () => {
+        ticking = false
+        jobs.forEach((fn) => fn())
       }
       onScroll = () => {
         if (!ticking) {
           ticking = true
-          requestAnimationFrame(update)
+          requestAnimationFrame(run)
         }
       }
       addEventListener('scroll', onScroll, { passive: true })
-      update()
+      addEventListener('resize', onScroll, { passive: true })
+      run()
     }
 
     // Footer: bọc từng tên (tách theo " / ") thành .nm; hover tên nào thì ô ảnh hiện
@@ -120,7 +145,10 @@
   function destroy() {
     io?.disconnect()
     io = null
-    if (onScroll) removeEventListener('scroll', onScroll)
+    if (onScroll) {
+      removeEventListener('scroll', onScroll)
+      removeEventListener('resize', onScroll)
+    }
     onScroll = null
   }
 
