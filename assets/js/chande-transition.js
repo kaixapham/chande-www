@@ -161,6 +161,8 @@
     // cuộn thẳng, không thấy smooth.
     lenis: { enabled: true, lerp: 0.1, wheelMultiplier: 1 },
   }
+  // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
+  window.CHANDE_SETTINGS_APPLY?.('transition', CONFIG)
 
   if (!CONFIG.enabled) return
 

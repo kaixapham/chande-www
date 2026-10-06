@@ -34,10 +34,13 @@ const stat = (p) => {
 
 // ---- CMS (chế độ Local) ------------------------------------------------------
 // cms.html gọi POST /__cms/save để ghi thẳng file xuống đĩa. Chỉ nhận từ máy
-// này (loopback) và chỉ được ghi: các trang .html ở gốc, ảnh trong assets/img/cms/.
+// này (loopback) và chỉ được ghi: các trang .html ở gốc, ảnh trong assets/img/cms/,
+// và assets/js/chande-settings.js (nút Lưu của bảng setting phím H).
 const isLoopback = (a = '') => a === '127.0.0.1' || a === '::1' || a === '::ffff:127.0.0.1'
 const writable = (rel) =>
-  /^[a-z0-9-]+\.html$/i.test(rel) || /^assets\/img\/cms\/[a-z0-9/_.-]+\.(webp|png|jpg|svg)$/i.test(rel)
+  /^[a-z0-9-]+\.html$/i.test(rel) ||
+  /^assets\/img\/cms\/[a-z0-9/_.-]+\.(webp|png|jpg|svg)$/i.test(rel) ||
+  rel === 'assets/js/chande-settings.js'
 
 function cms(req, res, url) {
   const send = (code, obj) => {

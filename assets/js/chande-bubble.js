@@ -64,6 +64,8 @@
     frost: 0,
     maxDpr: 1.5, // giới hạn độ phân giải canvas — màng mỏng, 1.5 đã đủ nét
   }
+  // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
+  window.CHANDE_SETTINGS_APPLY?.('bubble', CONFIG)
   const DEFAULTS = structuredClone(CONFIG)
   const MAX_TRAIL = 24
 

@@ -179,6 +179,8 @@
       aspect: 1.6 // kéo dải sáng theo chiều ngang, chỉ khi amount > 0
     },
   }
+  // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
+  window.CHANDE_SETTINGS_APPLY?.('loading', CONFIG)
 
   if (!CONFIG.enabled) return
 

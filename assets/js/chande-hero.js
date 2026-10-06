@@ -70,6 +70,8 @@
     // bằng CPU thay vì GPU. Tắt thì ảnh vẽ thẳng, canvas vẫn tăng tốc phần cứng.
     ditherImages: false,
   }
+  // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
+  window.CHANDE_SETTINGS_APPLY?.('hero', CONFIG)
 
   const DEFAULTS = structuredClone(CONFIG)
   const reduced = matchMedia('(prefers-reduced-motion: reduce)')

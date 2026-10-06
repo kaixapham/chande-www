@@ -71,6 +71,8 @@
     hoverGapColor: '#e9ffd1',
     hoverEase: 0.18, // độ bám theo chuột / bật-tắt (0..1, nhỏ = mượt hơn)
   }
+  // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
+  window.CHANDE_SETTINGS_APPLY?.('field', CONFIG)
   const DEFAULTS = structuredClone(CONFIG)
   const reduced = matchMedia('(prefers-reduced-motion: reduce)')
 

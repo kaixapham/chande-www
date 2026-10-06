@@ -51,6 +51,8 @@
     // để màu phẳng không lạc giữa các ảnh chân dung đã dither.
     dither: true,
   }
+  // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
+  window.CHANDE_SETTINGS_APPLY?.('reveal', CONFIG)
 
   const DEFAULTS = structuredClone(CONFIG)
 

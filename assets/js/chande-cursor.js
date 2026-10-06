@@ -31,6 +31,8 @@
     body: 0.38, // bán kính "thân" nhân vật để va chạm, theo tỉ lệ size
     src: 'assets/img/cursor-mascot.webp',
   }
+  // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
+  window.CHANDE_SETTINGS_APPLY?.('cursor', CONFIG)
   const DEFAULTS = structuredClone(CONFIG)
 
   const fine = matchMedia('(pointer: fine)')

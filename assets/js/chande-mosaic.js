@@ -98,6 +98,8 @@
     // Vùng có tên lạ (data-mosaic="x") mà chưa khai báo thì lấy bộ này.
     fallback: 'a',
   }
+  // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
+  window.CHANDE_SETTINGS_APPLY?.('mosaic', CONFIG)
 
   const DEFAULTS = structuredClone(CONFIG)
   const reduced = matchMedia('(prefers-reduced-motion: reduce)')

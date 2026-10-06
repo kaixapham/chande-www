@@ -38,6 +38,7 @@ tools/profile-reveal/          công cụ chỉnh hiệu ứng shape — Vite, p
 assets/js/chande-poster.js     section 7 Poster: chồng poster thả theo scroll (module) — cả ba trang
 assets/js/paper-stack.js       SINH TỰ ĐỘNG từ tool paper-stack — đừng sửa tay (xem mục 7)
 assets/js/chande-devtools.js   bảng điều khiển (chỉ lúc làm việc)
+assets/js/chande-settings.js   thông số đã bấm Lưu ở bảng setting — nạp trước mọi file hiệu ứng
 assets/vendor/                 barba 2.10.3, lenis 1.3.17, gsap 3.15 + CustomEase, three 0.185.1
 assets/fonts/Phudu-*.woff2     Phudu SemiBold 600 + Bold 700 (latin / latin-ext / vietnamese)
 assets/img/logo.svg            logo export từ Figma
@@ -522,6 +523,15 @@ Giá trị đã chỉnh lưu ở `localStorage['chande-devtools']` (ảnh ở
 lạ thì đọc localStorage trước khi nghi code. Nút **Reset** trả tab hiện tại về mặc định.
 Chỉ những giá trị **khác mặc định** mới được lưu, nên đổi mặc định trong CONFIG
 vẫn có tác dụng với những ô chưa ai chỉnh.
+
+localStorage chỉ là của trình duyệt đang chỉnh. Nút **Lưu** ở đầu bảng (chấm xanh =
+còn chỉnh chưa lưu) ghi các giá trị đó vào `assets/js/chande-settings.js` thành
+**mặc định cho mọi người xem**: mỗi file hiệu ứng gọi
+`CHANDE_SETTINGS_APPLY('tên', CONFIG)` ngay sau khối CONFIG, nên file này độc lập
+với devtools — bàn giao xoá devtools vẫn giữ thông số. Reset trả về bản đã Lưu.
+- Local (`node serve.mjs`): ghi thẳng file qua `POST /__cms/save`, rồi commit + push.
+- GitHub Pages: commit thẳng lên repo bằng token đã nhập ở `/cms.html` (cùng origin);
+  chưa có token thì chép nội dung file vào clipboard.
 
 **Smooth scroll** là Lenis trong `chande-transition.js`: `lerp 0.1` (mặc định của
 Lenis — càng nhỏ càng trôi lâu), `wheelMultiplier 1`. Chỉnh ở mục rèm → *Lenis lerp*.

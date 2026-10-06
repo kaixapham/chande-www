@@ -14,9 +14,16 @@
  * không biết gì về bảng này. Bàn giao cho dev = xoá đúng một thẻ
  * <script src="assets/js/chande-devtools.js">.
  *
- * Giá trị đã chỉnh lưu ở localStorage khoá 'chande-devtools' (ảnh demo ở
- * 'chande-devtools-shots') và ĐÈ LÊN CONFIG trong file hiệu ứng — thấy hành vi
- * lạ thì đọc localStorage trước khi nghi code.
+ * Giá trị đang chỉnh tự giữ ở localStorage khoá 'chande-devtools' (ảnh demo ở
+ * 'chande-devtools-shots') — CHỈ trình duyệt này thấy, và ĐÈ LÊN CONFIG trong
+ * file hiệu ứng; thấy hành vi lạ thì đọc localStorage trước khi nghi code.
+ *
+ * Nút LƯU ở đầu bảng ghi các giá trị đó thành file assets/js/chande-settings.js
+ * (nạp trước mọi file hiệu ứng) -> thành mặc định cho MỌI người xem:
+ *   • chạy local (node serve.mjs): ghi thẳng xuống đĩa, rồi commit + push.
+ *   • trên GitHub Pages: commit thẳng lên repo bằng token đã nhập ở cms.html
+ *     (cùng origin). Chưa có token thì chép nội dung file vào clipboard.
+ * Lưu xong, localStorage được dọn (không còn gì khác mặc định mới).
  * ========================================================================== */
 (() => {
   'use strict'
@@ -425,6 +432,106 @@
         if (JSON.stringify(v) !== JSON.stringify(d)) out[`${g.mod}.${f.path}`] = v
       }
     try { localStorage.setItem(KEY, JSON.stringify(out)) } catch (e) {}
+    // có giá trị nào khác mặc định (= bản đã Lưu) thì chấm xanh ở nút Lưu
+    saveBtn?.classList.toggle('is-dirty', Object.keys(out).some((k) => !k.startsWith('__')))
+  }
+
+  /* ------------------------------------------- Lưu thành chande-settings.js - */
+  const SETTINGS_FILE = 'assets/js/chande-settings.js'
+
+  // Mọi khoá đã lưu trước đó + mọi giá trị đang khác mặc định.
+  function collectSettings() {
+    const out = { ...(window.CHANDE_SETTINGS || {}) }
+    for (const g of groups())
+      for (const f of g.items) {
+        const k = `${g.mod}.${f.path}`
+        const v = get(live(g).config, f.path)
+        const d = live(g).defaults ? get(live(g).defaults, f.path) : undefined
+        if (k in out || JSON.stringify(v) !== JSON.stringify(d)) out[k] = structuredClone(v)
+      }
+    return Object.fromEntries(Object.entries(out).sort(([a], [b]) => a.localeCompare(b)))
+  }
+
+  // Giữ nguyên phần đầu file (ghi chú + hàm APPLY), chỉ thay khối CHANDE_SETTINGS.
+  async function settingsText(values, current) {
+    const body = Object.keys(values).length
+      ? `{\n${Object.entries(values).map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)},`).join('\n')}\n}`
+      : '{}'
+    const src = current ?? (await fetch(`${SETTINGS_FILE}?t=${Date.now()}`, { cache: 'no-store' }).then((r) => r.text()))
+    const re = /window\.CHANDE_SETTINGS = (\{\}|\{\n[\s\S]*?\n\})\n/
+    if (!re.test(src)) throw new Error('Không nhận ra cấu trúc chande-settings.js')
+    return src.replace(re, () => `window.CHANDE_SETTINGS = ${body}\n`)
+  }
+
+  async function saveToDisk(values) {
+    const ping = await fetch('__cms/ping', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+    if (!ping?.local) return null
+    const text = await settingsText(values)
+    const r = await fetch('__cms/save', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ files: [{ path: SETTINGS_FILE, text }] }),
+    })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`)
+    return 'Đã ghi chande-settings.js xuống máy — commit + push để lên GitHub Pages.'
+  }
+
+  // Dùng lại token mà cms.html đã lưu (cùng origin trên GitHub Pages).
+  async function saveToGitHub(values) {
+    let cfg = {}
+    try { cfg = JSON.parse(localStorage.getItem('chande-cms-gh') || sessionStorage.getItem('chande-cms-gh') || '{}') } catch (e) {}
+    if (!cfg.token || !cfg.repo) return null
+    const branch = cfg.branch || 'main'
+    const api = (path, opts = {}) =>
+      fetch(`https://api.github.com/repos/${cfg.repo}${path}`, {
+        ...opts,
+        headers: { Authorization: `Bearer ${cfg.token}`, Accept: 'application/vnd.github+json', ...(opts.body ? { 'content-type': 'application/json' } : {}) },
+      }).then(async (r) => {
+        const j = await r.json().catch(() => ({}))
+        if (!r.ok) throw new Error(`GitHub ${r.status}: ${j.message || ''}`)
+        return j
+      })
+    const cur = await api(`/contents/${SETTINGS_FILE}?ref=${encodeURIComponent(branch)}`)
+    const bin = (b64) => Uint8Array.from(atob(b64.replace(/\n/g, '')), (c) => c.charCodeAt(0))
+    const text = await settingsText(values, new TextDecoder().decode(bin(cur.content)))
+    const bytes = new TextEncoder().encode(text)
+    let b64 = ''
+    for (let i = 0; i < bytes.length; i += 0x8000) b64 += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+    const res = await api(`/contents/${SETTINGS_FILE}`, {
+      method: 'PUT',
+      body: JSON.stringify({ message: 'Settings: lưu thông số từ bảng setting (H)', content: btoa(b64), sha: cur.sha, branch }),
+    })
+    return `Đã commit ${res.commit.sha.slice(0, 7)} lên ${cfg.repo} — GitHub Pages cập nhật sau khoảng 1 phút.`
+  }
+
+  async function saveAsDefaults() {
+    const values = collectSettings()
+    saveBtn.disabled = true
+    msg.classList.remove('is-bad')
+    msg.textContent = 'Đang lưu…'
+    try {
+      let done = await saveToDisk(values)
+      if (done == null) done = await saveToGitHub(values)
+      if (done == null) {
+        await navigator.clipboard.writeText(await settingsText(values))
+        throw new Error('Không ghi được: chạy local (node serve.mjs) hoặc nhập token GitHub ở /cms.html. Đã chép nội dung file vào clipboard.')
+      }
+      // Bản vừa lưu thành mặc định mới -> localStorage không còn gì khác nó.
+      window.CHANDE_SETTINGS = values
+      for (const [k, v] of Object.entries(values)) {
+        const dot = k.indexOf('.')
+        const m = MODS[k.slice(0, dot)]
+        if (m?.defaults) try { set(m.defaults, k.slice(dot + 1), structuredClone(v)) } catch (e) {}
+      }
+      saveSettings()
+      msg.textContent = done
+    } catch (e) {
+      msg.classList.add('is-bad')
+      msg.textContent = String(e.message || e)
+    } finally {
+      saveBtn.disabled = false
+    }
   }
 
   /* ---------------------------------------------------------- ảnh demo ----- */
@@ -508,6 +615,15 @@
 .cdev__icon{display:inline-grid; place-items:center; width:28px; height:28px; padding:0;
   background:transparent; border:1px solid transparent; border-radius:8px; color:var(--fg)}
 .cdev__icon:hover{background:var(--fill-2)}
+.cdev__save{height:28px; padding:0 10px; border-radius:8px; background:var(--fill-2);
+  border:1px solid var(--line); font-size:12px; font-weight:500; display:inline-flex; align-items:center; gap:6px}
+.cdev__save:hover{background:rgba(250,250,250,.16)}
+.cdev__save::before{content:''; width:6px; height:6px; border-radius:50%; background:var(--muted)}
+.cdev__save.is-dirty::before{background:var(--accent)}
+.cdev__save:disabled{opacity:.5; cursor:progress}
+.cdev__msg{display:block; margin-top:4px; color:var(--fg-60)}
+.cdev__msg.is-bad{color:#ff7a70}
+.cdev__msg:empty{display:none}
 .cdev__icon svg{width:14px; height:14px}
 .cdev.is-closed .cdev__icon[data-fold] svg{transform:rotate(180deg)}
 .cdev.is-closed .cdev__body{display:none}
@@ -607,6 +723,7 @@
   <div class="cdev__head">
     <p class="cdev__title">Settings</p>
     <div class="cdev__icons">
+      <button type="button" class="cdev__save" data-save title="Lưu thông số thành mặc định của site (assets/js/chande-settings.js)">Lưu</button>
       <button type="button" class="cdev__icon" data-reset title="Reset tab này" aria-label="Reset tab này">${ICON.reset}</button>
       <button type="button" class="cdev__icon" data-fold title="Thu gọn" aria-label="Thu gọn" aria-expanded="true">${ICON.chevron}</button>
     </div>
@@ -623,10 +740,12 @@
     </section>
     <div class="cdev__panel"></div>
   </div>
-  <div class="cdev__foot"><kbd>H</kbd> ẩn / hiện bảng</div>`
+  <div class="cdev__foot"><kbd>H</kbd> ẩn / hiện bảng<span class="cdev__msg" data-msg role="status"></span></div>`
   const panel = dev.querySelector('.cdev__panel')
   const ctrl = dev.querySelector('.cdev__ctrl')
   const tabSel = dev.querySelector('[data-tabsel]')
+  const saveBtn = dev.querySelector('[data-save]')
+  const msg = dev.querySelector('[data-msg]')
 
   let tab = TABS[0].id
   let shown = false // cả bảng ẩn cho tới khi bấm H
@@ -839,6 +958,8 @@
     if (b.hasAttribute('data-fold')) {
       dev.classList.toggle('is-closed')
       b.setAttribute('aria-expanded', String(!dev.classList.contains('is-closed')))
+    } else if (b.hasAttribute('data-save')) {
+      saveAsDefaults()
     } else if (b.hasAttribute('data-reset')) {
       for (const g of groups())
         if (g.tab === tab)
@@ -891,4 +1012,5 @@
   syncTabs()
   buildCtrl()
   buildPanel()
+  saveSettings() // chấm báo "còn chỉnh chưa Lưu" ngay khi mở trang
 })()
