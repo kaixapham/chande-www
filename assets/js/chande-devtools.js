@@ -27,7 +27,8 @@
   const CM = window.CHANDE_MOSAIC
   const CR = window.CHANDE_REVEAL
   const CF = window.CHANDE_FIELD
-  if (!CL && !CT && !CH && !CM && !CR && !CF) return
+  const CB = window.CHANDE_BUBBLE
+  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB) return
 
   const KEY = 'chande-devtools'
   const KEY_SHOTS = 'chande-devtools-shots'
@@ -42,6 +43,7 @@
     CR && { id: 'reveal', label: 'Shape reveal', mod: 'reveal' },
     CM && { id: 'mosaic', label: 'Mosaic', mod: 'mosaic' },
     CF && { id: 'field', label: 'Effect xanh', mod: 'field' },
+    CB && { id: 'bubble', label: 'Bubble (giọt theo chuột)', mod: 'bubble' },
     CT && { id: 'sweep', label: 'Rèm quét', mod: 'transition', variant: 'sweep' },
     CT && { id: 'split', label: 'Rèm chẻ', mod: 'transition', variant: 'split' },
     CT && { id: 'stack', label: 'Trượt thẻ', mod: 'transition', variant: 'stack' },
@@ -176,6 +178,29 @@
         { path: 'dither', label: 'Dither shape', type: 'bool' },
       ] },
 
+    // ---- Bubble: giọt thuỷ tinh theo chuột (chande-bubble.js, Canvas UI) ----
+    { tab: 'bubble', mod: 'bubble', title: 'Giọt',
+      items: [
+        { path: 'enabled', label: 'Bật bubble', type: 'bool' },
+        { path: 'size', label: 'Cỡ giọt (px)', type: 'range', min: 6, max: 120, step: 1 },
+        { path: 'trail', label: 'Độ dài vệt (số cầu)', type: 'range', min: 1, max: 24, step: 1 },
+        { path: 'follow', label: 'Bám chuột', type: 'range', min: 0.02, max: 1, step: 0.01 },
+        { path: 'blend', label: 'Độ dính', type: 'range', min: 1, max: 40, step: 0.5 },
+      ] },
+    { tab: 'bubble', mod: 'bubble', title: 'Bề mặt',
+      items: [
+        { path: 'speed', label: 'Tốc độ óng ánh', type: 'range', min: 0, max: 8, step: 0.1 },
+        { path: 'iridescence', label: 'Óng ánh', type: 'range', min: 0, max: 3, step: 0.05 },
+        { path: 'intensity', label: 'Độ sáng óng ánh', type: 'range', min: 0, max: 2, step: 0.05 },
+        { path: 'shine', label: 'Phản quang', type: 'range', min: 0, max: 2, step: 0.05 },
+        { path: 'rim', label: 'Viền', type: 'range', min: 0, max: 2, step: 0.05 },
+        { path: 'fallbackOpacity', label: 'Độ đậm', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'colorA', label: 'Màu óng A', type: 'color' },
+        { path: 'colorB', label: 'Màu óng B', type: 'color' },
+        { path: 'tint', label: 'Màu phủ', type: 'color' },
+        { path: 'tintStrength', label: 'Độ phủ màu', type: 'range', min: 0, max: 1, step: 0.01 },
+      ] },
+
     // ---- Effect xanh: preset gradient-studio (chande-field.js) ----
     { tab: 'field', mod: 'field', title: 'Bảng màu (tối → sáng)',
       items: [0, 1, 2, 3].map((i) => ({ path: `colors.${i}`, label: `Màu ${i + 1}`, type: 'color' })) },
@@ -203,6 +228,7 @@
         { path: 'hoverPush', label: 'Đẩy ô ra xa', type: 'range', min: 0, max: 1, step: 0.01 },
         { path: 'hoverWarp', label: 'Kéo màu (thấu kính)', type: 'range', min: 0, max: 5, step: 0.05 },
         { path: 'hoverGlow', label: 'Sáng thêm', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'hoverGapColor', label: 'Màu nền lộ ra dưới ô', type: 'color' },
         { path: 'hoverEase', label: 'Độ mượt (nhỏ = mượt hơn)', type: 'range', min: 0.03, max: 1, step: 0.01 },
       ] },
     { tab: 'field', mod: 'field', title: 'Grade',
@@ -325,7 +351,7 @@
       ]) },
   ]
 
-  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF }
+  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB }
   const get = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o)
   const set = (o, p, v) => {
     const k = p.split('.')

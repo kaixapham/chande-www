@@ -66,6 +66,9 @@
     hoverPush: 0.9, // ô trượt ra xa con trỏ, tỉ lệ khoảng trống vừa co ra
     hoverWarp: 1.6, // màu field bị kéo về phía con trỏ (số ô)
     hoverGlow: 0.25, // sáng thêm
+    // Nền lộ ra dưới các ô khi chúng co lại: màu sáng nhất của bảng màu (ô trắng
+    // phía trên) thay vì khe tối của preset. Chỉ áp ở vùng chuột tác động.
+    hoverGapColor: '#e9ffd1',
     hoverEase: 0.18, // độ bám theo chuột / bật-tắt (0..1, nhỏ = mượt hơn)
   }
   const DEFAULTS = structuredClone(CONFIG)
@@ -110,6 +113,7 @@ uniform float uHoverShrink;
 uniform float uHoverPush;
 uniform float uHoverWarp;
 uniform float uHoverGlow;
+uniform vec3 uHoverGap;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
 
@@ -205,7 +209,8 @@ void main() {
       float studRelief = dot(normalize(local + vec2(1e-5)), key) * studSlope;
       lit = mix(lit, tint * (1.0 + uMosaicBevel * (0.25 + studRelief)) * (1.0 + uHoverGlow * infl), stud);
     }
-    color = mix(rampColor(0.0) * 0.3, clamp(lit, 0.0, 1.0), brick);
+    vec3 gapCol = mix(rampColor(0.0) * 0.3, uHoverGap, infl);
+    color = mix(gapCol, clamp(lit, 0.0, 1.0), brick);
   } else {
     color = shadeAt(uv);
   }
@@ -224,7 +229,7 @@ void main() {
     'uResolution', 'uPhase', 'uLineCount', 'uLineOffset', 'uLineOrder', 'uSoftness',
     'uMosaicOn', 'uMosaicDetail', 'uMosaicGap', 'uMosaicCorners', 'uMosaicBevel',
     'uMosaicStuds', 'uContrast', 'uSaturation', 'uVignette', 'uGrainAmount', 'uGrainSize',
-  'uFlip', 'uMouse', 'uHover', 'uHoverRadius', 'uHoverShrink', 'uHoverPush', 'uHoverWarp', 'uHoverGlow',
+  'uFlip', 'uMouse', 'uHover', 'uHoverRadius', 'uHoverShrink', 'uHoverPush', 'uHoverWarp', 'uHoverGlow', 'uHoverGap',
   ]
 
   const hexToRgb = (hex) => {
@@ -288,6 +293,7 @@ void main() {
         gl.uniform1f(u.uHoverPush, o.hoverPush)
         gl.uniform1f(u.uHoverWarp, o.hoverWarp)
         gl.uniform1f(u.uHoverGlow, o.hoverGlow)
+        gl.uniform3fv(u.uHoverGap, hexToRgb(o.hoverGapColor))
         o.colors.forEach((c, i) => gl.uniform3fv(uColors[i], hexToRgb(c)))
         gl.uniform2f(u.uResolution, w, h)
         gl.uniform1f(u.uPhase, phase)
