@@ -433,7 +433,9 @@ export function mount(container, config = {}) {
   const canvas = document.createElement('canvas')
   canvas.className = 'paper-stack-canvas'
   canvas.style.display = 'block'
-  canvas.style.touchAction = 'none'
+  // Driver 'page' sống bằng chính cú cuộn trang: khoá touch là trên điện thoại khối
+  // phủ kín màn hình thì không cuộn đi đâu được nữa.
+  canvas.style.touchAction = state.driver === 'page' && !state.edit ? 'pan-y' : 'none'
   container.append(canvas)
 
   const renderer = new THREE.WebGLRenderer({
@@ -448,13 +450,14 @@ export function mount(container, config = {}) {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
   const scene = new THREE.Scene()
+  scene.background = new THREE.Color(params.frame.bg)
   const camera = new THREE.PerspectiveCamera(params.camera.fov, 1, 0.05, 60)
   camera.up.set(0, 0, -1)
 
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(24, 24),
-    new THREE.MeshStandardMaterial({ color: params.frame.bg, roughness: 1, metalness: 0 }),
-  )
+  // Sàn CHỈ hứng bóng; màu nền là scene.background nên ra đúng mã hex đã chọn. Sàn có
+  // chiếu sáng thì luôn tối đi (~63%: #FFFEF8 ra #CDCCC7) — trong tool không ai thấy,
+  // nhúng lên site nền kem là lộ ngay một khung xám giữa trang.
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(24, 24), new THREE.ShadowMaterial({ color: 0x000000 }))
   ground.rotation.x = -Math.PI / 2
   ground.receiveShadow = true
   scene.add(ground)
@@ -618,6 +621,22 @@ export function mount(container, config = {}) {
     key.shadow.radius = params.light.softness
     key.shadow.intensity = clamp(params.light.shadow, 0, 1)
     fill.position.set(-key.position.x, r * 0.7, -key.position.z)
+    ground.material.opacity = groundShadowGain(el)
+  }
+
+  /**
+   * Độ đậm bóng trên sàn sao cho giống hệt hồi sàn còn được chiếu sáng: bóng lấy đi
+   * phần đèn chính trong tổng ánh sáng rơi lên sàn (tuyến tính), rồi quy về sRGB vì
+   * ShadowMaterial hoà trộn trên màu đã mã hoá. ShadowMaterial tự nhân shadow.intensity
+   * nên phải chia lại cho nó.
+   */
+  function groundShadowGain(el) {
+    const I = clamp(params.light.shadow, 0, 1)
+    if (I <= 0) return 0
+    const k = params.light.key * Math.sin(el)
+    const total = params.light.ambient + k + params.light.fill * fill.position.clone().normalize().y
+    const share = total > 0 ? clamp(k / total, 0, 1) : 0
+    return (1 - Math.pow(1 - I * share, 1 / 2.2)) / I
   }
 
   /* ---- tạo tờ ---- */
@@ -653,6 +672,10 @@ export function mount(container, config = {}) {
         roughness: params.paper.roughness,
         metalness: 0,
         side: THREE.FrontSide,
+        // three vẽ shadow map bằng mặt NGƯỢC của `side` — FrontSide thì chỉ mặt sau vào
+        // shadow map, mà tờ giấy nằm ngửa đón đèn từ trên nên bị loại hẳn: không tờ nào
+        // đổ bóng, slider "bóng" kéo cũng không đổi một pixel.
+        shadowSide: THREE.DoubleSide,
         transparent: params.entry.fade > 0,
       }),
     )
@@ -1401,8 +1424,13 @@ export function mount(container, config = {}) {
     if (!scroller) return state.head
     const sb = scroller.getBoundingClientRect()
     const span = Math.max(1, sb.height - box.height)
-    const done = clamp01((-sb.top) / span)
-    return done * maxHead()
+    // Khối dính không nhất thiết ở top 0 (site có header cố định thì dính dưới header):
+    // nó dính từ lúc sb.top = top tới lúc sb.top = top − span, nên phải bù đúng `top`.
+    const top = parseFloat(getComputedStyle(container).top) || 0
+    const done = clamp01((top - sb.top) / span)
+    // Từ minHead chứ không từ 0: bật "tờ đầu nằm sẵn" thì khúc cuộn đầu tiên không bị
+    // phí cho tờ đã nằm trên bàn — đúng như hai driver kia.
+    return lerp(minHead(), maxHead(), done)
   }
 
   /* ---- kích cỡ ---- */
@@ -1459,7 +1487,6 @@ export function mount(container, config = {}) {
       for (const k of Object.keys(next)) Object.assign(params[k], next[k])
     }
     applyFrame()
-    ground.material.color.set(params.frame.bg)
     scene.background = new THREE.Color(params.frame.bg)
     ambient.intensity = params.light.ambient
     key.intensity = params.light.key
@@ -1490,11 +1517,21 @@ export function mount(container, config = {}) {
   let raf = 0
   let alive = true
 
+  // Nhúng giữa một trang dài thì phần lớn thời gian khối nằm ngoài màn — khỏi vẽ WebGL
+  // mỗi frame. Chỉ áp cho driver 'page': tool và driver wheel luôn đang được nhìn.
+  let onScreen = true
+  const io =
+    state.driver === 'page' && typeof IntersectionObserver !== 'undefined'
+      ? new IntersectionObserver(([e]) => (onScreen = e.isIntersecting))
+      : null
+  io?.observe(container)
+
   function frame(now) {
     if (!alive) return
     raf = requestAnimationFrame(frame)
     const dt = Math.min(1 / 20, Math.max(1 / 480, (now - last) / 1000))
     last = now
+    if (!onScreen) return
     if (state.driver === 'page') {
       // Scroll của trang nhảy theo từng nấc của hệ điều hành; nội suy bằng cùng hằng số
       // "độ trễ khi kéo" cho ra cảm giác smooth scroll mà không cần thư viện ngoài.
@@ -1573,6 +1610,7 @@ export function mount(container, config = {}) {
       alive = false
       cancelAnimationFrame(raf)
       ro.disconnect()
+      io?.disconnect()
       container.removeEventListener('wheel', onWheel)
       while (sheets.length) disposeSheet(sheets.pop())
       overlayQuad.geometry.dispose()

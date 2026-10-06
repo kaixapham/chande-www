@@ -171,7 +171,17 @@
 
 /* --------------------------------------------------------------- 7. POSTER */
 .hs-poster{height:calc(1080 * var(--u)); background:#fffef8; border-bottom:1px solid #e1e1e1}
+.hs-poster__pin{height:100%}
 .hs-poster img{width:100%; height:100%; object-fit:cover}
+/* chande-poster.js chạy được (có WebGL, ảnh đã nạp): section dài thêm đủ quãng cuộn
+   cho từng tờ, khối trong dính ngay dưới header và giữ đúng một màn. Runtime đọc
+   `top` của khối dính để khớp quãng cuộn — đổi `top` ở đây không cần sửa JS.
+   Canvas bị runtime gắn `display:block` inline nên phải !important mới ẩn được. */
+.hs-poster:not(.is-live) canvas{display:none !important}
+.hs-poster.is-live{height:calc(var(--poster-scroll) + 100svh - var(--bar))}
+.hs-poster.is-live .hs-poster__pin{position:sticky; top:var(--bar); height:calc(100svh - var(--bar));
+  display:grid; place-items:center}
+.hs-poster.is-live .hs-poster__pin > img{display:none}
 
 /* --------------------------------------------------------------- 8. AGENDA */
 .hs-agenda{height:calc(3160 * var(--u)); background:#fff; color:#112020; overflow:visible}

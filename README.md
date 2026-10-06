@@ -35,8 +35,10 @@ assets/js/chande-cursor.js     nhân vật chạy theo chuột — cả ba trang
 assets/css/home.css            CSS các section sau hero — link ở cả ba trang
 assets/js/chande-reveal.js     player đoàn shape đổi ảnh (bản phát lại của tools/profile-reveal)
 tools/profile-reveal/          công cụ chỉnh hiệu ứng shape — Vite, port 3116, có CLAUDE.md riêng
+assets/js/chande-poster.js     section 7 Poster: chồng poster thả theo scroll (module) — cả ba trang
+assets/js/paper-stack.js       SINH TỰ ĐỘNG từ tool paper-stack — đừng sửa tay (xem mục 7)
 assets/js/chande-devtools.js   bảng điều khiển (chỉ lúc làm việc)
-assets/vendor/                 barba 2.10.3, lenis 1.3.17, gsap 3.15 + CustomEase
+assets/vendor/                 barba 2.10.3, lenis 1.3.17, gsap 3.15 + CustomEase, three 0.185.1
 assets/fonts/Phudu-*.woff2     Phudu SemiBold 600 + Bold 700 (latin / latin-ext / vietnamese)
 assets/img/logo.svg            logo export từ Figma
 assets/img/menu-dots.svg       icon menu export từ Figma
@@ -428,6 +430,42 @@ Hai chế độ lưu:
 
 Trước khi ghi, CMS luôn đọc lại bản HTML mới nhất rồi mới áp thay đổi, nên không
 đè mất sửa đổi khác.
+
+Chỉ danh sách `hero-people` mới được đồng bộ sang 4 ô hero dự phòng. Trước đây mọi
+danh sách JSON đều bị đồng bộ, nên lưu danh sách poster là ảnh poster đè lên hero.
+
+---
+
+## 7. Poster — chồng poster thả theo scroll (`chande-poster.js`)
+
+Hiệu ứng là **paper-stack** (`~/Projects/paper-stack`, port 3117): mỗi quãng cuộn, một tờ
+poster bay tới, trải xuống theo cung tròn rồi đè lên chồng, tờ dưới vỗ mép.
+
+- `assets/js/paper-stack.js` là **bản chép nguyên văn** `src/runtime.js` của tool, khác
+  đúng dòng import three. Đừng sửa ở đây. Sửa ở tool rồi chạy lại trong thư mục tool:
+  `node scripts/export-runtime.mjs ~/Desktop/chande-www/assets/js/paper-stack.js ../vendor/three/three.module.min.js`
+- `chande-poster.js` chỉ đọc danh sách tờ, mount driver `page` và gỡ khi Barba đổi trang.
+  Tham số hiệu ứng nằm ở `CONFIG.params` đầu file: chỉnh ở tool rồi chép số sang, chỉ
+  ghi các khoá khác mặc định.
+- **Danh sách tờ** là `<script data-poster-sheets data-cms-list="poster-stack">` trong
+  `index.html`, thay ảnh được ở CMS. Thứ tự = thứ tự đáp, tờ đầu nằm sẵn trên bàn.
+  `x`, `y` (−0.5…0.5 theo khung), `rot` (độ), `scale` chép từ tool.
+- **Cuộn:** section dài `(n − 1) × perSheet vh + một màn`. Khối trong `position: sticky`
+  ngay dưới header (`top: var(--bar)`). `head` đi theo vị trí cuộn trang: dính thì tờ 1
+  nằm sẵn, nhả dính đúng lúc tờ cuối đáp xong (đã đo). Lenis đã làm mượt nên
+  `motion.damping: 0`, để mượt hai tầng thì giấy đi sau ngón tay.
+- Cảnh sau (vòng màu trùm kín) **tắt**: section kế là Agenda nền trắng.
+- Không có WebGL / danh sách rỗng / ảnh lỗi thì giữ nguyên ảnh tĩnh `poster.webp`
+  (CMS key `poster`).
+- `three` được vendor offline (`assets/vendor/three/`, gồm `three.module.min.js` và
+  `three.core.min.js` — file module import file core). Lên production có thể đổi dòng
+  import trong `paper-stack.js` sang
+  `https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.min.js`, bằng cách chạy
+  lại lệnh export với đường đó.
+
+```js
+window.CHANDE_POSTER = { config, mount(scope), destroy(), api }   // api = runtime paper-stack
+```
 
 ---
 

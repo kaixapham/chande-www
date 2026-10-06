@@ -215,8 +215,23 @@
     </section>
 
     <!-- ===================== 7. POSTER ====================================== -->
-    <section class="hs hs-poster" data-cms-section="Poster" aria-label="Ấn phẩm">
-      <img data-cms="poster" data-cms-label="Bộ poster (toàn khung)" data-cms-w="1920" src="assets/img/home/poster.webp" alt="Bộ poster Chande" loading="lazy">
+    <!-- Chồng poster thả từng tờ theo scroll (chande-poster.js + paper-stack.js).
+         Ảnh tĩnh poster.webp là bản dự phòng khi không có WebGL / JS. -->
+    <section class="hs hs-poster" data-cms-section="Poster" aria-label="Ấn phẩm" data-poster-stack>
+      <div class="hs-poster__pin" data-poster-pin>
+        <img data-cms="poster" data-cms-label="Bộ poster tĩnh (dự phòng khi không có WebGL)" data-cms-w="1920" src="assets/img/home/poster.webp" alt="Bộ poster Chande" loading="lazy">
+      </div>
+      <!-- Thứ tự = thứ tự đáp: tờ đầu nằm sẵn dưới cùng, tờ cuối đè trên cùng.
+           x / y (-0.5…0.5 theo khung), rot (độ), scale: chép từ tool paper-stack.
+           ẢNH TẠM (ảnh có sẵn của site) — chờ poster rời của Kaixa rồi thay. -->
+      <script type="application/json" data-poster-sheets data-cms-list="poster-stack" data-cms-label="Các tờ poster — thả lần lượt theo scroll (trên = tờ đáp trước)" data-cms-w="900">
+      [
+        { "num": "01", "name": "Poster 1", "img": "assets/img/home/agenda-poster.webp", "x": -0.04, "y": 0.0, "rot": -2 },
+        { "num": "02", "name": "Poster 2", "img": "assets/img/home/about-card.webp", "x": 0.05, "y": -0.04, "rot": 3, "scale": 0.86 },
+        { "num": "03", "name": "Poster 3", "img": "assets/img/home/story-rock.webp", "x": -0.06, "y": 0.03, "rot": -4, "scale": 0.72 },
+        { "num": "04", "name": "Poster 4", "img": "assets/img/home/quote-card.webp", "x": 0.07, "y": 0.08, "rot": 9, "scale": 0.5 }
+      ]
+      </script>
     </section>
 
     <!-- ===================== 8. AGENDA ====================================== -->
@@ -351,6 +366,8 @@
 <script src="assets/js/chande-field.js"></script>
 <script src="assets/js/chande-home.js"></script>
 <script src="assets/js/chande-cursor.js"></script>
+<!-- Module: tự nạp paper-stack.js + three (assets/vendor/three/). -->
+<script type="module" src="assets/js/chande-poster.js"></script>
 <!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
 <script src="assets/js/chande-devtools.js"></script>
 </body>

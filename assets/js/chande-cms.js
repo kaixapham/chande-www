@@ -218,8 +218,9 @@
         const json = `[\n${op.items.map((it) => `        ${JSON.stringify(it)}`).join(',\n')}\n      ]`
         html = html.replace(re, (_, a, __, c) => `${a}\n      ${json}\n      ${c}`)
         // Bản dự phòng (khi chưa có JS) của 4 ô hero = 4 người đầu danh sách:
-        // ảnh, căn ảnh và thanh tên.
-        op.items.slice(0, 4).forEach((p, i) => {
+        // ảnh, căn ảnh và thanh tên. CHỈ cho danh sách hero — cùng trang còn danh
+        // sách khác (poster-stack), đồng bộ bừa là ảnh poster đè lên 4 ô hero.
+        if (op.key === 'hero-people') op.items.slice(0, 4).forEach((p, i) => {
           if (!p) return
           try {
             html = editTag(html, `data-cms-person="${i}"`, (t) => {
