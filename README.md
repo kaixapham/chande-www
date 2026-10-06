@@ -23,6 +23,8 @@ index.html                     Home
 gallery.html                   Page A
 about.html                     Page B
 serve.mjs                      server tĩnh, có clean URL (/gallery -> gallery.html)
+cms.html                       CMS thay ảnh (cây CMS tổng → trang → section)
+assets/js/chande-cms.js        logic CMS: đọc trang, nén ảnh, sửa HTML, lưu Local / GitHub
 assets/css/site.css            CSS dùng chung 3 trang
 assets/js/chande-loading.js    HIỆU ỨNG loading  — tự chạy, CONFIG ở đầu file
 assets/js/chande-transition.js HIỆU ỨNG chuyển trang — tự chạy, CONFIG ở đầu file
@@ -388,6 +390,44 @@ viên thuốc bằng DOM; cả hai chỉ dịch `transform` và dừng khi ra kh
 
 **Con trỏ** (`chande-cursor.js`): nhân vật chạy theo chuột, trễ một nhịp, nghiêng
 theo hướng đi, phóng to khi trỏ vào link; con trỏ thật vẫn giữ. Chỉ bật với chuột.
+
+---
+
+## 6. CMS thay ảnh — `cms.html`
+
+Mở `/cms.html`. Cây bên trái: **CMS tổng → trang (Home / Gallery / About) →
+Section 1, 2, 3…** theo đúng thứ tự trong trang. Bấm *Thay ảnh* hoặc kéo-thả ảnh
+vào ô, sửa alt, sửa danh sách người ở hero (số, tên, căn ảnh, thêm / xoá / đổi
+thứ tự) và danh sách ảnh hover tên ở footer. Mọi thay đổi chờ ở thanh trên, bấm
+*Lưu* một lần.
+
+**HTML là nguồn sự thật duy nhất** — không có file cấu hình. CMS đọc thẳng trang:
+
+| Thuộc tính | Nghĩa |
+|---|---|
+| `data-cms-section="Tên"` | một section; số thứ tự = thứ tự trong trang |
+| `<img data-cms="khoá" data-cms-label="…" data-cms-w="234">` | một ô ảnh; `w` = bề rộng hiển thị ở khổ 1920 |
+| `data-cms-list="khoá"` | danh sách: `<script type="application/json">` (object có `img`) hoặc `data-photos='[…]'` |
+| `data-cms-person="i"`, `data-cms-person-cap="i"` | bản dự phòng của 4 ô hero, CMS tự đồng bộ theo danh sách |
+
+Muốn thêm ô ảnh vào CMS chỉ cần gắn các thuộc tính đó, không sửa `chande-cms.js`.
+
+Ảnh mới được nén **ngay trong trình duyệt** sang WebP (giữ nền trong suốt) rộng
+tối đa 2× ô, lưu ở `assets/img/cms/<trang>/<khoá>-<mốc>.webp`; CMS chỉ thay đúng
+`src` / `alt` của thẻ đó (thay chuỗi, không viết lại cả trang). Ảnh cũ không xoá.
+
+Hai chế độ lưu:
+
+- **Local** — chạy `node serve.mjs`: CMS tự nhận ra, ghi thẳng xuống đĩa qua
+  `POST /__cms/save` (chỉ nhận từ máy này, chỉ ghi được `*.html` ở gốc và
+  `assets/img/cms/`). Sau đó commit + push như bình thường.
+- **GitHub** — trên GitHub Pages: nút *GitHub*, dán fine-grained token chỉ cấp
+  cho repo này, quyền *Contents: Read and write*. *Xuất bản* gom mọi thay đổi
+  thành **một commit** (Git Data API), Pages tự build lại sau ~1 phút. Token mặc
+  định chỉ giữ tới khi đóng tab.
+
+Trước khi ghi, CMS luôn đọc lại bản HTML mới nhất rồi mới áp thay đổi, nên không
+đè mất sửa đổi khác.
 
 ---
 

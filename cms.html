@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Chande CMS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="assets/img/logo.svg">
+<style>
+:root{
+  --bg:#0f1110; --panel:#171a19; --panel-2:#1e2221; --line:rgba(250,250,250,.1); --line-2:rgba(250,250,250,.18);
+  --fg:#f4f3eb; --muted:#9aa19e; --dim:#6b7270; --lime:#68f12b; --warn:#ffb020; --bad:#ff5a4f;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0; height:100%; background:var(--bg); color:var(--fg);
+  font:500 13px/1.4 'Inter Variable',Inter,ui-sans-serif,system-ui,-apple-system,sans-serif; -webkit-font-smoothing:antialiased}
+button,input{font:inherit; color:inherit}
+button{cursor:pointer}
+a{color:var(--lime)}
+.app{display:grid; grid-template-columns:280px 1fr; grid-template-rows:56px 1fr; height:100vh}
+
+/* ---- thanh trên ---- */
+.top{grid-column:1/-1; display:flex; align-items:center; gap:12px; padding:0 16px; border-bottom:1px solid var(--line); background:var(--panel)}
+.top h1{margin:0; font-size:14px; font-weight:600; letter-spacing:.02em}
+.badge{font-size:11px; padding:3px 8px; border-radius:99px; border:1px solid var(--line-2); color:var(--muted)}
+.badge.is-local{color:var(--lime); border-color:rgba(104,241,43,.4)}
+.badge.is-gh{color:#7cc4ff; border-color:rgba(124,196,255,.4)}
+.top .sp{flex:1}
+.pending{color:var(--warn); font-size:12px}
+.btn{height:32px; padding:0 12px; border-radius:8px; border:1px solid var(--line-2); background:var(--panel-2)}
+.btn:hover{border-color:var(--fg)}
+.btn--go{background:var(--lime); color:#0f1513; border-color:var(--lime); font-weight:600}
+.btn--go:disabled{opacity:.35; cursor:not-allowed}
+.btn--ghost{background:none}
+
+/* ---- cây ---- */
+.tree{overflow:auto; border-right:1px solid var(--line); padding:12px 8px}
+.tree h2{margin:4px 8px 10px; font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:.08em}
+.node{display:flex; align-items:center; gap:8px; width:100%; padding:7px 8px; border:0; border-radius:6px; background:none; text-align:left}
+.node:hover{background:var(--panel-2)}
+.node[aria-current=true]{background:var(--panel-2); box-shadow:inset 2px 0 var(--lime)}
+.node .n{color:var(--dim); font-variant-numeric:tabular-nums; min-width:22px}
+.node .c{margin-left:auto; font-size:11px; color:var(--dim)}
+.node .dot{width:6px; height:6px; border-radius:50%; background:var(--warn); display:none}
+.node.has-change .dot{display:block}
+.node--page{font-weight:600; margin-top:6px}
+.node--root{font-weight:600}
+.node.is-empty{color:var(--dim)}
+.kids{padding-left:14px; border-left:1px solid var(--line); margin-left:12px}
+
+/* ---- nội dung ---- */
+.main{overflow:auto; padding:24px 28px 80px}
+.crumb{color:var(--muted); font-size:12px; margin-bottom:6px}
+.main h3{margin:0 0 4px; font-size:20px}
+.hint{color:var(--muted); margin:0 0 20px; max-width:760px}
+.grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px}
+.slot{background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; display:flex; flex-direction:column}
+.slot.is-changed{border-color:var(--warn)}
+.slot.is-drag{border-color:var(--lime); box-shadow:0 0 0 2px rgba(104,241,43,.3)}
+.thumb{position:relative; height:180px; display:grid; place-items:center;
+  background:repeating-conic-gradient(#222 0 25%, #1a1a1a 0 50%) 0 0/16px 16px}
+.thumb img{max-width:100%; max-height:100%; object-fit:contain}
+.thumb .tag{position:absolute; left:8px; top:8px; font-size:10px; padding:2px 6px; border-radius:4px; background:var(--warn); color:#111; font-weight:700; display:none}
+.slot.is-changed .thumb .tag{display:block}
+.meta{padding:10px 12px; display:flex; flex-direction:column; gap:6px; font-size:12px}
+.meta b{font-size:13px}
+.meta code{color:var(--dim); font-size:11px; word-break:break-all}
+.meta .size{color:var(--muted)}
+.row{display:flex; gap:6px; align-items:center}
+.row input[type=text]{flex:1; min-width:0; height:28px; padding:0 8px; border-radius:6px; border:1px solid var(--line-2); background:var(--bg)}
+.acts{display:flex; gap:6px; padding:0 12px 12px}
+.acts .btn{height:28px; font-size:12px}
+.empty{color:var(--dim); padding:40px; text-align:center; border:1px dashed var(--line-2); border-radius:10px}
+
+/* danh sách (hero người / ảnh footer) */
+.list{display:flex; flex-direction:column; gap:10px}
+.item{display:grid; grid-template-columns:72px 1fr auto; gap:12px; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px}
+.item.is-changed{border-color:var(--warn)}
+.item .ph{width:72px; height:84px; border-radius:6px; background:#222 center/cover no-repeat; cursor:pointer; border:1px dashed transparent}
+.item .ph:hover, .item.is-drag .ph{border-color:var(--lime)}
+.item .fields{display:grid; grid-template-columns:70px 1fr 120px; gap:8px}
+.item .fields label{display:flex; flex-direction:column; gap:3px; font-size:11px; color:var(--dim)}
+.item .fields input{height:28px; padding:0 8px; border-radius:6px; border:1px solid var(--line-2); background:var(--bg)}
+.item .ops{display:flex; gap:4px}
+.item .ops .btn{height:28px; width:28px; padding:0}
+.chips{display:grid; grid-template-columns:repeat(auto-fill, minmax(120px,1fr)); gap:10px}
+.chip{position:relative; aspect-ratio:235/272; border-radius:8px; background:#222 center/cover no-repeat; border:1px solid var(--line); cursor:pointer}
+.chip.is-changed{border-color:var(--warn)}
+.chip span{position:absolute; left:6px; top:6px; font-size:10px; background:rgba(0,0,0,.6); padding:1px 5px; border-radius:4px}
+.chip button{position:absolute; right:6px; top:6px; width:22px; height:22px; border-radius:50%; border:0; background:rgba(0,0,0,.7)}
+.addbox{display:grid; place-items:center; border:1px dashed var(--line-2); border-radius:8px; color:var(--muted); cursor:pointer; background:none}
+
+/* hộp thoại token / thông báo */
+dialog{background:var(--panel); color:var(--fg); border:1px solid var(--line-2); border-radius:12px; padding:20px; width:min(520px, 92vw)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog h4{margin:0 0 8px; font-size:15px}
+dialog p{color:var(--muted); margin:0 0 12px}
+dialog label{display:flex; flex-direction:column; gap:4px; margin-bottom:10px; font-size:12px; color:var(--muted)}
+dialog input[type=text], dialog input[type=password]{height:32px; padding:0 10px; border-radius:6px; border:1px solid var(--line-2); background:var(--bg)}
+dialog .row{justify-content:flex-end; margin-top:8px}
+.toast{position:fixed; right:16px; bottom:16px; background:var(--panel-2); border:1px solid var(--line-2); border-radius:10px; padding:12px 14px; max-width:420px; display:none}
+.toast.is-on{display:block}
+.toast.is-bad{border-color:var(--bad)}
+input[type=file]{display:none}
+@media (max-width:760px){ .app{grid-template-columns:1fr; grid-template-rows:56px auto 1fr} .tree{max-height:40vh; border-right:0; border-bottom:1px solid var(--line)} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>Chande CMS</h1>
+    <span class="badge" data-mode>…</span>
+    <span class="sp"></span>
+    <span class="pending" data-pending></span>
+    <button class="btn btn--ghost" type="button" data-discard hidden>Bỏ hết thay đổi</button>
+    <button class="btn" type="button" data-settings>GitHub</button>
+    <button class="btn btn--go" type="button" data-save disabled>Lưu</button>
+  </header>
+  <nav class="tree" aria-label="Cây nội dung"><h2>Cây nội dung</h2><div data-tree></div></nav>
+  <main class="main" data-main><p class="hint">Đang đọc các trang…</p></main>
+</div>
+
+<dialog data-gh>
+  <h4>Xuất bản lên GitHub</h4>
+  <p>Mỗi lần bấm Lưu sẽ thành một commit lên nhánh dưới đây; GitHub Pages tự build lại sau khoảng 1 phút.
+    Cần một <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">fine-grained token</a>
+    chỉ cấp cho repo này, quyền <b>Contents: Read and write</b>.</p>
+  <label>Repo (owner/tên)<input type="text" data-f="repo" placeholder="kaixapham/chande-www"></label>
+  <label>Nhánh<input type="text" data-f="branch" placeholder="main"></label>
+  <label>Token<input type="password" data-f="token" placeholder="github_pat_…" autocomplete="off"></label>
+  <label style="flex-direction:row; align-items:center; gap:8px"><input type="checkbox" data-f="remember"> Nhớ token trên máy này (mặc định chỉ giữ tới khi đóng tab)</label>
+  <div class="row"><button class="btn btn--ghost" type="button" data-close>Huỷ</button><button class="btn btn--go" type="button" data-gh-ok>Dùng</button></div>
+</dialog>
+<div class="toast" data-toast></div>
+<input type="file" accept="image/*" data-file>
+
+<script src="assets/js/chande-cms.js"></script>
+</body>
+</html>
