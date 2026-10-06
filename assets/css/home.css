@@ -213,6 +213,10 @@
 .agenda__nav--prev{left:calc(269 * var(--u))}
 .agenda__nav--prev img{transform:rotate(180deg)}
 .agenda__nav--next{left:calc(1588 * var(--u))}
+.agenda__nav, .hs-quote__nav{transition:opacity .2s}
+.agenda__nav[aria-disabled=true], .hs-quote__nav[aria-disabled=true]{opacity:.3; pointer-events:none}
+.agenda__dates p span{transition:opacity .25s, transform .25s}
+.agenda__dates.is-swap p span{opacity:0; transform:translateY(-.15em)}
 
 /* ----------------------------------------------------------------- 9. WALL */
 .hs-wall{height:calc(1556 * var(--u)); background:#000}
@@ -249,6 +253,11 @@
 .hs-quote__nav--prev{left:calc(1807 * var(--u))}
 .hs-quote__nav--prev img{transform:rotate(180deg)}
 .hs-quote__nav--next{left:calc(1864 * var(--u))}
+/* đổi cảm nhận: chữ + thẻ mờ đi, đổi nội dung, hiện lại */
+.hs-quote__text, .hs-quote__by, .hs-quote__card{transition:opacity .35s ease, transform .35s ease}
+.hs-quote.is-swap .hs-quote__text, .hs-quote.is-swap .hs-quote__by{opacity:0; transform:translateY(calc(24 * var(--u)))}
+.hs-quote.is-swap .hs-quote__card{opacity:0; transform:translateX(calc(-24 * var(--u)))}
+.hs-quote.is-single .hs-quote__bar span{animation:none; transform:scaleX(1)}
 
 /* --------------------------------------------------------------- 11. COLORS */
 .hs-colors .scheme > i{height:calc(60 * var(--u))}
