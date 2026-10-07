@@ -41,7 +41,8 @@
   const CB = window.CHANDE_BUBBLE
   const CC = window.CHANDE_CURSOR
   const CTL = window.CHANDE_TILT
-  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL) return
+  const CPX = window.CHANDE_PARALLAX
+  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL && !CPX) return
 
   const KEY = 'chande-devtools'
   const KEY_SHOTS = 'chande-devtools-shots'
@@ -59,6 +60,7 @@
     CB && { id: 'bubble', label: 'Bubble (giọt theo chuột)', mod: 'bubble' },
     CC && { id: 'cursor', label: 'Con trỏ nhân vật', mod: 'cursor' },
     CTL && { id: 'tilt', label: 'Chữ nghiêng khi cuộn (Agenda)', mod: 'tilt' },
+    CPX && { id: 'parallax', label: 'Parallax ảnh', mod: 'parallax' },
     CT && { id: 'sweep', label: 'Rèm quét', mod: 'transition', variant: 'sweep' },
     CT && { id: 'split', label: 'Rèm chẻ', mod: 'transition', variant: 'split' },
     CT && { id: 'stack', label: 'Trượt thẻ', mod: 'transition', variant: 'stack' },
@@ -231,6 +233,17 @@
     { tab: 'bubble', mod: 'bubble', title: 'Hiệu năng',
       items: [
         { path: 'maxDpr', label: 'Độ phân giải tối đa (dpr)', type: 'range', min: 0.75, max: 2, step: 0.25 },
+      ] },
+
+    // ---- Parallax ảnh khi cuộn (chande-parallax.js) ----
+    { tab: 'parallax', mod: 'parallax', title: 'Parallax ảnh',
+      items: [
+        { path: 'enabled', label: 'Bật parallax', type: 'bool' },
+        { path: 'mode', label: 'Kiểu', type: 'select', options: [['inner', 'Hình trôi trong khung (khung đứng yên)'], ['move', 'Cả ảnh trôi']] },
+        { path: 'zoom', label: 'Phóng ảnh (kiểu trong khung)', type: 'range', min: 1.02, max: 1.5, step: 0.01 },
+        { path: 'speed', label: 'Độ lệch (âm = ảnh nổi lên, dương = lùi sâu)', type: 'range', min: -0.4, max: 0.4, step: 0.01 },
+        { path: 'max', label: 'Lệch tối đa (px, kiểu cả ảnh trôi)', type: 'range', min: 10, max: 300, step: 5 },
+        { path: 'smooth', label: 'Độ bám (nhỏ = trôi mượt hơn)', type: 'range', min: 0.03, max: 1, step: 0.01 },
       ] },
 
     // ---- Chữ nghiêng theo quán tính khi cuộn (chande-tilt.js) ----
@@ -446,7 +459,7 @@
       ]) },
   ]
 
-  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL }
+  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL, parallax: CPX }
   const get = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o)
   const set = (o, p, v) => {
     const k = p.split('.')
