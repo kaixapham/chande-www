@@ -59,6 +59,8 @@
     grainSize: 1.4,
     // ---- Chạy --------------------------------------------------------------
     loop: 6, // giây cho một vòng
+    // Đỗ lại (chạy nốt vòng rồi đứng) trong lúc 4 ảnh hero đổi — tắt = chạy liên tục
+    pauseOnSwap: false,
     fps: 60, // 30 tiết kiệm hơn nhưng cột trượt chậm nhìn thành từng nấc (đã đo: 60 không làm tụt khung trang)
     maxDpr: 1.25, // ô to + gờ mềm: 1.25 đủ nét trên retina, đỡ ~30% điểm ảnh so với 1.5
     // ---- Rê chuột vào mảng xanh ---------------------------------------------
@@ -81,6 +83,7 @@
     // cha gần nhất có nền — hero kem, hero tối, section đen…) để liền với trang;
     // tắt thì dùng hoverGapColor.
     hoverGapAuto: true,
+    imgTiles: true, // 4 ảnh hero cũng vỡ ô khi rê (chande-imgtiles.js đọc cờ này)
     hoverGapColor: '#ffffff',
     hoverFlat: 1, // làm phẳng gờ nổi (bóng) của ô trong vùng chuột (0 = giữ gờ)
     hoverEase: 0.18, // độ bám theo chuột / bật-tắt (0..1, nhỏ = mượt hơn)

@@ -383,10 +383,10 @@
     if (!H || H.swapping) return
     const state = H
     state.swapping = true
-    // Chờ effect xanh (chande-field.js) chạy NỐT vòng của nó và đỗ ở điểm nghỉ
-    // rồi mới đổi ảnh — không bao giờ bắt nó khựng giữa chừng. Nó tự chạy vòng
-    // mới khi nhận 'chande-hero:swap-end'.
-    if (window.CHANDE_FIELD?.park) await window.CHANDE_FIELD.park()
+    // Tuỳ chọn (CHANDE_FIELD.config.pauseOnSwap, mặc định TẮT): chờ effect xanh
+    // chạy NỐT vòng và đỗ ở điểm nghỉ rồi mới đổi ảnh; nó chạy lại khi nhận
+    // 'chande-hero:swap-end'. Tắt thì effect xanh cứ chạy liên tục.
+    if (window.CHANDE_FIELD?.config?.pauseOnSwap && window.CHANDE_FIELD.park) await window.CHANDE_FIELD.park()
     if (H !== state) {
       // Rời trang trong lúc chờ: trả effect về chạy, đừng để nó đỗ mãi.
       window.CHANDE_FIELD?.release?.()

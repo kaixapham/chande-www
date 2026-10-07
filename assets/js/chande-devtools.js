@@ -314,6 +314,7 @@
         { path: 'hoverPush', label: 'Đẩy ô (âm = hút về chuột)', type: 'range', min: -1, max: 1, step: 0.01 },
         { path: 'hoverWarp', label: 'Kéo màu (âm = chụm vào)', type: 'range', min: -5, max: 5, step: 0.05 },
         { path: 'hoverGlow', label: 'Sáng thêm', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'imgTiles', label: 'Ảnh hero cũng vỡ ô khi rê (cùng kiểu)', type: 'bool' },
         { path: 'hoverGapAuto', label: 'Nền lộ ra = màu nền phía sau (tự động)', type: 'bool' },
         { path: 'hoverGapColor', label: 'Màu nền lộ ra (khi tắt tự động)', type: 'color' },
         { path: 'hoverFlat', label: 'Làm phẳng bóng ô khi rê', type: 'range', min: 0, max: 1, step: 0.01 },
@@ -329,6 +330,7 @@
       ] },
     { tab: 'field', mod: 'field', title: 'Chạy',
       items: [
+        { path: 'pauseOnSwap', label: 'Dừng chờ khi 4 ảnh hero đổi', type: 'bool' },
         { path: 'loop', label: 'Một vòng (s)', type: 'range', min: 1, max: 20, step: 0.5 },
         { path: 'fps', label: 'Khung hình / giây (thấp = nhẹ máy nhưng giật)', type: 'range', min: 10, max: 120, step: 1 },
         { path: 'maxDpr', label: 'Độ nét tối đa (DPR)', type: 'range', min: 0.5, max: 2, step: 0.05 },
