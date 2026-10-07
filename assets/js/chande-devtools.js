@@ -269,10 +269,16 @@
     { tab: 'field', mod: 'field', title: 'Rê chuột',
       items: [
         { path: 'hover', label: 'Bật hiệu ứng rê chuột', type: 'bool' },
+        // chọn preset = chép cả bộ số bên dưới, rồi vẫn chỉnh tay từng ô được
+        { path: 'hoverPreset', label: 'Preset', type: 'select',
+          options: [['lens', 'Thấu kính'], ['scatter', 'Tản ô'], ['magnet', 'Nam châm (hút)'], ['ripple', 'Gợn sóng']],
+          apply: (v) => CF?.applyHoverPreset?.(v) },
+        { path: 'hoverMode', label: 'Kiểu', type: 'select', options: [['push', 'Co / đẩy'], ['ripple', 'Gợn sóng']] },
+        { path: 'hoverRipple', label: 'Tốc độ sóng (kiểu gợn sóng)', type: 'range', min: 0.1, max: 3, step: 0.05 },
         { path: 'hoverRadius', label: 'Bán kính (số ô)', type: 'range', min: 1, max: 20, step: 0.5 },
         { path: 'hoverShrink', label: 'Co ô', type: 'range', min: 0, max: 0.9, step: 0.01 },
-        { path: 'hoverPush', label: 'Đẩy ô ra xa', type: 'range', min: 0, max: 1, step: 0.01 },
-        { path: 'hoverWarp', label: 'Kéo màu (thấu kính)', type: 'range', min: 0, max: 5, step: 0.05 },
+        { path: 'hoverPush', label: 'Đẩy ô (âm = hút về chuột)', type: 'range', min: -1, max: 1, step: 0.01 },
+        { path: 'hoverWarp', label: 'Kéo màu (âm = chụm vào)', type: 'range', min: -5, max: 5, step: 0.05 },
         { path: 'hoverGlow', label: 'Sáng thêm', type: 'range', min: 0, max: 1, step: 0.01 },
         { path: 'hoverGapColor', label: 'Màu nền lộ ra dưới ô', type: 'color' },
         { path: 'hoverFlat', label: 'Làm phẳng bóng ô khi rê', type: 'range', min: 0, max: 1, step: 0.01 },
@@ -786,7 +792,11 @@
       r.innerHTML =
         `<div class="cdev__lab"><label for="${id}">${f.label}</label></div>` +
         `<select id="${id}" class="cdev__sel">${f.options
-          .map((o) => `<option ${o === v ? 'selected' : ''}>${o}</option>`).join('')}</select>`
+          .map((o) => {
+            // chuỗi, hoặc [giá trị, nhãn hiển thị]
+            const [ov, ol] = Array.isArray(o) ? o : [o, o]
+            return `<option value="${esc(ov)}" ${ov === v ? 'selected' : ''}>${ol}</option>`
+          }).join('')}</select>`
     else
       r.innerHTML =
         `<div class="cdev__lab"><label for="${id}">${f.label}</label><span class="cdev__v">${v}</span></div>` +
@@ -796,8 +806,10 @@
     const commit = (nv) => {
       set(cfg, f.path, nv)
       if (out) out.textContent = nv
+      f.apply?.(nv) // vd. preset: chép cả bộ số -> dựng lại bảng để các ô hiện số mới
       live(g).refresh?.()
       saveSettings()
+      if (f.apply) buildPanel()
     }
 
     if (f.type === 'color') {

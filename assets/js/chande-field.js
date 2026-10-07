@@ -31,8 +31,10 @@
  * Tham số theo từng vùng (ghi đè CONFIG): data-field-cols, data-field-tiles,
  * data-field-flip ("y" = lật dọc), data-field-shift (0..1, lệch pha).
  *
+ * Rê chuột có 4 preset (HOVER_PRESETS): Thấu kính · Tản ô · Nam châm · Gợn sóng.
+ *
  * API: window.CHANDE_FIELD = { config, defaults, mount(root), destroy(), refresh(),
- *                            park() -> Promise, release() }
+ *                            park() -> Promise, release(), applyHoverPreset(tên) }
  * ========================================================================== */
 (() => {
   'use strict'
@@ -61,6 +63,11 @@
     maxDpr: 1.25, // ô to + gờ mềm: 1.25 đủ nét trên retina, đỡ ~30% điểm ảnh so với 1.5
     // ---- Rê chuột vào mảng xanh ---------------------------------------------
     hover: true,
+    // Preset chỉ là nhãn của bộ số bên dưới — chọn ở bảng setting thì
+    // applyHoverPreset() chép bộ số vào đây; chỉnh tay từng ô sau đó vẫn được.
+    hoverPreset: 'lens', // lens · scatter · magnet · ripple (xem HOVER_PRESETS)
+    hoverMode: 'push', // push = ô co/đẩy theo khoảng cách · ripple = thêm vòng sóng lan ra
+    hoverRipple: 1, // ripple: tốc độ sóng
     hoverRadius: 6, // bán kính ảnh hưởng, tính bằng số ô
     hoverShrink: 0.45, // ô sát con trỏ co lại bao nhiêu (0..1)
     hoverPush: 0.9, // ô trượt ra xa con trỏ, tỉ lệ khoảng trống vừa co ra
@@ -76,6 +83,25 @@
   window.CHANDE_SETTINGS_APPLY?.('field', CONFIG)
   const DEFAULTS = structuredClone(CONFIG)
   const reduced = matchMedia('(prefers-reduced-motion: reduce)')
+
+  // Bộ số cho từng kiểu rê chuột. hoverGapColor không nằm trong preset (giữ màu
+  // nền đang chọn). 'lens' = mặc định gốc.
+  const HOVER_PRESETS = {
+    lens: { // Thấu kính — ô co, trượt ra xa, màu bị kéo về con trỏ
+      hoverMode: 'push', hoverRadius: 6, hoverShrink: 0.45, hoverPush: 0.9, hoverWarp: 1.6, hoverGlow: 0.25, hoverFlat: 1, hoverEase: 0.18 },
+    scatter: { // Tản ô — ô co mạnh và dạt hết ra, lộ nhiều nền
+      hoverMode: 'push', hoverRadius: 8, hoverShrink: 0.8, hoverPush: 1, hoverWarp: 0, hoverGlow: 0, hoverFlat: 1, hoverEase: 0.12 },
+    magnet: { // Nam châm — ô bị hút về phía con trỏ, màu chụm vào
+      hoverMode: 'push', hoverRadius: 6, hoverShrink: 0.3, hoverPush: -1, hoverWarp: -1.2, hoverGlow: 0.35, hoverFlat: 1, hoverEase: 0.2 },
+    ripple: { // Gợn sóng — vòng sóng lan ra từ con trỏ, ô co/giãn theo sóng
+      hoverMode: 'ripple', hoverRipple: 1, hoverRadius: 10, hoverShrink: 0.6, hoverPush: 0.5, hoverWarp: 0.6, hoverGlow: 0.2, hoverFlat: 1, hoverEase: 0.15 },
+  }
+  function applyHoverPreset(name) {
+    const p = HOVER_PRESETS[name]
+    if (!p) return
+    Object.assign(CONFIG, p)
+    CONFIG.hoverPreset = name
+  }
 
   /* ------------------------------------------------------------- Shader --- */
   const VERT = `
@@ -118,6 +144,8 @@ uniform float uHoverWarp;
 uniform float uHoverGlow;
 uniform vec3 uHoverGap;
 uniform float uHoverFlat;
+uniform float uHoverMode;   // 0 push · 1 ripple
+uniform float uHoverTime;   // giây, cho sóng
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
 
@@ -188,6 +216,11 @@ void main() {
     float dist = length(dCells);
     float infl = uHover * (1.0 - smoothstep(0.0, uHoverRadius, dist));
     infl *= infl * (3.0 - 2.0 * infl);
+    if (uHoverMode > 0.5) {
+      // vòng sóng lan ra: đỉnh sóng đi ra ngoài theo thời gian, mờ dần về rìa
+      float wave = 0.5 + 0.5 * sin(dist * 1.1 - uHoverTime * 5.0);
+      infl *= mix(0.15, 1.0, wave);
+    }
     vec2 away = dist > 1e-4 ? dCells / dist : vec2(0.0);
     vec3 tint = shadeAt(cellUv - away / grid * infl * uHoverWarp);
 
@@ -239,7 +272,7 @@ void main() {
     'uResolution', 'uPhase', 'uLineCount', 'uLineOffset', 'uLineOrder', 'uSoftness',
     'uMosaicOn', 'uMosaicDetail', 'uMosaicGap', 'uMosaicCorners', 'uMosaicBevel',
     'uMosaicStuds', 'uContrast', 'uSaturation', 'uVignette', 'uGrainAmount', 'uGrainSize',
-  'uFlip', 'uMouse', 'uHover', 'uHoverRadius', 'uHoverShrink', 'uHoverPush', 'uHoverWarp', 'uHoverGlow', 'uHoverGap', 'uHoverFlat',
+  'uFlip', 'uMouse', 'uHover', 'uHoverRadius', 'uHoverShrink', 'uHoverPush', 'uHoverWarp', 'uHoverGlow', 'uHoverGap', 'uHoverFlat', 'uHoverMode', 'uHoverTime',
   ]
 
   const hexToRgb = (hex) => {
@@ -305,6 +338,8 @@ void main() {
         gl.uniform1f(u.uHoverGlow, o.hoverGlow)
         gl.uniform3fv(u.uHoverGap, hexToRgb(o.hoverGapColor))
         gl.uniform1f(u.uHoverFlat, o.hoverFlat)
+        gl.uniform1f(u.uHoverMode, o.hoverMode === 'ripple' ? 1 : 0)
+        gl.uniform1f(u.uHoverTime, ((performance.now() / 1000) * o.hoverRipple) % 1000)
         o.colors.forEach((c, i) => gl.uniform3fv(uColors[i], hexToRgb(c)))
         gl.uniform2f(u.uResolution, w, h)
         gl.uniform1f(u.uPhase, phase)
@@ -583,5 +618,5 @@ void main() {
     window.barba.hooks.afterLeave((data) => destroy(data.current.container))
   }
 
-  window.CHANDE_FIELD = { config: CONFIG, defaults: DEFAULTS, mount, destroy, refresh, park, release }
+  window.CHANDE_FIELD = { config: CONFIG, defaults: DEFAULTS, mount, destroy, refresh, park, release, applyHoverPreset, HOVER_PRESETS }
 })()
