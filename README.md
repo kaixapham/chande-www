@@ -398,7 +398,8 @@ theo hướng đi, phóng to khi trỏ vào link; con trỏ thật vẫn giữ. 
 
 ## 6. CMS thay ảnh — `cms.html`
 
-Mở `/cms.html`. Cây bên trái: **CMS tổng → trang (Home / Gallery / About) →
+Mở `/cms.html` — hoặc bấm phím **K** ở bất kỳ trang nào (mở CMS ở tab riêng, bấm lại thì
+quay về đúng tab đó). Cây bên trái: **CMS tổng → trang (Home / Gallery / About) →
 Section 1, 2, 3…** theo đúng thứ tự trong trang. Bấm *Thay ảnh* hoặc kéo-thả ảnh
 vào ô, sửa alt, sửa danh sách người ở hero (số, tên, căn ảnh, thêm / xoá / đổi
 thứ tự) và danh sách ảnh hover tên ở footer. Mọi thay đổi chờ ở thanh trên, bấm

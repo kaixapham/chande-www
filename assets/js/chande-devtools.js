@@ -2,7 +2,8 @@
  * CHANDE — Devtools (CHỈ DÙNG LÚC LÀM VIỆC)
  * -----------------------------------------------------------------------------
  * Một bảng duy nhất ở góc phải trên, giao diện theo bảng Controls của
- * Toolcraft. ẨN SẴN — bấm phím H để bật / tắt. Các mục (chọn ở ô "Mục"):
+ * Toolcraft. ẨN SẴN — bấm phím H để bật / tắt; phím K mở CMS thay ảnh
+ * (cms.html) ở tab riêng. Các mục (chọn ở ô "Mục"):
  *   • Loading    — play / pause / tua timeline + màu nền, dither, màu element
  *   • Hero home  — chiều cao ảnh (% viewport, chung 4 ô), nhịp vòng đổi ảnh,
  *                  kiểu đổi ảnh + thứ tự + độ lệch giữa 4 ô
@@ -809,7 +810,7 @@
     </section>
     <div class="cdev__panel"></div>
   </div>
-  <div class="cdev__foot"><kbd>H</kbd> ẩn / hiện bảng<span class="cdev__msg" data-msg role="status"></span>
+  <div class="cdev__foot"><kbd>H</kbd> ẩn / hiện bảng · <kbd>K</kbd> mở CMS<span class="cdev__msg" data-msg role="status"></span>
     <form class="cdev__gh" data-gh hidden>
       <input class="cdev__in" name="repo" type="text" spellcheck="false" placeholder="owner/repo" aria-label="Repo GitHub">
       <input class="cdev__in" name="token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…" aria-label="Token GitHub">
@@ -1096,6 +1097,9 @@
     if (e.target.matches('input,textarea,select,[contenteditable]')) return
     if (e.metaKey || e.ctrlKey || e.altKey) return
     if (e.code === 'KeyH') return void setShown(!shown)
+    // K: mở CMS thay ảnh ở tab riêng (tên cửa sổ cố định -> bấm lại thì quay về
+    // đúng tab CMS đã mở chứ không mở thêm tab mới).
+    if (e.code === 'KeyK') return void window.open('cms.html', 'chande-cms')?.focus()
     // Phím tắt timeline chỉ sống khi bảng đang hiện — không thì Space cuộn trang.
     if (!CL || !shown) return
     if (e.code === 'Space') { e.preventDefault(); CL.toggle() }
