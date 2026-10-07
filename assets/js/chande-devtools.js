@@ -275,6 +275,7 @@
         { path: 'hoverWarp', label: 'Kéo màu (thấu kính)', type: 'range', min: 0, max: 5, step: 0.05 },
         { path: 'hoverGlow', label: 'Sáng thêm', type: 'range', min: 0, max: 1, step: 0.01 },
         { path: 'hoverGapColor', label: 'Màu nền lộ ra dưới ô', type: 'color' },
+        { path: 'hoverFlat', label: 'Làm phẳng bóng ô khi rê', type: 'range', min: 0, max: 1, step: 0.01 },
         { path: 'hoverEase', label: 'Độ mượt (nhỏ = mượt hơn)', type: 'range', min: 0.03, max: 1, step: 0.01 },
       ] },
     { tab: 'field', mod: 'field', title: 'Grade',

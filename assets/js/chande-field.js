@@ -66,9 +66,10 @@
     hoverPush: 0.9, // ô trượt ra xa con trỏ, tỉ lệ khoảng trống vừa co ra
     hoverWarp: 1.6, // màu field bị kéo về phía con trỏ (số ô)
     hoverGlow: 0.25, // sáng thêm
-    // Nền lộ ra dưới các ô khi chúng co lại: màu sáng nhất của bảng màu (ô trắng
-    // phía trên) thay vì khe tối của preset. Chỉ áp ở vùng chuột tác động.
-    hoverGapColor: '#e9ffd1',
+    // Nền lộ ra dưới các ô khi chúng co lại: TRẮNG PHẲNG — không bóng, không đi
+    // qua contrast / saturation / vignette / grain. Chỉ áp ở vùng chuột tác động.
+    hoverGapColor: '#ffffff',
+    hoverFlat: 1, // làm phẳng gờ nổi (bóng) của ô trong vùng chuột (0 = giữ gờ)
     hoverEase: 0.18, // độ bám theo chuột / bật-tắt (0..1, nhỏ = mượt hơn)
   }
   // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
@@ -116,6 +117,7 @@ uniform float uHoverPush;
 uniform float uHoverWarp;
 uniform float uHoverGlow;
 uniform vec3 uHoverGap;
+uniform float uHoverFlat;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
 
@@ -170,6 +172,7 @@ void main() {
   vec2 centered = (uv - 0.5) * vec2(aspect, 1.0);
   float angle = uPhase * TAU;
   vec3 color;
+  float reveal = 0.0; // phần nền trắng lộ ra dưới ô khi rê chuột
 
   if (uMosaicOn > 0.5) {
     vec2 grid = vec2(uMosaicDetail, max(1.0, floor(uMosaicDetail / max(aspect, 0.001))));
@@ -200,7 +203,8 @@ void main() {
     vec2 key = normalize(vec2(-0.7, 0.7));
     vec2 slope = local / max(extent, 0.001);
     float rim = smoothstep(0.25, 1.0, max(abs(slope.x), abs(slope.y)));
-    float relief = dot(normalize(slope + vec2(1e-5)), key) * rim;
+    float flatK = 1.0 - uHoverFlat * infl; // ("flat" là từ khoá GLSL)
+    float relief = dot(normalize(slope + vec2(1e-5)), key) * rim * flatK;
     vec3 lit = tint * (1.0 + uMosaicBevel * relief) * (1.0 + uHoverGlow * infl);
 
     if (uMosaicStuds > 0.001) {
@@ -208,11 +212,13 @@ void main() {
       float studDistance = length(local) - studRadius;
       float stud = 1.0 - smoothstep(-edgeAA, edgeAA, studDistance);
       float studSlope = clamp(length(local) / max(studRadius, 0.001), 0.0, 1.0);
-      float studRelief = dot(normalize(local + vec2(1e-5)), key) * studSlope;
-      lit = mix(lit, tint * (1.0 + uMosaicBevel * (0.25 + studRelief)) * (1.0 + uHoverGlow * infl), stud);
+      float studRelief = dot(normalize(local + vec2(1e-5)), key) * studSlope * flatK;
+      lit = mix(lit, tint * (1.0 + uMosaicBevel * (0.25 * flatK + studRelief)) * (1.0 + uHoverGlow * infl), stud);
     }
-    vec3 gapCol = mix(rampColor(0.0) * 0.3, uHoverGap, infl);
-    color = mix(gapCol, clamp(lit, 0.0, 1.0), brick);
+    color = mix(rampColor(0.0) * 0.3, clamp(lit, 0.0, 1.0), brick);
+    // Khe trong vùng chuột: bão hoà nhanh (infl 0.15 đã trắng hẳn) để không còn
+    // dải xám pha giữa khe tối và nền trắng ở rìa vùng ảnh hưởng.
+    reveal = (1.0 - brick) * smoothstep(0.0, 0.15, infl);
   } else {
     color = shadeAt(uv);
   }
@@ -224,6 +230,8 @@ void main() {
   vec2 grainCell = floor(gl_FragCoord.xy / max(uGrainSize, 0.25));
   float grain = hash(grainCell + vec2(sin(angle) * 37.0, cos(angle) * 61.0)) - 0.5;
   color = clamp(color + grain * uGrainAmount, 0.0, 1.0);
+  // nền trắng đè SAU mọi bước chỉnh màu -> đúng màu hoverGapColor, phẳng tuyệt đối
+  color = mix(color, uHoverGap, reveal);
   gl_FragColor = vec4(color, 1.0);
 }`
 
@@ -231,7 +239,7 @@ void main() {
     'uResolution', 'uPhase', 'uLineCount', 'uLineOffset', 'uLineOrder', 'uSoftness',
     'uMosaicOn', 'uMosaicDetail', 'uMosaicGap', 'uMosaicCorners', 'uMosaicBevel',
     'uMosaicStuds', 'uContrast', 'uSaturation', 'uVignette', 'uGrainAmount', 'uGrainSize',
-  'uFlip', 'uMouse', 'uHover', 'uHoverRadius', 'uHoverShrink', 'uHoverPush', 'uHoverWarp', 'uHoverGlow', 'uHoverGap',
+  'uFlip', 'uMouse', 'uHover', 'uHoverRadius', 'uHoverShrink', 'uHoverPush', 'uHoverWarp', 'uHoverGlow', 'uHoverGap', 'uHoverFlat',
   ]
 
   const hexToRgb = (hex) => {
@@ -296,6 +304,7 @@ void main() {
         gl.uniform1f(u.uHoverWarp, o.hoverWarp)
         gl.uniform1f(u.uHoverGlow, o.hoverGlow)
         gl.uniform3fv(u.uHoverGap, hexToRgb(o.hoverGapColor))
+        gl.uniform1f(u.uHoverFlat, o.hoverFlat)
         o.colors.forEach((c, i) => gl.uniform3fv(uColors[i], hexToRgb(c)))
         gl.uniform2f(u.uResolution, w, h)
         gl.uniform1f(u.uPhase, phase)
