@@ -85,7 +85,9 @@
 .hs-story__dots img{width:4px; height:4px}
 .hs-story__col{right:0; bottom:0; width:calc(492 * var(--u))}
 .hs-story__panel{position:relative; height:calc(514 * var(--u)); padding:calc(40 * var(--u)) calc(32 * var(--u)); display:flex; flex-direction:column; justify-content:space-between}
-.hs-story__panel:first-child{background:#161d1d; justify-content:flex-start; gap:calc(218 * var(--u))}
+/* Như ô dưới: tiêu đề trên, cụm chữ bám đáy (đệm dưới 40) — trước để gap cố định
+   218 từ tiêu đề nên ở màn < 1920 chữ (cỡ rem) tràn xuống, mất đệm dưới. */
+.hs-story__panel:first-child{background:#161d1d}
 .hs-story__panel:last-child{background:#192423}
 .hs-story__panel h3{margin:0; color:#5c6161}
 .hs-story__text{width:calc(360 * var(--u)); min-width:16rem; min-height:calc(216 * var(--u)); display:flex; flex-direction:column; justify-content:space-between; gap:1.5rem}
@@ -213,6 +215,9 @@
 .stack-over > .hs-poster{position:sticky; top:calc(100svh - 1080 * var(--u) + 1px); z-index:0}
 .stack-over > .hs-poster.is-live{top:calc(var(--bar) - var(--poster-scroll) + 1px)}
 .stack-over > .hs-agenda{z-index:1}
+/* Nền tối khi cụm ngày dính chạm ảnh của một ngày (chande-home.js .is-dark) */
+.hs-agenda{transition:background-color .5s ease, color .5s ease}
+.hs-agenda.is-dark, .stack-over > .hs-poster.is-live + .hs-agenda.is-dark{background:#0f1513; color:#f4f3eb}
 /* Agenda không đợi outro (vòng màu) phủ kín màn kem mới lên: nó gối lên quãng
    cuộn cuối của Poster một đoạn --agenda-overlap, nên trồi lên trong lúc outro
    vẫn chạy bên dưới. Nền Agenda TRONG SUỐT để không che các vòng — chỉ chữ / ảnh

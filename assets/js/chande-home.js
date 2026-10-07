@@ -158,6 +158,20 @@
     if (agenda) {
       const heads = [...agenda.querySelectorAll('.agenda__head[data-day]')]
       const dates = agenda.querySelector('.agenda__dates')
+      // Nền tối: mép trên cụm ngày (dính) chạm mép trên ảnh của một ngày -> nền
+      // Agenda đen, chữ sáng; ảnh trôi qua hết thì về sáng.
+      const shots = [...agenda.querySelectorAll('.agenda > .agenda__shot, .agenda__pair')]
+      const dateTop = dates?.querySelector('p')
+      let darkOn = null
+      if (shots.length && dateTop)
+        jobs.push(() => {
+          const y = dateTop.getBoundingClientRect().top
+          const on = shots.some((s) => {
+            const r = s.getBoundingClientRect()
+            return r.top <= y + 0.5 && r.bottom > y
+          })
+          if (on !== darkOn) agenda.classList.toggle('is-dark', (darkOn = on))
+        })
       const spans = dates ? [...dates.querySelectorAll('p span')] : []
       const prev = agenda.querySelector('.agenda__nav--prev')
       const next = agenda.querySelector('.agenda__nav--next')
