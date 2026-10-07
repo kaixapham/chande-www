@@ -159,8 +159,8 @@
       const heads = [...agenda.querySelectorAll('.agenda__head[data-day]')]
       const dates = agenda.querySelector('.agenda__dates')
       // Nền tối: mép trên cụm ngày (dính) chạm mép trên CẶP ẢNH DƯỚI (ngày 2,
-      // .agenda__pair) -> nền Agenda đen, chữ sáng; cặp ảnh trôi qua hết thì về
-      // sáng. Ảnh ngày 1 không bật.
+      // .agenda__pair) -> nền Agenda đen, chữ sáng, và GIỮ tối khi cuộn tiếp xuống;
+      // chỉ cuộn ngược lên trên điểm đó mới về sáng. Ảnh ngày 1 không bật.
       const shots = [...agenda.querySelectorAll('.agenda__pair')]
       const dateTop = dates?.querySelector('p')
       let darkOn = null
@@ -169,7 +169,7 @@
           const y = dateTop.getBoundingClientRect().top
           const on = shots.some((s) => {
             const r = s.getBoundingClientRect()
-            return r.top <= y + 0.5 && r.bottom > y
+            return r.top <= y + 0.5
           })
           if (on !== darkOn) agenda.classList.toggle('is-dark', (darkOn = on))
         })
