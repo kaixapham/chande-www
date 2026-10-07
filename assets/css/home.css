@@ -110,7 +110,7 @@
 .hs-scheme .scheme{position:absolute; left:calc(492 * var(--u)); right:0; top:0}
 
 /* ---------------------------------------------------------------- 4. STRIP */
-.hs-strip{height:calc(200 * var(--u))}
+.hs-strip{height:calc(96 * var(--u))} /* vừa đúng dải — không chừa khoảng kem trước phong cảnh */
 .strip{position:absolute; left:0; right:0; height:calc(96 * var(--u)); display:flex}
 .strip__field{width:50%; height:100%}
 .strip__run{width:50%; height:100%; background:#1b2524; position:relative}
