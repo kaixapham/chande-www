@@ -37,8 +37,9 @@ window.CHANDE_SETTINGS = {
   "field.maxDpr": 2,
   "field.softness": 0.55,
   "hero.darkOnRow": true,
-  "hero.revealStagger": 250,
-  "hero.swapDuration": 580,
+  "hero.retract": 750,
+  "hero.revealStagger": 240,
+  "hero.swapDuration": 540,
   "reveal.speed": 0.4,
 }
 
