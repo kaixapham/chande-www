@@ -21,6 +21,10 @@
  * Cặp ảnh Agenda đổi bằng nút: khung tạm của hiệu ứng đổi ảnh chép theo
  * translate / scale / clip-path của ảnh (chande-home.js) nên không giật lúc đổi.
  *
+ * Ảnh đè liền với ảnh nền như một ảnh (data-parallax-follow, ví dụ ảnh đè góc trái
+ * ngày 1 Agenda) đi theo ảnh đứng ngay trước nó: cùng độ dịch, phóng quanh tâm
+ * ảnh nền, cắt theo khung ảnh nền -> cả cụm trôi như một tấm, mép không lệch nhau.
+ *
  * Bỏ qua ảnh đã có chuyển động riêng: hero (sticky + đổi ảnh), tem / hoá đơn của
  * phong cảnh, chồng poster.
  *
@@ -49,7 +53,34 @@
   window.CHANDE_PARALLAX = api
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-  let items = [] // { el, k, cur, on, pin }
+  let items = [] // { el, k, cur, on, pin, followers }
+
+  // Ảnh đi theo: áp đúng phép phóng / dịch của ảnh nền (tâm phóng = tâm ảnh nền,
+  // quy về toạ độ riêng của ảnh đi theo) rồi cắt về khung ảnh nền.
+  function paintFollower(f, lead, d, z) {
+    if (!d && z === 1) {
+      f.style.translate = f.style.scale = f.style.clipPath = f.style.transformOrigin = ''
+      return
+    }
+    const W = lead.offsetWidth
+    const H = lead.offsetHeight
+    const fw = f.offsetWidth
+    const fh = f.offsetHeight
+    const lx = lead.offsetLeft - f.offsetLeft
+    const ly = lead.offsetTop - f.offsetTop
+    const ox = lx + W / 2
+    const oy = ly + H / 2
+    // điểm Y (toạ độ chưa biến đổi) -> toạ độ riêng: Y' = o + (Y − dịch − o) / z
+    const inv = (Y, o, dd) => o + (Y - dd - o) / z
+    const top = Math.max(0, inv(ly, oy, d))
+    const bot = Math.max(0, fh - inv(ly + H, oy, d))
+    const left = Math.max(0, inv(lx, ox, 0))
+    const right = Math.max(0, fw - inv(lx + W, ox, 0))
+    f.style.transformOrigin = `${ox.toFixed(2)}px ${oy.toFixed(2)}px`
+    f.style.translate = `0 ${d.toFixed(2)}px`
+    f.style.scale = z === 1 ? '' : String(z)
+    f.style.clipPath = z === 1 ? '' : `inset(${top.toFixed(2)}px ${right.toFixed(2)}px ${bot.toFixed(2)}px ${left.toFixed(2)}px)`
+  }
   let io = null
   let raf = 0
   let last = 0
@@ -86,6 +117,7 @@
       if (Math.abs(goal - it.cur) < 0.05) it.cur = goal
       else moving = true
       const d = it.cur
+      it.followers.forEach((f) => paintFollower(f, it.el, CONFIG.enabled ? d : 0, CONFIG.enabled ? z : 1))
       if (!CONFIG.enabled || (!d && z === 1)) {
         it.el.style.translate = it.el.style.scale = it.el.style.clipPath = ''
         continue
@@ -126,9 +158,17 @@
   function mount(root = document) {
     destroy()
     const scope = root.querySelectorAll ? root : document
+    const follow = [...scope.querySelectorAll('[data-parallax-follow]')]
     items = [...scope.querySelectorAll(CONFIG.selector)]
-      .filter((el) => !el.matches(CONFIG.exclude))
-      .map((el) => ({ el, k: el.dataset.parallax ? +el.dataset.parallax / CONFIG.speed || 1 : 1, cur: 0, on: false, pin: pinOf(el) }))
+      .filter((el) => !el.matches(CONFIG.exclude) && !el.hasAttribute('data-parallax-follow'))
+      .map((el) => ({
+        el,
+        k: el.dataset.parallax ? +el.dataset.parallax / CONFIG.speed || 1 : 1,
+        cur: 0,
+        on: false,
+        pin: pinOf(el),
+        followers: follow.filter((f) => f.previousElementSibling === el),
+      }))
     io = new IntersectionObserver(
       (es) => {
         es.forEach((e) => {
@@ -151,7 +191,10 @@
     io = null
     removeEventListener('scroll', kick)
     removeEventListener('resize', repin)
-    items.forEach((it) => (it.el.style.translate = it.el.style.scale = it.el.style.clipPath = ''))
+    items.forEach((it) => {
+      it.el.style.translate = it.el.style.scale = it.el.style.clipPath = ''
+      it.followers.forEach((f) => (f.style.translate = f.style.scale = f.style.clipPath = f.style.transformOrigin = ''))
+    })
     items = []
   }
 
