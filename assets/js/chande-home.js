@@ -209,10 +209,14 @@
           c.cube.style.setProperty('--dh', `${h}px`)
           c.back.innerHTML = html
           c.back.className = `dc__b ${dir > 0 ? 'is-down' : 'is-up'}`
+          const timing = { duration: 750, easing: 'cubic-bezier(.7, 0, .25, 1)' }
           c.anim = c.cube.animate(
             [{ transform: `translateZ(${-h / 2}px) rotateX(0deg)` }, { transform: `translateZ(${-h / 2}px) rotateX(${dir * 90}deg)` }],
-            { duration: 700, easing: 'cubic-bezier(.7, 0, .25, 1)' },
+            timing,
           )
+          // đổ bóng: mặt quay đi tối dần, mặt quay ra sáng dần -> đọc ra khối 3D
+          c.front.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(.45)' }], timing)
+          c.back.animate([{ filter: 'brightness(.45)' }, { filter: 'brightness(1)' }], timing)
           c.anim.finished
             .then(() => {
               c.front.innerHTML = html
