@@ -167,15 +167,20 @@
 .circle .tex{left:calc(8 * var(--u)); top:calc(8 * var(--u)); width:calc(452 * var(--u)); height:calc(452 * var(--u))}
 .circle .tex--dim{opacity:.2}
 .circle .core{left:calc(72 * var(--u)); top:calc(72 * var(--u)); width:calc(324 * var(--u)); height:calc(324 * var(--u))}
+/* Đoạn chữ trái / ảnh giữa / danh sách vai trò: BẰNG ĐÁY nhau, cách đường kẻ đứt
+   (top 1930) 16 -> đáy ở 1914 = bottom 3090 − 1914 = 1176. Neo theo đáy nên chữ
+   (cỡ rem, không co theo màn) dài ra thì mọc lên trên, không lấn qua đường kẻ. */
 .hs-about__who{left:calc(492 * var(--u)); top:calc(1538 * var(--u)); margin:0; white-space:nowrap}
 .hs-about__who span{display:block}
 .hs-about__friends{left:calc(492 * var(--u)); top:calc(1603 * var(--u)); width:calc(234 * var(--u)); height:calc(311 * var(--u)); object-fit:cover}
-.hs-about__roots{left:calc(24 * var(--u)); top:calc(1798 * var(--u)); width:calc(234 * var(--u)); margin:0; font-size:1rem; color:#000; opacity:.3}
-.hs-about__roles{left:calc(960 * var(--u)); top:calc(1538 * var(--u)); width:calc(368 * var(--u)); margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:calc(4 * var(--u))}
+.hs-about__roots{left:calc(24 * var(--u)); top:auto; bottom:calc(1176 * var(--u)); width:calc(234 * var(--u)); margin:0; font-size:1rem; color:#000; opacity:.3}
+.hs-about__roles{left:calc(960 * var(--u)); top:auto; bottom:calc(1176 * var(--u)); width:calc(368 * var(--u)); margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:calc(4 * var(--u))}
 .hs-about__roles li{white-space:nowrap}
 .hs-about__count{left:calc(1848 * var(--u)); top:calc(1614 * var(--u)); margin:0}
 .hs-about__pills{left:calc(492 * var(--u)); top:calc(2230 * var(--u))}
-.hs-about__scheme{left:0; top:calc(2310 * var(--u)); width:calc(492 * var(--u))}
+/* +1px chui dưới ảnh đá (ảnh vẽ sau, nằm trên): hai mép trùng ở toạ độ lẻ thì
+   điểm ảnh mép phủ không đủ, lộ nền kem thành vạch sáng 1px. */
+.hs-about__scheme{left:0; top:calc(2310 * var(--u)); width:calc(492 * var(--u) + 1px)}
 .hs-about__rock{left:calc(492 * var(--u)); top:calc(2310 * var(--u)); width:calc(468 * var(--u)); height:calc(540 * var(--u)); object-fit:cover; object-position:40% 55%}
 .hs-about__field{right:0; top:calc(2310 * var(--u)); width:calc(960 * var(--u)); height:calc(540 * var(--u))}
 .hs-about__band{left:0; right:0; top:calc(2850 * var(--u)); height:calc(240 * var(--u)); background:#112020; display:flex; align-items:center; gap:calc(32 * var(--u))}
