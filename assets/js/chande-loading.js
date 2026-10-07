@@ -339,12 +339,14 @@
 .cl__navlink .cl__flip,
 .cl__navlink .cl__flip-face{height:var(--cl-cap1)}
 
-/* nút menu — chỉ hiện ở trạng thái xong */
+/* nút menu — chỉ hiện ở trạng thái xong. Con TRỰC TIẾP của thanh (không nằm
+   trong ô nav 02): ô có viền 1px + overflow:hidden nên nút đặt bên trong bị lùi
+   vào 1px và bị cắt trong viền, lộ nền ô thành đường kẻ quanh nút. */
 .cl__menu{
   /* font:inherit BẮT BUỘC: <button> không kế thừa font-size (UA đặt 13.333px),
      nên mọi giá trị em bên trong nút sẽ tính sai cỡ nếu thiếu dòng này. */
   font:inherit;
-  position:absolute; right:0; top:0; width:${em(S.menuSize)}; height:${em(S.menuSize)};
+  position:absolute; right:0; top:0; width:${em(S.menuSize)}; height:100%;
   background:${S.fill}; color:${S.ink}; border:0; padding:0; cursor:pointer;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:${em(S.dotsGap)}; clip-path:inset(0 0 0 100%);
@@ -405,9 +407,6 @@
             <span class="cl__flip-face"><span class="cl__t">${line(n.after)}</span></span>
           </span></span>
         </a>
-        ${i === S.nav.length - 1
-            ? `<button class="cl__menu" type="button" aria-label="Menu">${DOTS}${DOTS}</button>`
-            : ''}
       </div>`
       )
       .join('')
@@ -429,6 +428,7 @@
     </div>
     <div class="cl__cell cl__cell--track"><div class="cl__fill"></div></div>
     ${navCells}
+    <button class="cl__menu" type="button" aria-label="Menu">${DOTS}${DOTS}</button>
   </div>`
   }
 
