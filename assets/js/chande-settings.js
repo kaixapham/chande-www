@@ -12,6 +12,7 @@ window.CHANDE_SETTINGS = {
   "bubble.colorA": "#d1d1d1",
   "bubble.colorB": "#c2c2c2",
   "bubble.dispersion": 0.5,
+  "bubble.enabled": false,
   "bubble.fallbackOpacity": 0.63,
   "bubble.follow": 0.02,
   "bubble.lensScale": 0.92,
@@ -38,6 +39,7 @@ window.CHANDE_SETTINGS = {
   "hero.darkOnRow": true,
   "hero.revealStagger": 250,
   "hero.swapDuration": 580,
+  "reveal.speed": 0.4,
 }
 
 window.CHANDE_SETTINGS_APPLY = (mod, config) => {
