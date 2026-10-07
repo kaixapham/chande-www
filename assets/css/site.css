@@ -154,6 +154,10 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
   background:var(--cap-bg); color:var(--cap-ink);
   font-weight:500; font-size:.875rem; line-height:.98; letter-spacing:-.02em;
   white-space:nowrap; overflow:hidden;
+  /* Mép dưới ảnh hay rơi vào nửa pixel (--hi lẻ) -> trình duyệt pha mép ảnh với
+     nền trắng của khung thành một đường kẻ mảnh. Thanh tên phủ lên 1px cuối của
+     ảnh bằng chính màu của nó (bóng không chiếm chỗ, bố cục không xê dịch). */
+  position:relative; z-index:1; box-shadow:0 -1px 0 var(--cap-bg);
 }
 .hero-card__cap > span{display:block}
 /* Block reveal khi đổi người (chande-hero.js swapCaption): khối lime như màn
