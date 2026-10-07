@@ -298,7 +298,7 @@
     { tab: 'field', mod: 'field', title: 'Chạy',
       items: [
         { path: 'loop', label: 'Một vòng (s)', type: 'range', min: 1, max: 20, step: 0.5 },
-        { path: 'fps', label: 'Khung hình / giây', type: 'range', min: 10, max: 60, step: 1 },
+        { path: 'fps', label: 'Khung hình / giây (thấp = nhẹ máy nhưng giật)', type: 'range', min: 10, max: 120, step: 1 },
         { path: 'maxDpr', label: 'Độ nét tối đa (DPR)', type: 'range', min: 0.5, max: 2, step: 0.05 },
       ] },
 

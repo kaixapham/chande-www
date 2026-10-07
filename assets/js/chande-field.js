@@ -59,7 +59,7 @@
     grainSize: 1.4,
     // ---- Chạy --------------------------------------------------------------
     loop: 6, // giây cho một vòng
-    fps: 30,
+    fps: 60, // 30 tiết kiệm hơn nhưng cột trượt chậm nhìn thành từng nấc (đã đo: 60 không làm tụt khung trang)
     maxDpr: 1.25, // ô to + gờ mềm: 1.25 đủ nét trên retina, đỡ ~30% điểm ảnh so với 1.5
     // ---- Rê chuột vào mảng xanh ---------------------------------------------
     hover: true,
@@ -463,9 +463,12 @@ void main() {
     const t = rg.target
     if (!t || !CONFIG.hover) return null
     const m = (rg.m ||= { x: t.x, y: t.y, on: 0 })
-    const k = CONFIG.hoverEase
-    m.x += (t.x - m.x) * k * 1.6
-    m.y += (t.y - m.y) * k * 1.6
+    // hoverEase chỉnh theo nhịp 30 khung/giây; quy đổi theo thời gian thật của
+    // khung này để đổi fps không làm chuột nhanh / chậm đi.
+    const k = 1 - Math.pow(1 - Math.min(CONFIG.hoverEase, 0.999), frameScale)
+    const kp = 1 - Math.pow(1 - Math.min(CONFIG.hoverEase * 1.6, 0.999), frameScale)
+    m.x += (t.x - m.x) * kp
+    m.y += (t.y - m.y) * kp
     m.on += (t.on - m.on) * k
     if (t.on === 0 && m.on < 0.003) {
       rg.m = null
@@ -485,10 +488,12 @@ void main() {
     kick()
   }
 
+  let frameScale = 1 // thời gian khung này / (1000/30 ms)
   function loop(t) {
     raf = 0
     let any = false
     if (t - last >= 1000 / CONFIG.fps - 1) {
+      frameScale = last ? Math.min(4, (t - last) / (1000 / 30)) : 1
       last = t
       advance(t)
       groups.forEach((g) => {
