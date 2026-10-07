@@ -79,6 +79,57 @@
       })
     }
 
+    // Dải màu 3D [data-flip3d]: vạch i mặt trước màu i, mặt dưới màu (n−1−i). Tâm
+    // dải đi từ 65% xuống 35% chiều cao màn thì các khối lăn 0 -> 90° (lệch nhau
+    // `FLIP_STAGGER` mỗi vạch) — đảo thứ tự màu. Góc đuổi theo đích bằng lerp mỗi
+    // khung cho mượt; cuộn ngược thì lăn về.
+    const FLIP_STAGGER = 0.07
+    scope.querySelectorAll('[data-flip3d]').forEach((sc) => {
+      const lines = [...sc.children].sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)
+      const n = lines.length
+      if (n < 2) return
+      const cols = lines.map((l) => getComputedStyle(l).backgroundColor)
+      lines.forEach((l, i) => {
+        l.style.setProperty('--cf', cols[i])
+        l.style.setProperty('--cb', cols[n - 1 - i])
+      })
+      const setH = () => sc.style.setProperty('--h', `${lines[0].offsetHeight}px`)
+      setH()
+      sc.classList.add('is-3d')
+      const cur = new Array(n).fill(0)
+      const goal = new Array(n).fill(0)
+      let raf = 0
+      let last = 0
+      const tick = (now) => {
+        raf = 0
+        const dt = last ? Math.min(0.1, (now - last) / 1000) : 1 / 60
+        last = now
+        const k = 1 - Math.exp(-dt * 9)
+        let moving = false
+        lines.forEach((l, i) => {
+          cur[i] += (goal[i] - cur[i]) * k
+          if (Math.abs(goal[i] - cur[i]) < 0.001) cur[i] = goal[i]
+          else moving = true
+          l.style.setProperty('--t', cur[i].toFixed(4))
+        })
+        if (moving) raf = requestAnimationFrame(tick)
+        else last = 0
+      }
+      jobs.push(() => {
+        const r = sc.getBoundingClientRect()
+        if (r.bottom < -innerHeight || r.top > innerHeight * 2) return
+        const c = (r.top + r.bottom) / 2
+        const t = Math.min(Math.max((innerHeight * 0.65 - c) / (innerHeight * 0.3), 0), 1)
+        const span = 1 - (n - 1) * FLIP_STAGGER
+        lines.forEach((_, i) => {
+          const x = Math.min(Math.max((t - i * FLIP_STAGGER) / span, 0), 1)
+          goal[i] = x * x * (3 - 2 * x)
+        })
+        if (!raf) raf = requestAnimationFrame(tick)
+      })
+      addEventListener('resize', setH, { passive: true })
+    })
+
     // Phong cảnh: ghim 1 màn, chia (số món + 1) nhịp — nhịp 0 chỉ ảnh nền, nhịp i
     // dán món thứ i (trái -> phải), nhịp cuối giữ đủ.
     const land = scope.querySelector('.hs-land')

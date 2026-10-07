@@ -294,6 +294,20 @@
 
 /* --------------------------------------------------------------- 11. COLORS */
 .hs-colors .scheme > i{height:calc(60 * var(--u))}
+/* [data-flip3d] (chande-home.js gắn .is-3d): mỗi vạch là khối hộp — mặt trước màu
+   của nó (--cf), mặt DƯỚI màu của vạch đối xứng (--cb). Xoay rotateX(--t × 90°):
+   khối lăn lên, mặt dưới ra trước -> cả dải đảo thứ tự màu. --h = cao một vạch. */
+.scheme.is-3d{perspective:1600px; perspective-origin:50% 50%}
+.scheme.is-3d > i{position:relative; background:none !important; transform-style:preserve-3d;
+  transform:rotateX(calc(var(--t, 0) * 90deg))}
+/* inset -1px dọc: mặt chồm 1px lên khối kề để mép khử răng cưa không lộ vạch mảnh */
+.scheme.is-3d > i::before, .scheme.is-3d > i::after{content:''; position:absolute; inset:-1px 0; backface-visibility:hidden}
+.scheme.is-3d > i::before{background:var(--cf); transform:translateZ(calc(var(--h) / 2))}
+.scheme.is-3d > i::after{background:var(--cb); transform:rotateX(-90deg) translateZ(calc(var(--h) / 2))}
+/* Vạch nằm lệch tâm nhìn để lộ mép mặt đã lăn đi (đúng 3D) -> lúc đã lật xong /
+   chưa lật thì tắt hẳn mặt không dùng (chỉ 2% cuối/đầu của cú lăn). */
+.scheme.is-3d > i::before{opacity:clamp(0, (1 - var(--t, 0)) * 50, 1)}
+.scheme.is-3d > i::after{opacity:clamp(0, var(--t, 0) * 50, 1)}
 
 /* --------------------------------------------------------------- 12. FOOTER */
 .hs-foot{height:calc(1080 * var(--u)); background:#000; color:#838b89}
