@@ -293,6 +293,11 @@
 /* fill xanh của track — bề rộng do đồng hồ chung ghi vào, không transition */
 .cl__fill{position:absolute; inset:-1px auto -1px -1px; width:0%; background:${S.fill};
   will-change:width,transform}
+/* Sau loading: ô track thành thanh TIẾN ĐỘ CUỘN TRANG (scaleX = phần đã cuộn).
+   Thanh riêng — không đụng .cl__fill vì fill đã có animation trượt ra lúc dock. */
+.cl__scroll{position:absolute; inset:-1px; background:${S.fill}; transform-origin:0 50%;
+  transform:scaleX(0); opacity:0; transition:opacity .4s ease; will-change:transform; pointer-events:none}
+.cl.is-done .cl__scroll{opacity:1}
 
 /* ô trái: logo + wordmark | flipper bên phải */
 .cl__row{display:flex; align-items:center; justify-content:space-between}
@@ -428,7 +433,7 @@
         </span></span>
       </div>
     </div>
-    <div class="cl__cell cl__cell--track"><div class="cl__fill"></div></div>
+    <div class="cl__cell cl__cell--track"><div class="cl__fill"></div><div class="cl__scroll"></div></div>
     ${navCells}
     <button class="cl__menu" type="button" aria-label="Menu">${DOTS}${DOTS}</button>
   </div>`
@@ -499,6 +504,7 @@
     nav1: $('.cl__cell--nav1'),
     nav2: $('.cl__cell--nav2'),
     fill: $('.cl__fill'),
+    scroll: $('.cl__scroll'),
     menu: $('.cl__menu'),
     // Sau wordifyAll(), chữ của hai ô này nằm trong .cl__wt — resolve lại ở boot.
     pct: $('.cl__pct'),
@@ -778,6 +784,22 @@
     return curveAt(clamp((T - M.loadStart) / S.loadDuration, 0, 1))
   }
 
+  // Tiến độ cuộn trang -> thanh .cl__scroll (Lenis cuộn window thật nên đọc scrollY).
+  let scrollRaf = 0
+  function paintScroll() {
+    scrollRaf = 0
+    if (!el.scroll) return
+    const max = document.documentElement.scrollHeight - innerHeight
+    const p = max > 0 ? Math.min(Math.max(scrollY / max, 0), 1) : 0
+    el.scroll.style.transform = `scaleX(${p.toFixed(4)})`
+  }
+  const onScrollProgress = () => {
+    if (!scrollRaf) scrollRaf = requestAnimationFrame(paintScroll)
+  }
+  addEventListener('scroll', onScrollProgress, { passive: true })
+  addEventListener('resize', onScrollProgress, { passive: true })
+  window.barba?.hooks?.afterEnter(onScrollProgress)
+
   function lock(on) {
     if (!S.lockScroll) return
     document.documentElement.style.overflow = on ? 'hidden' : ''
@@ -803,7 +825,10 @@
       document.documentElement.classList.toggle('cl-done', done)
       document.documentElement.classList.toggle('cl-loading', !done)
       lock(!done)
-      if (done) document.dispatchEvent(new CustomEvent('chande-loading:done'))
+      if (done) {
+        document.dispatchEvent(new CustomEvent('chande-loading:done'))
+        onScrollProgress()
+      }
     }
     for (const cb of listeners) cb(state)
   }
