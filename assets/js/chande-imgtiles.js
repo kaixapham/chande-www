@@ -58,9 +58,11 @@ float brickAt(vec2 g, vec2 c, out vec3 col, out float infl) {
   infl *= infl * (3.0 - 2.0 * infl);
   if (uMode > 0.5 && uMode < 1.5) infl *= mix(0.15, 1.0, 0.5 + 0.5 * sin(dist * 1.1 - uTime * 5.0));
   vec2 away = dist > 1e-4 ? d / dist : vec2(0.0);
-  // Không bị chuột tác động: ô liền khít, không bo góc -> đúng ảnh gốc.
-  float k = smoothstep(0.0, 0.12, infl);
-  float extent = 0.5 * (1.0 - uShrink * infl) - 0.006 * k;
+  // Chỉ bo góc khi ô THẬT SỰ đã co / dạt đi một khoảng; ô chưa nhúc nhích thì
+  // vuông, liền khít -> không có lưới kẻ trên ảnh.
+  float amt = max(uShrink * infl, (uMode > 1.5 ? 0.9 : 0.5 - 0.5 * (1.0 - uShrink * infl)) * clamp(uPush * infl, 0.0, 1.0));
+  float k = smoothstep(0.02, 0.15, amt);
+  float extent = 0.5 * (1.0 - uShrink * infl);
   vec2 local = g - (c + 0.5);
   if (uMode > 1.5) local -= away * clamp(uPush * infl, 0.0, 1.0) * 0.9;
   else {
@@ -86,8 +88,9 @@ void main() {
   float inside = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
   vec2 g = uv * uGrid;
   vec2 cell = floor(g);
-  float best = -1.0;
-  vec3 col = vec3(0.0);
+  // Cộng độ phủ các ô (mép hai ô liền nhau mỗi bên 0.5 -> đủ 1, không lộ khe);
+  // màu = trung bình theo độ phủ.
+  vec3 sum = vec3(0.0);
   float cover = 0.0;
   float inflMax = 0.0;
   for (int j = -1; j <= 1; j++) {
@@ -98,10 +101,12 @@ void main() {
       float f;
       float b = brickAt(g, nc, c, f);
       inflMax = max(inflMax, f);
-      float score = b * 10.0 + f;
-      if (b > 0.001 && score > best) { best = score; col = c; cover = b; }
+      sum += c * b;
+      cover += b;
     }
   }
+  vec3 col = cover > 0.0001 ? sum / cover : vec3(0.0);
+  cover = min(cover, 1.0);
   // trong ảnh: khe = màu nền phía sau; ngoài ảnh (phần nới): chỉ ô tràn ra
   vec3 outCol = mix(uGap, col, cover);
   float a = inside > 0.5 ? 1.0 : cover;
