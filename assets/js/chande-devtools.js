@@ -21,8 +21,11 @@
  * Nút LƯU ở đầu bảng ghi các giá trị đó thành file assets/js/chande-settings.js
  * (nạp trước mọi file hiệu ứng) -> thành mặc định cho MỌI người xem:
  *   • chạy local (node serve.mjs): ghi thẳng xuống đĩa, rồi commit + push.
- *   • trên GitHub Pages: commit thẳng lên repo bằng token đã nhập ở cms.html
- *     (cùng origin). Chưa có token thì chép nội dung file vào clipboard.
+ *   • trên GitHub Pages: commit thẳng lên repo bằng fine-grained token (quyền
+ *     Contents: Read and write). Chưa có token thì bảng hiện ô nhập ngay dưới
+ *     chân bảng — token dùng chung khoá với cms.html ('chande-cms-gh'), mặc định
+ *     chỉ giữ tới khi đóng tab. Không muốn dùng token: nút "Tải file" tải
+ *     chande-settings.js về để chép vào repo.
  * Lưu xong, localStorage được dọn (không còn gì khác mặc định mới).
  * ========================================================================== */
 (() => {
@@ -491,10 +494,27 @@
     return 'Đã ghi chande-settings.js xuống máy — commit + push để lên GitHub Pages.'
   }
 
-  // Dùng lại token mà cms.html đã lưu (cùng origin trên GitHub Pages).
-  async function saveToGitHub(values) {
+  // Token GitHub: chung khoá với cms.html (cùng origin trên GitHub Pages).
+  const GH_KEY = 'chande-cms-gh'
+  function ghConfig() {
     let cfg = {}
-    try { cfg = JSON.parse(localStorage.getItem('chande-cms-gh') || sessionStorage.getItem('chande-cms-gh') || '{}') } catch (e) {}
+    try { cfg = JSON.parse(localStorage.getItem(GH_KEY) || sessionStorage.getItem(GH_KEY) || '{}') } catch (e) {}
+    const guess = location.hostname.endsWith('github.io')
+      ? `${location.hostname.split('.')[0]}/${location.pathname.split('/')[1] || ''}`
+      : 'kaixapham/chande-www'
+    return { repo: cfg.repo || guess, branch: cfg.branch || 'main', token: cfg.token || '', remember: !!cfg.remember }
+  }
+  function ghStore(cfg) {
+    const v = JSON.stringify(cfg)
+    try {
+      sessionStorage.setItem(GH_KEY, v)
+      if (cfg.remember) localStorage.setItem(GH_KEY, v)
+      else localStorage.removeItem(GH_KEY)
+    } catch (e) {}
+  }
+
+  async function saveToGitHub(values) {
+    const cfg = ghConfig()
     if (!cfg.token || !cfg.repo) return null
     const branch = cfg.branch || 'main'
     const api = (path, opts = {}) =>
@@ -528,9 +548,12 @@
       let done = await saveToDisk(values)
       if (done == null) done = await saveToGitHub(values)
       if (done == null) {
-        await navigator.clipboard.writeText(await settingsText(values))
-        throw new Error('Không ghi được: chạy local (node serve.mjs) hoặc nhập token GitHub ở /cms.html. Đã chép nội dung file vào clipboard.')
+        // Không có server local, chưa có token -> hỏi token ngay trong bảng.
+        showGhForm(true)
+        msg.textContent = 'Trên GitHub Pages cần token GitHub để lưu thẳng vào repo — nhập bên dưới, hoặc bấm "Tải file".'
+        return
       }
+      showGhForm(false)
       // Bản vừa lưu thành mặc định mới -> localStorage không còn gì khác nó.
       window.CHANDE_SETTINGS = values
       for (const [k, v] of Object.entries(values)) {
@@ -543,9 +566,36 @@
     } catch (e) {
       msg.classList.add('is-bad')
       msg.textContent = String(e.message || e)
+      // token sai / hết hạn -> mở lại ô nhập
+      if (/GitHub 40[13]/.test(String(e.message))) showGhForm(true)
     } finally {
       saveBtn.disabled = false
     }
+  }
+
+  // Tải chande-settings.js về máy (thay cho clipboard — trình duyệt hay chặn).
+  async function downloadSettings() {
+    const text = await settingsText(collectSettings())
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([text], { type: 'text/javascript' }))
+    a.download = 'chande-settings.js'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+    msg.classList.remove('is-bad')
+    msg.textContent = 'Đã tải chande-settings.js — chép vào assets/js/ của repo rồi commit (hoặc gửi file cho Claude).'
+  }
+
+  function showGhForm(on) {
+    const f = dev.querySelector('[data-gh]')
+    if (!f) return
+    f.hidden = !on
+    if (!on) return
+    const cfg = ghConfig()
+    f.querySelector('[name=repo]').value = cfg.repo
+    f.querySelector('[name=remember]').checked = cfg.remember
+    f.querySelector('[name=token]').focus()
   }
 
   /* ---------------------------------------------------------- ảnh demo ----- */
@@ -638,6 +688,11 @@
 .cdev__msg{display:block; margin-top:4px; color:var(--fg-60)}
 .cdev__msg.is-bad{color:#ff7a70}
 .cdev__msg:empty{display:none}
+.cdev__gh{display:flex; flex-direction:column; gap:6px; margin-top:8px}
+.cdev__gh[hidden]{display:none}
+.cdev__gh .cdev__in{width:100%}
+.cdev__gh a{color:var(--fg-60)}
+.cdev__gh .cdev__btns .cdev__btn{font-size:12px}
 .cdev__icon svg{width:14px; height:14px}
 .cdev.is-closed .cdev__icon[data-fold] svg{transform:rotate(180deg)}
 .cdev.is-closed .cdev__body{display:none}
@@ -754,7 +809,17 @@
     </section>
     <div class="cdev__panel"></div>
   </div>
-  <div class="cdev__foot"><kbd>H</kbd> ẩn / hiện bảng<span class="cdev__msg" data-msg role="status"></span></div>`
+  <div class="cdev__foot"><kbd>H</kbd> ẩn / hiện bảng<span class="cdev__msg" data-msg role="status"></span>
+    <form class="cdev__gh" data-gh hidden>
+      <input class="cdev__in" name="repo" type="text" spellcheck="false" placeholder="owner/repo" aria-label="Repo GitHub">
+      <input class="cdev__in" name="token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…" aria-label="Token GitHub">
+      <label class="cdev__tg"><input name="remember" type="checkbox"><span>Nhớ token trên máy này</span></label>
+      <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Tạo fine-grained token (chỉ repo này, Contents: Read and write)</a>
+      <div class="cdev__btns">
+        <button class="cdev__btn" type="submit">Lưu lên GitHub</button>
+        <button class="cdev__btn" type="button" data-download>Tải file</button>
+      </div>
+    </form></div>`
   const panel = dev.querySelector('.cdev__panel')
   const ctrl = dev.querySelector('.cdev__ctrl')
   const tabSel = dev.querySelector('[data-tabsel]')
@@ -980,6 +1045,8 @@
       b.setAttribute('aria-expanded', String(!dev.classList.contains('is-closed')))
     } else if (b.hasAttribute('data-save')) {
       saveAsDefaults()
+    } else if (b.hasAttribute('data-download')) {
+      downloadSettings()
     } else if (b.hasAttribute('data-reset')) {
       for (const g of groups())
         if (g.tab === tab)
@@ -1009,6 +1076,21 @@
     }
     saveSettings()
   }
+
+  dev.querySelector('[data-gh]').addEventListener('submit', (e) => {
+    e.preventDefault()
+    const f = e.currentTarget
+    const token = f.querySelector('[name=token]').value.trim()
+    const repo = f.querySelector('[name=repo]').value.trim()
+    if (!token || !/^[\w.-]+\/[\w.-]+$/.test(repo)) {
+      msg.classList.add('is-bad')
+      msg.textContent = 'Cần repo dạng owner/tên và một token.'
+      return
+    }
+    ghStore({ ...ghConfig(), repo, token, remember: f.querySelector('[name=remember]').checked })
+    f.querySelector('[name=token]').value = ''
+    saveAsDefaults()
+  })
 
   addEventListener('keydown', (e) => {
     if (e.target.matches('input,textarea,select,[contenteditable]')) return
