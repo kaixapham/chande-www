@@ -174,24 +174,53 @@
           })
           if (on !== darkOn) agenda.classList.toggle('is-dark', (darkOn = on))
         })
-      const spans = dates ? [...dates.querySelectorAll('p span')] : []
       const prev = agenda.querySelector('.agenda__nav--prev')
       const next = agenda.querySelector('.agenda__nav--next')
       let cur = -1
-      let swapT = 0
+      // Mỗi cụm ngày (p) là một KHỐI HỘP: mặt trước = chữ đang hiện, đổi ngày thì
+      // chữ mới nằm ở mặt dưới (sang ngày sau) / mặt trên (lùi ngày) và khối lật
+      // 90° đưa mặt đó ra trước. Khối lùi vào −h/2 nên lúc đứng yên mặt trước ở
+      // đúng chỗ cũ (không bị phối cảnh phóng to).
+      const cubes = dates
+        ? [...dates.querySelectorAll('p')].map((p) => {
+            const lines = [...p.querySelectorAll('span')].map((s) => s.outerHTML).join('')
+            p.innerHTML = `<span class="dc"><span class="dc__f">${lines}</span><span class="dc__b" aria-hidden="true"></span></span>`
+            return { p, cube: p.firstElementChild, front: p.querySelector('.dc__f'), back: p.querySelector('.dc__b'), n: p.querySelectorAll('.dc__f span').length, anim: null }
+          })
+        : []
+      const reducedFlip = matchMedia('(prefers-reduced-motion: reduce)').matches
+      const escTxt = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;')
       const show = (i) => {
         if (i === cur) return
+        const dir = i > cur ? 1 : -1
         const first = cur < 0
         cur = i
         const parts = heads[i].dataset.day.split('|')
-        const write = () => spans.forEach((s, k) => parts[k] != null && (s.textContent = parts[k]))
-        if (first) return write()
-        clearTimeout(swapT)
-        dates.classList.add('is-swap')
-        swapT = setTimeout(() => {
-          write()
-          dates.classList.remove('is-swap')
-        }, 250)
+        let k = 0
+        cubes.forEach((c) => {
+          const html = parts.slice(k, k + c.n).map((t) => `<span>${escTxt(t)}</span>`).join('')
+          k += c.n
+          c.anim?.cancel()
+          if (first || reducedFlip) {
+            c.front.innerHTML = html
+            return
+          }
+          const h = c.p.offsetHeight
+          c.cube.style.setProperty('--dh', `${h}px`)
+          c.back.innerHTML = html
+          c.back.className = `dc__b ${dir > 0 ? 'is-down' : 'is-up'}`
+          c.anim = c.cube.animate(
+            [{ transform: `translateZ(${-h / 2}px) rotateX(0deg)` }, { transform: `translateZ(${-h / 2}px) rotateX(${dir * 90}deg)` }],
+            { duration: 700, easing: 'cubic-bezier(.7, 0, .25, 1)' },
+          )
+          c.anim.finished
+            .then(() => {
+              c.front.innerHTML = html
+              c.back.innerHTML = ''
+              c.anim = null
+            })
+            .catch(() => {})
+        })
       }
       if (heads.length) {
         jobs.push(() => {

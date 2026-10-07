@@ -258,8 +258,14 @@
 .agenda__nav--next{left:calc(1588 * var(--u))}
 .agenda__nav, .hs-quote__nav{transition:opacity .2s}
 .agenda__nav[aria-disabled=true], .hs-quote__nav[aria-disabled=true]{opacity:.3; pointer-events:none}
-.agenda__dates p span{transition:opacity .25s, transform .25s}
-.agenda__dates.is-swap p span{opacity:0; transform:translateY(-.15em)}
+/* Cụm ngày = khối hộp lật khi đổi ngày (chande-home.js dựng .dc) */
+.agenda__dates p{perspective:900px}
+.dc{display:block; position:relative; transform-style:preserve-3d; transform:translateZ(calc(var(--dh, 0px) / -2))}
+.dc__f, .dc__b{display:block; backface-visibility:hidden; text-box:trim-both cap alphabetic}
+.dc__f{transform:translateZ(calc(var(--dh, 0px) / 2))}
+.dc__b{position:absolute; inset:0}
+.dc__b.is-down{transform:rotateX(-90deg) translateZ(calc(var(--dh, 0px) / 2))}
+.dc__b.is-up{transform:rotateX(90deg) translateZ(calc(var(--dh, 0px) / 2))}
 
 /* ----------------------------------------------------------------- 9. WALL */
 .hs-wall{height:calc(1556 * var(--u)); background:#000}
