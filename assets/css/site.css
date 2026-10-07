@@ -118,6 +118,13 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
 /* Mảng xanh phải: từ mép trên ảnh 4, cao ĐÚNG bằng ảnh 4 (ảnh + thanh tên) — nằm
    dưới ảnh nên ảnh 4 sticky đi lên thì chỗ nó để lại vẫn là effect xanh. */
 .hero__field--c{left:calc(960 * var(--u)); right:0; top:var(--y4); height:calc(var(--hi) + var(--cap) * var(--u))}
+/* Dải viên thuốc (pillrun như section Strip — kiểu viên ở home.css) lấp phần dưới
+   ảnh 4 + mảng xanh phải, tới đáy hero. Cao theo khoảng trống đó (đổi theo màn),
+   hàng viên căn giữa dọc. */
+.hero__pills{position:absolute; left:calc(960 * var(--u)); right:0;
+  top:calc(var(--y4) + var(--hi) + var(--cap) * var(--u)); bottom:0;
+  display:flex; align-items:center; padding:0 calc(24 * var(--u)); background:#1b2524; overflow:hidden}
+.hero__pills .pillrun{flex:1; min-width:0; height:calc(56 * var(--u))}
 /* Mảng B lật dọc như node Figma. */
 .hero__field--b{transform:scaleY(-1)}
 
@@ -308,7 +315,7 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
     background:#182220;
   }
   .hero__stage > *{position:relative; inset:auto; width:auto; height:auto}
-  .hero__field--a, .hero__field--b, .hero__dark, .hero__col--scroll{display:none}
+  .hero__field--a, .hero__field--b, .hero__dark, .hero__col--scroll, .hero__pills{display:none}
   .hero__panel{
     grid-column:1 / -1; order:-1; background:var(--cream);
     gap:3rem; padding:2rem 1.5rem;
