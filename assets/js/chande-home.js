@@ -158,9 +158,10 @@
     if (agenda) {
       const heads = [...agenda.querySelectorAll('.agenda__head[data-day]')]
       const dates = agenda.querySelector('.agenda__dates')
-      // Nền tối: mép trên cụm ngày (dính) chạm mép trên ảnh của một ngày -> nền
-      // Agenda đen, chữ sáng; ảnh trôi qua hết thì về sáng.
-      const shots = [...agenda.querySelectorAll('.agenda > .agenda__shot, .agenda__pair')]
+      // Nền tối: mép trên cụm ngày (dính) chạm mép trên CẶP ẢNH DƯỚI (ngày 2,
+      // .agenda__pair) -> nền Agenda đen, chữ sáng; cặp ảnh trôi qua hết thì về
+      // sáng. Ảnh ngày 1 không bật.
+      const shots = [...agenda.querySelectorAll('.agenda__pair')]
       const dateTop = dates?.querySelector('p')
       let darkOn = null
       if (shots.length && dateTop)
