@@ -202,8 +202,11 @@
         })
       }
       // Nút ‹ › hai bên: đổi cặp ảnh ngày 2 ([data-agenda-slides], danh sách ở
-      // data-photos). Ảnh mới QUÉT vào theo hướng bấm (› từ phải, ‹ từ trái), hai
-      // bên lệch nhau một nhịp; quay vòng.
+      // data-photos), quay vòng, hai bên lệch nhau một nhịp. Hiệu ứng = đoàn shape
+      // của 4 ảnh hero (CHANDE_REVEAL.play): ảnh cũ / mới vẽ kiểu cover thành canvas
+      // đúng cỡ khung ảnh, đoàn shape chạy trong một khung tạm chồng khít lên ảnh
+      // (chèn ngay sau ảnh nên graphic xung quanh vẫn nằm trên). Không có
+      // CHANDE_REVEAL / giảm chuyển động thì ảnh mới quét vào theo hướng bấm.
       const slides = [...agenda.querySelectorAll('[data-agenda-slides]')].map((box) => {
         let list = []
         try {
@@ -217,9 +220,47 @@
       let slideIdx = 0
       let sliding = false
       const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
+      const cover = (src, w, h) =>
+        new Promise((res) => {
+          const im = new Image()
+          im.onload = () => {
+            const c = document.createElement('canvas')
+            c.width = w
+            c.height = h
+            const k = Math.max(w / im.naturalWidth, h / im.naturalHeight)
+            const dw = im.naturalWidth * k
+            const dh = im.naturalHeight * k
+            c.getContext('2d').drawImage(im, (w - dw) / 2, (h - dh) / 2, dw, dh)
+            res(c)
+          }
+          im.onerror = () => res(null)
+          im.src = src
+        })
+      const swapShapes = async (R, img, src, delay) => {
+        const dpr = Math.min(devicePixelRatio || 1, 2)
+        const w = Math.max(1, Math.round(img.offsetWidth * dpr))
+        const h = Math.max(1, Math.round(img.offsetHeight * dpr))
+        const [from, to] = await Promise.all([cover(img.currentSrc || img.src, w, h), cover(src, w, h)])
+        if (!to) return
+        const box = document.createElement('div')
+        Object.assign(box.style, {
+          position: 'absolute', left: `${img.offsetLeft}px`, top: `${img.offsetTop}px`,
+          width: `${img.offsetWidth}px`, height: `${img.offsetHeight}px`, pointerEvents: 'none',
+        })
+        img.after(box)
+        try {
+          await R.play(box, { from, to, levels: 0, delay }).finished
+          img.src = src
+          await img.decode?.().catch(() => {})
+        } finally {
+          box.remove()
+        }
+      }
       const swap = ({ img, list }, d, delay) => {
         if (list.length < 2) return Promise.resolve()
         const src = list[(((slideIdx % list.length) + list.length) % list.length)]
+        const R = window.CHANDE_REVEAL
+        if (R?.play && !reducedMotion) return swapShapes(R, img, src, delay)
         const top = img.cloneNode()
         top.removeAttribute('loading')
         top.src = src
@@ -242,7 +283,7 @@
         if (sliding || !slides.some((s) => s.list.length > 1)) return
         sliding = true
         slideIdx += d
-        Promise.all(slides.map((s, i) => swap(s, d, i * 90))).finally(() => (sliding = false))
+        Promise.all(slides.map((s, i) => swap(s, d, i * 150))).finally(() => (sliding = false))
       }
       prev?.addEventListener('click', () => slide(-1))
       next?.addEventListener('click', () => slide(1))
