@@ -203,8 +203,13 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
   white-space:nowrap;
 }
 .hero__intro-text p{margin:0; text-box:trim-both cap alphabetic}
-/* Qua nền kem (hết hero) thì chữ tối — chande-home.js gắn .is-on-light */
-.travel__col.is-on-light .hero__intro-text{color:#0e1813}
+/* Hai lớp chữ chồng khít (chande-home.js dựng): lớp sáng giữ phần TRÊN mép
+   dưới hero (--split, px tính từ đỉnh khối chữ), lớp tối giữ phần DƯỚI -> chữ
+   đổi màu đúng ranh giới nền, kể cả giữa một dòng. */
+.hero__intro-text{position:relative}
+.hero__intro-text > .it-light, .hero__intro-text > .it-dark{display:flex; flex-direction:column; gap:1.5rem}
+.hero__intro-text > .it-light{color:#e1e0d8; clip-path:inset(0 0 calc(100% - var(--split, 100%)) 0)}
+.hero__intro-text > .it-dark{position:absolute; inset:0; color:#0e1813; clip-path:inset(var(--split, 100%) 0 0 0); pointer-events:none}
 .hero__recap{position:relative; width:100%; height:calc(140 * var(--u)); margin:0; overflow:hidden}
 .hero__recap img{width:100%; height:100%; object-fit:cover; object-position:50% 33%}
 .hero__recap figcaption{

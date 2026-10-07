@@ -52,17 +52,30 @@
       })
     }
 
-    // Cụm chữ trôi của hero: tâm khối chữ qua khỏi mép dưới hero (sang nền kem)
-    // thì chữ chuyển màu tối.
+    // Cụm chữ trôi của hero: chữ có HAI lớp chồng khít — sáng (.it-light) và tối
+    // (.it-dark) — cắt theo mép dưới hero (ranh giới nền tối / nền kem ở cột này):
+    // phần chữ còn trên nền tối là chữ sáng, phần đã sang nền kem là chữ tối, cắt
+    // ngang được cả giữa một dòng. Hero đang ở chế độ nền tối (html.hero-row-dark)
+    // thì cả cột tối -> chữ sáng hết. .is-on-light vẫn gắn (tâm khối qua ranh giới)
+    // cho các thứ khác dùng.
     const travel = scope.querySelector('[data-travel]')
     const stage = scope.querySelector('.hero__stage')
     if (travel && stage) {
       const text = travel.querySelector('.hero__intro-text')
+      if (!text.querySelector('.it-light')) {
+        const html = text.innerHTML
+        text.innerHTML = `<div class="it-light">${html}</div><div class="it-dark" aria-hidden="true">${html}</div>`
+      }
       let light = null
+      let split = -1
       jobs.push(() => {
         const t = text.getBoundingClientRect()
-        const on = (t.top + t.bottom) / 2 > stage.getBoundingClientRect().bottom
+        const edge = stage.getBoundingClientRect().bottom
+        const on = (t.top + t.bottom) / 2 > edge
         if (on !== light) travel.classList.toggle('is-on-light', (light = on))
+        const dark = document.documentElement.classList.contains('hero-row-dark')
+        const s = Math.round(dark ? t.height + 1 : Math.min(Math.max(edge - t.top, 0), t.height + 1))
+        if (s !== split) text.style.setProperty('--split', `${(split = s)}px`)
       })
     }
 
