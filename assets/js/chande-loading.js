@@ -298,7 +298,9 @@
    viền 1px). Không dùng lớp phủ riêng: lớp transform bị khử răng cưa ở mép (cao
    thanh hay lẻ nửa px) -> lộ một viền tối quanh thanh xanh. */
 .cl.is-done .cl__cell--track{background-image:linear-gradient(90deg, ${S.fill} 0 calc(var(--sp, 0) * 100%), transparent 0);
-  background-origin:border-box; background-repeat:no-repeat}
+  background-origin:border-box; background-repeat:no-repeat;
+  /* viền 1px của ô vẽ ĐÈ lên nền -> ép trong suốt (thắng cả animation dock) */
+  border-color:transparent !important}
 
 /* ô trái: logo + wordmark | flipper bên phải */
 .cl__row{display:flex; align-items:center; justify-content:space-between}
