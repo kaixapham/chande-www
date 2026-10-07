@@ -39,6 +39,7 @@ assets/js/chande-poster.js     section 7 Poster: chồng poster thả theo scrol
 assets/js/paper-stack.js       SINH TỰ ĐỘNG từ tool paper-stack — đừng sửa tay (xem mục 7)
 assets/js/chande-devtools.js   bảng điều khiển (chỉ lúc làm việc)
 assets/js/chande-settings.js   thông số đã bấm Lưu ở bảng setting — nạp trước mọi file hiệu ứng
+assets/js/chande-tilt.js       chữ nghiêng theo quán tính khi cuộn ([data-tilt], cụm tiêu đề Agenda) — 6 preset
 assets/vendor/                 barba 2.10.3, lenis 1.3.17, gsap 3.15 + CustomEase, three 0.185.1
 assets/fonts/Phudu-*.woff2     Phudu SemiBold 600 + Bold 700 (latin / latin-ext / vietnamese)
 assets/img/logo.svg            logo export từ Figma

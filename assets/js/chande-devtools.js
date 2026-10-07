@@ -40,7 +40,8 @@
   const CF = window.CHANDE_FIELD
   const CB = window.CHANDE_BUBBLE
   const CC = window.CHANDE_CURSOR
-  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC) return
+  const CTL = window.CHANDE_TILT
+  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL) return
 
   const KEY = 'chande-devtools'
   const KEY_SHOTS = 'chande-devtools-shots'
@@ -57,6 +58,7 @@
     CF && { id: 'field', label: 'Effect xanh', mod: 'field' },
     CB && { id: 'bubble', label: 'Bubble (giọt theo chuột)', mod: 'bubble' },
     CC && { id: 'cursor', label: 'Con trỏ nhân vật', mod: 'cursor' },
+    CTL && { id: 'tilt', label: 'Chữ nghiêng khi cuộn (Agenda)', mod: 'tilt' },
     CT && { id: 'sweep', label: 'Rèm quét', mod: 'transition', variant: 'sweep' },
     CT && { id: 'split', label: 'Rèm chẻ', mod: 'transition', variant: 'split' },
     CT && { id: 'stack', label: 'Trượt thẻ', mod: 'transition', variant: 'stack' },
@@ -224,6 +226,34 @@
     { tab: 'bubble', mod: 'bubble', title: 'Hiệu năng',
       items: [
         { path: 'maxDpr', label: 'Độ phân giải tối đa (dpr)', type: 'range', min: 0.75, max: 2, step: 0.25 },
+      ] },
+
+    // ---- Chữ nghiêng theo quán tính khi cuộn (chande-tilt.js) ----
+    { tab: 'tilt', mod: 'tilt', title: 'Preset',
+      items: [
+        { path: 'enabled', label: 'Bật', type: 'bool' },
+        { path: 'preset', label: 'Kiểu', type: 'select',
+          options: [['hinge', 'Bản lề'], ['pendulum', 'Con lắc'], ['jelly', 'Thạch'], ['rope', 'Sợi dây'], ['heavy', 'Quán tính nặng'], ['snap', 'Giật nảy']],
+          apply: (v) => CTL?.applyPreset?.(v) },
+      ] },
+    { tab: 'tilt', mod: 'tilt', title: 'Lực',
+      items: [
+        { path: 'strength', label: 'Độ nhạy (độ / 1000px/s)', type: 'range', min: 0, max: 6, step: 0.1 },
+        { path: 'max', label: 'Góc tối đa (độ)', type: 'range', min: 0.5, max: 20, step: 0.5 },
+      ] },
+    { tab: 'tilt', mod: 'tilt', title: 'Lò xo',
+      items: [
+        { path: 'stiffness', label: 'Độ cứng (lớn = bật về nhanh)', type: 'range', min: 10, max: 600, step: 5 },
+        { path: 'damping', label: 'Giảm chấn (nhỏ = nhún nhiều)', type: 'range', min: 1, max: 40, step: 0.5 },
+        { path: 'lineLag', label: 'Dòng sau trễ dòng trước', type: 'range', min: 0, max: 0.95, step: 0.05 },
+      ] },
+    { tab: 'tilt', mod: 'tilt', title: 'Biến dạng',
+      items: [
+        { path: 'origin', label: 'Điểm xoay', type: 'select', options: [['left', 'Mép trái'], ['center', 'Giữa'], ['right', 'Mép phải']] },
+        { path: 'rotate', label: 'Xoay', type: 'range', min: 0, max: 2, step: 0.05 },
+        { path: 'skew', label: 'Xô lệch (skew)', type: 'range', min: 0, max: 2, step: 0.05 },
+        { path: 'drag', label: 'Tụt xuống (px / độ)', type: 'range', min: 0, max: 6, step: 0.1 },
+        { path: 'stretch', label: 'Giãn dọc', type: 'range', min: 0, max: 0.05, step: 0.001 },
       ] },
 
     // ---- Con trỏ nhân vật (chande-cursor.js) ----
@@ -408,7 +438,7 @@
       ]) },
   ]
 
-  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC }
+  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL }
   const get = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o)
   const set = (o, p, v) => {
     const k = p.split('.')
