@@ -115,9 +115,9 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
 .hero__field{position:absolute}
 .hero__field--a{left:0; top:0; width:calc(492 * var(--u)); height:var(--y3)}
 .hero__field--b{left:calc(492 * var(--u)); top:0; width:calc(468 * var(--u)); height:var(--y3)}
-/* Mảng xanh phải phủ cả cột ảnh 4 (nằm dưới ảnh): ảnh 4 sticky đi lên thì chỗ nó
-   để lại vẫn là effect xanh, không lộ nền kem. */
-.hero__field--c{left:calc(960 * var(--u)); right:0; top:var(--y4); bottom:0}
+/* Mảng xanh phải: từ mép trên ảnh 4, cao ĐÚNG bằng ảnh 4 (ảnh + thanh tên) — nằm
+   dưới ảnh nên ảnh 4 sticky đi lên thì chỗ nó để lại vẫn là effect xanh. */
+.hero__field--c{left:calc(960 * var(--u)); right:0; top:var(--y4); height:calc(var(--hi) + var(--cap) * var(--u))}
 /* Mảng B lật dọc như node Figma. */
 .hero__field--b{transform:scaleY(-1)}
 
