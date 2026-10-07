@@ -304,7 +304,10 @@
    khối lăn lên, mặt dưới ra trước -> cả dải đảo thứ tự màu. --h = cao một vạch. */
 .scheme.is-3d{perspective:1600px; perspective-origin:50% 50%}
 .scheme.is-3d > i{position:relative; background:none !important; transform-style:preserve-3d;
-  transform:rotateX(calc(var(--t, 0) * 90deg))}
+  /* --k = p / (p + h/2): mặt trước nhô h/2 về phía người xem nên phối cảnh phóng
+     to p/(p − z) — thu cả khối lại để lúc đứng yên mặt trước khớp đúng mép cũ
+     (không thì dải tràn ra hai bên vài px, lệch với ảnh / lưới phía trên). */
+  transform:scale3d(var(--k, 1), var(--k, 1), var(--k, 1)) rotateX(calc(var(--t, 0) * 90deg))}
 /* inset -1px dọc: mặt chồm 1px lên khối kề để mép khử răng cưa không lộ vạch mảnh */
 .scheme.is-3d > i::before, .scheme.is-3d > i::after{content:''; position:absolute; inset:-1px 0; backface-visibility:hidden}
 .scheme.is-3d > i::before{background:var(--cf); transform:translateZ(calc(var(--h) / 2))}

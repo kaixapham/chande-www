@@ -93,7 +93,12 @@
         l.style.setProperty('--cf', cols[i])
         l.style.setProperty('--cb', cols[n - 1 - i])
       })
-      const setH = () => sc.style.setProperty('--h', `${lines[0].offsetHeight}px`)
+      const setH = () => {
+        const h = lines[0].offsetHeight
+        const p = parseFloat(getComputedStyle(sc).perspective) || 1600
+        sc.style.setProperty('--h', `${h}px`)
+        sc.style.setProperty('--k', (p / (p + h / 2)).toFixed(5))
+      }
       setH()
       sc.classList.add('is-3d')
       const cur = new Array(n).fill(0)
