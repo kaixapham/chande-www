@@ -294,8 +294,10 @@
 .cl__fill{position:absolute; inset:-1px auto -1px -1px; width:0%; background:${S.fill};
   will-change:width,transform}
 /* Sau loading: ô track thành thanh TIẾN ĐỘ CUỘN TRANG (scaleX = phần đã cuộn).
-   Thanh riêng — không đụng .cl__fill vì fill đã có animation trượt ra lúc dock. */
-.cl__scroll{position:absolute; inset:-1px; background:${S.fill}; transform-origin:0 50%;
+   Thanh riêng — không đụng .cl__fill vì fill đã có animation trượt ra lúc dock.
+   Con TRỰC TIẾP của thanh, phủ đúng chỗ ô track (cả viền 1px): đặt trong ô thì
+   bị cắt bên trong viền, lộ một vòng tối quanh thanh (như nút menu trước đây). */
+.cl__scroll{position:absolute; top:0; bottom:0; left:${w[0]}%; width:${w[1]}%; background:${S.fill}; transform-origin:0 50%;
   transform:scaleX(0); opacity:0; transition:opacity .4s ease; will-change:transform; pointer-events:none}
 .cl.is-done .cl__scroll{opacity:1}
 
@@ -376,6 +378,7 @@
   .cl__cell--nav1{display:none}
   .cl__cell--brand{width:${R.tablet.brand}%}
   .cl__cell--track{width:${R.tablet.track}%}
+  .cl__scroll{left:${R.tablet.brand}%; width:${R.tablet.track}%}
   .cl__cell--nav2{
     position:absolute; right:0; top:0; width:${em(S.menuSize)}; height:100%;
     padding:0; border:0 !important; background:transparent !important;
@@ -386,6 +389,7 @@
   .cl{font-size:${R.mobile.base}px}
   .cl__cell--brand{width:${R.mobile.brand}%}
   .cl__cell--track{width:${R.mobile.track}%}
+  .cl__scroll{left:${R.mobile.brand}%; width:${R.mobile.track}%}
 }
 `
   }
@@ -433,7 +437,8 @@
         </span></span>
       </div>
     </div>
-    <div class="cl__cell cl__cell--track"><div class="cl__fill"></div><div class="cl__scroll"></div></div>
+    <div class="cl__cell cl__cell--track"><div class="cl__fill"></div></div>
+    <div class="cl__scroll" aria-hidden="true"></div>
     ${navCells}
     <button class="cl__menu" type="button" aria-label="Menu">${DOTS}${DOTS}</button>
   </div>`
