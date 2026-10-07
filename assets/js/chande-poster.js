@@ -12,7 +12,9 @@
  *     (head đi theo vị trí cuộn trang — Lenis cuộn window thật nên đọc được);
  *   - gỡ / dựng lại khi Barba đổi trang;
  *   - khung vẽ lấy đúng tỉ lệ khối dính (ratio 'custom') để OUTRO của tool (vòng
- *     màu nở phủ màn sau tờ cuối) phủ full màn.
+ *     màu nở phủ màn sau tờ cuối) phủ full màn;
+ *   - cụm ngày hai bên của Agenda (.agenda__dates) nằm "dưới" các vòng: cắt theo
+ *     hình tròn của vòng TRONG CÙNG (màu kem), vòng nở tới đâu chữ lộ tới đó.
  *
  * LƯU Ý api.applyParams(patch): runtime ghép patch vào RUNTIME_DEFAULTS chứ không
  * vào thông số đang chạy — gửi thiếu là mọi khoá khác bị reset (đã dính: đổi một
@@ -20,7 +22,7 @@
  *
  * Không có WebGL hoặc danh sách rỗng thì section giữ nguyên ảnh tĩnh `poster.webp`.
  */
-import { mount as mountStack } from './paper-stack.js'
+import { mount as mountStack, easeCurve } from './paper-stack.js'
 
 const CONFIG = {
   /** Quãng cuộn (vh) cho mỗi tờ đáp. Tờ đầu nằm sẵn nên n tờ = n − 1 quãng. */
@@ -99,6 +101,7 @@ function mount(scope = document) {
   }
   me.ro = new ResizeObserver(() => me.fit())
   me.ro.observe(pin)
+  me.under = underRings(api, pin, scope.querySelector('.agenda__dates > div'))
   live = me
   // Chỉ đổi sang bản chạy khi ảnh đã nạp xong — trước đó vẫn là ảnh tĩnh, không nháy trắng.
   api.ready
@@ -112,9 +115,77 @@ function mount(scope = document) {
     })
 }
 
+// Bán kính (px) và tâm của vòng TRONG CÙNG lúc này — cùng công thức updateOutro()
+// của runtime: vòng i khởi hành ở i × stagger, nở tuyến tính (theo easing) tới
+// rMax = khoảng cách từ tâm tới góc xa nhất của khung; đơn vị = chiều cao khung,
+// gốc toạ độ ở ĐÁY (uv của plane).
+function innerRing(api, rect) {
+  const o = api.params.outro
+  const op = api.outroProgress()
+  const cols = (o.colors || []).filter((c) => typeof c === 'string' && c).slice(0, 16)
+  const n = cols.length
+  if (!o.on || !n || op <= 0) return null
+  const aspect = rect.width / Math.max(1, rect.height)
+  const ox = Math.min(Math.max(o.originX, 0), 1)
+  const oy = Math.min(Math.max(o.originY, 0), 1)
+  let rMax = 0
+  for (const [cx, cy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) rMax = Math.max(rMax, Math.hypot((cx - ox) * aspect, cy - oy))
+  rMax *= Math.max(1, o.scale)
+  const stag = Math.min(Math.max(o.stagger, 0), n > 1 ? 0.9 / (n - 1) : 0.9)
+  const span = Math.max(0.05, 1 - Math.min(Math.max(o.hold, 0), 0.6) - (n - 1) * stag)
+  const local = Math.min(Math.max((op - (n - 1) * stag) / span, 0), 1)
+  return {
+    x: rect.left + ox * rect.width,
+    y: rect.top + (1 - oy) * rect.height,
+    r: easeCurve(o.easing, o.easeMode, local) * rMax * rect.height,
+    full: local >= 1,
+  }
+}
+
+// Cắt cụm ngày theo vòng trong cùng. Chỉ chạy rAF khi Agenda đang trong màn.
+function underRings(api, pin, el) {
+  if (!el) return null
+  const agenda = el.closest('.hs-agenda')
+  let raf = 0
+  let on = false
+  let lastClip = ''
+  const set = (v) => {
+    if (v === lastClip) return
+    lastClip = v
+    el.style.clipPath = v
+  }
+  const tick = () => {
+    raf = 0
+    if (!on) return
+    const ring = pin.isConnected ? innerRing(api, pin.getBoundingClientRect()) : null
+    // tắt outro / outro đã phủ kín -> không cắt; outro chưa tới -> ẩn hẳn
+    if (!api.params.outro.on || ring?.full || api.outroProgress() >= 1) set('')
+    else if (!ring) set('circle(0 at 50% 100%)')
+    else {
+      const b = el.getBoundingClientRect()
+      set(`circle(${ring.r.toFixed(1)}px at ${(ring.x - b.left).toFixed(1)}px ${(ring.y - b.top).toFixed(1)}px)`)
+    }
+    raf = requestAnimationFrame(tick)
+  }
+  const io = new IntersectionObserver(([e]) => {
+    on = e.isIntersecting
+    if (on && !raf) raf = requestAnimationFrame(tick)
+  })
+  io.observe(agenda)
+  return {
+    dispose() {
+      io.disconnect()
+      cancelAnimationFrame(raf)
+      on = false
+      el.style.removeProperty('clip-path')
+    },
+  }
+}
+
 function destroy() {
   if (!live) return
   live.ro?.disconnect()
+  live.under?.dispose()
   live.api.dispose()
   live.section.classList.remove('is-live')
   live.section.style.removeProperty('--poster-scroll')
