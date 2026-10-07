@@ -125,7 +125,11 @@
    (số món + 1) nhịp --land-step; khối trong dính ở đỉnh, cao đúng 1 màn. Nhịp đầu
    chỉ ảnh nền, mỗi nhịp sau dán thêm 1 món (data-land-step, trái -> phải), nhịp
    cuối giữ đủ 3 món. Bố cục các món giữ số đo Figma trong khung 1028 đặt giữa màn. */
-.hs-land.is-staged{--land-step:55svh; height:calc(100svh + 4 * var(--land-step)); overflow:clip}
+.hs-land.is-staged{--land-step:55svh; height:calc(100svh + 4 * var(--land-step) + 100svh); overflow:clip}
+/* +100svh cuối: phong cảnh (đủ 3 món) đứng yên, section About ngay sau TRỒI LÊN
+   phủ lên nó (kéo ngược 100svh, nằm lớp trên, nền kem); About phủ kín màn thì
+   phong cảnh mới được thả. */
+.hs-land.is-staged + .hs-about{margin-top:-100svh; position:relative; z-index:2; background:var(--cream)}
 .hs-land.is-staged .hs-land__pin{position:sticky; top:0; height:100svh; overflow:hidden}
 .hs-land__frame{position:absolute; inset:0}
 .hs-land.is-staged .hs-land__frame{inset:auto 0; top:50%; height:calc(1028 * var(--u)); transform:translateY(-50%)}

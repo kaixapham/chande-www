@@ -145,7 +145,8 @@
       let shown = -1
       jobs.push(() => {
         const r = land.getBoundingClientRect()
-        const span = Math.max(1, r.height - innerHeight)
+        // trừ thêm 1 màn: nhịp cuối để section sau trồi lên phủ (home.css)
+        const span = Math.max(1, r.height - innerHeight * 2)
         const p = Math.min(Math.max(-r.top / span, 0), 1)
         const n = Math.min(items.length, Math.floor(p * (items.length + 1)))
         if (n === shown) return
