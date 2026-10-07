@@ -7,7 +7,21 @@
  * nút reset trong bảng cũng trả về đây). Xoá một dòng = về mặc định trong code.
  * Khoá dạng "module.đường.dẫn", ví dụ "bubble.size", "loading.colors.0".
  * ========================================================================== */
-window.CHANDE_SETTINGS = {}
+window.CHANDE_SETTINGS = {
+  "bubble.blend": 11.5,
+  "bubble.colorA": "#d1d1d1",
+  "bubble.colorB": "#c2c2c2",
+  "bubble.dispersion": 0.5,
+  "bubble.fallbackOpacity": 0.63,
+  "bubble.follow": 0.02,
+  "bubble.lensScale": 0.92,
+  "bubble.maxDpr": 0.75,
+  "bubble.size": 6,
+  "bubble.tintStrength": 0.23,
+  "cursor.arrowColor": "#0f1513",
+  "cursor.arrowSize": 32,
+  "cursor.size": 144,
+}
 
 window.CHANDE_SETTINGS_APPLY = (mod, config) => {
   for (const [key, value] of Object.entries(window.CHANDE_SETTINGS || {})) {
