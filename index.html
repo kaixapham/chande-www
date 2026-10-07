@@ -214,6 +214,10 @@
       </div>
     </section>
 
+    <!-- Poster + Agenda chung một khối: Poster dính lại khi đáy chạm đáy màn (tờ
+         cuối đã đáp), Agenda trồi từ dưới lên phủ lên nó. Hết khối thì cả hai
+         cuộn đi bình thường. CSS: .stack-over trong home.css. -->
+    <div class="stack-over">
     <!-- ===================== 7. POSTER ====================================== -->
     <!-- Chồng poster thả từng tờ theo scroll (chande-poster.js + paper-stack.js).
          Ảnh tĩnh poster.webp là bản dự phòng khi không có WebGL / JS. -->
@@ -270,6 +274,8 @@
       <button class="abs agenda__nav agenda__nav--prev" type="button" aria-label="Ngày trước"><img src="assets/img/home/ag-arrow.svg" alt=""></button>
       <button class="abs agenda__nav agenda__nav--next" type="button" aria-label="Ngày sau"><img src="assets/img/home/ag-arrow.svg" alt=""></button>
     </section>
+
+    </div><!-- /.stack-over -->
 
     <!-- ===================== 9. WALL: sticker collage ======================= -->
     <section class="hs hs-wall" data-cms-section="Kỷ niệm — collage sticker" aria-label="Kỷ niệm">

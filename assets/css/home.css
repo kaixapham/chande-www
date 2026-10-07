@@ -183,6 +183,17 @@
   display:grid; place-items:center}
 .hs-poster.is-live .hs-poster__pin > img{display:none}
 
+/* Poster đứng yên, Agenda trồi lên phủ (index.html: div.stack-over bọc 2 section).
+   Poster dính với top = 100svh − chiều cao của nó -> dừng đúng lúc đáy chạm đáy
+   màn, khối dính bên trong (pin) lúc đó vẫn ở đúng chỗ dính dưới header nên hình
+   không nhảy, và runtime paper-stack đọc tiến độ = 100% (tờ cuối đã đáp). Hết
+   .stack-over (đáy Agenda chạm đáy màn) thì Poster được thả, cuộn đi cùng. */
+/* +1px: viền dưới 1px của .hs-poster — không bù thì khối dính nhảy lên 1px lúc
+   chuyển từ "pin dính trong section" sang "cả section dính". */
+.stack-over > .hs-poster{position:sticky; top:calc(100svh - 1080 * var(--u) + 1px); z-index:0}
+.stack-over > .hs-poster.is-live{top:calc(var(--bar) - var(--poster-scroll) + 1px)}
+.stack-over > .hs-agenda{z-index:1}
+
 /* --------------------------------------------------------------- 8. AGENDA */
 .hs-agenda{height:calc(3160 * var(--u)); background:#fff; color:#112020; overflow:visible}
 .agenda{position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:calc(48 * var(--u)); padding-top:calc(24 * var(--u))}
