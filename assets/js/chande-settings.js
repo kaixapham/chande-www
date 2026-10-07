@@ -20,7 +20,14 @@ window.CHANDE_SETTINGS = {
   "bubble.tintStrength": 0.23,
   "cursor.arrowColor": "#0f1513",
   "cursor.arrowSize": 32,
-  "cursor.size": 144,
+  "cursor.offsetX": 40,
+  "cursor.offsetY": 32,
+  "cursor.size": 165,
+  "field.columns": 4,
+  "field.softness": 0.55,
+  "hero.darkOnRow": true,
+  "hero.revealStagger": 250,
+  "hero.swapDuration": 580,
 }
 
 window.CHANDE_SETTINGS_APPLY = (mod, config) => {
