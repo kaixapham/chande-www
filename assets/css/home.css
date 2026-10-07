@@ -193,6 +193,11 @@
 .stack-over > .hs-poster{position:sticky; top:calc(100svh - 1080 * var(--u) + 1px); z-index:0}
 .stack-over > .hs-poster.is-live{top:calc(var(--bar) - var(--poster-scroll) + 1px)}
 .stack-over > .hs-agenda{z-index:1}
+/* Agenda không đợi outro (vòng màu) phủ kín màn kem mới lên: nó gối lên quãng
+   cuộn cuối của Poster một đoạn --agenda-overlap, nên bắt đầu trồi từ lúc vòng kem
+   trong cùng vừa mở (~48% outro) trong khi outro vẫn chạy tiếp bên dưới. Chỉ áp
+   khi chồng poster chạy thật — bản ảnh tĩnh dự phòng không bị che. */
+.stack-over > .hs-poster.is-live + .hs-agenda{margin-top:calc(-1 * var(--agenda-overlap, 45svh))}
 
 /* --------------------------------------------------------------- 8. AGENDA */
 .hs-agenda{height:calc(3160 * var(--u)); background:#fff; color:#112020; overflow:visible}
