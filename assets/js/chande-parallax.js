@@ -15,8 +15,14 @@
  * không đụng các xoay / lật sẵn có của ảnh. Chỉ tính ảnh đang gần màn (IntersectionObserver),
  * một rAF cho mỗi lần cuộn; lerp cho mượt thêm.
  *
- * Bỏ qua ảnh đã có chuyển động riêng: hero (sticky + đổi ảnh), phong cảnh ghim,
- * chồng poster, cặp ảnh Agenda đổi bằng nút.
+ * Ảnh nằm trong khối ghim (position: sticky — ảnh nền phong cảnh) đứng yên trên
+ * màn nên đo theo tâm ảnh thì không lệch gì: lấy tiến độ cuộn qua cả section thay
+ * thế — vào section hình lệch +lim, ra khỏi section lệch −lim.
+ * Cặp ảnh Agenda đổi bằng nút: khung tạm của hiệu ứng đổi ảnh chép theo
+ * translate / scale / clip-path của ảnh (chande-home.js) nên không giật lúc đổi.
+ *
+ * Bỏ qua ảnh đã có chuyển động riêng: hero (sticky + đổi ảnh), tem / hoá đơn của
+ * phong cảnh, chồng poster.
  *
  * API: window.CHANDE_PARALLAX = { config, defaults, refresh(), mount(root) }
  * ========================================================================== */
@@ -31,10 +37,10 @@
     max: 80, // px — move: lệch tối đa
     smooth: 0.18, // 0..1 — độ bám (1 = tức thì)
     selector:
-      '.hs-intro img, .hs-story img, .hs-about img, .hs-agenda img, .hs-wall img, .hs-quote img, .hs-foot img, [data-parallax]',
+      '.hs-intro img, .hs-story img, .hs-land__bg, .hs-about img, .hs-agenda img, .hs-wall img, .hs-quote img, .hs-foot img, [data-parallax]',
     // ảnh có chuyển động / clip-path riêng, và icon nhỏ (chấm, mũi tên, tem)
     exclude:
-      '.hero *, .hs-land *, .hs-poster *, [data-agenda-slides] *, .agenda__dates *, .cl *, [data-name-photo] *, ' +
+      '.hero *, .hs-land *:not(.hs-land__bg), .hs-poster *, .agenda__dates *, .cl *, [data-name-photo] *, ' +
       '.cta *, .pill *, .hs-quote__nav *, .agenda__nav *, .agenda__stamp, .hs-story__dots *, img[src$=".svg"]',
   }
   window.CHANDE_SETTINGS_APPLY?.('parallax', CONFIG)
@@ -43,7 +49,7 @@
   window.CHANDE_PARALLAX = api
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-  let items = [] // { el, k, cur, on }
+  let items = [] // { el, k, cur, on, pin }
   let io = null
   let raf = 0
   let last = 0
@@ -63,11 +69,18 @@
       const z = inner ? Math.max(1, CONFIG.zoom) : 1
       let goal = 0
       if (CONFIG.enabled) {
-        const r = it.el.getBoundingClientRect()
-        // bù phần lệch đang áp để đo vị trí "gốc" của ảnh (move: cả khung trôi)
-        const c = r.top + r.height / 2 - (inner ? 0 : it.cur)
         const lim = inner ? ((z - 1) * H) / 2 : CONFIG.max
-        goal = Math.max(-lim, Math.min(lim, (c - mid) * CONFIG.speed * it.k))
+        if (it.pin) {
+          // ghim: tiến độ cuộn qua section, 0 = section vừa ló đáy màn, 1 = vừa khuất đỉnh
+          const r = it.pin.getBoundingClientRect()
+          const p = Math.min(1, Math.max(0, (innerHeight - r.top) / (r.height + innerHeight)))
+          goal = Math.max(-lim, Math.min(lim, (0.5 - p) * 2 * lim * (CONFIG.speed / 0.12) * it.k))
+        } else {
+          const r = it.el.getBoundingClientRect()
+          // bù phần lệch đang áp để đo vị trí "gốc" của ảnh (move: cả khung trôi)
+          const c = r.top + r.height / 2 - (inner ? 0 : it.cur)
+          goal = Math.max(-lim, Math.min(lim, (c - mid) * CONFIG.speed * it.k))
+        }
       }
       it.cur += (goal - it.cur) * ease
       if (Math.abs(goal - it.cur) < 0.05) it.cur = goal
@@ -98,12 +111,24 @@
     if (!raf) raf = requestAnimationFrame(frame)
   }
 
+  // Khối ghim gần nhất bao ảnh -> trả về section chứa nó (để đo tiến độ cuộn).
+  function pinOf(el) {
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      if (getComputedStyle(p).position === 'sticky') return p.parentElement
+    }
+    return null
+  }
+  const repin = () => {
+    items.forEach((it) => (it.pin = pinOf(it.el)))
+    kick()
+  }
+
   function mount(root = document) {
     destroy()
     const scope = root.querySelectorAll ? root : document
     items = [...scope.querySelectorAll(CONFIG.selector)]
       .filter((el) => !el.matches(CONFIG.exclude))
-      .map((el) => ({ el, k: el.dataset.parallax ? +el.dataset.parallax / CONFIG.speed || 1 : 1, cur: 0, on: false }))
+      .map((el) => ({ el, k: el.dataset.parallax ? +el.dataset.parallax / CONFIG.speed || 1 : 1, cur: 0, on: false, pin: pinOf(el) }))
     io = new IntersectionObserver(
       (es) => {
         es.forEach((e) => {
@@ -116,14 +141,16 @@
     )
     items.forEach((it) => io.observe(it.el))
     addEventListener('scroll', kick, { passive: true })
-    addEventListener('resize', kick, { passive: true })
+    addEventListener('resize', repin, { passive: true })
+    // phong cảnh chỉ ghim khi đã bật is-staged (JS trang chủ bật sau) -> đo lại
+    setTimeout(repin, 300)
   }
 
   function destroy() {
     io?.disconnect()
     io = null
     removeEventListener('scroll', kick)
-    removeEventListener('resize', kick)
+    removeEventListener('resize', repin)
     items.forEach((it) => (it.el.style.translate = it.el.style.scale = it.el.style.clipPath = ''))
     items = []
   }

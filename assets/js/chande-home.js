@@ -270,6 +270,19 @@
           im.onerror = () => res(null)
           im.src = src
         })
+      // Parallax ảnh (chande-parallax.js) phóng + dịch + cắt ảnh bằng translate /
+      // scale / clip-path: khung tạm chép theo từng khung hình để khớp ảnh bên dưới.
+      const follow = (img, el) => {
+        let raf = 0
+        const copy = () => {
+          el.style.translate = img.style.translate
+          el.style.scale = img.style.scale
+          el.style.clipPath = img.style.clipPath
+          raf = el.isConnected ? requestAnimationFrame(copy) : 0
+        }
+        copy()
+        return () => cancelAnimationFrame(raf)
+      }
       const swapShapes = async (R, img, src, delay) => {
         const dpr = Math.min(devicePixelRatio || 1, 2)
         const w = Math.max(1, Math.round(img.offsetWidth * dpr))
@@ -282,11 +295,13 @@
           width: `${img.offsetWidth}px`, height: `${img.offsetHeight}px`, pointerEvents: 'none',
         })
         img.after(box)
+        const stop = follow(img, box)
         try {
           await R.play(box, { from, to, levels: 0, delay }).finished
           img.src = src
           await img.decode?.().catch(() => {})
         } finally {
+          stop()
           box.remove()
         }
       }
@@ -303,6 +318,7 @@
           width: `${img.offsetWidth}px`, height: `${img.offsetHeight}px`, zIndex: 1,
         })
         img.after(top)
+        const stop = follow(img, top)
         const from = d > 0 ? 'inset(0 0 0 100%)' : 'inset(0 100% 0 0)'
         const a = top.animate([{ clipPath: from }, { clipPath: 'inset(0 0 0 0)' }], {
           duration: reducedMotion ? 0 : 700, delay: reducedMotion ? 0 : delay,
@@ -311,7 +327,10 @@
         return a.finished.then(() => {
           img.src = src
           return img.decode?.().catch(() => {})
-        }).finally(() => top.remove())
+        }).finally(() => {
+          stop()
+          top.remove()
+        })
       }
       const slide = (d) => {
         if (sliding || !slides.some((s) => s.list.length > 1)) return
