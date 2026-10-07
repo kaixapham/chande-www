@@ -322,6 +322,27 @@
 .hs-foot__legal{left:calc(758 * var(--u)); top:calc(1045 * var(--u)); width:calc(1130 * var(--u)); display:flex; justify-content:space-between; font-size:.875rem; color:#fff}
 .hs-foot__legal p{margin:0; opacity:.3}
 
+/* Chân trang vừa ĐÚNG 1 màn hình, tính cả thanh menu 80px đè lên trên cùng:
+   - cụm dưới (CTA, effect, panel link, bản quyền) bám ĐÁY, giữ nguyên số đo Figma
+     (đổi top:Y thành top:100% − (1080 − Y));
+   - phần trên nằm giữa mép dưới thanh menu và mép trên cụm dưới, cách đều 32:
+     logo co theo chiều cao khoảng đó (neo mép phải), cột tên + ô ảnh xếp dọc,
+     ô ảnh co lại (giữ tỉ lệ 235:272) nếu thiếu chỗ.
+   min-height: màn quá thấp thì không ép bể bố cục, cho cuộn thêm. */
+.hs-foot{--foot-bottom:calc(420 * var(--u)); height:100svh; min-height:calc(var(--bar) + 880 * var(--u))}
+.hs-foot__col{left:calc(32 * var(--u)); top:calc(var(--bar) + 32 * var(--u)); bottom:calc(var(--foot-bottom) + 32 * var(--u));
+  display:flex; flex-direction:column; align-items:flex-start; gap:calc(32 * var(--u))}
+.hs-foot__col > .hs-foot__n2{margin-left:calc(-2 * var(--u))}
+.hs-foot__col > .hs-foot__face{flex:1 1 0; min-height:0; max-height:calc(272 * var(--u)); width:auto; height:auto; aspect-ratio:235 / 272}
+.hs-foot__logo{left:auto; right:calc(32 * var(--u)); top:calc(var(--bar) + 32 * var(--u));
+  height:calc(100% - var(--bar) - var(--foot-bottom) - 64 * var(--u)); width:auto; max-width:calc(870 * var(--u))}
+.hs-foot__n3{top:calc(100% - 420 * var(--u))}
+.hs-foot__cta1, .hs-foot__cta2{top:calc(100% - 420 * var(--u))}
+.hs-foot__field, .hs-foot__panel, .hs-foot__vr{top:calc(100% - 328 * var(--u))}
+.hs-foot__social, .hs-foot__index{top:calc(100% - 296 * var(--u))}
+.hs-foot__hr{top:calc(100% - 59 * var(--u))}
+.hs-foot__legal{top:calc(100% - 35 * var(--u))}
+
 /* -------------------------------------------------------------- Responsive */
 /* Dưới 900px Figma chưa có bản — giữ bố cục desktop co theo bề rộng, chỉ nới
    chữ nhỏ cho đọc được (rem đã có sàn 10–11px ở site.css). */

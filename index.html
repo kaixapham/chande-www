@@ -315,14 +315,17 @@
 
     <!-- ===================== 12. FOOTER ===================================== -->
     <footer class="hs hs-foot" data-cms-section="Footer">
-      <div class="abs names hs-foot__n1">
+      <!-- Cột trái phần trên: tên + ô ảnh hover, xếp dọc trong khoảng giữa thanh
+           menu và cụm dưới (home.css .hs-foot__col) — ô ảnh co lại nếu thiếu chỗ. -->
+      <div class="abs hs-foot__col">
+      <div class="names hs-foot__n1">
         <span>Kenny Ho / minhsharing / HuyML / Ha Nguyen / Tam Do</span>
         <span>Huy Ta (remote) / Hanlion / Chien Pham / Trong Motion</span>
         <span>Beostiful / MyMy / NMD - Vua dep trai / Bum /</span>
         <span>Leno Nguyen / Annie XP / Thu Sinh (Pháp) / Quynh</span>
         <span>Tranglai / Kaixa / Duong Vu (Zen) / BuiXii / Yen</span>
       </div>
-      <div class="abs names hs-foot__n2">
+      <div class="names hs-foot__n2">
         <span class="pair"><span>Dylan (5K_HA-KIBO)</span><span>(Adobe)</span></span>
         <div>
           <span>Tiên-Tiến / Duongg Vu / Hung (Kres) / Kao Thi / Tunz</span>
@@ -334,9 +337,10 @@
       <!-- Ô ảnh: rỗng lúc đầu, hover vào từng tên thì hiện ảnh người đó (chande-home.js).
            data-photo trên tên nào thì dùng ảnh đó; tên chưa có ảnh riêng lấy lần lượt
            trong data-photos — THAY bằng ảnh thật của từng người. -->
-      <figure class="abs hs-foot__face" data-name-photo data-cms-list="footer-photos" data-cms-label="Ảnh hiện khi hover tên (lần lượt theo thứ tự tên)" data-cms-w="235"
+      <figure class="hs-foot__face" data-name-photo data-cms-list="footer-photos" data-cms-label="Ảnh hiện khi hover tên (lần lượt theo thứ tự tên)" data-cms-w="235"
               data-photos='["assets/img/cms/index/footer-photos-1-muxj4vqe.webp"]'
               style="margin:0" aria-hidden="true"><img alt=""></figure>
+      </div><!-- /.hs-foot__col -->
       <div class="abs names hs-foot__n3">
         <span>Ben Nguyen / Khanh Linh / Vu Hong Linh / Duc Nguyen</span>
         <span>Billy - Tran Mau Quoc Hung / DJ Thai Hoang / Long Hai /</span>
