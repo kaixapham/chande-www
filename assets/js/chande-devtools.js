@@ -305,9 +305,9 @@
         { path: 'hover', label: 'Bật hiệu ứng rê chuột', type: 'bool' },
         // chọn preset = chép cả bộ số bên dưới, rồi vẫn chỉnh tay từng ô được
         { path: 'hoverPreset', label: 'Preset', type: 'select',
-          options: [['lens', 'Thấu kính'], ['scatter', 'Tản ô'], ['magnet', 'Nam châm (hút)'], ['ripple', 'Gợn sóng']],
+          options: [['lens', 'Thấu kính'], ['scatter', 'Tản ô'], ['magnet', 'Nam châm (hút)'], ['drift', 'Dạt ô (không co)'], ['ripple', 'Gợn sóng']],
           apply: (v) => CF?.applyHoverPreset?.(v) },
-        { path: 'hoverMode', label: 'Kiểu', type: 'select', options: [['push', 'Co / đẩy'], ['ripple', 'Gợn sóng']] },
+        { path: 'hoverMode', label: 'Kiểu', type: 'select', options: [['push', 'Co / đẩy'], ['scatter', 'Dạt sang ô bên'], ['ripple', 'Gợn sóng']] },
         { path: 'hoverRipple', label: 'Tốc độ sóng (kiểu gợn sóng)', type: 'range', min: 0.1, max: 3, step: 0.05 },
         { path: 'hoverRadius', label: 'Bán kính (số ô)', type: 'range', min: 1, max: 20, step: 0.5 },
         { path: 'hoverShrink', label: 'Co ô', type: 'range', min: 0, max: 0.9, step: 0.01 },

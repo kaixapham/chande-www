@@ -31,7 +31,7 @@
  * Tham số theo từng vùng (ghi đè CONFIG): data-field-cols, data-field-tiles,
  * data-field-flip ("y" = lật dọc), data-field-shift (0..1, lệch pha).
  *
- * Rê chuột có 4 preset (HOVER_PRESETS): Thấu kính · Tản ô · Nam châm · Gợn sóng.
+ * Rê chuột có 5 preset (HOVER_PRESETS): Thấu kính · Tản ô · Nam châm · Dạt ô · Gợn sóng.
  *
  * API: window.CHANDE_FIELD = { config, defaults, mount(root), destroy(), refresh(),
  *                            park() -> Promise, release(), applyHoverPreset(tên) }
@@ -65,8 +65,10 @@
     hover: true,
     // Preset chỉ là nhãn của bộ số bên dưới — chọn ở bảng setting thì
     // applyHoverPreset() chép bộ số vào đây; chỉnh tay từng ô sau đó vẫn được.
-    hoverPreset: 'lens', // lens · scatter · magnet · ripple (xem HOVER_PRESETS)
-    hoverMode: 'push', // push = ô co/đẩy theo khoảng cách · ripple = thêm vòng sóng lan ra
+    hoverPreset: 'lens', // lens · scatter · magnet · drift · ripple (xem HOVER_PRESETS)
+    // push = ô co/đẩy trong ô của nó · ripple = thêm vòng sóng lan ra ·
+    // scatter = ô giữ cỡ, bị đẩy dạt sang chỗ ô bên cạnh
+    hoverMode: 'push',
     hoverRipple: 1, // ripple: tốc độ sóng
     hoverRadius: 6, // bán kính ảnh hưởng, tính bằng số ô
     hoverShrink: 0.45, // ô sát con trỏ co lại bao nhiêu (0..1)
@@ -93,6 +95,8 @@
       hoverMode: 'push', hoverRadius: 8, hoverShrink: 0.8, hoverPush: 1, hoverWarp: 0, hoverGlow: 0, hoverFlat: 1, hoverEase: 0.12 },
     magnet: { // Nam châm — ô bị hút về phía con trỏ, màu chụm vào
       hoverMode: 'push', hoverRadius: 6, hoverShrink: 0.3, hoverPush: -1, hoverWarp: -1.2, hoverGlow: 0.35, hoverFlat: 1, hoverEase: 0.2 },
+    drift: { // Dạt ô — ô GIỮ NGUYÊN CỠ, chỉ bị đẩy dạt ra xa con trỏ, lộ nền phía sau
+      hoverMode: 'scatter', hoverRadius: 7, hoverShrink: 0, hoverPush: 1, hoverWarp: 0.4, hoverGlow: 0.1, hoverFlat: 1, hoverEase: 0.15 },
     ripple: { // Gợn sóng — vòng sóng lan ra từ con trỏ, ô co/giãn theo sóng
       hoverMode: 'ripple', hoverRipple: 1, hoverRadius: 10, hoverShrink: 0.6, hoverPush: 0.5, hoverWarp: 0.6, hoverGlow: 0.2, hoverFlat: 1, hoverEase: 0.15 },
   }
@@ -144,7 +148,7 @@ uniform float uHoverWarp;
 uniform float uHoverGlow;
 uniform vec3 uHoverGap;
 uniform float uHoverFlat;
-uniform float uHoverMode;   // 0 push · 1 ripple
+uniform float uHoverMode;   // 0 push · 1 ripple · 2 scatter (dạt ô)
 uniform float uHoverTime;   // giây, cho sóng
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
@@ -194,6 +198,60 @@ vec3 saturate3(vec3 color, float amount) {
   return mix(vec3(grey), color, amount);
 }
 
+// Một viên ô của cell c, xét tại điểm g (toạ độ theo ô). Trả độ phủ (0..1), ghi
+// màu đã chiếu sáng (lit) và mức ảnh hưởng của chuột lên viên đó (infl).
+// scatter = 0: ô CO LẠI và TRƯỢT trong phạm vi ô của chính nó (không tràn sang ô
+// bên nên không bị cắt). scatter = 1: ô giữ cỡ, bị ĐẨY ra xa chuột tới 0.9 ô
+// (main() xét cả ô lân cận). Màu field bị kéo về phía con trỏ như qua thấu kính,
+// ô sáng lên một chút. Tính theo đơn vị ô nên tròn đều ở mọi tỉ lệ vùng.
+float brickAt(vec2 g, vec2 c, vec2 grid, float scatter, out vec3 lit, out float infl) {
+  vec2 cellUv = (c + 0.5) / grid;
+  vec2 dCells = (cellUv - uMouse) * grid;
+  float dist = length(dCells);
+  infl = uHover * (1.0 - smoothstep(0.0, uHoverRadius, dist));
+  infl *= infl * (3.0 - 2.0 * infl);
+  if (uHoverMode > 0.5 && uHoverMode < 1.5) {
+    // vòng sóng lan ra: đỉnh sóng đi ra ngoài theo thời gian, mờ dần về rìa
+    float wave = 0.5 + 0.5 * sin(dist * 1.1 - uHoverTime * 5.0);
+    infl *= mix(0.15, 1.0, wave);
+  }
+  vec2 away = dist > 1e-4 ? dCells / dist : vec2(0.0);
+  vec3 tint = shadeAt(cellUv - away / grid * infl * uHoverWarp);
+
+  float extent = (0.5 - uMosaicGap * 0.5) * (1.0 - uHoverShrink * infl);
+  vec2 local = g - (c + 0.5);
+  if (scatter > 0.5) {
+    local -= away * clamp(uHoverPush * infl, 0.0, 1.0) * 0.9;
+  } else {
+    float room = 0.5 - extent;
+    local -= clamp(away * room * uHoverPush * infl, -room, room);
+  }
+  float radius = uMosaicCorners * extent;
+  vec2 corner = max(abs(local) - (extent - radius), 0.0);
+  float brickDistance = length(corner) - radius;
+  // khử răng cưa theo cỡ điểm ảnh (đơn vị ô / px) — không dùng fwidth vì hàm
+  // này chạy trong vòng lặp / nhánh rẽ theo từng điểm ảnh
+  float edgeAA = max(grid.x / max(uResolution.x, 1.0), 0.0008);
+  float brick = 1.0 - smoothstep(-edgeAA, edgeAA, brickDistance);
+
+  vec2 key = normalize(vec2(-0.7, 0.7));
+  vec2 slope = local / max(extent, 0.001);
+  float rim = smoothstep(0.25, 1.0, max(abs(slope.x), abs(slope.y)));
+  float flatK = 1.0 - uHoverFlat * infl; // ("flat" là từ khoá GLSL)
+  float relief = dot(normalize(slope + vec2(1e-5)), key) * rim * flatK;
+  lit = tint * (1.0 + uMosaicBevel * relief) * (1.0 + uHoverGlow * infl);
+
+  if (uMosaicStuds > 0.001) {
+    float studRadius = uMosaicStuds * extent * 0.62;
+    float studDistance = length(local) - studRadius;
+    float stud = 1.0 - smoothstep(-edgeAA, edgeAA, studDistance);
+    float studSlope = clamp(length(local) / max(studRadius, 0.001), 0.0, 1.0);
+    float studRelief = dot(normalize(local + vec2(1e-5)), key) * studSlope * flatK;
+    lit = mix(lit, tint * (1.0 + uMosaicBevel * (0.25 * flatK + studRelief)) * (1.0 + uHoverGlow * infl), stud);
+  }
+  return brick;
+}
+
 void main() {
   vec2 uv = vec2(vUv.x, uFlip > 0.5 ? 1.0 - vUv.y : vUv.y);
   float aspect = uResolution.x / max(uResolution.y, 1.0);
@@ -204,54 +262,44 @@ void main() {
 
   if (uMosaicOn > 0.5) {
     vec2 grid = vec2(uMosaicDetail, max(1.0, floor(uMosaicDetail / max(aspect, 0.001))));
-    vec2 cell = floor(uv * grid);
-    vec2 local = fract(uv * grid) - 0.5;
-    vec2 cellUv = (cell + 0.5) / grid;
-
-    // Rê chuột: ô quanh con trỏ CO LẠI và TRƯỢT ra xa con trỏ trong phạm vi ô của
-    // chính nó (không tràn sang ô bên nên không bị cắt), màu field bị kéo về phía
-    // con trỏ như qua thấu kính, ô sáng lên một chút. Tính theo đơn vị ô nên tròn
-    // đều ở mọi tỉ lệ vùng.
-    vec2 dCells = (cellUv - uMouse) * grid;
-    float dist = length(dCells);
-    float infl = uHover * (1.0 - smoothstep(0.0, uHoverRadius, dist));
-    infl *= infl * (3.0 - 2.0 * infl);
-    if (uHoverMode > 0.5) {
-      // vòng sóng lan ra: đỉnh sóng đi ra ngoài theo thời gian, mờ dần về rìa
-      float wave = 0.5 + 0.5 * sin(dist * 1.1 - uHoverTime * 5.0);
-      infl *= mix(0.15, 1.0, wave);
-    }
-    vec2 away = dist > 1e-4 ? dCells / dist : vec2(0.0);
-    vec3 tint = shadeAt(cellUv - away / grid * infl * uHoverWarp);
-
-    float extent = (0.5 - uMosaicGap * 0.5) * (1.0 - uHoverShrink * infl);
-    float room = 0.5 - extent;
-    local -= clamp(away * room * uHoverPush * infl, -room, room);
-    float radius = uMosaicCorners * extent;
-    vec2 corner = max(abs(local) - (extent - radius), 0.0);
-    float brickDistance = length(corner) - radius;
-    float edgeAA = max(RAMP_AA(brickDistance), 0.0008);
-    float brick = 1.0 - smoothstep(-edgeAA, edgeAA, brickDistance);
-
-    vec2 key = normalize(vec2(-0.7, 0.7));
-    vec2 slope = local / max(extent, 0.001);
-    float rim = smoothstep(0.25, 1.0, max(abs(slope.x), abs(slope.y)));
-    float flatK = 1.0 - uHoverFlat * infl; // ("flat" là từ khoá GLSL)
-    float relief = dot(normalize(slope + vec2(1e-5)), key) * rim * flatK;
-    vec3 lit = tint * (1.0 + uMosaicBevel * relief) * (1.0 + uHoverGlow * infl);
-
-    if (uMosaicStuds > 0.001) {
-      float studRadius = uMosaicStuds * extent * 0.62;
-      float studDistance = length(local) - studRadius;
-      float stud = 1.0 - smoothstep(-edgeAA, edgeAA, studDistance);
-      float studSlope = clamp(length(local) / max(studRadius, 0.001), 0.0, 1.0);
-      float studRelief = dot(normalize(local + vec2(1e-5)), key) * studSlope * flatK;
-      lit = mix(lit, tint * (1.0 + uMosaicBevel * (0.25 * flatK + studRelief)) * (1.0 + uHoverGlow * infl), stud);
+    vec2 g = uv * grid; // toạ độ theo ô
+    vec2 cell = floor(g);
+    vec3 lit;
+    float infl;
+    float brick = brickAt(g, cell, grid, 0.0, lit, infl);
+    float inflMax = infl;
+    // DẠT Ô (uHoverMode 2): ô không co, bị đẩy ra xa chuột tới gần 1 ô — có thể
+    // trượt sang chỗ ô bên cạnh, nên điểm ảnh phải xét cả 8 ô quanh nó xem viên
+    // nào đang đè lên mình. Chỉ làm ở gần chuột; ngoài đó đường nhanh ở trên.
+    if (uHoverMode > 1.5 && uHover > 0.001) {
+      float dc = length(((cell + 0.5) / grid - uMouse) * grid);
+      if (dc < uHoverRadius + 2.0) {
+        float best = -1.0;
+        vec3 bestLit = vec3(0.0);
+        float bestBrick = 0.0;
+        for (int j = -1; j <= 1; j++) {
+          for (int i = -1; i <= 1; i++) {
+            vec3 l;
+            float f;
+            float b = brickAt(g, cell + vec2(float(i), float(j)), grid, 1.0, l, f);
+            inflMax = max(inflMax, f);
+            // phủ thật thắng viền khử răng cưa; cùng phủ thì viên gần chuột nằm trên
+            float score = b * 10.0 + f;
+            if (b > 0.001 && score > best) {
+              best = score;
+              bestLit = l;
+              bestBrick = b;
+            }
+          }
+        }
+        lit = bestLit;
+        brick = bestBrick;
+      }
     }
     color = mix(rampColor(0.0) * 0.3, clamp(lit, 0.0, 1.0), brick);
     // Khe trong vùng chuột: bão hoà nhanh (infl 0.15 đã trắng hẳn) để không còn
     // dải xám pha giữa khe tối và nền trắng ở rìa vùng ảnh hưởng.
-    reveal = (1.0 - brick) * smoothstep(0.0, 0.15, infl);
+    reveal = (1.0 - brick) * smoothstep(0.0, 0.15, inflMax);
   } else {
     color = shadeAt(uv);
   }
@@ -338,7 +386,7 @@ void main() {
         gl.uniform1f(u.uHoverGlow, o.hoverGlow)
         gl.uniform3fv(u.uHoverGap, hexToRgb(o.hoverGapColor))
         gl.uniform1f(u.uHoverFlat, o.hoverFlat)
-        gl.uniform1f(u.uHoverMode, o.hoverMode === 'ripple' ? 1 : 0)
+        gl.uniform1f(u.uHoverMode, { ripple: 1, scatter: 2 }[o.hoverMode] || 0)
         gl.uniform1f(u.uHoverTime, ((performance.now() / 1000) * o.hoverRipple) % 1000)
         o.colors.forEach((c, i) => gl.uniform3fv(uColors[i], hexToRgb(c)))
         gl.uniform2f(u.uResolution, w, h)
