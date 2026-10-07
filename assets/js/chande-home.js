@@ -79,6 +79,24 @@
       })
     }
 
+    // Phong cảnh: ghim 1 màn, chia (số món + 1) nhịp — nhịp 0 chỉ ảnh nền, nhịp i
+    // dán món thứ i (trái -> phải), nhịp cuối giữ đủ.
+    const land = scope.querySelector('.hs-land')
+    if (land) {
+      const items = [...land.querySelectorAll('[data-land-step]')].sort((a, b) => a.dataset.landStep - b.dataset.landStep)
+      land.classList.add('is-staged')
+      let shown = -1
+      jobs.push(() => {
+        const r = land.getBoundingClientRect()
+        const span = Math.max(1, r.height - innerHeight)
+        const p = Math.min(Math.max(-r.top / span, 0), 1)
+        const n = Math.min(items.length, Math.floor(p * (items.length + 1)))
+        if (n === shown) return
+        shown = n
+        items.forEach((el, i) => el.classList.toggle('is-in', i < n))
+      })
+    }
+
     // Agenda: ngày nào có đầu đề đã lên quá 60% màn hình là ngày đang đọc.
     const agenda = scope.querySelector('.hs-agenda')
     if (agenda) {

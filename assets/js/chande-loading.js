@@ -183,6 +183,8 @@
   window.CHANDE_SETTINGS_APPLY?.('loading', CONFIG)
 
   if (!CONFIG.enabled) return
+  // html.cl-loading = màn loading đang chạy (nhân vật con trỏ + bubble ẩn theo cờ này)
+  document.documentElement.classList.add('cl-loading')
 
   // Bản sao SÂU: `{ ...CONFIG }` dùng chung object lồng (dither, textReveal…) với
   // config, sửa config là defaults đổi theo -> Reset vô tác dụng.
@@ -799,6 +801,7 @@
       root.classList.toggle('is-done', done)
       // Cờ cho trang chủ dùng: html.cl-done { ... } — không cần JS ở phía trang.
       document.documentElement.classList.toggle('cl-done', done)
+      document.documentElement.classList.toggle('cl-loading', !done)
       lock(!done)
       if (done) document.dispatchEvent(new CustomEvent('chande-loading:done'))
     }

@@ -90,7 +90,8 @@
 .cmascot{position:fixed; left:0; top:0; z-index:10001; pointer-events:none; user-select:none;
   width:var(--cm-size); height:auto; opacity:0; transition:opacity .25s ease;
   will-change:transform}
-.cmascot.is-on{opacity:1}`
+.cmascot.is-on{opacity:1}
+html.cl-loading .cmascot{visibility:hidden}`
   document.head.appendChild(style)
   document.body.appendChild(el)
 

@@ -157,15 +157,21 @@
     </section>
 
     <!-- ===================== 5. LAND: phong cảnh + sticker ================= -->
+    <!-- Ghim 1 màn: ban đầu chỉ ảnh nền, mỗi nhịp cuộn dán thêm 1 món (trái -> phải,
+         data-land-step). chande-home.js bật .is-in theo tiến độ cuộn qua section. -->
     <section class="hs hs-land" data-cms-section="Phong cảnh + sticker" aria-label="Khoảnh khắc ở Chande">
+      <div class="hs-land__pin">
       <img data-cms="land-bg" data-cms-label="Ảnh nền phong cảnh" data-cms-w="1920" class="abs hs-land__bg" src="assets/img/home/land-bg.webp" alt="Đồi cỏ và núi đá" loading="lazy">
-      <div class="abs tilt hs-land__receipt"><img data-cms="land-receipt" data-cms-label="Tờ hoá đơn (PNG trong suốt)" data-cms-w="825" src="assets/img/home/land-receipt.webp" alt="" loading="lazy"></div>
-      <div class="abs tilt hs-land__atom"><img data-cms="land-atom" data-cms-label="Tem Atom (PNG trong suốt)" data-cms-w="405" src="assets/img/home/sticker-atom.webp" alt="" loading="lazy"></div>
-      <img data-cms="land-stickers" data-cms-label="Cụm tem ảnh + sticker (PNG trong suốt)" data-cms-w="573" class="abs hs-land__stickers" src="assets/img/home/land-stickers.webp" alt="" loading="lazy">
+      <div class="hs-land__frame">
+      <div class="abs tilt hs-land__receipt" data-land-step="1"><img data-cms="land-receipt" data-cms-label="Tờ hoá đơn (PNG trong suốt)" data-cms-w="825" src="assets/img/home/land-receipt.webp" alt="" loading="lazy"></div>
+      <div class="abs tilt hs-land__atom" data-land-step="2"><img data-cms="land-atom" data-cms-label="Tem Atom (PNG trong suốt)" data-cms-w="405" src="assets/img/home/sticker-atom.webp" alt="" loading="lazy"></div>
+      <img data-cms="land-stickers" data-cms-label="Cụm tem ảnh + sticker (PNG trong suốt)" data-cms-w="573" class="abs hs-land__stickers" data-land-step="3" src="assets/img/home/land-stickers.webp" alt="" loading="lazy">
+      </div><!-- /.hs-land__frame -->
       <div class="abs loader" data-scroll-pct aria-hidden="true">
         <img src="assets/img/home/land-ring.svg" alt="">
         <b><span data-pct>0</span><small>%</small></b>
       </div>
+      </div><!-- /.hs-land__pin -->
     </section>
 
     <!-- ===================== 6. ABOUT ======================================= -->

@@ -284,7 +284,9 @@ void main () {
     // cong luôn lớp màng) và cả hai PHẢI dưới nhân vật (không thì che mất nó).
     '.cbubble{position:fixed; inset:0; width:100vw; height:100vh; z-index:10000; pointer-events:none}' +
     '.cbubble-lens{position:fixed; left:0; top:0; z-index:9999; border-radius:50%; pointer-events:none;' +
-    ' backdrop-filter:url(#cbubble-lens); visibility:hidden; will-change:transform}'
+    ' backdrop-filter:url(#cbubble-lens); visibility:hidden; will-change:transform}' +
+    // màn loading đang chạy (chande-loading.js gắn html.cl-loading): ẩn giọt
+    'html.cl-loading .cbubble, html.cl-loading .cbubble-lens{visibility:hidden !important}'
   document.head.appendChild(style)
   document.body.appendChild(output)
 
