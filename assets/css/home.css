@@ -174,7 +174,7 @@
 .hs-about__who span{display:block}
 .hs-about__friends{left:calc(492 * var(--u)); top:calc(1603 * var(--u)); width:calc(234 * var(--u)); height:calc(311 * var(--u)); object-fit:cover}
 .hs-about__roots{left:calc(24 * var(--u)); top:auto; bottom:calc(1176 * var(--u)); width:calc(234 * var(--u)); margin:0; font-size:1rem; color:#000; opacity:.3}
-.hs-about__roles{left:calc(960 * var(--u)); top:auto; bottom:calc(1176 * var(--u)); width:calc(368 * var(--u)); margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:calc(4 * var(--u))}
+.hs-about__roles{left:calc(960 * var(--u)); top:auto; bottom:calc(1176 * var(--u)); width:calc(368 * var(--u)); margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:0} /* sát nhau như Figma: 10 dòng × .78em ≈ 374u, vừa khoảng 1538 → 1914 */
 .hs-about__roles li{white-space:nowrap}
 .hs-about__count{left:calc(1848 * var(--u)); top:calc(1614 * var(--u)); margin:0}
 .hs-about__pills{left:calc(492 * var(--u)); top:calc(2230 * var(--u))}
