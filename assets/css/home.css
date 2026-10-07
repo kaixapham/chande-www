@@ -261,12 +261,9 @@
 /* Cụm ngày = khối hộp lật khi đổi ngày (chande-home.js dựng .dc) */
 .agenda__dates p{perspective:420px; perspective-origin:50% 50%}
 .dc{display:block; position:relative; transform-style:preserve-3d; transform:translateZ(calc(var(--dh, 0px) / -2))}
-/* Mặt khối có NỀN đúng màu nền Agenda đang hiện -> khối đặc in chữ, che mặt kia
-   (chỉ có chữ trên nền trong suốt thì hai lớp chữ chồng nhau, nhìn như ép dẹt). */
-.dc__f, .dc__b{display:block; backface-visibility:hidden; text-box:trim-both cap alphabetic; background:var(--agenda-bg, #fff)}
-.hs-agenda{--agenda-bg:#fff}
-.stack-over > .hs-poster.is-live + .hs-agenda{--agenda-bg:#fdfbf4}
-.hs-agenda.is-dark, .stack-over > .hs-poster.is-live + .hs-agenda.is-dark{--agenda-bg:#0f1513}
+/* Chỉ chữ, không nền: chiều sâu đến từ phối cảnh gần + mặt quay đi mờ dần / mặt
+   quay ra rõ dần (chande-home.js) để hai lớp chữ không đè nhau lúc lật. */
+.dc__f, .dc__b{display:block; backface-visibility:hidden; text-box:trim-both cap alphabetic}
 .dc__f{transform:translateZ(calc(var(--dh, 0px) / 2))}
 .dc__b{position:absolute; inset:0}
 .dc__b.is-down{transform:rotateX(-90deg) translateZ(calc(var(--dh, 0px) / 2))}
