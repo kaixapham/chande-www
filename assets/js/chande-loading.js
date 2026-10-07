@@ -293,13 +293,12 @@
 /* fill xanh của track — bề rộng do đồng hồ chung ghi vào, không transition */
 .cl__fill{position:absolute; inset:-1px auto -1px -1px; width:0%; background:${S.fill};
   will-change:width,transform}
-/* Sau loading: ô track thành thanh TIẾN ĐỘ CUỘN TRANG (scaleX = phần đã cuộn).
-   Thanh riêng — không đụng .cl__fill vì fill đã có animation trượt ra lúc dock.
-   Con TRỰC TIẾP của thanh, phủ đúng chỗ ô track (cả viền 1px): đặt trong ô thì
-   bị cắt bên trong viền, lộ một vòng tối quanh thanh (như nút menu trước đây). */
-.cl__scroll{position:absolute; top:0; bottom:0; left:${w[0]}%; width:${w[1]}%; background:${S.fill}; transform-origin:0 50%;
-  transform:scaleX(0); opacity:0; transition:opacity .4s ease; will-change:transform; pointer-events:none}
-.cl.is-done .cl__scroll{opacity:1}
+/* Sau loading: ô track thành thanh TIẾN ĐỘ CUỘN TRANG — tô thẳng NỀN của chính ô
+   (background-image chồng lên màu nền do animation dock điều khiển; nền phủ cả
+   viền 1px). Không dùng lớp phủ riêng: lớp transform bị khử răng cưa ở mép (cao
+   thanh hay lẻ nửa px) -> lộ một viền tối quanh thanh xanh. */
+.cl.is-done .cl__cell--track{background-image:linear-gradient(90deg, ${S.fill} 0 calc(var(--sp, 0) * 100%), transparent 0);
+  background-origin:border-box; background-repeat:no-repeat}
 
 /* ô trái: logo + wordmark | flipper bên phải */
 .cl__row{display:flex; align-items:center; justify-content:space-between}
@@ -378,7 +377,6 @@
   .cl__cell--nav1{display:none}
   .cl__cell--brand{width:${R.tablet.brand}%}
   .cl__cell--track{width:${R.tablet.track}%}
-  .cl__scroll{left:${R.tablet.brand}%; width:${R.tablet.track}%}
   .cl__cell--nav2{
     position:absolute; right:0; top:0; width:${em(S.menuSize)}; height:100%;
     padding:0; border:0 !important; background:transparent !important;
@@ -389,7 +387,6 @@
   .cl{font-size:${R.mobile.base}px}
   .cl__cell--brand{width:${R.mobile.brand}%}
   .cl__cell--track{width:${R.mobile.track}%}
-  .cl__scroll{left:${R.mobile.brand}%; width:${R.mobile.track}%}
 }
 `
   }
@@ -438,7 +435,6 @@
       </div>
     </div>
     <div class="cl__cell cl__cell--track"><div class="cl__fill"></div></div>
-    <div class="cl__scroll" aria-hidden="true"></div>
     ${navCells}
     <button class="cl__menu" type="button" aria-label="Menu">${DOTS}${DOTS}</button>
   </div>`
@@ -509,7 +505,6 @@
     nav1: $('.cl__cell--nav1'),
     nav2: $('.cl__cell--nav2'),
     fill: $('.cl__fill'),
-    scroll: $('.cl__scroll'),
     menu: $('.cl__menu'),
     // Sau wordifyAll(), chữ của hai ô này nằm trong .cl__wt — resolve lại ở boot.
     pct: $('.cl__pct'),
@@ -789,14 +784,14 @@
     return curveAt(clamp((T - M.loadStart) / S.loadDuration, 0, 1))
   }
 
-  // Tiến độ cuộn trang -> thanh .cl__scroll (Lenis cuộn window thật nên đọc scrollY).
+  // Tiến độ cuộn trang -> --sp trên ô track (Lenis cuộn window thật nên đọc scrollY).
   let scrollRaf = 0
   function paintScroll() {
     scrollRaf = 0
-    if (!el.scroll) return
+    if (!el.track) return
     const max = document.documentElement.scrollHeight - innerHeight
     const p = max > 0 ? Math.min(Math.max(scrollY / max, 0), 1) : 0
-    el.scroll.style.transform = `scaleX(${p.toFixed(4)})`
+    el.track.style.setProperty('--sp', p.toFixed(4))
   }
   const onScrollProgress = () => {
     if (!scrollRaf) scrollRaf = requestAnimationFrame(paintScroll)
