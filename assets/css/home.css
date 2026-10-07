@@ -73,18 +73,21 @@
 .hs-intro__eye img{position:absolute; left:-146.48%; top:-441.67%; width:396.48%; height:1190.48%; max-width:none}
 
 /* ---------------------------------------------------------------- 2. STORY */
-.hs-story{height:calc(1308 * var(--u)); color:#fff}
+/* Cụm ảnh + cột chữ luôn cao đúng 1 màn trừ thanh menu (--sh). Bên trong khung ảnh
+   đo theo --k = --sh / 1028 (chiều cao Figma), canh theo tâm ngang khung nên màn
+   thấp / cao thì cả cụm co giãn đều, không bị cắt. */
+.hs-story{--sh:calc(100svh - var(--bar)); --k:calc(var(--sh) / 1028); height:calc(280 * var(--u) + var(--sh)); color:#fff}
 .hs-story__band{left:calc(492 * var(--u)); right:0; top:0; height:calc(280 * var(--u)); background:#121212}
 .hs-story__band::before{content:''; position:absolute; left:0; top:0; bottom:0; width:calc(936 * var(--u)); background:#182220}
-.hs-story__media{left:calc(492 * var(--u)); top:calc(280 * var(--u)); width:calc(936 * var(--u)); height:calc(1028 * var(--u)); background:#0f1513; overflow:hidden}
+.hs-story__media{left:calc(492 * var(--u)); top:calc(280 * var(--u)); width:calc(936 * var(--u)); height:var(--sh); background:#0f1513; overflow:hidden}
 .hs-story__photo{left:0; top:0; width:100%; height:100%; object-fit:cover} /* phủ kín khung 936 — 933 như Figma để hở 3u lộ nền tối thành vạch đen cạnh cột chữ */
-.hs-story__card{left:calc(201 * var(--u)); top:calc(143 * var(--u)); width:calc(558 * var(--u)); height:calc(743 * var(--u)); object-fit:cover; object-position:0 74%}
-.hs-story__small{left:calc(449 * var(--u)); top:calc(473 * var(--u)); width:calc(62 * var(--u)); height:calc(83 * var(--u)); object-fit:cover; object-position:33% 50%}
-.hs-story__dots{left:calc(458 * var(--u)); top:calc(993 * var(--u)); display:flex; gap:8px; align-items:center; height:11px; padding:0 8px;
+.hs-story__card{left:calc(50% - 267 * var(--k)); top:calc(143 * var(--k)); width:calc(558 * var(--k)); height:calc(743 * var(--k)); object-fit:cover; object-position:0 74%}
+.hs-story__small{left:calc(50% - 19 * var(--k)); top:calc(473 * var(--k)); width:calc(62 * var(--k)); height:calc(83 * var(--k)); object-fit:cover; object-position:33% 50%}
+.hs-story__dots{left:calc(50% - 10 * var(--k)); top:calc(993 * var(--k)); display:flex; gap:8px; align-items:center; height:11px; padding:0 8px;
   border:1px solid rgba(244,243,235,.2); border-radius:999px}
 .hs-story__dots img{width:4px; height:4px}
 .hs-story__col{right:0; bottom:0; width:calc(492 * var(--u))}
-.hs-story__panel{position:relative; height:calc(514 * var(--u)); padding:calc(40 * var(--u)) calc(32 * var(--u)); display:flex; flex-direction:column; justify-content:space-between}
+.hs-story__panel{position:relative; height:calc(var(--sh) / 2); padding:calc(40 * var(--u)) calc(32 * var(--u)); display:flex; flex-direction:column; justify-content:space-between}
 /* Như ô dưới: tiêu đề trên, cụm chữ bám đáy (đệm dưới 40) — trước để gap cố định
    218 từ tiêu đề nên ở màn < 1920 chữ (cỡ rem) tràn xuống, mất đệm dưới. */
 .hs-story__panel:first-child{background:#161d1d}
