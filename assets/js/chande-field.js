@@ -553,8 +553,12 @@ void main() {
       if (rg.w < 1 || rg.h < 1) return
       const x = Math.round(rg.x * dpr)
       const y = Math.round(rg.y * dpr)
-      const w = Math.round((rg.x + rg.w) * dpr) - x
-      const h = Math.round((rg.y + rg.h) * dpr) - y
+      // Vùng lẻ (canvas nới ra ngoài phần tử): làm tròn XUỐNG ở mép phải / dưới —
+      // làm tròn lên thì điểm ảnh mép lấn qua mép thật, lộ ra thành vạch xanh ở
+      // chỗ giáp khối bên cạnh (vd. footer: mảng xanh | panel tối).
+      const inner = g.pad > 0
+      const w = (inner ? Math.floor((rg.x + rg.w) * dpr) : Math.round((rg.x + rg.w) * dpr)) - x
+      const h = (inner ? Math.floor((rg.y + rg.h) * dpr) : Math.round((rg.y + rg.h) * dpr)) - y
       const phase = (clock.phase + (+rg.el.dataset.fieldShift || 0)) % 1
       const o = regionOptions(rg.el)
       const mouse = easeMouse(rg)
