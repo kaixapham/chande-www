@@ -153,7 +153,7 @@
     { tab: 'hero', mod: 'hero', title: 'Ảnh',
       items: [
         { path: 'imageHeight', label: 'Chiều cao 4 ảnh (% viewport)', type: 'range', min: 10, max: 50, step: 0.5 },
-        { path: 'darkOnRow', label: 'Nền tối khi 4 ảnh thành hàng (thử nghiệm)', type: 'bool' },
+        { path: 'darkOnRow', label: 'Nền tối khi 4 ảnh thành hàng chạm đáy hero', type: 'bool' },
       ] },
     { tab: 'hero', mod: 'hero', title: 'Thanh tên · block reveal',
       items: [

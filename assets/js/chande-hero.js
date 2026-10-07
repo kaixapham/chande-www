@@ -38,10 +38,11 @@
     // .hero__stage; vị trí ảnh dưới, mảng nền và thanh process đều suy ra từ
     // đây (xem site.css).
     imageHeight: 25,
-    // Thử nghiệm: khi 4 ảnh dính thành MỘT HÀNG dưới header thì nền kem bên dưới
-    // chuyển tối (html.hero-row-dark), tách hàng ra thì trở lại. Mặc định tắt
-    // để giữ nguyên giao diện cũ; bật ở bảng setting (phím H) → Hero home.
-    darkOnRow: false,
+    // Nền tối (html.hero-row-dark): khi 4 ảnh đã thành MỘT HÀNG và hàng đó CHẠM
+    // ĐÁY hero (hết đoạn sticky, ảnh bắt đầu trôi lên theo trang). Từ đó cuộn
+    // xuống tiếp vẫn giữ tối; chỉ cuộn NGƯỢC lên trên điểm đó mới về nền kem.
+    // Tắt ở bảng setting (phím H) → Hero home.
+    darkOnRow: true,
     cycle: 6000, // ms — thanh process chạy từ 0 tới đầy
     // Cách đổi ảnh: 'shapes' = đoàn shape màu bay chéo (chande-reveal.js, cấu
     // hình ở CHANDE_REVEAL.config); 'wipe' = ảnh mới quét lên như bản đầu.
@@ -284,15 +285,21 @@
     }
   }
 
-  // Hàng ngang = mép trên 4 thẻ bằng nhau (bậc thang thì lệch nhau) và hàng còn
-  // nằm trong màn hình. Bố cục mobile (lưới 2×2) không bao giờ thoả nên tự tắt.
+  // Tối khi: mép trên 4 thẻ bằng nhau (thành hàng) VÀ đáy hàng chạm đáy
+  // .hero__stage. Từ lúc chạm, thẻ và stage dính nhau trôi lên nên điều kiện giữ
+  // nguyên dù hàng đã ra khỏi màn hình — cuộn xuống không bị trả về nền kem.
+  // Cuộn ngược lên, thẻ sticky lại tách khỏi đáy stage -> về kem. Bố cục mobile
+  // (lưới 2×2) không bao giờ thành hàng nên tự tắt.
   function checkRow() {
     const root = document.documentElement
     if (!H || !CONFIG.darkOnRow) return void root.classList.remove('hero-row-dark')
+    const stage = H.hero.querySelector('.hero__stage')
+    if (!stage) return
     const rects = H.slots.map((s) => s.getBoundingClientRect())
     const tops = rects.map((r) => r.top)
-    const row = Math.max(...tops) - Math.min(...tops) < 1.5 && rects[0].bottom > 0
-    root.classList.toggle('hero-row-dark', row)
+    const row = Math.max(...tops) - Math.min(...tops) < 1.5
+    const touch = stage.getBoundingClientRect().bottom <= Math.max(...rects.map((r) => r.bottom)) + 1.5
+    root.classList.toggle('hero-row-dark', row && touch)
   }
 
   function applyHeights() {

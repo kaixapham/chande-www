@@ -326,7 +326,10 @@ void main () {
     if (key === lensKey) return
     lensKey = key
     lensR = R
-    const S = 128
+    // Bản đồ đúng độ phân giải màn (1 điểm bản đồ = 1 px thiết bị) — 128×128
+    // phóng lên vài trăm px là ra mép răng cưa từng bậc.
+    const S = Math.max(64, Math.min(1024, Math.round(2 * R * Math.min(devicePixelRatio || 1, 2))))
+    const edge = 2.5 / (S / 2) // ~2.5 px thiết bị, theo toạ độ chuẩn hoá
     const cv = document.createElement('canvas')
     cv.width = cv.height = S
     const ctx = cv.getContext('2d')
@@ -339,7 +342,10 @@ void main () {
         let dx = 0
         let dy = 0
         if (r2 < 1) {
-          const k = 1 - Math.sqrt(1 - r2)
+          // mép giảm mượt về 0 trong ~2.5 px: không còn bậc nhảy từ "bẻ mạnh
+          // nhất" sang "không bẻ" ngay trên đường tròn (nguồn răng cưa)
+          const fade = Math.min(1, (1 - Math.sqrt(r2)) / edge)
+          const k = (1 - Math.sqrt(1 - r2)) * fade * fade * (3 - 2 * fade)
           dx = -x * k
           dy = -y * k
         }
