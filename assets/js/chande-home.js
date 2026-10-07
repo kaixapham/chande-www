@@ -6,7 +6,8 @@
  *   • [data-scroll-pct] vòng % ở section phong cảnh = tiến độ cuộn cả trang
  *   • tab AGENDA / BOOTCAMP — đổi aria-selected (nội dung mới có một bộ)
  *   • Agenda: ngày dính (sticky) đổi theo ngày đang đọc (data-day trên từng
- *     .agenda__head: "ngày|tháng|D-x|giờ"); nút ‹ › cuộn tới ngày trước / sau
+ *     .agenda__head: "ngày|tháng|D-x|giờ"); nút ‹ › đổi cặp ảnh ngày 2
+ *     ([data-agenda-slides], danh sách ảnh ở data-photos — CMS sửa được)
  *   • Cảm nhận: nút ‹ › + thanh chạy 6s đổi cảm nhận; danh sách thêm trong
  *     <script data-quotes> (cảm nhận đầu là HTML sẵn có, CMS vẫn thay ảnh được)
  *   • [data-back-top]  cuộn về đầu trang bằng Lenis nếu có
@@ -182,8 +183,6 @@
         if (i === cur) return
         const first = cur < 0
         cur = i
-        prev?.setAttribute('aria-disabled', String(i <= 0))
-        next?.setAttribute('aria-disabled', String(i >= heads.length - 1))
         const parts = heads[i].dataset.day.split('|')
         const write = () => spans.forEach((s, k) => parts[k] != null && (s.textContent = parts[k]))
         if (first) return write()
@@ -201,16 +200,54 @@
           heads.forEach((h, k) => h.getBoundingClientRect().top < line && (i = k))
           show(i)
         })
-        const go = (d) => {
-          const h = heads[Math.min(Math.max(cur + d, 0), heads.length - 1)]
-          const lenis = window.CHANDE_TRANSITION?.lenis
-          const off = -innerHeight * 0.25
-          if (lenis) lenis.scrollTo(h, { offset: off })
-          else scrollTo({ top: h.getBoundingClientRect().top + scrollY + off, behavior: 'smooth' })
-        }
-        prev?.addEventListener('click', () => go(-1))
-        next?.addEventListener('click', () => go(1))
       }
+      // Nút ‹ › hai bên: đổi cặp ảnh ngày 2 ([data-agenda-slides], danh sách ở
+      // data-photos). Ảnh mới QUÉT vào theo hướng bấm (› từ phải, ‹ từ trái), hai
+      // bên lệch nhau một nhịp; quay vòng.
+      const slides = [...agenda.querySelectorAll('[data-agenda-slides]')].map((box) => {
+        let list = []
+        try {
+          list = JSON.parse(box.dataset.photos || '[]')
+        } catch {}
+        const img = box.querySelector('img')
+        if (list[0] && img.getAttribute('src') !== list[0]) img.src = list[0]
+        list.slice(1).forEach((src) => (new Image().src = src))
+        return { box, img, list }
+      })
+      let slideIdx = 0
+      let sliding = false
+      const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
+      const swap = ({ img, list }, d, delay) => {
+        if (list.length < 2) return Promise.resolve()
+        const src = list[(((slideIdx % list.length) + list.length) % list.length)]
+        const top = img.cloneNode()
+        top.removeAttribute('loading')
+        top.src = src
+        Object.assign(top.style, {
+          position: 'absolute', left: `${img.offsetLeft}px`, top: `${img.offsetTop}px`,
+          width: `${img.offsetWidth}px`, height: `${img.offsetHeight}px`, zIndex: 1,
+        })
+        img.after(top)
+        const from = d > 0 ? 'inset(0 0 0 100%)' : 'inset(0 100% 0 0)'
+        const a = top.animate([{ clipPath: from }, { clipPath: 'inset(0 0 0 0)' }], {
+          duration: reducedMotion ? 0 : 700, delay: reducedMotion ? 0 : delay,
+          easing: 'cubic-bezier(.76,0,.24,1)', fill: 'both',
+        })
+        return a.finished.then(() => {
+          img.src = src
+          return img.decode?.().catch(() => {})
+        }).finally(() => top.remove())
+      }
+      const slide = (d) => {
+        if (sliding || !slides.some((s) => s.list.length > 1)) return
+        sliding = true
+        slideIdx += d
+        Promise.all(slides.map((s, i) => swap(s, d, i * 90))).finally(() => (sliding = false))
+      }
+      prev?.addEventListener('click', () => slide(-1))
+      next?.addEventListener('click', () => slide(1))
+      prev?.setAttribute('aria-label', 'Ảnh trước')
+      next?.setAttribute('aria-label', 'Ảnh sau')
     }
 
     // Cảm nhận: mục 0 đọc từ HTML, các mục sau từ <script data-quotes>.

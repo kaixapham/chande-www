@@ -266,12 +266,16 @@
         </figure>
         <h2 data-tilt class="d106 agenda__head agenda__head--wrap" data-day="03|Oct|D-2|08H"><span>Wake up</span><span>Join me in nature</span><span>Workshop-002: AI era by Everfit</span><span>Chande-night</span></h2>
         <div class="agenda__pair">
-          <figure class="agenda__shot" style="margin:0">
-            <img data-cms="agenda-2" data-cms-label="Ảnh ngày 2 — trái" data-cms-w="685" src="assets/img/home/agenda-2.webp" alt="" loading="lazy">
+          <!-- Nút ‹ › hai bên đổi cặp ảnh này (chande-home.js). Danh sách ảnh mỗi bên ở
+               data-photos (CMS sửa được); ảnh đầu = ảnh hiện lúc mở trang. -->
+          <figure class="agenda__shot" style="margin:0" data-agenda-slides data-cms-list="agenda-left" data-cms-label="Ảnh ngày 2 — trái (nút ‹ › đổi lần lượt)" data-cms-w="685"
+                  data-photos='["assets/img/home/agenda-2.webp","assets/img/home/agenda-1.webp","assets/img/home/about-photo.webp"]'>
+            <img src="assets/img/home/agenda-2.webp" alt="" loading="lazy">
             <div class="field" data-field data-field-shift="0.3"></div>
           </figure>
-          <div class="agenda__house">
-            <img data-cms="agenda-3" data-cms-label="Ảnh ngày 2 — phải (nhà gỗ)" data-cms-w="570" src="assets/img/home/agenda-3.webp" alt="Nhà gỗ giữa rừng" loading="lazy">
+          <div class="agenda__house" data-agenda-slides data-cms-list="agenda-right" data-cms-label="Ảnh ngày 2 — phải (nút ‹ › đổi lần lượt)" data-cms-w="570"
+               data-photos='["assets/img/home/agenda-3.webp","assets/img/home/recap.webp","assets/img/home/insta-friends.webp"]'>
+            <img src="assets/img/home/agenda-3.webp" alt="Ảnh ngày 2" loading="lazy">
             <div class="bar"></div>
             <div class="pillrun pillrun--sm" data-marquee aria-hidden="true"><div class="pillrun__track"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
           </div>
