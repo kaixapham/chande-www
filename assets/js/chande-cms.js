@@ -84,6 +84,7 @@
         w: +img.dataset.cmsW || 600,
         src: img.getAttribute('src'),
         alt: img.getAttribute('alt') || '',
+        hidden: img.hasAttribute('hidden'),
       })),
       lists: [...el.querySelectorAll('[data-cms-list]')].map((l) => {
         const isScript = l.tagName === 'SCRIPT'
@@ -155,7 +156,7 @@
     S.previews.set(path, URL.createObjectURL(img.blob))
     const prev = S.ops.get(opKey(file, slot.key))
     S.ops.set(opKey(file, slot.key), {
-      type: 'img', file, key: slot.key, path, blob: img.blob, alt: prev?.alt ?? slot.alt,
+      type: 'img', file, key: slot.key, path, blob: img.blob, alt: prev?.alt ?? slot.alt, hidden: false,
       note: img.width ? `${img.from} → ${img.width}×${img.height} WebP, ${Math.round(img.blob.size / 1024)} KB` : 'SVG giữ nguyên',
     })
     render()
@@ -209,6 +210,9 @@
         html = editTag(html, `data-cms="${reEsc(op.key)}"`, (tag) => {
           if (op.path) tag = setAttr(tag, 'src', op.path)
           if (op.alt != null) tag = setAttr(tag, 'alt', esc(op.alt))
+          // Xoá ảnh = ẩn khỏi trang (thuộc tính hidden), file ảnh giữ nguyên
+          if (op.hidden === true && !/\shidden(\s|=|>|\/)/.test(tag)) tag = tag.replace(/\s*\/?>$/, (end) => ` hidden${end}`)
+          if (op.hidden === false) tag = tag.replace(/\shidden(="[^"]*")?(?=[\s/>])/, '')
           return tag
         })
       } else if (op.kind === 'objects') {
@@ -375,14 +379,22 @@
   function slotCard(file, slot) {
     const op = S.ops.get(opKey(file, slot.key))
     const src = op?.path || slot.src
-    return `<article class="slot ${op ? 'is-changed' : ''}" data-slot="${esc(slot.key)}">
-      <div class="thumb"><span class="tag">CHƯA LƯU</span><img src="${esc(shown(src))}" alt=""></div>
+    const hidden = op?.hidden ?? slot.hidden
+    // Thao tác ngay trên ảnh: bấm ảnh = thay; nút Thay / Xoá (ẩn khỏi trang) / Hiện lại / Hoàn tác
+    return `<article class="slot ${op ? 'is-changed' : ''} ${hidden ? 'is-hidden' : ''}" data-slot="${esc(slot.key)}">
+      <div class="thumb" data-pick title="Bấm để thay ảnh — hoặc kéo-thả ảnh vào đây"><span class="tag">CHƯA LƯU</span><img src="${esc(shown(src))}" alt="">
+        ${hidden ? '<span class="gone">ĐÃ ẨN KHỎI TRANG</span>' : ''}
+        <span class="tbar">
+          <button class="tbtn" type="button" data-pick>Thay ảnh</button>
+          ${hidden ? '<button class="tbtn" type="button" data-unhide>Hiện lại</button>' : '<button class="tbtn tbtn--bad" type="button" data-remove>Xoá</button>'}
+          ${op ? '<button class="tbtn" type="button" data-undo>Hoàn tác</button>' : ''}
+        </span>
+      </div>
       <div class="meta"><b>${esc(slot.label)}</b>
         <code>${esc(src)}</code>
         <span class="size">${op?.note ? esc(op.note) : `Nên dùng ảnh rộng ≥ ${slot.w * 2}px (ô hiển thị ${slot.w}px khổ 1920)`}</span>
         <div class="row"><input type="text" data-alt value="${esc(op?.alt ?? slot.alt)}" placeholder="Mô tả ảnh (alt) — để trống nếu là ảnh trang trí"></div>
       </div>
-      <div class="acts"><button class="btn" type="button" data-pick>Thay ảnh</button>${op ? '<button class="btn btn--ghost" type="button" data-undo>Hoàn tác</button>' : ''}</div>
     </article>`
   }
 
@@ -394,20 +406,20 @@
       h += `<div class="list" data-list="${esc(list.key)}">`
       items.forEach((it, i) => {
         h += `<div class="item" data-i="${i}">
-          <div class="ph" data-pick-i style="background-image:url('${esc(shown(it.img || ''))}')" title="Thay ảnh"></div>
+          <div class="ph" data-pick-i style="background-image:url('${esc(shown(it.img || ''))}')" title="Bấm để thay ảnh"><em>Thay ảnh</em></div>
           <div class="fields">
             <label>Số<input type="text" data-k="num" value="${esc(it.num)}"></label>
             <label>Tên<input type="text" data-k="name" value="${esc(it.name)}"></label>
             <label>Căn ảnh<input type="text" data-k="pos" value="${esc(it.pos || '')}" placeholder="50% 50%"></label>
           </div>
-          <div class="ops"><button class="btn" type="button" data-move="-1" title="Lên">↑</button><button class="btn" type="button" data-move="1" title="Xuống">↓</button><button class="btn" type="button" data-del title="Xoá">✕</button></div>
+          <div class="ops"><button class="btn" type="button" data-move="-1" title="Lên">↑</button><button class="btn" type="button" data-move="1" title="Xuống">↓</button><button class="btn btn--del" type="button" data-del title="Xoá người này">✕ Xoá</button></div>
         </div>`
       })
       h += `<button class="btn" type="button" data-add style="align-self:flex-start">+ Thêm người</button></div>`
     } else {
       h += `<div class="chips" data-list="${esc(list.key)}">`
       items.forEach((p, i) => {
-        h += `<div class="chip" data-i="${i}" data-pick-i style="background-image:url('${esc(shown(p))}')" title="${esc(p)}"><span>${i + 1}</span><button type="button" data-del title="Xoá">✕</button></div>`
+        h += `<div class="chip" data-i="${i}" data-pick-i style="background-image:url('${esc(shown(p))}')" title="Bấm để thay — ${esc(p)}"><span>${i + 1}</span><em>Thay ảnh</em><button type="button" data-del title="Xoá ảnh này khỏi danh sách">✕ Xoá</button></div>`
       })
       h += `<button class="addbox chip" type="button" data-add>+ Thêm ảnh</button></div>`
     }
@@ -486,11 +498,20 @@
     const slotEl = e.target.closest('[data-slot]')
     if (slotEl && sec) {
       const slot = sec.slots.find((s) => s.key === slotEl.dataset.slot)
-      if (e.target.closest('[data-pick]')) pick((f) => replaceSlot(page.file, slot, f))
+      const k = opKey(page.file, slot.key)
       if (e.target.closest('[data-undo]')) {
-        S.ops.delete(opKey(page.file, slot.key))
-        render()
+        S.ops.delete(k)
+        return render()
       }
+      if (e.target.closest('[data-remove], [data-unhide]')) {
+        const op = S.ops.get(k) || { type: 'img', file: page.file, key: slot.key, path: null, blob: null }
+        op.hidden = !!e.target.closest('[data-remove]')
+        // trở về đúng trạng thái gốc thì bỏ thay đổi
+        if (!op.path && op.alt == null && op.hidden === slot.hidden) S.ops.delete(k)
+        else S.ops.set(k, op)
+        return render()
+      }
+      if (e.target.closest('[data-pick]')) pick((f) => replaceSlot(page.file, slot, f))
       return
     }
     const undoList = e.target.closest('[data-list-undo]')

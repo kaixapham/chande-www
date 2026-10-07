@@ -19,6 +19,8 @@ body{
   text-transform:uppercase; -webkit-font-smoothing:antialiased;
 }
 a{color:inherit}
+/* CMS "Xoá ảnh" gắn thuộc tính hidden — thắng mọi display:block riêng của ảnh */
+[hidden]{display:none !important}
 
 /* ---- Thử nghiệm "nền tối khi 4 ảnh thành hàng" ----
    chande-hero.js gắn html.hero-row-dark khi 4 ảnh hero dính thành một hàng (chỉ

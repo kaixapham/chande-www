@@ -63,6 +63,22 @@ a{color:var(--lime)}
 .thumb img{max-width:100%; max-height:100%; object-fit:contain}
 .thumb .tag{position:absolute; left:8px; top:8px; font-size:10px; padding:2px 6px; border-radius:4px; background:var(--warn); color:#111; font-weight:700; display:none}
 .slot.is-changed .thumb .tag{display:block}
+/* thao tác ngay trên ảnh */
+.thumb{cursor:pointer}
+.thumb::after{content:'Bấm để thay · kéo-thả ảnh vào'; position:absolute; inset:0; display:grid; place-items:center;
+  background:rgba(0,0,0,.45); color:#fff; font-size:12px; font-weight:600; opacity:0; transition:opacity .15s; pointer-events:none}
+.thumb:hover::after{opacity:1}
+.tbar{position:absolute; right:8px; bottom:8px; display:flex; gap:6px; z-index:1}
+.tbtn{height:28px; padding:0 10px; border-radius:7px; border:0; background:rgba(15,17,16,.85); color:var(--fg); font-size:12px; font-weight:600; backdrop-filter:blur(4px)}
+.tbtn:hover{background:#000}
+.tbtn--bad{color:#ff8a80}
+.slot.is-hidden .thumb img{opacity:.25}
+.gone{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--warn)}
+.item .ph{position:relative}
+.item .ph em, .chip em{position:absolute; inset:0; display:grid; place-items:center; background:rgba(0,0,0,.5); color:#fff; font-style:normal; font-size:11px; font-weight:600; opacity:0; transition:opacity .15s; border-radius:inherit}
+.item .ph:hover em, .chip:hover em{opacity:1}
+.btn--del{width:auto !important; padding:0 10px !important; color:#ff8a80}
+.chip button{width:auto; height:24px; padding:0 8px; border-radius:6px; color:#ff8a80; font-size:11px; font-weight:600; z-index:1}
 .meta{padding:10px 12px; display:flex; flex-direction:column; gap:6px; font-size:12px}
 .meta b{font-size:13px}
 .meta code{color:var(--dim); font-size:11px; word-break:break-all}
