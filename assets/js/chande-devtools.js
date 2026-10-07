@@ -223,6 +223,11 @@
         { path: 'tint', label: 'Màu phủ', type: 'color' },
         { path: 'tintStrength', label: 'Độ phủ màu', type: 'range', min: 0, max: 1, step: 0.01 },
       ] },
+    { tab: 'bubble', mod: 'bubble', title: 'Thu nhỏ theo trang',
+      items: [
+        { path: 'shrinkOn', label: 'Thu nhỏ từ section Poster tới hết trang', type: 'bool' },
+        { path: 'shrinkScale', label: 'Còn bao nhiêu (1 = không thu)', type: 'range', min: 0.2, max: 1, step: 0.05 },
+      ] },
     { tab: 'bubble', mod: 'bubble', title: 'Hiệu năng',
       items: [
         { path: 'maxDpr', label: 'Độ phân giải tối đa (dpr)', type: 'range', min: 0.75, max: 2, step: 0.25 },

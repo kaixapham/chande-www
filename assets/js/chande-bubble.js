@@ -66,6 +66,12 @@
     lensScale: 1, // thấu kính to / nhỏ hơn giọt
     frost: 0,
     maxDpr: 1.5, // giới hạn độ phân giải canvas — màng mỏng, 1.5 đã đủ nét
+    // Thu nhỏ cả giọt khi mép trên section `shrinkFrom` lên quá nửa màn — giữ
+    // nhỏ tới hết trang, cuộn ngược lên thì to lại (chuyển mượt). Cả giọt co đều:
+    // cỡ × s và độ dính ÷ s (phần phình do các cầu hoà vào nhau tỉ lệ 1/độ dính).
+    shrinkOn: true,
+    shrinkFrom: '.hs-poster',
+    shrinkScale: 0.5,
   }
   // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
   window.CHANDE_SETTINGS_APPLY?.('bubble', CONFIG)
@@ -323,7 +329,8 @@ void main () {
   // tâm không lệch, càng ra mép càng lấy mẫu từ phía trong (như tia đi qua giọt
   // nước bị bẻ vào). Ngoài hình tròn giữ 0.5 (không dịch).
   function buildLens() {
-    const R = Math.max(8, pooledRadius() * CONFIG.lensScale)
+    // dựng theo cỡ gốc (m = 1); lúc thu nhỏ thì placeLens() chỉ scale xuống
+    const R = Math.max(8, pooledRadius(1) * CONFIG.lensScale)
     const key = `${R.toFixed(1)}|${CONFIG.refraction}|${CONFIG.dispersion}|${CONFIG.frost}`
     if (key === lensKey) return
     lensKey = key
@@ -433,11 +440,17 @@ void main () {
   // Bán kính giọt khi gom lại (px CSS), tính đúng như shader: các cầu đồng tâm
   // bán kính r_i = base·(c − i) hoà bằng smoothMin(k = blend) -> mặt giọt ở
   // d = ln Σ e^(k·r_i) / k (toạ độ chuẩn hoá, 1 đơn vị = nửa cạnh ngắn màn).
-  function pooledRadius() {
+  // Hệ số thu nhỏ hiện tại (đuổi theo mulTarget mỗi khung) — xem shrinkOn.
+  let mul = 1
+  let mulTarget = 1
+  const effSize = (m = mul) => Math.max(CONFIG.size, 4) * m
+  const effBlend = (m = mul) => Math.max(CONFIG.blend, 0.5) / m
+
+  function pooledRadius(scale = mul) {
     const c = count()
     const half = Math.min(innerWidth, innerHeight) / 2
-    const k = Math.max(CONFIG.blend, 0.5)
-    const r0 = Math.max(CONFIG.size, 4) / half
+    const k = effBlend(scale)
+    const r0 = effSize(scale) / half
     let m = 0
     for (let i = 0; i < c; i++) m += Math.exp(k * (r0 * (c - i)) / c - k * r0)
     return (r0 + Math.log(m) / k) * half
@@ -470,9 +483,9 @@ void main () {
 
     const c = count()
     const minRes = Math.min(output.width, output.height)
-    const headRadius = Math.max(CONFIG.size, 4) * dpr * presence
+    const headRadius = effSize() * dpr * presence
     const baseRadius = (headRadius * 2) / (minRes * c)
-    const blend = Math.max(CONFIG.blend, 0.5)
+    const blend = effBlend()
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
     for (let i = 0; i < c; i++) {
       const dx = trailX[i] * dpr
@@ -538,6 +551,8 @@ void main () {
     trailX[0] = headX
     trailY[0] = headY
     presence += (presenceTarget - presence) * kScale
+    mul += (mulTarget - mul) * (1 - Math.exp(-delta * 6))
+    if (Math.abs(mulTarget - mul) < 0.002) mul = mulTarget
     render()
     placeLens()
     if (presence < 0.004 && presenceTarget === 0) {
@@ -548,7 +563,7 @@ void main () {
     }
     // Đứng yên: đầu đã tới chuột, đuôi đã gom vào đầu, giọt đã phồng đủ -> dừng.
     // pointermove kế tiếp gọi start() chạy lại.
-    let spread = Math.abs(targetX - headX) + Math.abs(targetY - headY) + Math.abs(presenceTarget - presence) * 100
+    let spread = Math.abs(targetX - headX) + Math.abs(targetY - headY) + Math.abs(presenceTarget - presence) * 100 + Math.abs(mulTarget - mul) * 100
     const c = count()
     for (let i = 1; i < c && spread < 0.25; i++) spread += Math.abs(trailX[i] - headX) + Math.abs(trailY[i] - headY)
     state.moving = spread >= 0.25
@@ -561,8 +576,8 @@ void main () {
   function placeLens() {
     state.x = headX
     state.y = headY
-    state.size = CONFIG.enabled ? Math.max(CONFIG.size, 4) : 0
-    state.swell = Math.max(0, pooledRadius() - Math.max(CONFIG.size, 4))
+    state.size = CONFIG.enabled ? effSize() : 0
+    state.swell = Math.max(0, pooledRadius() - effSize())
     state.count = count()
     state.presence = CONFIG.enabled ? presence : 0
     const on = lensOK && CONFIG.enabled && CONFIG.refract && presence > 0.02
@@ -575,8 +590,8 @@ void main () {
     // còn một vòng tròn cứng lơ lửng to hơn giọt.
     const c = count()
     const half = Math.min(innerWidth, innerHeight) / 2
-    const k = Math.max(CONFIG.blend, 0.5)
-    const r0 = (Math.max(CONFIG.size, 4) * presence) / half
+    const k = effBlend()
+    const r0 = (effSize() * presence) / half
     let m = 0
     for (let i = 0; i < c; i++) {
       const d = Math.hypot(trailX[i] - headX, trailY[i] - headY) / half
@@ -618,6 +633,19 @@ void main () {
   }
   document.documentElement.addEventListener('pointerleave', leave)
   addEventListener('blur', leave)
+  // Thu nhỏ theo vị trí cuộn (section shrinkFrom). Giọt đang ẩn thì đặt luôn.
+  function checkShrink() {
+    const el = CONFIG.shrinkOn && CONFIG.shrinkFrom ? document.querySelector(CONFIG.shrinkFrom) : null
+    const t = el && el.getBoundingClientRect().top < innerHeight * 0.5 ? Math.min(Math.max(CONFIG.shrinkScale, 0.1), 1) : 1
+    if (t === mulTarget) return
+    mulTarget = t
+    if (presence > 0.004) start()
+    else mul = t
+  }
+  addEventListener('scroll', checkShrink, { passive: true })
+  window.barba?.hooks?.afterEnter(() => checkShrink())
+  checkShrink()
+
   addEventListener('resize', () => {
     sync()
     lensKey = '' // cỡ giọt theo cạnh ngắn màn hình
@@ -626,6 +654,8 @@ void main () {
 
   api.refresh = () => {
     lensKey = ''
+    mulTarget = -1
+    checkShrink()
     sync()
     if (!CONFIG.enabled) {
       lens.style.visibility = 'hidden'
