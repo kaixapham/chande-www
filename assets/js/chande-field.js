@@ -148,6 +148,7 @@ uniform float uHoverWarp;
 uniform float uHoverGlow;
 uniform vec3 uHoverGap;
 uniform float uHoverFlat;
+uniform vec2 uPad;          // khung vẽ nới ra mỗi phía (tỉ lệ theo cỡ vùng) cho ô dạt tràn ra
 uniform float uHoverMode;   // 0 push · 1 ripple · 2 scatter (dạt ô)
 uniform float uHoverTime;   // giây, cho sóng
 
@@ -253,7 +254,12 @@ float brickAt(vec2 g, vec2 c, vec2 grid, float scatter, out vec3 lit, out float 
 }
 
 void main() {
-  vec2 uv = vec2(vUv.x, uFlip > 0.5 ? 1.0 - vUv.y : vUv.y);
+  // uPad > 0: khung vẽ rộng hơn vùng một ô mỗi phía; uv ngoài [0, 1] là phần
+  // nới ra — trong suốt, chỉ hiện những ô bị dạt tràn ra khỏi mép vùng.
+  vec2 vu = vUv * (1.0 + 2.0 * uPad) - uPad;
+  vec2 uv = vec2(vu.x, uFlip > 0.5 ? 1.0 - vu.y : vu.y);
+  float inside = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
+  float alpha = inside;
   float aspect = uResolution.x / max(uResolution.y, 1.0);
   vec2 centered = (uv - 0.5) * vec2(aspect, 1.0);
   float angle = uPhase * TAU;
@@ -266,8 +272,8 @@ void main() {
     vec2 cell = floor(g);
     vec3 lit;
     float infl;
-    float brick = brickAt(g, cell, grid, 0.0, lit, infl);
-    float inflMax = infl;
+    float brick = brickAt(g, cell, grid, 0.0, lit, infl) * inside;
+    float inflMax = infl * inside;
     // DẠT Ô (uHoverMode 2): ô không co, bị đẩy ra xa chuột tới gần 1 ô — có thể
     // trượt sang chỗ ô bên cạnh, nên điểm ảnh phải xét cả 8 ô quanh nó xem viên
     // nào đang đè lên mình. Chỉ làm ở gần chuột; ngoài đó đường nhanh ở trên.
@@ -279,9 +285,12 @@ void main() {
         float bestBrick = 0.0;
         for (int j = -1; j <= 1; j++) {
           for (int i = -1; i <= 1; i++) {
+            vec2 nc = cell + vec2(float(i), float(j));
+            // chỉ ô CÓ THẬT của vùng mới dạt được (không mọc ô ngoài mép)
+            if (nc.x < 0.0 || nc.y < 0.0 || nc.x > grid.x - 1.0 || nc.y > grid.y - 1.0) continue;
             vec3 l;
             float f;
-            float b = brickAt(g, cell + vec2(float(i), float(j)), grid, 1.0, l, f);
+            float b = brickAt(g, nc, grid, 1.0, l, f);
             inflMax = max(inflMax, f);
             // phủ thật thắng viền khử răng cưa; cùng phủ thì viên gần chuột nằm trên
             float score = b * 10.0 + f;
@@ -299,7 +308,12 @@ void main() {
     color = mix(rampColor(0.0) * 0.3, clamp(lit, 0.0, 1.0), brick);
     // Khe trong vùng chuột: bão hoà nhanh (infl 0.15 đã trắng hẳn) để không còn
     // dải xám pha giữa khe tối và nền trắng ở rìa vùng ảnh hưởng.
-    reveal = (1.0 - brick) * smoothstep(0.0, 0.15, inflMax);
+    reveal = (1.0 - brick) * smoothstep(0.0, 0.15, inflMax) * inside;
+    // ngoài vùng: chỉ có ô tràn ra, độ phủ = độ trong suốt
+    if (inside < 0.5) {
+      color = clamp(lit, 0.0, 1.0);
+      alpha = brick;
+    }
   } else {
     color = shadeAt(uv);
   }
@@ -313,14 +327,14 @@ void main() {
   color = clamp(color + grain * uGrainAmount, 0.0, 1.0);
   // nền trắng đè SAU mọi bước chỉnh màu -> đúng màu hoverGapColor, phẳng tuyệt đối
   color = mix(color, uHoverGap, reveal);
-  gl_FragColor = vec4(color, 1.0);
+  gl_FragColor = vec4(color * alpha, alpha); // premultiplied (canvas mặc định)
 }`
 
   const UNIFORMS = [
     'uResolution', 'uPhase', 'uLineCount', 'uLineOffset', 'uLineOrder', 'uSoftness',
     'uMosaicOn', 'uMosaicDetail', 'uMosaicGap', 'uMosaicCorners', 'uMosaicBevel',
     'uMosaicStuds', 'uContrast', 'uSaturation', 'uVignette', 'uGrainAmount', 'uGrainSize',
-  'uFlip', 'uMouse', 'uHover', 'uHoverRadius', 'uHoverShrink', 'uHoverPush', 'uHoverWarp', 'uHoverGlow', 'uHoverGap', 'uHoverFlat', 'uHoverMode', 'uHoverTime',
+  'uFlip', 'uMouse', 'uHover', 'uHoverRadius', 'uHoverShrink', 'uHoverPush', 'uHoverWarp', 'uHoverGlow', 'uHoverGap', 'uHoverFlat', 'uHoverMode', 'uHoverTime', 'uPad',
   ]
 
   const hexToRgb = (hex) => {
@@ -354,6 +368,10 @@ void main() {
     gl.useProgram(prog)
     gl.enableVertexAttribArray(0)
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
+    // Pha trộn premultiplied: phần nới ra (trong suốt) không xoá vùng bên cạnh,
+    // ô tràn ra phủ lên trên. Trong vùng alpha = 1 nên như vẽ đè bình thường.
+    gl.enable(gl.BLEND)
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
     const u = {}
     UNIFORMS.forEach((n) => (u[n] = gl.getUniformLocation(prog, n)))
     const uColors = [0, 1, 2, 3].map((i) => gl.getUniformLocation(prog, `uColors[${i}]`))
@@ -372,10 +390,11 @@ void main() {
         gl.clear(gl.COLOR_BUFFER_BIT)
       },
       // Một vùng: x, y tính từ góc TRÊN-trái canvas (px thiết bị).
-      draw(x, y, w, h, phase, o, pixelScale, flip, mouse = null) {
+      draw(x, y, w, h, phase, o, pixelScale, flip, mouse = null, pad = 0) {
         const gy = canvas.height - y - h // WebGL đếm từ đáy
-        gl.viewport(x, gy, w, h)
-        gl.scissor(x, gy, w, h)
+        gl.viewport(x - pad, gy - pad, w + 2 * pad, h + 2 * pad)
+        gl.scissor(x - pad, gy - pad, w + 2 * pad, h + 2 * pad)
+        gl.uniform2f(u.uPad, pad / w, pad / h)
         gl.uniform1f(u.uFlip, flip ? 1 : 0)
         gl.uniform2f(u.uMouse, mouse ? mouse.x : -9, mouse ? mouse.y : -9)
         gl.uniform1f(u.uHover, mouse ? mouse.on : 0)
@@ -476,31 +495,52 @@ void main() {
   }
 
   // Vị trí từng vùng so với root, đo lại khi đổi cỡ (vùng không trượt trong root).
+  // Vùng lẻ (canvas nằm trong chính nó): canvas nới ra `pad` px mỗi phía, tràn
+  // khỏi phần tử (overflow: visible) để ô Dạt có chỗ tràn ra. Nhóm root (hero)
+  // không cần — canvas của nó đã phủ cả root, rộng hơn các vùng.
+  function padFor(g) {
+    if (g.root.hasAttribute('data-field-root') || !matchMedia('(pointer: fine)').matches) return 0
+    return Math.ceil(g.root.clientWidth / Math.max(1, regionOptions(g.root).tiles)) + 2
+  }
   function measure(g) {
     const rr = g.root.getBoundingClientRect()
+    const p = padFor(g)
+    if (p !== g.pad) {
+      g.pad = p
+      Object.assign(g.canvas.style, p
+        ? { inset: `-${p}px`, width: `calc(100% + ${2 * p}px)`, height: `calc(100% + ${2 * p}px)` }
+        : { inset: '', width: '', height: '' })
+      g.root.style.overflow = p ? 'visible' : ''
+    }
     g.regions.forEach((rg) => {
       const r = rg.el.getBoundingClientRect()
-      rg.x = r.left - rr.left
-      rg.y = r.top - rr.top
+      rg.x = r.left - rr.left + p
+      rg.y = r.top - rr.top + p
       rg.w = r.width
       rg.h = r.height
     })
-    g.cssW = g.root.clientWidth
-    g.cssH = g.root.clientHeight
+    g.cssW = g.root.clientWidth + 2 * p
+    g.cssH = g.root.clientHeight + 2 * p
   }
 
   function drawGroup(g) {
     if (!g.r) return
     const dpr = Math.min(devicePixelRatio || 1, CONFIG.maxDpr)
     g.r.begin(Math.max(1, Math.round(g.cssW * dpr)), Math.max(1, Math.round(g.cssH * dpr)))
-    g.regions.forEach((rg) => {
+    // Vùng đang bị rê vẽ SAU CÙNG để ô tràn ra nằm trên vùng bên cạnh.
+    const order = [...g.regions].sort((a, b) => (a.target ? 1 : 0) - (b.target ? 1 : 0))
+    order.forEach((rg) => {
       if (rg.w < 1 || rg.h < 1) return
       const x = Math.round(rg.x * dpr)
       const y = Math.round(rg.y * dpr)
       const w = Math.round((rg.x + rg.w) * dpr) - x
       const h = Math.round((rg.y + rg.h) * dpr) - y
       const phase = (clock.phase + (+rg.el.dataset.fieldShift || 0)) % 1
-      g.r.draw(x, y, w, h, phase, regionOptions(rg.el), dpr, rg.el.dataset.fieldFlip === 'y', easeMouse(rg))
+      const o = regionOptions(rg.el)
+      const mouse = easeMouse(rg)
+      // Dạt ô: nới khung vẽ thêm 1 ô mỗi phía (ô dạt tối đa 0.9 ô) cho tràn ra
+      const pad = mouse && o.hoverMode === 'scatter' ? Math.ceil(w / Math.max(1, o.tiles)) + 2 : 0
+      g.r.draw(x, y, w, h, phase, o, dpr, rg.el.dataset.fieldFlip === 'y', mouse, pad)
     })
   }
 
