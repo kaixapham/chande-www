@@ -75,8 +75,12 @@
     hoverPush: 0.9, // ô trượt ra xa con trỏ, tỉ lệ khoảng trống vừa co ra
     hoverWarp: 1.6, // màu field bị kéo về phía con trỏ (số ô)
     hoverGlow: 0.25, // sáng thêm
-    // Nền lộ ra dưới các ô khi chúng co lại: TRẮNG PHẲNG — không bóng, không đi
-    // qua contrast / saturation / vignette / grain. Chỉ áp ở vùng chuột tác động.
+    // Nền lộ ra dưới các ô khi chúng co / dạt: PHẲNG — không bóng, không đi qua
+    // contrast / saturation / vignette / grain. Chỉ áp ở vùng chuột tác động.
+    // hoverGapAuto: lấy đúng màu nền phía sau vùng (đọc background của phần tử
+    // cha gần nhất có nền — hero kem, hero tối, section đen…) để liền với trang;
+    // tắt thì dùng hoverGapColor.
+    hoverGapAuto: true,
     hoverGapColor: '#ffffff',
     hoverFlat: 1, // làm phẳng gờ nổi (bóng) của ô trong vùng chuột (0 = giữ gờ)
     hoverEase: 0.18, // độ bám theo chuột / bật-tắt (0..1, nhỏ = mượt hơn)
@@ -403,7 +407,7 @@ void main() {
         gl.uniform1f(u.uHoverPush, o.hoverPush)
         gl.uniform1f(u.uHoverWarp, o.hoverWarp)
         gl.uniform1f(u.uHoverGlow, o.hoverGlow)
-        gl.uniform3fv(u.uHoverGap, hexToRgb(o.hoverGapColor))
+        gl.uniform3fv(u.uHoverGap, o.hoverGapRGB || hexToRgb(o.hoverGapColor))
         gl.uniform1f(u.uHoverFlat, o.hoverFlat)
         gl.uniform1f(u.uHoverMode, { ripple: 1, scatter: 2 }[o.hoverMode] || 0)
         gl.uniform1f(u.uHoverTime, ((performance.now() / 1000) * o.hoverRipple) % 1000)
@@ -523,6 +527,19 @@ void main() {
     g.cssH = g.root.clientHeight + 2 * p
   }
 
+  // Màu nền phía sau một vùng: background của phần tử cha gần nhất có nền đặc.
+  // Bỏ qua chính phần tử .field (nền ảnh dự phòng). Chỉ đọc khi đang rê chuột,
+  // mỗi khung — nền đang chuyển màu (hero sáng ↔ tối) thì khe đổi theo.
+  function bgBehind(g, rg) {
+    let el = (g.root.hasAttribute('data-field-root') ? rg.el : g.root).parentElement
+    while (el) {
+      const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g)
+      if (m && (m.length < 4 || +m[3] > 0.5)) return [m[0] / 255, m[1] / 255, m[2] / 255]
+      el = el.parentElement
+    }
+    return null
+  }
+
   function drawGroup(g) {
     if (!g.r) return
     const dpr = Math.min(devicePixelRatio || 1, CONFIG.maxDpr)
@@ -538,6 +555,7 @@ void main() {
       const phase = (clock.phase + (+rg.el.dataset.fieldShift || 0)) % 1
       const o = regionOptions(rg.el)
       const mouse = easeMouse(rg)
+      if (mouse && CONFIG.hoverGapAuto) o.hoverGapRGB = bgBehind(g, rg)
       // Dạt ô: nới khung vẽ thêm 1 ô mỗi phía (ô dạt tối đa 0.9 ô) cho tràn ra
       const pad = mouse && o.hoverMode === 'scatter' ? Math.ceil(w / Math.max(1, o.tiles)) + 2 : 0
       g.r.draw(x, y, w, h, phase, o, dpr, rg.el.dataset.fieldFlip === 'y', mouse, pad)
