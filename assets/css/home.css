@@ -240,7 +240,6 @@
 .agenda__shot{position:relative; width:calc(685 * var(--u))}
 .agenda__shot > img:first-child{width:100%; height:calc(576 * var(--u)); object-fit:cover}
 .agenda__shot > .field{height:calc(136 * var(--u))}
-.agenda__poster{position:absolute; left:calc(6.5 * var(--u)); top:calc(6 * var(--u)); width:calc(418 * var(--u)); height:calc(564 * var(--u)); object-fit:cover}
 .agenda__sign{position:absolute; left:calc(34 * var(--u)); top:calc(246 * var(--u)); width:calc(319.62 * var(--u)); height:calc(251.62 * var(--u)); display:grid; place-items:center}
 .agenda__sign img{width:calc(300.46 * var(--u)); height:calc(225.34 * var(--u)); max-width:none; transform:rotate(5.19deg); object-fit:cover}
 .agenda__pair{position:relative; display:flex; width:calc(1255 * var(--u))}
