@@ -302,7 +302,9 @@
 /* [data-flip3d] (chande-home.js gắn .is-3d): mỗi vạch là khối hộp — mặt trước màu
    của nó (--cf), mặt DƯỚI màu của vạch đối xứng (--cb). Xoay rotateX(--t × 90°):
    khối lăn lên, mặt dưới ra trước -> cả dải đảo thứ tự màu. --h = cao một vạch. */
-.scheme.is-3d{perspective:1600px; perspective-origin:50% 50%}
+/* overflow clip: đang lăn, khối nghiêng cao √2 lần -> vạch trên / dưới cùng nhô
+   ra khỏi khung dải; cắt lại để dải không "đội" lên / thò xuống. */
+.scheme.is-3d{perspective:1600px; perspective-origin:50% 50%; overflow:clip}
 .scheme.is-3d > i{position:relative; background:none !important; transform-style:preserve-3d;
   /* --k = p / (p + h/2): mặt trước nhô h/2 về phía người xem nên phối cảnh phóng
      to p/(p − z) — thu cả khối lại để lúc đứng yên mặt trước khớp đúng mép cũ
