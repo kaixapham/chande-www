@@ -254,12 +254,12 @@
 .agenda__dates p{position:absolute; top:calc(563 * var(--u)); margin:0; white-space:nowrap}
 .agenda__dates p span{display:block}
 .agenda__dates p:last-child{right:0; text-align:right}
-.agenda__nav{top:calc(2610 * var(--u)); width:calc(64 * var(--u)); height:calc(64 * var(--u)); min-width:2.5rem; min-height:2.5rem; display:grid; place-items:center;
+.agenda__nav{bottom:0; width:calc(64 * var(--u)); height:calc(64 * var(--u)); min-width:2.5rem; min-height:2.5rem; display:grid; place-items:center;
   background:#f5f0e3; border:0; cursor:pointer; z-index:2}
 .agenda__nav img{width:37.5%; height:37.5%}
-.agenda__nav--prev{left:calc(269 * var(--u))}
+.agenda__nav--prev{right:calc(100% - 1px)}
 .agenda__nav--prev img{transform:rotate(180deg)}
-.agenda__nav--next{left:calc(1588 * var(--u))}
+.agenda__nav--next{left:calc(100% - 1px)}
 .agenda__nav, .hs-quote__nav{transition:opacity .2s}
 .agenda__nav[aria-disabled=true], .hs-quote__nav[aria-disabled=true]{opacity:.3; pointer-events:none}
 /* Cụm ngày = khối hộp lật khi đổi ngày (chande-home.js dựng .dc) */
