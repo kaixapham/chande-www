@@ -368,7 +368,9 @@
 .hs-foot__face{left:calc(32 * var(--u)); top:calc(356 * var(--u)); width:calc(235 * var(--u)); height:calc(272 * var(--u)); overflow:hidden;
   clip-path:inset(100% 0 0 0); transition:clip-path .45s cubic-bezier(.76,0,.24,1)}
 .hs-foot__face.is-on{clip-path:inset(0)}
-.hs-foot__col > .hs-foot__face{position:relative} /* chứa lớp shape khi đổi ảnh */
+/* relative để chứa lớp shape khi đổi ảnh — left/top của bản abs cũ phải bỏ, không
+   thì relative đẩy khung lệch xuống đè cụm tên dưới */
+.hs-foot__col > .hs-foot__face{position:relative; left:auto; top:auto}
 .hs-foot__face img{width:100%; height:100%; object-fit:cover}
 /* Tên hover được (chande-home.js bọc từng tên thành .nm) */
 .names .nm{display:inline; cursor:default; transition:color .15s, background-size .4s cubic-bezier(.65,0,.35,1);
