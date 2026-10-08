@@ -35,7 +35,16 @@
  *     thấu kính không phải tính lại backdrop). Chuột rời cửa sổ: giọt tan rồi dừng.
  * Chỉ bật với chuột thật và khi không reduced-motion.
  *
- * API: window.CHANDE_BUBBLE = { config, defaults, refresh(), state }
+ * API: window.CHANDE_BUBBLE = { config, defaults, refresh(), state, lead(fn) }
+ *   lead(fn): giọt bỏ chuột, bám theo điểm fn() trả về ({x, y} toạ độ màn,
+ *   null = tan đi) mỗi khung — trang Gallery cho giọt đi theo vịt patin
+ *   (chande-duck.js). lead(null) trả giọt về cho chuột.
+ * Đẩy giọt (CONFIG.push, chỉ khi giọt đang được dắt — tự bám chuột thì con
+ * trỏ lúc nào cũng ở sát giọt): con trỏ lại gần / quẹt vào -> giọt bị hất ra xa
+ * con trỏ có quán tính, lò xo tắt dần kéo về chỗ được dắt (vệt đuôi kéo dài
+ * rồi gom lại như giọt nhão). Kèm vết lõm mềm (CONFIG.dent): chỗ con trỏ chạm
+ * lõm nông và rộng — trong map() trừ một cầu với độ bo rất lớn — lún / phồng
+ * lại qua lò xo chậm.
  *   state: { x, y, size, swell, count, presence, moving, trailX, trailY } — để
  *   con trỏ nhân vật (chande-cursor.js) né giọt.
  * ========================================================================== */
@@ -85,6 +94,21 @@
     // Trỏ vào tiêu đề hover được (vai trò About…): co nhỏ hơn nữa, còn hoverTitleScale.
     hoverTitleSel: '.hs-about__roles li',
     hoverTitleScale: 0.15,
+    // Con trỏ đẩy giọt văng đi (khi giọt đi theo vịt), lò xo kéo về
+    push: true,
+    pushReach: 1.6, // bán kính con trỏ bắt đầu đẩy (× bán kính giọt)
+    pushForce: 3000, // lực đẩy khi con trỏ đứng sát (px/s²)
+    pushHit: 2.2, // lực theo tốc độ con trỏ lao vào giọt (× tốc độ, /s)
+    pushSpring: 26, // độ cứng lò xo kéo về
+    pushDamping: 5, // giảm chấn — thấp = nảy qua lại lâu
+    pushMax: 420, // văng xa tối đa (px)
+    // Vết lõm mềm chỗ con trỏ chạm (đi cùng đẩy)
+    dent: true,
+    dentSize: 0.7, // độ rộng vết lõm (× bán kính giọt)
+    dentDepth: 0.25, // độ sâu (× độ rộng) — nhỏ = lõm nhẹ
+    dentSoft: 0.9, // độ mềm mép (× độ rộng) — lớn = bo tròn mềm hơn
+    dentSpring: 70, // lò xo lún / phồng lại — thấp = chậm, mềm
+    dentDamping: 12,
   }
   // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
   window.CHANDE_SETTINGS_APPLY?.('bubble', CONFIG)
@@ -135,6 +159,8 @@ uniform float uTintStrength;
 uniform vec3 uColorA;
 uniform vec3 uColorB;
 uniform float uFallbackAlpha;
+uniform vec4 uDent; // cầu khoét vết lõm mềm (x, y, z, bán kính) — bán kính 0 = tắt
+uniform float uDentSoft; // độ bo mép (đơn vị toạ độ chuẩn hoá)
 
 const float EPS = 1e-4;
 const int ITR = 16;
@@ -191,6 +217,12 @@ float map (vec3 p) {
     float sphere = length(p - vec3(uTrail[i], 0.0)) -
       (radius - uBaseRadius * float(i));
     d = smoothMin(d, sphere, uBlend);
+  }
+  if (uDent.w > 0.0) {
+    // Trừ mềm (smooth max) với độ bo lớn -> lõm nông, mép tan vào mặt giọt.
+    float b = -(length(p - uDent.xyz) - uDent.w);
+    float h = clamp(0.5 - 0.5 * (b - d) / uDentSoft, 0.0, 1.0);
+    d = mix(b, d, h) + uDentSoft * h * (1.0 - h);
   }
   return d;
 }
@@ -457,6 +489,17 @@ void main () {
   let mul = 1
   let mulTarget = 1
   let overBtn = false // con trỏ đang trên nút / link (hoverSel)
+  let leader = null // lead(fn): giọt đi theo fn() thay vì chuột
+  let ptrIn = false // chuột đang trong cửa sổ (kể cả khi giọt đang được dắt)
+  let ptrVX = 0 // vận tốc con trỏ (px/s, tắt dần khi chuột đứng yên)
+  let ptrVY = 0
+  let ptrT = 0
+  let pushX = 0 // độ văng hiện tại do con trỏ đẩy (px) + vận tốc
+  let pushY = 0
+  let pushVX = 0
+  let pushVY = 0
+  let dent = 0 // độ lún vết lõm (0..1) + vận tốc
+  let dentV = 0
   let ptrX = 0 // vị trí chuột thật; đích của giọt = chuột + độ lệch (co theo giọt)
   let ptrY = 0
   const aim = () => {
@@ -546,6 +589,25 @@ void main () {
     gl.uniform3f(U.uColorA, ...rgb(CONFIG.colorA))
     gl.uniform3f(U.uColorB, ...rgb(CONFIG.colorB))
     gl.uniform1f(U.uFallbackAlpha, Math.min(Math.max(CONFIG.fallbackOpacity, 0), 1))
+    // Vết lõm mềm: cầu bán kính pr đặt chạm mặt giọt ngay dưới con trỏ (mặt
+    // giọt coi như cầu bán kính rho quanh đầu) rồi ấn xuống theo `dent`.
+    if (dent > 0.002 && CONFIG.dent) {
+      const half = minRes / 2
+      const rho = (pooledRadius() * presence * dpr) / half
+      const pr = rho * Math.max(CONFIG.dentSize, 0.05)
+      const cx = (ptrX * dpr * 2 - output.width) / minRes
+      const cy = ((output.height - ptrY * dpr) * 2 - output.height) / minRes
+      const hx = (headX * dpr * 2 - output.width) / minRes
+      const hy = ((output.height - headY * dpr) * 2 - output.height) / minRes
+      const rn = Math.min(Math.hypot(cx - hx, cy - hy), rho)
+      const zs = Math.sqrt(Math.max(0, rho * rho - rn * rn))
+      gl.uniform4f(U.uDent, cx, cy, zs + pr - Math.min(dent, 1.2) * CONFIG.dentDepth * pr, pr)
+      gl.uniform1f(U.uDentSoft, Math.max(pr * CONFIG.dentSoft, 1e-4))
+    } else {
+      gl.uniform4f(U.uDent, 0, 0, 0, 0)
+      gl.uniform1f(U.uDentSoft, 1)
+    }
+
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
     gl.disable(gl.SCISSOR_TEST)
   }
@@ -562,7 +624,69 @@ void main () {
     const follow = Math.min(Math.max(CONFIG.follow, 0.02), 1)
     const kHead = follow >= 1 ? 1 : 1 - Math.exp(-delta * (3 + follow * 30))
     const kScale = 1 - Math.exp(-delta * 10)
+    if (leader) {
+      const p = leader()
+      if (p) {
+        if (presence < 0.004) {
+          // Hiện lại: đặt thẳng vào chỗ, không bay từ chỗ cũ tới.
+          headX = p.x
+          headY = p.y
+          trailX.fill(p.x)
+          trailY.fill(p.y)
+        }
+        targetX = p.x
+        targetY = p.y
+        presenceTarget = 1
+      } else presenceTarget = 0
+    }
     headX += (targetX - headX) * kHead
+    // Đẩy: con trỏ gần / lao vào giọt -> lực hất ra xa con trỏ; lò xo kéo về.
+    if (leader) {
+      let ax = -pushX * CONFIG.pushSpring - pushVX * CONFIG.pushDamping
+      let ay = -pushY * CONFIG.pushSpring - pushVY * CONFIG.pushDamping
+      const fade = Math.exp(-delta * 6)
+      ptrVX *= fade
+      ptrVY *= fade
+      const R = Math.max(pooledRadius() * presence, 8)
+      const dx = headX - ptrX
+      const dy = headY - ptrY
+      const d = Math.hypot(dx, dy)
+      const reach = R * CONFIG.pushReach
+      if (CONFIG.push && ptrIn && d < reach && d > 0.001) {
+        const ux = dx / d
+        const uy = dy / d
+        const near = 1 - d / reach
+        const rush = Math.max(0, ptrVX * ux + ptrVY * uy)
+        const f = CONFIG.pushForce * near * near + CONFIG.pushHit * rush * near * 8
+        ax += ux * f
+        ay += uy * f
+      }
+      pushVX += ax * delta
+      pushVY += ay * delta
+      pushX += pushVX * delta
+      pushY += pushVY * delta
+      const L = Math.hypot(pushX, pushY)
+      if (L > CONFIG.pushMax) {
+        // Chạm mức văng tối đa: giữ ở mép và bỏ phần vận tốc hướng ra ngoài
+        // (không thì giọt dính ở mép tới khi lò xo hãm hết đà).
+        const nx = pushX / L
+        const ny = pushY / L
+        pushX = nx * CONFIG.pushMax
+        pushY = ny * CONFIG.pushMax
+        const out = pushVX * nx + pushVY * ny
+        if (out > 0) {
+          pushVX -= out * nx
+          pushVY -= out * ny
+        }
+      }
+      targetX += pushX
+      targetY += pushY
+      // Vết lõm: con trỏ chạm mặt giọt -> lún dần, rời ra -> phồng lại mềm.
+      const touching = CONFIG.dent && ptrIn && d < R * 1.05
+      dentV += (((touching ? 1 : 0) - dent) * CONFIG.dentSpring - dentV * CONFIG.dentDamping) * delta
+      dent += dentV * delta
+      if (!touching && Math.abs(dent) < 0.001 && Math.abs(dentV) < 0.01) dent = dentV = 0
+    } else dent = dentV = 0
     headY += (targetY - headY) * kHead
     for (let i = MAX_TRAIL - 1; i > 0; i--) {
       trailX[i] = trailX[i - 1]
@@ -575,7 +699,9 @@ void main () {
     if (Math.abs(mulTarget - mul) < 0.002) mul = mulTarget
     render()
     placeLens()
-    if (presence < 0.004 && presenceTarget === 0) {
+    // Đang được dắt (lead) thì không dừng dù giọt đang tan — vật dắt có thể
+    // hiện ra lại bất cứ lúc nào.
+    if (presence < 0.004 && presenceTarget === 0 && !leader) {
       presence = 0
       running = false
       state.moving = false
@@ -587,7 +713,8 @@ void main () {
     const c = count()
     for (let i = 1; i < c && spread < 0.25; i++) spread += Math.abs(trailX[i] - headX) + Math.abs(trailY[i] - headY)
     state.moving = spread >= 0.25
-    if (!state.moving) {
+    // Đang đi theo vật khác thì không dừng vòng chạy (vật có thể đi tiếp bất cứ lúc nào).
+    if (!state.moving && !leader) {
       running = false
       return
     }
@@ -596,6 +723,9 @@ void main () {
   function placeLens() {
     state.x = headX
     state.y = headY
+    state.pushX = pushX // độ văng do con trỏ đẩy (px) — để đo / gỡ lỗi
+    state.pushY = pushY
+    state.dent = dent
     state.size = CONFIG.enabled ? effSize() : 0
     state.swell = Math.max(0, pooledRadius() - effSize())
     state.count = count()
@@ -632,8 +762,16 @@ void main () {
     'pointermove',
     (e) => {
       if (e.pointerType !== 'mouse') return
+      const dt = Math.max(0.008, (e.timeStamp - ptrT) / 1000)
+      if (ptrT && dt < 0.2) {
+        ptrVX = ptrVX * 0.5 + ((e.clientX - ptrX) / dt) * 0.5
+        ptrVY = ptrVY * 0.5 + ((e.clientY - ptrY) / dt) * 0.5
+      }
+      ptrT = e.timeStamp
       ptrX = e.clientX
       ptrY = e.clientY
+      ptrIn = true
+      if (leader) return
       aim()
       const title = !!(CONFIG.hoverOn && CONFIG.hoverTitleSel && e.target?.closest?.(CONFIG.hoverTitleSel))
       const over = title ? 'title' : !!(CONFIG.hoverOn && CONFIG.hoverSel && e.target?.closest?.(CONFIG.hoverSel))
@@ -654,6 +792,8 @@ void main () {
     { passive: true },
   )
   const leave = () => {
+    ptrIn = false
+    if (leader) return
     presenceTarget = 0
     hasPointer = false
     start()
@@ -685,6 +825,16 @@ void main () {
     lensKey = '' // cỡ giọt theo cạnh ngắn màn hình
     start()
   })
+
+  api.lead = (fn) => {
+    leader = typeof fn === 'function' ? fn : null
+    if (!leader) {
+      // Trả về cho chuột: bám lại chỗ chuột nếu chuột đang trong cửa sổ.
+      presenceTarget = hasPointer ? 1 : 0
+      if (hasPointer) aim()
+    }
+    start()
+  }
 
   api.refresh = () => {
     lensKey = ''

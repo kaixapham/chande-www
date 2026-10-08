@@ -8,19 +8,24 @@
 .page--gallery{height:100vh; min-height:0; padding:0; overflow:hidden}
 
 .gal{
-  --g-size:10rem;             /* cạnh ô ảnh — JS đọc qua .gal__probe */
+  --g-size:var(--gal-size, 10rem); /* cạnh ô ảnh — CONFIG.size của chande-gallery.js; JS đọc qua .gal__probe */
   --g-cap:1.75rem;            /* chỗ cho caption phía trên ảnh */
   position:fixed; inset:0; overflow:hidden;
   touch-action:none; user-select:none; -webkit-user-select:none;
   cursor:grab; background:var(--cream);
 }
 .gal.is-dragging{cursor:grabbing}
-.gal__world{position:absolute; inset:0}
+.gal__world{position:absolute; inset:0; isolation:isolate} /* z-index của ảnh (tấm to đè tấm nhỏ) không trồi lên trên lớp cỏ / vịt */
 .gal__probe{position:absolute; width:var(--g-size); height:var(--g-cap); visibility:hidden; pointer-events:none}
 
 .gal__item{
-  position:absolute; top:0; left:0; display:block; width:var(--g-size);
+  /* --k: tỉ lệ cỡ ảnh của ô (kiểu ngẫu nhiên to nhỏ) — chỉ khung ảnh đổi cỡ,
+     chữ caption giữ nguyên */
+  --gk:calc(var(--g-size) * var(--k, 1));
+  position:absolute; top:0; left:0; display:block; width:var(--gk);
   text-decoration:none; color:var(--green); will-change:transform;
+  /* xoay (kiểu rải rác) quanh tâm ẢNH, không phải tâm cả khối caption + ảnh */
+  transform-origin:50% calc(100% - var(--gk) / 2);
   -webkit-user-drag:none;
 }
 .gal__card{transition:transform .5s cubic-bezier(.16,1,.3,1)}
@@ -36,11 +41,51 @@
 .gal__num{flex:none; font-variant-numeric:tabular-nums}
 .gal__name{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; text-align:right}
 
-.gal__media{width:var(--g-size); height:var(--g-size); overflow:hidden; background:#e6e4d8}
+.gal__media{width:var(--gk); height:var(--gk); overflow:hidden; background:#e6e4d8}
 .gal__media img{display:block; width:100%; height:100%; object-fit:cover; pointer-events:none}
+
+/* ---- Sàn thảm cỏ — ảnh như ảnh in nằm trên cỏ ----
+   data-floor="grass-3d": cỏ 3D do chande-grass.js vẽ lên canvas .gal__grass
+   data-floor="grass-pixel": ô cỏ pixel chande-gallery.js gắn làm nền */
+.gal[data-floor="grass-3d"]{background-color:#21451a}
+.gal[data-floor="grass-pixel"]{background-color:#367531; background-repeat:repeat; image-rendering:pixelated}
+.gal__grass{position:absolute; top:0; left:0; pointer-events:none}
+.gal[data-floor^="grass"] .gal__media{
+  box-shadow:0 0 0 3px var(--cream), 0 8px 14px rgba(12,32,10,.45), 0 2px 3px rgba(12,32,10,.35);
+  transition:box-shadow .5s cubic-bezier(.16,1,.3,1);
+}
+.gal[data-floor^="grass"] .gal__cap{color:var(--cream); text-shadow:0 1px 2px rgba(10,30,10,.55)}
+@media (hover:hover){
+  .gal[data-floor^="grass"]:not(.is-dragging) .gal__item:hover .gal__media{
+    box-shadow:0 0 0 3px var(--cream), 0 22px 30px rgba(12,32,10,.42), 0 6px 10px rgba(12,32,10,.3)}
+}
+
+/* ---- Viền tem răng cưa (CONFIG.stamp của chande-gallery.js) ----
+   Khung ảnh tô màu viền + padding = độ dày viền; mép ngoài khoét nửa tròn bằng
+   mask: lớp 1 là lưới lỗ tròn tâm nằm đúng trên mép (`round` -> mỗi cạnh luôn
+   đủ số răng nguyên, ảnh to nhỏ đều khớp), lớp 2 lấp kín phần trong để chỉ
+   còn lỗ ở mép. Mask cắt cả box-shadow nên bóng chuyển sang drop-shadow của
+   .gal__card. Mọi số tính theo cạnh ảnh (--gk) nên ảnh to thì răng to theo. */
+.gal[data-stamp] .gal__media{
+  --sr:calc(var(--gk) * var(--stamp-r, .028));
+  --sd:calc(var(--sr) * var(--stamp-gap, 3));
+  padding:calc(var(--gk) * var(--stamp-b, .06));
+  background:var(--stamp-color, #333);
+  -webkit-mask:
+    radial-gradient(var(--sr) at var(--sr) var(--sr), #0000 97%, #000) calc(-1 * var(--sr)) calc(-1 * var(--sr)) / var(--sd) var(--sd) round,
+    linear-gradient(#000 0 0) 50% / calc(100% - 2 * var(--sr)) calc(100% - 2 * var(--sr)) no-repeat;
+  mask:
+    radial-gradient(var(--sr) at var(--sr) var(--sr), #0000 97%, #000) calc(-1 * var(--sr)) calc(-1 * var(--sr)) / var(--sd) var(--sd) round,
+    linear-gradient(#000 0 0) 50% / calc(100% - 2 * var(--sr)) calc(100% - 2 * var(--sr)) no-repeat;
+}
+.gal[data-stamp][data-floor^="grass"] .gal__media,
+.gal[data-stamp][data-floor^="grass"]:not(.is-dragging) .gal__item:hover .gal__media{box-shadow:none}
+.gal[data-stamp][data-floor^="grass"] .gal__card{filter:drop-shadow(0 6px 8px rgba(12,32,10,.42))}
 
 /* Vịt patin 3D (chande-duck.js) — phủ lên lưới, không ăn chuột */
 .gal__duck{position:absolute; inset:0; pointer-events:none}
+/* Vệt rẽ cỏ (chande-duck.js) — dưới lưới ảnh, phóng pixel từ canvas độ phân giải ô cỏ */
+.gal__trail{position:absolute; top:0; left:0; pointer-events:none; image-rendering:pixelated}
 
 /* ---- Lightbox ---- */
 .gal-lb{
@@ -54,6 +99,10 @@
   font-weight:500; font-size:1rem; line-height:.98; letter-spacing:-.02em; text-transform:uppercase;
 }
 
+/* Tablet: rem của site co lại -> giữ ô ảnh không nhỏ hơn 116px */
+@media (min-width:768px) and (max-width:1199px){
+  .gal{--g-size:max(var(--gal-size, 10rem), 116px)}
+}
 @media (max-width:767px){
   .gal{--g-size:88px; --g-cap:1.25rem}
   .gal__cap{font-size:10px; padding-bottom:.35rem}

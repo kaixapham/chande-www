@@ -327,6 +327,10 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
     background:#182220;
   }
   .hero__stage > *{position:relative; inset:auto; width:auto; height:auto}
+  /* Canvas effect xanh (chande-field.js) phải nằm NGOÀI luồng lưới: nó vẽ theo
+     cỡ khung, khung lại cao theo nó -> vòng lặp tới 16.7 triệu px (đã dính). */
+  .hero__stage > .field__gl{position:absolute; inset:0; width:100%; height:100%}
+  .hero__stage > *{min-width:0}
   .hero__field--a, .hero__field--b, .hero__dark, .hero__col--scroll, .hero__pills{display:none}
   .hero__panel{
     grid-column:1 / -1; order:-1; background:var(--cream);

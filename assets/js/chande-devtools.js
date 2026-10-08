@@ -10,6 +10,11 @@
  *   • Shape reveal — màu 5 lớp, nhịp, easing của đoàn shape (chande-reveal.js)
  *   • Rèm …      — chạy thử rèm, đi Home / Page A / Page B, màu 4 cột, nhịp
  *                  chuyển động, và NẠP ẢNH DEMO cho page A / page B
+ *   • Gallery    — lưới ảnh vô tận, preset mặt sàn, vịt patin 3D, thảm cỏ 3D
+ *                  (chande-gallery.js / chande-duck.js / chande-grass.js)
+ *
+ * Bảng khởi động ở DOMContentLoaded (không chạy ngay) để kịp thấy các file
+ * hiệu ứng dạng module (vịt, cỏ) — module chạy sau mọi script thường.
  *
  * Bảng chỉ nói chuyện với API công khai của các file hiệu ứng; các file đó
  * không biết gì về bảng này. Bàn giao cho dev = xoá đúng một thẻ
@@ -29,7 +34,7 @@
  *     chande-settings.js về để chép vào repo.
  * Lưu xong, localStorage được dọn (không còn gì khác mặc định mới).
  * ========================================================================== */
-(() => {
+const chandeDevtools = () => {
   'use strict'
 
   const CL = window.CHANDE_LOADING
@@ -44,7 +49,10 @@
   const CPX = window.CHANDE_PARALLAX
   const CTF = window.CHANDE_TITLEFX
   const CSG = window.CHANDE_SIGN
-  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL && !CPX && !CTF && !CSG) return
+  const CGA = window.CHANDE_GALLERY
+  const CDK = window.CHANDE_DUCK
+  const CGR = window.CHANDE_GRASS
+  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL && !CPX && !CTF && !CSG && !CGA) return
 
   const KEY = 'chande-devtools'
   const KEY_SHOTS = 'chande-devtools-shots'
@@ -65,6 +73,7 @@
     CPX && { id: 'parallax', label: 'Parallax ảnh', mod: 'parallax' },
     CTF && { id: 'titlefx', label: 'Title Effect', mod: 'titlefx' },
     CSG && { id: 'sign', label: 'Chữ ký viết tay (Cảm nhận)', mod: 'sign' },
+    CGA && { id: 'gallery', label: 'Gallery (lưới, vịt, cỏ)', mod: 'gallery' },
     CT && { id: 'sweep', label: 'Rèm quét', mod: 'transition', variant: 'sweep' },
     CT && { id: 'split', label: 'Rèm chẻ', mod: 'transition', variant: 'split' },
     CT && { id: 'stack', label: 'Trượt thẻ', mod: 'transition', variant: 'stack' },
@@ -211,6 +220,25 @@
         { path: 'follow', label: 'Bám chuột', type: 'range', min: 0.02, max: 1, step: 0.01 },
         { path: 'blend', label: 'Độ dính', type: 'range', min: 1, max: 40, step: 0.5 },
       ] },
+    { tab: 'bubble', mod: 'bubble', title: 'Chuột đẩy giọt (khi giọt đi theo vịt — trang Gallery)',
+      items: [
+        { path: 'push', label: 'Bật: con trỏ đẩy giọt văng đi', type: 'bool' },
+        { path: 'pushReach', label: 'Bán kính bắt đầu đẩy (× bán kính giọt)', type: 'range', min: 0.5, max: 4, step: 0.05 },
+        { path: 'pushForce', label: 'Lực đẩy khi con trỏ đứng sát', type: 'range', min: 0, max: 20000, step: 100 },
+        { path: 'pushHit', label: 'Lực theo tốc độ con trỏ lao vào', type: 'range', min: 0, max: 8, step: 0.1 },
+        { path: 'pushSpring', label: 'Độ cứng lò xo kéo về', type: 'range', min: 2, max: 120, step: 1 },
+        { path: 'pushDamping', label: 'Giảm chấn (thấp = nảy lâu)', type: 'range', min: 0.5, max: 30, step: 0.5 },
+        { path: 'pushMax', label: 'Văng xa tối đa (px)', type: 'range', min: 40, max: 1200, step: 10 },
+      ] },
+    { tab: 'bubble', mod: 'bubble', title: 'Vết lõm mềm chỗ con trỏ chạm (trang Gallery)',
+      items: [
+        { path: 'dent', label: 'Bật vết lõm', type: 'bool' },
+        { path: 'dentSize', label: 'Độ rộng (× bán kính giọt)', type: 'range', min: 0.2, max: 1.5, step: 0.05 },
+        { path: 'dentDepth', label: 'Độ sâu (nhỏ = lõm nhẹ)', type: 'range', min: 0.02, max: 1, step: 0.01 },
+        { path: 'dentSoft', label: 'Độ mềm mép', type: 'range', min: 0.1, max: 2, step: 0.05 },
+        { path: 'dentSpring', label: 'Lò xo (thấp = lún / phồng chậm)', type: 'range', min: 10, max: 300, step: 5 },
+        { path: 'dentDamping', label: 'Giảm chấn', type: 'range', min: 2, max: 40, step: 0.5 },
+      ] },
     { tab: 'bubble', mod: 'bubble', title: 'Khúc xạ (thấu kính — Chrome/Edge)',
       items: [
         { path: 'refract', label: 'Bật khúc xạ nội dung bên dưới', type: 'bool' },
@@ -243,6 +271,118 @@
     { tab: 'bubble', mod: 'bubble', title: 'Hiệu năng',
       items: [
         { path: 'maxDpr', label: 'Độ phân giải tối đa (dpr)', type: 'range', min: 0.75, max: 2, step: 0.25 },
+      ] },
+
+    // ---- Gallery: lưới ảnh (chande-gallery.js) ----
+    { tab: 'gallery', mod: 'gallery', title: 'Lưới ảnh',
+      items: [
+        { path: 'layout', label: 'Kiểu đặt ảnh (đổi = nạp bộ số của kiểu đó)', type: 'select',
+          options: [
+            ['zigzag', 'Zigzag — cột lẻ lệch xuống (197 stories)'],
+            ['grid', 'Lưới thẳng'],
+            ['brick', 'Gạch xây — hàng lẻ lệch nửa ô'],
+            ['scatter', 'Rải rác — xô lệch + xoay ngẫu nhiên'],
+            ['cluster', 'Cụm 4 ảnh 2×2'],
+          ],
+          apply: (v) => CGA.applyLayout(v) },
+        { path: 'jitter', label: 'Ngẫu nhiên: lệch từng ô (× cạnh ô)', type: 'range', min: 0, max: 0.8, step: 0.01 },
+        { path: 'warp', label: 'Ngẫu nhiên: cả vùng trôi theo nhau — dồn / thưa (× cạnh ô)', type: 'range', min: 0, max: 1.2, step: 0.01 },
+        { path: 'warpScale', label: 'Ngẫu nhiên: độ rộng một vùng (số ô)', type: 'range', min: 1, max: 10, step: 0.1 },
+        { path: 'sizeVar', label: 'Ngẫu nhiên: to nhỏ (0 = đều)', type: 'range', min: 0, max: 0.8, step: 0.01 },
+        { path: 'holes', label: 'Ngẫu nhiên: tỉ lệ ô bỏ trống', type: 'range', min: 0, max: 0.5, step: 0.01 },
+        { path: 'rotate', label: 'Ngẫu nhiên: xoay tối đa (độ)', type: 'range', min: 0, max: 30, step: 0.5 },
+        { path: 'tiltWild', label: 'Ngẫu nhiên: tỉ lệ tấm nghiêng hẳn', type: 'range', min: 0, max: 0.4, step: 0.01 },
+        { path: 'clusterGap', label: 'Cụm 4 ảnh: khe trong cụm (× cạnh ô)', type: 'range', min: 0, max: 0.6, step: 0.01 },
+        { path: 'size', label: 'Cạnh ô ảnh (rem, desktop)', type: 'range', min: 6, max: 16, step: 0.25 },
+        { path: 'colGap', label: 'Khoảng cột (× cạnh ô)', type: 'range', min: 1.05, max: 3.5, step: 0.01 },
+        { path: 'rowGap', label: 'Khoảng hàng (× cạnh ô)', type: 'range', min: 1.15, max: 3.5, step: 0.01 },
+        { path: 'zig', label: 'Zigzag: ô cột lẻ lệch xuống (× cạnh ô)', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'rowShift', label: 'Zigzag: mỗi hàng lệch ngang (phần khoảng cột)', type: 'range', min: 0, max: 1, step: 0.001 },
+        { path: 'ease', label: 'Độ bám khi kéo (nhỏ = trôi mượt hơn)', type: 'range', min: 0.03, max: 0.5, step: 0.01 },
+        { path: 'throw', label: 'Quán tính khi thả tay', type: 'range', min: 0, max: 800, step: 10 },
+        { path: 'introSpread', label: 'Intro: ô xa nhất trễ (s, lần vào sau)', type: 'range', min: 0, max: 3, step: 0.05 },
+      ] },
+    { tab: 'gallery', mod: 'gallery', title: 'Viền tem (răng cưa quanh ảnh)',
+      items: [
+        { path: 'stamp.enabled', label: 'Bật viền tem', type: 'bool' },
+        { path: 'stamp.color', label: 'Màu viền', type: 'color' },
+        { path: 'stamp.border', label: 'Độ dày viền (× cạnh ảnh)', type: 'range', min: 0.01, max: 0.2, step: 0.005 },
+        { path: 'stamp.teeth', label: 'Cỡ răng (bán kính × cạnh ảnh)', type: 'range', min: 0.008, max: 0.08, step: 0.001 },
+        { path: 'stamp.gap', label: 'Khoảng cách răng (× bán kính)', type: 'range', min: 2.1, max: 6, step: 0.05 },
+      ] },
+    { tab: 'gallery', mod: 'gallery', title: 'Mặt sàn',
+      items: [
+        { path: 'floor', label: 'Preset mặc định (nút góc trang đè lên theo trình duyệt)', type: 'select',
+          options: [['grass-3d', 'Cỏ 3D'], ['grass-pixel', 'Cỏ pixel'], ['', 'Nền kem địa hình (Figma)']] },
+      ] },
+    // ---- Vịt patin 3D (chande-duck.js) ----
+    { tab: 'gallery', mod: 'duck', title: 'Vịt patin',
+      items: [
+        { path: 'height', label: 'Chiều cao vịt (px)', type: 'range', min: 80, max: 420, step: 5 },
+        { path: 'tilt', label: 'Góc nhìn (độ, 90 = thẳng từ trên)', type: 'range', min: 25, max: 90, step: 1 },
+        { path: 'speed', label: 'Tốc độ lăn (px/s)', type: 'range', min: 30, max: 400, step: 5 },
+        { path: 'sprint', label: 'Tăng tốc khi ở ngoài màn (×)', type: 'range', min: 1, max: 5, step: 0.1 },
+        { path: 'turn', label: 'Tốc độ ôm cua (rad/s)', type: 'range', min: 0.3, max: 5, step: 0.1 },
+        { path: 'lean', label: 'Nghiêng khi ôm cua (rad)', type: 'range', min: 0, max: 0.8, step: 0.01 },
+        { path: 'rest.0', label: 'Nghỉ giữa chặng — ít nhất (s)', type: 'range', min: 0, max: 6, step: 0.1 },
+        { path: 'rest.1', label: 'Nghỉ giữa chặng — nhiều nhất (s)', type: 'range', min: 0, max: 10, step: 0.1 },
+        { path: 'shadow', label: 'Độ đậm bóng (nền kem)', type: 'range', min: 0, max: 0.6, step: 0.01 },
+        { path: 'shadowGrass', label: 'Độ đậm bóng (trên cỏ)', type: 'range', min: 0, max: 0.8, step: 0.01 },
+      ] },
+    { tab: 'gallery', mod: 'duck', title: 'Vịt — giọt bong bóng đi theo',
+      items: [
+        { path: 'bubble.gap', label: 'Khoảng cách sau lưng vịt (× chiều cao vịt)', type: 'range', min: 0, max: 2.5, step: 0.05 },
+        { path: 'bubble.side', label: 'Lệch sang bên (× chiều cao vịt)', type: 'range', min: -1.5, max: 1.5, step: 0.05 },
+        { path: 'bubble.lift', label: 'Bay cao (× chiều cao vịt)', type: 'range', min: 0, max: 2, step: 0.05 },
+        { path: 'bubble.bob', label: 'Nhấp nhô (px)', type: 'range', min: 0, max: 40, step: 1 },
+      ] },
+    { tab: 'gallery', mod: 'duck', title: 'Vịt — va chạm chuột',
+      items: [
+        { path: 'reach', label: 'Bán kính ảnh hưởng (× chiều cao vịt)', type: 'range', min: 0.2, max: 2, step: 0.05 },
+        { path: 'push', label: 'Lực đẩy khi chuột đứng gần', type: 'range', min: 0, max: 30, step: 0.5 },
+        { path: 'hit', label: 'Lực theo tốc độ chuột lao vào', type: 'range', min: 0, max: 0.05, step: 0.001 },
+        { path: 'spring', label: 'Độ cứng lò xo (dựng lại)', type: 'range', min: 10, max: 200, step: 1 },
+        { path: 'damping', label: 'Giảm chấn (nhỏ = lắc lâu)', type: 'range', min: 0.5, max: 20, step: 0.1 },
+        { path: 'maxTip', label: 'Nghiêng tối đa (rad)', type: 'range', min: 0.1, max: 1.2, step: 0.01 },
+        { path: 'slide', label: 'Trượt ra xa khi bị đẩy', type: 'range', min: 0, max: 2, step: 0.05 },
+      ] },
+    // ---- Thảm cỏ 3D (chande-grass.js) — chỉ thấy khi sàn = Cỏ 3D ----
+    CGR && { tab: 'gallery', mod: 'grass', title: 'Thảm cỏ 3D — lá',
+      items: [
+        { path: 'style', label: 'Kiểu cỏ (đổi = nạp cả bộ số của kiểu đó)', type: 'select',
+          options: [['meadow', 'Đồng cỏ (lá mảnh, gió sóng)'], ['vector', 'Lá vector (to bản, chải một hướng)']],
+          apply: (v) => CGR.applyPreset(v) },
+        { path: 'shape', label: 'Hình lá (0 = mũi giáo, 1 = mảnh thon đều)', type: 'range', min: 0, max: 1, step: 0.05 },
+        { path: 'facing', label: 'Xoay lá (0 = theo hướng ngả, 1 = ngẫu nhiên)', type: 'range', min: 0, max: 1, step: 0.05 },
+        { path: 'bend', label: 'Độ cong ngẫu nhiên từng lá', type: 'range', min: 0, max: 2, step: 0.05 },
+        { path: 'twoTone', label: 'Hai tông hai nửa lá', type: 'range', min: 0, max: 1, step: 0.05 },
+        { path: 'density', label: 'Mật độ (lá / px²) — máy yếu thì giảm', type: 'range', min: 0.004, max: 0.08, step: 0.001 },
+        { path: 'height.0', label: 'Lá ngắn nhất (px)', type: 'range', min: 5, max: 60, step: 1 },
+        { path: 'height.1', label: 'Lá dài nhất (px)', type: 'range', min: 5, max: 80, step: 1 },
+        { path: 'width.0', label: 'Bản lá hẹp nhất (px)', type: 'range', min: 0.5, max: 20, step: 0.1 },
+        { path: 'width.1', label: 'Bản lá rộng nhất (px)', type: 'range', min: 0.5, max: 24, step: 0.1 },
+        { path: 'comb.angle', label: 'Hướng chải (độ, 0 = sang phải, âm = chếch lên)', type: 'range', min: -180, max: 180, step: 1 },
+        { path: 'comb.lean', label: 'Độ ngả theo hướng chải', type: 'range', min: 0, max: 2, step: 0.05 },
+        { path: 'comb.spread', label: 'Lá xoay lệch ngẫu nhiên', type: 'range', min: 0, max: 1.6, step: 0.05 },
+        { path: 'wind', label: 'Gió', type: 'range', min: 0, max: 3, step: 0.05 },
+      ] },
+    CGR && { tab: 'gallery', mod: 'grass', title: 'Thảm cỏ 3D — màu',
+      items: [
+        { path: 'colors.base', label: 'Gốc lá', type: 'color' },
+        { path: 'colors.mid', label: 'Thân lá', type: 'color' },
+        { path: 'colors.tip', label: 'Ngọn lá', type: 'color' },
+        { path: 'colors.tip2', label: 'Ngọn lá — màu thứ hai (theo mảng)', type: 'color' },
+        { path: 'ground', label: 'Nền dưới cỏ', type: 'color' },
+        { path: 'colors.pressed', label: 'Cỏ bị vịt đè rạp', type: 'color' },
+        { path: 'colors.pile', label: 'Cỏ dồn hai mép vệt', type: 'color' },
+      ] },
+    CGR && { tab: 'gallery', mod: 'grass', title: 'Thảm cỏ 3D — vệt vịt & lá đan mép ảnh',
+      items: [
+        { path: 'part.radius', label: 'Bán kính rẽ cỏ (px)', type: 'range', min: 8, max: 90, step: 1 },
+        { path: 'part.life', label: 'Cỏ dựng lại sau (s)', type: 'range', min: 0.5, max: 20, step: 0.5 },
+        { path: 'weave.outside', label: 'Lá đan: dải ngoài mép ảnh (px)', type: 'range', min: 0, max: 40, step: 1 },
+        { path: 'weave.inside', label: 'Lá đan: lấn vào trong ảnh (px)', type: 'range', min: 0, max: 30, step: 1 },
+        { path: 'weave.height', label: 'Lá đan: độ dài (× lá thường)', type: 'range', min: 0, max: 1.5, step: 0.05 },
       ] },
 
     // ---- Parallax ảnh khi cuộn (chande-parallax.js) ----
@@ -498,7 +638,7 @@
       ]) },
   ]
 
-  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL, parallax: CPX, titlefx: CTF, sign: CSG }
+  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL, parallax: CPX, titlefx: CTF, sign: CSG, gallery: CGA, duck: CDK, grass: CGR }
   const get = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o)
   const set = (o, p, v) => {
     const k = p.split('.')
@@ -788,7 +928,9 @@
 .cdev.is-closed .cdev__icon[data-fold] svg{transform:rotate(180deg)}
 .cdev.is-closed .cdev__body{display:none}
 
-.cdev__body{overflow:auto; scrollbar-width:thin; scrollbar-color:rgba(250,250,250,.1) transparent}
+/* min-height:0 để thân bảng co lại trong khung flex dọc (không thì tràn ra và bị cắt, không cuộn được);
+   overscroll-behavior: cuộn hết bảng không kéo theo trang */
+.cdev__body{flex:1 1 auto; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:rgba(250,250,250,.1) transparent}
 .cdev__body::-webkit-scrollbar{width:4px}
 .cdev__body::-webkit-scrollbar-thumb{background:rgba(250,250,250,.1); border-radius:999px}
 
@@ -879,6 +1021,8 @@
   dev.className = 'cdev'
   dev.setAttribute('role', 'dialog')
   dev.setAttribute('aria-label', 'Settings')
+  // Lenis chặn wheel cả trang để cuộn mượt — báo nó bỏ qua bảng để bảng tự cuộn.
+  dev.setAttribute('data-lenis-prevent', '')
   dev.innerHTML = `
   <div class="cdev__head">
     <p class="cdev__title">Settings</p>
@@ -1106,6 +1250,13 @@
           ? '<button class="cdev__btn" type="button" data-hero-next>Đổi ảnh ngay</button>'
           : '<button class="cdev__btn" type="button" data-go="index.html">Về Home để xem</button>'
       }</div>`
+    } else if (tab === 'gallery') {
+      const here = !!document.querySelector('[data-gallery]')
+      ctrl.innerHTML = `<div class="cdev__btns">${
+        here
+          ? '<button class="cdev__btn" type="button" data-duck-recall>Gọi vịt về giữa màn</button>'
+          : '<button class="cdev__btn" type="button" data-go="gallery.html">Sang Gallery để xem</button>'
+      }</div>`
     } else if (CT) {
       const canPlay = CT.canPlayInPlace ? CT.canPlayInPlace() : true
       ctrl.innerHTML = `
@@ -1144,12 +1295,14 @@
           for (const f of g.items)
             set(live(g).config, f.path, structuredClone(get(live(g).defaults, f.path)))
       saveSettings()
-      MODS[TAB(tab).mod]?.refresh?.()
+      // Một tab có thể gồm nhiều module (Gallery = lưới + vịt + cỏ).
+      new Set(groups().filter((g) => g.tab === tab).map((g) => g.mod)).forEach((m) => MODS[m]?.refresh?.())
       buildPanel()
     } else if (b.hasAttribute('data-toggle')) CL.toggle()
     else if (b.hasAttribute('data-restart')) CL.restart()
     else if (b.hasAttribute('data-play-ct')) CT.play()
     else if (b.hasAttribute('data-hero-next')) CH?.next()
+    else if (b.hasAttribute('data-duck-recall')) CDK?.recall?.()
     else if (b.dataset.go) CT.go(b.dataset.go)
   })
 
@@ -1198,7 +1351,7 @@
   })
 
   // Nút của tab Hero tuỳ trang đang đứng có hero hay không.
-  window.barba?.hooks?.afterEnter(() => tab === 'hero' && buildCtrl())
+  window.barba?.hooks?.afterEnter(() => (tab === 'hero' || tab === 'gallery') && buildCtrl())
 
   /* ----------------------------------------------------------- khởi động - */
   loadSettings()
@@ -1209,4 +1362,8 @@
   buildCtrl()
   buildPanel()
   saveSettings() // chấm báo "còn chỉnh chưa Lưu" ngay khi mở trang
-})()
+}
+
+// Chờ các file hiệu ứng dạng module (vịt, cỏ) chạy xong rồi mới dựng bảng.
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', chandeDevtools, { once: true })
+else chandeDevtools()

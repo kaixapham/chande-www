@@ -15,6 +15,12 @@
  * nghỉ một lúc rồi đi tiếp; bị kéo ra khỏi màn thì tăng tốc quay lại.
  * Chuột lại gần / quẹt qua: vịt bị đẩy nghiêng ra xa rồi lắc lư như lật đật
  * (lò xo tắt dần quanh điểm chạm sàn) và trượt nhẹ khỏi con trỏ.
+ * Vịt luôn ghi vệt đường lăn (CHANDE_DUCK.marks). Sàn cỏ 3D (chande-grass.js)
+ * dùng vệt đó để rẽ lá cỏ; sàn cỏ pixel (data-floor="grass-pixel") thì file này
+ * tự vẽ vệt: giữa rạp sáng, hai mép cỏ dồn tối + ngọn bật ra, dựng lại dần sau
+ * CONFIG.trail.life giây — trên canvas độ phân giải ô cỏ, nằm DƯỚI các ảnh.
+ * Giọt bong bóng (chande-bubble.js) bỏ chuột, đi theo thân vịt khi đang ở
+ * trang này (CHANDE_BUBBLE.lead); rời trang thì trả giọt về cho chuột.
  * Module — nạp three từ assets/vendor/three. Mount / gỡ theo Barba.
  * ========================================================================== */
 import * as THREE from '../vendor/three/three.module.min.js'
@@ -28,6 +34,18 @@ const CONFIG = {
   lean: 0.38, // rad — nghiêng người tối đa khi ôm cua
   rest: [0.5, 1.4], // s — nghỉ giữa hai chặng
   shadow: 0.16, // độ đậm bóng trên sàn
+  shadowGrass: 0.32, // độ đậm bóng khi sàn là thảm cỏ (data-floor="grass-…")
+  // Vệt rẽ cỏ (chỉ khi sàn cỏ)
+  trail: {
+    life: 7, // s — cỏ dựng lại hết sau bấy nhiêu
+    width: 0.13, // bề ngang vệt = width × chiều cao vịt (px)
+    step: 5, // px — khoảng cách giữa hai điểm ghi vệt
+    cell: 4, // px — cỡ ô pixel, khớp GRASS.px của chande-gallery.js
+    pressed: 'brightness(1.28) saturate(0.8)', // lòng vệt: hoa văn cỏ sáng + nhạt (rạp)
+    edge: 'brightness(0.58)', // mép: hoa văn cỏ tối (cỏ dồn)
+    streak: '#8fca6c', // lá cỏ nằm dẹp xuôi theo hướng lăn
+    tip: '#7cc85a', // ngọn cỏ bật ra ở mép
+  },
   // Va chạm với chuột
   reach: 0.75, // bán kính ảnh hưởng = reach × chiều cao vịt (px màn)
   push: 9, // lực đẩy khi chuột đứng gần (rad/s² ở sát tâm)
@@ -36,7 +54,17 @@ const CONFIG = {
   damping: 4.5, // giảm chấn — nhỏ thì lắc lâu
   maxTip: 0.6, // rad — nghiêng tối đa
   slide: 0.5, // vịt trượt ra xa bao nhiêu theo lực đẩy (px/s mỗi rad/s²)
+  // Giọt bong bóng đi theo (chande-bubble.js): bay sau lưng vịt, lệch một bên
+  bubble: {
+    gap: 0.75, // khoảng cách sau lưng (× chiều cao vịt)
+    side: 0.35, // lệch sang bên (× chiều cao vịt)
+    lift: 0.6, // cao hơn điểm chạm sàn (× chiều cao vịt)
+    bob: 10, // nhấp nhô (px)
+  },
 }
+// Giá trị đã Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
+window.CHANDE_SETTINGS_APPLY?.('duck', CONFIG)
+const DEFAULTS = structuredClone(CONFIG)
 
 /* Dữ liệu pixel: bảng màu + từng hàng (ký tự a.. = chỉ số màu, cách = trống).
    Sinh từ ảnh gốc bằng script (lưới 16.2px, gom 10 màu). */
@@ -295,6 +323,7 @@ function mount(root = document) {
   canvas.className = 'gal__duck'
   stage.appendChild(canvas)
 
+
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
   renderer.setPixelRatio(Math.min(2, devicePixelRatio))
   renderer.shadowMap.enabled = true
@@ -359,6 +388,11 @@ function mount(root = document) {
     last: performance.now(),
     started: false,
     off: [],
+    trail: null, // canvas vệt cỏ pixel (chỉ preset grass-pixel)
+    tctx: null,
+    pat: null, // {pressed, edge} — hoa văn cỏ cùng tông, dựng khi ảnh nền nạp xong
+    marks: [], // điểm vệt: {x, y, dx, dy, t, i}
+    markN: 0,
   }
 
   const onPtr = (e) => {
@@ -383,6 +417,9 @@ function mount(root = document) {
     removeEventListener('pointermove', onPtr)
     document.removeEventListener('pointerleave', onLeave)
   })
+  applyFloor()
+  document.addEventListener('chande-floor', applyFloor)
+  D.off.push(() => document.removeEventListener('chande-floor', applyFloor))
   const onResize = () => resize()
   addEventListener('resize', onResize)
   D.off.push(() => removeEventListener('resize', onResize))
@@ -406,10 +443,31 @@ function mount(root = document) {
   D.off.push(() => document.removeEventListener('chande-transition:done', kick))
 
   D.raf = requestAnimationFrame(tick)
+
+  // Giọt bong bóng đi theo vịt (giữa thân, trên điểm chạm sàn) — vịt chưa vào
+  // sân hoặc đang ngoài màn thì giọt tan.
+  window.CHANDE_BUBBLE?.lead?.(() => {
+    const view = galleryView()
+    if (!D || !D.started || !view) return null
+    const r = D.stage.getBoundingClientRect()
+    const h = D.duck.rows * D.duck.root.scale.x
+    const B = CONFIG.bubble
+    const t = performance.now() / 1000
+    // Sau lưng theo hướng đi (trên màn), lệch sang một bên, nhấp nhô chậm.
+    const bx = -Math.cos(D.head)
+    const by = -Math.sin(D.head)
+    const x = r.left + D.x + view.x + bx * h * B.gap - by * h * B.side + Math.sin(t * 0.9) * B.bob * 0.6
+    const y =
+      r.top + D.y + view.y + by * h * B.gap * Math.sin(D.tilt) + bx * h * B.side * Math.sin(D.tilt) -
+      h * B.lift * Math.cos(D.tilt) + Math.sin(t * 1.7) * B.bob
+    if (x < -h * 2 || y < -h * 2 || x > innerWidth + h * 2 || y > innerHeight + h * 2) return null
+    return { x, y }
+  })
 }
 
 function destroy() {
   if (!D) return
+  window.CHANDE_BUBBLE?.lead?.(null)
   cancelAnimationFrame(D.raf)
   clearTimeout(D.startTimer)
   D.off.forEach((f) => f())
@@ -419,6 +477,7 @@ function destroy() {
   })
   D.renderer.dispose()
   D.canvas.remove()
+  D.trail?.remove()
   D = null
 }
 
@@ -435,8 +494,10 @@ function resize() {
   cam.top = D.vh / 2
   cam.bottom = -D.vh / 2
   cam.updateProjectionMatrix()
-  // Màn hẹp (điện thoại) thì vịt nhỏ lại theo bề ngang.
-  D.duck.root.scale.setScalar(Math.min(CONFIG.height, D.vw * 0.42) / D.duck.rows)
+  // Màn hẹp (điện thoại / tablet) thì vịt nhỏ lại: không quá 30% bề ngang màn
+  // và không quá 1.6 lần cạnh ô ảnh của gallery.
+  const tile = D.stage.querySelector('.gal__probe')?.offsetWidth || 160
+  D.duck.root.scale.setScalar(Math.min(CONFIG.height, D.vw * 0.3, tile * 1.6) / D.duck.rows)
 }
 
 const galleryView = () => window.CHANDE_GALLERY?.view?.() || null
@@ -493,6 +554,8 @@ function tick(now) {
   // Góc quay bánh = quãng đường / bán kính bánh (đổi px màn -> ô voxel).
   D.roll += (D.v * dt) / (WHEEL_R * D.duck.root.scale.x)
 
+  mark(now)
+  if (D.trail) drawTrail(now, view)
   pose(now, view)
   D.renderer.render(D.scene, D.cam)
 }
@@ -542,6 +605,146 @@ function shove(dt, view, now) {
   D.y += fz * Math.sin(D.tilt) * CONFIG.slide * 60 * dt
 }
 
+/* ----------------------------------------------------------- vệt rẽ cỏ -- */
+// Theo preset sàn: bóng đậm hơn trên cỏ; preset pixel thì dựng canvas vệt.
+function applyFloor() {
+  if (!D) return
+  const floor = D.stage.dataset.floor || ''
+  D.floor.material.opacity = floor.startsWith('grass') ? CONFIG.shadowGrass : CONFIG.shadow
+  const pixel = floor === 'grass-pixel'
+  if (pixel && !D.trail) {
+    // Canvas vệt cỏ: độ phân giải = ô cỏ, phóng pixelated, nằm dưới lưới ảnh.
+    D.trail = document.createElement('canvas')
+    D.trail.className = 'gal__trail'
+    D.stage.insertBefore(D.trail, D.stage.querySelector('[data-gallery-world]') || D.stage.firstChild)
+    D.tctx = D.trail.getContext('2d')
+    D.pat = null
+    loadGrassPatterns(D.stage)
+  } else if (!pixel && D.trail) {
+    D.trail.remove()
+    D.trail = D.tctx = D.pat = null
+  }
+}
+
+// Lấy đúng ô cỏ nền (data URL do chande-gallery.js vẽ), thu về 1 px = 1 ô cỏ,
+// rồi làm hai bản lọc màu: sáng nhạt cho lòng vệt, tối cho mép.
+function loadGrassPatterns(stage) {
+  const url = getComputedStyle(stage).backgroundImage.match(/url\("?(.*?)"?\)/)?.[1]
+  if (!url) return
+  const img = new Image()
+  img.onload = () => {
+    if (!D || D.stage !== stage) return
+    const N = Math.round(img.width / CONFIG.trail.cell)
+    const make = (filter) => {
+      const c = document.createElement('canvas')
+      c.width = c.height = N
+      const g = c.getContext('2d')
+      g.imageSmoothingEnabled = false
+      g.filter = filter
+      g.drawImage(img, 0, 0, N, N)
+      return D.tctx.createPattern(c, 'repeat')
+    }
+    D.pat = { pressed: make(CONFIG.trail.pressed), edge: make(CONFIG.trail.edge), N }
+  }
+  img.src = url
+}
+
+function mark(now) {
+  const T = CONFIG.trail
+  const life = T.life * 1000
+  while (D.marks.length && now - D.marks[0].t > life) D.marks.shift()
+  const last = D.marks[D.marks.length - 1]
+  const d = last ? Math.hypot(D.x - last.x, D.y - last.y) : Infinity
+  if (d < T.step) return
+  // Chỉ ghi khi vịt thật sự lăn (không ghi lúc đứng yên / mới vào sân).
+  if (D.v < 8 && last) return
+  const dx = last && d < 60 ? (D.x - last.x) / d : Math.cos(D.head)
+  const dy = last && d < 60 ? (D.y - last.y) / d : Math.sin(D.head)
+  D.marks.push({ x: D.x, y: D.y, dx, dy, t: now, i: D.markN++, gap: !last || d > 60 })
+}
+
+function drawTrail(now, view) {
+  const T = CONFIG.trail
+  const P = T.cell
+  // Khớp lưới ô cỏ: nền cỏ đặt ở round(view) nên ô bắt đầu tại mod(round(view), P).
+  const bx = Math.round(view.x)
+  const by = Math.round(view.y)
+  const ox = (((bx % P) + P) % P) - P
+  const oy = (((by % P) + P) % P) - P
+  const cw = Math.ceil(D.vw / P) + 2
+  const ch = Math.ceil(D.vh / P) + 2
+  const cv = D.trail
+  if (cv.width !== cw || cv.height !== ch) {
+    cv.width = cw
+    cv.height = ch
+    cv.style.width = cw * P + 'px'
+    cv.style.height = ch * P + 'px'
+  }
+  cv.style.transform = `translate(${ox}px, ${oy}px)`
+  const g = D.tctx
+  g.clearRect(0, 0, cw, ch)
+  const m = D.marks
+  if (m.length < 2) return
+  const life = T.life * 1000
+  const w = (D.duck.rows * D.duck.root.scale.x * T.width) / P // bề ngang vệt (ô)
+  const toC = (pt) => [(pt.x + bx - ox) / P, (pt.y + by - oy) / P]
+  const alpha = (pt) => {
+    const k = 1 - (now - pt.t) / life
+    return k <= 0 ? 0 : k * k * (3 - 2 * k) // cỏ dựng lại nhanh dần về cuối
+  }
+  g.imageSmoothingEnabled = false
+  g.lineCap = 'round'
+  // Lượt 1: mép tối (cỏ dồn) — rộng hơn; lượt 2: lòng vệt rạp sáng đè lên.
+  if (!D.pat) return
+  // Hoa văn bám đúng lưới cỏ nền: gốc ô nền ở màn (bx, by) -> canvas ((bx-ox)/P, …).
+  const m0 = new DOMMatrix().translateSelf((bx - ox) / P, (by - oy) / P)
+  D.pat.pressed.setTransform(m0)
+  D.pat.edge.setTransform(m0)
+  ;[
+    [w + 2, D.pat.edge, 0.9],
+    [w, D.pat.pressed, 1],
+  ].forEach(([lw, col, a0]) => {
+    g.strokeStyle = col
+    g.lineWidth = lw
+    for (let i = 1; i < m.length; i++) {
+      if (m[i].gap) continue
+      const a = alpha(m[i]) * a0
+      if (a <= 0.01) continue
+      g.globalAlpha = a
+      const [x0, y0] = toC(m[i - 1])
+      const [x1, y1] = toC(m[i])
+      g.beginPath()
+      g.moveTo(x0, y0)
+      g.lineTo(x1, y1)
+      g.stroke()
+    }
+  })
+  // Lá cỏ nằm dẹp: nét ngắn 2–3 ô xuôi theo hướng lăn, rải ngang trong lòng vệt.
+  g.fillStyle = T.streak
+  for (const pt of m) {
+    const a = alpha(pt)
+    if (a <= 0.01 || pt.i % 3) continue
+    const [x, y] = toC(pt)
+    const lat = ((((pt.i * 2654435761) >>> 0) % 1000) / 1000 - 0.5) * (w - 2)
+    const len = 2 + (pt.i % 2)
+    g.globalAlpha = a * 0.8
+    for (let k = 0; k < len; k++)
+      g.fillRect(Math.floor(x - pt.dy * lat - pt.dx * k), Math.floor(y + pt.dx * lat - pt.dy * k), 1, 1)
+  }
+  // Ngọn cỏ bật ra hai bên mép: chấm sáng rải theo nhịp cố định của từng điểm.
+  g.fillStyle = T.tip
+  for (const pt of m) {
+    const a = alpha(pt)
+    if (a <= 0.01 || pt.i % 2) continue
+    const [x, y] = toC(pt)
+    const side = (pt.i * 7919) % 3 === 0 ? -1 : 1
+    const off = w / 2 + 1 + ((pt.i * 31) % 2)
+    g.globalAlpha = a
+    g.fillRect(Math.floor(x - pt.dy * off * side), Math.floor(y + pt.dx * off * side), 1, 1)
+  }
+  g.globalAlpha = 1
+}
+
 function pose(now, view) {
   const { duck, tilt } = D
   const sx = D.x + view.x - D.vw / 2
@@ -584,11 +787,39 @@ if (window.barba?.hooks) {
   })
 }
 
+// Bảng setting đổi thông số: cập nhật góc camera, cỡ vịt, bóng; cỏ 3D dùng chung góc.
+function refresh() {
+  if (D) {
+    D.tilt = (CONFIG.tilt * Math.PI) / 180
+    D.cam.position.set(0, Math.sin(D.tilt) * 1000, Math.cos(D.tilt) * 1000)
+    D.cam.lookAt(0, 0, 0)
+    resize()
+    applyFloor()
+  }
+  window.CHANDE_GRASS?.refresh?.()
+}
+
+// Gọi vịt lăn về giữa màn (nút trong bảng setting — tiện ngắm khi chỉnh).
+function recall() {
+  const view = galleryView()
+  if (!D || !view) return
+  D.started = true
+  D.target = { x: -view.x + D.vw / 2, y: -view.y + D.vh / 2 + CONFIG.height * 0.3 }
+  D.restUntil = 0
+}
+
 window.CHANDE_DUCK = {
   config: CONFIG,
+  defaults: DEFAULTS,
   mount,
   destroy,
+  refresh,
+  recall,
   get state() {
     return D
+  },
+  // Vệt đường lăn (toạ độ thế giới gallery) — chande-grass.js dùng để rẽ cỏ.
+  get marks() {
+    return D?.marks || []
   },
 }
