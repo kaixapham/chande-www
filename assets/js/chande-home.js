@@ -890,6 +890,32 @@
           running = false
         }
       }
+      // số ngang hàng dòng đang chọn: cùng cỡ chữ (d48) nên đỉnh số = đỉnh dòng.
+      // Đo lại khi đổi cỡ màn / font nạp xong.
+      // So NÉT chữ (ký tự đầu), không so hộp: ô số có text-box trim, dòng vai trò
+      // thì không -> khớp đỉnh hộp vẫn lệch chân chữ ~4px.
+      const glyph = (el) => {
+        const t = el.firstChild
+        if (!t || t.nodeType !== 3) return el.getBoundingClientRect()
+        const r = document.createRange()
+        r.setStart(t, 0)
+        r.setEnd(t, 1)
+        return r.getBoundingClientRect()
+      }
+      const placeNum = () => {
+        if (!roleNum || !active || !roleNum.offsetParent) return
+        // chân chữ số cách đỉnh ô số một đoạn cố định (đo cùng lúc nên đúng cả khi
+        // đang trượt) -> đỉnh ô số = chân chữ dòng − đoạn đó
+        const inside = glyph(roleNum).bottom - roleNum.getBoundingClientRect().top
+        const top = glyph(active).bottom - roleNum.offsetParent.getBoundingClientRect().top - inside
+        roleNum.style.top = `${top.toFixed(2)}px`
+      }
+      addEventListener('resize', placeNum, { passive: true })
+      new ResizeObserver(() => placeNum()).observe(roles.closest('section') || roles)
+      document.fonts?.ready.then(() => {
+        placeNum()
+        requestAnimationFrame(() => roleNum?.classList.add('is-follow'))
+      })
       let active = null
       const select = (li, animate = true) => {
         if (!li || li === active) return
@@ -897,7 +923,10 @@
         active = li
         li.classList.add('is-active')
         const i = items.indexOf(li)
-        if (roleNum) roleNum.textContent = String(i + 1).padStart(2, '0')
+        if (roleNum) {
+          roleNum.textContent = String(i + 1).padStart(2, '0')
+          placeNum()
+        }
         want = photoOf(i)
         if (animate) pump()
         else roleImg.src = want

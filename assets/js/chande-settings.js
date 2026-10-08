@@ -55,6 +55,10 @@ window.CHANDE_SETTINGS = {
   "tilt.stiffness": 600,
   "tilt.strength": 2.2,
   "tilt.stretch": 0.012,
+  "titlefx.accent": "#85fc56",
+  "titlefx.baseAlpha": 0.08,
+  "titlefx.ditherSize": 1,
+  "titlefx.start": 0.94,
 }
 
 window.CHANDE_SETTINGS_APPLY = (mod, config) => {

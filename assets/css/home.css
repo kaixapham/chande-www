@@ -194,6 +194,8 @@
 /* vai trò đang chọn / đang trỏ: gạch chân chạy trái -> phải */
 .hs-about__roles li.is-active{background-size:100% max(1px, .04em); background-position:left 100%}
 .hs-about__count{left:calc(1848 * var(--u)); top:calc(1614 * var(--u)); margin:0}
+/* số trượt theo dòng vai trò đang chọn (top do chande-home.js đặt) */
+.hs-about__count.is-follow{transition:top .5s cubic-bezier(.65,0,.35,1)}
 .hs-about__pills{left:calc(492 * var(--u)); top:calc(2230 * var(--u))}
 /* +1px chui dưới ảnh đá (ảnh vẽ sau, nằm trên): hai mép trùng ở toạ độ lẻ thì
    điểm ảnh mép phủ không đủ, lộ nền kem thành vạch sáng 1px. */
