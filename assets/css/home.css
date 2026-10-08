@@ -251,7 +251,9 @@
 .agenda__house .bar{position:absolute; left:0; top:0; right:0; height:calc(57 * var(--u)); background:#1b2524}
 .agenda__house .pillrun{position:absolute; left:calc(14.25 * var(--u)); top:calc(11.88 * var(--u)); width:calc(540.9 * var(--u)); height:calc(33.25 * var(--u))}
 .agenda__stamp{position:absolute; left:calc(613 * var(--u)); top:calc(356 * var(--u)); width:calc(144 * var(--u)); height:calc(144 * var(--u)); z-index:1}
-.agenda__dates{left:calc(24 * var(--u)); right:calc(24 * var(--u)); top:calc(-380 * var(--u)); bottom:0; pointer-events:none}
+/* top: lúc chưa dính, đáy cụm ngày (baseline dòng 2) thẳng baseline dòng 3 của
+   tiêu đề ngày 1 (đo: 591.24 − 563 = 28.24u thấp hơn bản −380 cũ). */
+.agenda__dates{left:calc(24 * var(--u)); right:calc(24 * var(--u)); top:calc(-351.76 * var(--u)); bottom:0; pointer-events:none}
 .agenda__dates > div{position:sticky; top:0; height:calc(752 * var(--u))}
 .agenda__dates p{position:absolute; top:calc(563 * var(--u)); margin:0; white-space:nowrap}
 .agenda__dates p span{display:block}
