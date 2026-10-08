@@ -349,6 +349,19 @@
 .cl__navlink .cl__flip,
 .cl__navlink .cl__flip-face{height:var(--cl-cap1)}
 
+/* Hover (sau loading): ô nav + nút menu đậm hơn — nền ô do animation dock ghi
+   thẳng (fill 'both') nên không đổi background được: phủ bóng đổ inset tối (vẽ
+   trên nền, dưới chữ). Nhãn GALLERY / ABOUT có gạch chân chạy trái -> phải
+   (rời chuột thì rút về phải). Cả ô bấm được, không chỉ dòng chữ. */
+.cl__cell--nav, .cl__menu{transition:box-shadow .25s}
+.cl.is-done .cl__cell--nav{cursor:pointer}
+.cl.is-done .cl__cell--nav:hover, .cl.is-done .cl__menu:hover{box-shadow:inset 0 0 0 100vmax rgba(0,0,0,.18)}
+.cl__navlink{position:relative; width:fit-content}
+.cl__navlink::after{content:''; position:absolute; left:0; right:0; top:calc(100% + ${em(6)}); height:${em(2)};
+  background:currentColor; transform:scaleX(0); transform-origin:right center;
+  transition:transform .45s cubic-bezier(.65,0,.35,1)}
+.cl.is-done .cl__cell--nav:hover .cl__navlink::after{transform:scaleX(1); transform-origin:left center}
+
 /* nút menu — chỉ hiện ở trạng thái xong. Con TRỰC TIẾP của thanh (không nằm
    trong ô nav 02): ô có viền 1px + overflow:hidden nên nút đặt bên trong bị lùi
    vào 1px và bị cắt trong viền, lộ nền ô thành đường kẻ quanh nút. */
@@ -514,6 +527,14 @@
     brandFlip: $('.cl__cell--brand .cl__flip-in'),
     navFlips: $$('.cl__navlink .cl__flip-in'),
   }
+
+  // Cả ô nav bấm được: bấm ngoài dòng chữ thì chuyển cú bấm cho link (Barba
+  // vẫn bắt được vì click() phát sự kiện thật, nổi bọt như bấm tay).
+  ;[el.nav1, el.nav2].forEach((c) =>
+    c?.addEventListener('click', (e) => {
+      if (!e.target.closest('a') && root.classList.contains('is-done')) c.querySelector('a')?.click()
+    }),
+  )
 
   /* -------------------------------------------- các bước trên trục thời gian */
   // Mỗi bước là một animation ĐANG PAUSE, fill 'both'. Đồng hồ chung chỉ việc
