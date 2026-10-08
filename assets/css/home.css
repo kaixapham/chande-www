@@ -389,7 +389,14 @@
 .cta i img{width:20px; height:6px}
 .cta span{display:flex; flex-direction:column; gap:4px; padding-left:calc(24 * var(--u)); white-space:nowrap}
 .cta span small{font-size:1em; font-feature-settings:"numr" 1}
-.cta:hover i{background:#fff}
+/* Hover như menu top: cả nút tối đi (bóng inset phủ trên nền, dưới chữ — cả ô
+   chấm xanh), nhãn có gạch chân 0.5px chạy trái -> phải, dài đúng chữ nhãn. */
+.cta, .cta i{transition:box-shadow .25s}
+.cta:hover, .cta:hover i{box-shadow:inset 0 0 0 100vmax rgba(0,0,0,.18)}
+.cta__t{font-style:normal; width:fit-content; padding-bottom:calc(6 * var(--u)); margin-bottom:calc(-6 * var(--u));
+  background:linear-gradient(currentColor, currentColor) right 100% / 0% max(.5px, calc(.5 * var(--u))) no-repeat;
+  transition:background-size .45s cubic-bezier(.65,0,.35,1)}
+.cta:hover .cta__t{background-size:100% max(.5px, calc(.5 * var(--u))); background-position:left 100%}
 .hs-foot__cta1{left:calc(726 * var(--u)); top:calc(660 * var(--u)); width:calc(597 * var(--u)); background:#236c3c}
 .hs-foot__cta2{left:calc(1323 * var(--u)); top:calc(660 * var(--u)); width:calc(597 * var(--u)); background:#2c3a38}
 .links{display:flex; justify-content:space-between; width:calc(533 * var(--u)); font-size:.875rem}
