@@ -1,0 +1,219 @@
+/* =============================================================================
+ * CHANDE — Title Effect: chữ tô màu dần theo cuộn (kiểu unitedcarriers.com)
+ * -----------------------------------------------------------------------------
+ * Tiêu đề tách thành từng TỪ, gom theo DÒNG HIỂN THỊ (đo offset sau khi xuống
+ * dòng thật). Mỗi dòng có tiến độ riêng theo vị trí của nó trên màn: dòng chạm
+ * mốc `start` (phần màn từ trên xuống) thì bắt đầu, tới mốc `end` thì tô xong
+ * -> dòng dưới tự trễ hơn dòng trên khi cuộn.
+ *
+ * Tô bằng gradient cắt theo chữ (background-clip: text), toạ độ tính theo cả dòng
+ * nên các từ nối liền một vệt:  [màu chữ] —band— [màu chuyển] —band— [màu nền chữ]
+ * Mép quét là một dải màu chuyển, phía trước là chữ mờ (màu nền chữ + độ đậm).
+ *
+ * Chỉ tính khi tiêu đề đang gần màn; mỗi khung chỉ ghi background của các từ.
+ * Giảm chuyển động / tắt -> chữ về màu gốc.
+ *
+ * API: window.CHANDE_TITLEFX = { config, defaults, refresh(), mount(root) }
+ * ========================================================================== */
+(() => {
+  'use strict'
+
+  const CONFIG = {
+    enabled: true,
+    selector: '.hs-about__statement', // tiêu đề áp hiệu ứng (nhiều cái: cách nhau dấu phẩy)
+    color: '#000000', // màu chữ sau khi tô xong
+    accent: '#68f12b', // màu chuyển (dải ở mép quét)
+    base: '#000000', // màu chữ lúc chưa tô
+    baseAlpha: 0.12, // độ đậm chữ lúc chưa tô (0 = ẩn hẳn)
+    band: 0.18, // bề rộng mỗi đoạn chuyển, theo bề rộng dòng
+    start: 0.95, // dòng bắt đầu tô khi đỉnh dòng ở mốc này (0 = mép trên màn, 1 = mép dưới)
+    end: 0.45, // tô xong khi đỉnh dòng tới mốc này
+    smooth: 0.2, // 0..1 — độ bám (1 = tức thì)
+  }
+  window.CHANDE_SETTINGS_APPLY?.('titlefx', CONFIG)
+  const DEFAULTS = structuredClone(CONFIG)
+  const api = { config: CONFIG, defaults: DEFAULTS, refresh() {}, mount() {} }
+  window.CHANDE_TITLEFX = api
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  const style = document.createElement('style')
+  // .hs-about__statement span{display:block} sẽ biến từng từ thành khối -> ép inline
+  style.textContent =
+    '.tfx-w{display:inline !important}' +
+    '.tfx-on .tfx-w{color:transparent; -webkit-background-clip:text; background-clip:text; background-repeat:no-repeat}'
+  document.head.appendChild(style)
+
+  let titles = [] // { el, words: [{ el, line, x }], lines: [{ top, left, width, p }], on }
+  let io = null
+  let ro = null
+  let raf = 0
+  let last = 0
+
+  const clamp01 = (v) => Math.min(1, Math.max(0, v))
+  const rgba = (hex, a) => {
+    const h = String(hex || '#000').replace('#', '')
+    const n = parseInt(h.length === 3 ? h.replace(/./g, '$&$&') : h.slice(0, 6), 16) || 0
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${clamp01(+a)})`
+  }
+
+  // Tách text thành từ (giữ khoảng trắng là text node thường) — chỉ làm một lần.
+  function split(el) {
+    if (el.dataset.tfxSplit) return [...el.querySelectorAll('.tfx-w')]
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+    const nodes = []
+    while (walker.nextNode()) if (walker.currentNode.nodeValue.trim()) nodes.push(walker.currentNode)
+    nodes.forEach((t) => {
+      const frag = document.createDocumentFragment()
+      t.nodeValue.split(/(\s+)/).forEach((part) => {
+        if (!part) return
+        if (/^\s+$/.test(part)) frag.appendChild(document.createTextNode(part))
+        else {
+          const w = document.createElement('span')
+          w.className = 'tfx-w'
+          w.textContent = part
+          frag.appendChild(w)
+        }
+      })
+      t.replaceWith(frag)
+    })
+    el.dataset.tfxSplit = '1'
+    return [...el.querySelectorAll('.tfx-w')]
+  }
+
+  // Gom từ theo dòng hiển thị: cùng top (sai số nửa dòng) là một dòng.
+  function measure(t) {
+    const base = t.el.getBoundingClientRect()
+    const lines = []
+    t.words.forEach((w) => {
+      const r = w.el.getBoundingClientRect()
+      const top = r.top - base.top
+      let ln = lines.find((l) => Math.abs(l.top - top) < r.height / 2)
+      if (!ln) {
+        ln = { top, h: r.height, left: Infinity, right: -Infinity, p: t.lines?.[lines.length]?.p ?? 0 }
+        lines.push(ln)
+      }
+      ln.left = Math.min(ln.left, r.left - base.left)
+      ln.right = Math.max(ln.right, r.right - base.left)
+      w.line = ln
+      w.x = r.left - base.left
+    })
+    lines.forEach((l) => (l.width = Math.max(1, l.right - l.left)))
+    t.lines = lines
+  }
+
+  function paint(t) {
+    const fin = CONFIG.color
+    const acc = CONFIG.accent
+    const bas = rgba(CONFIG.base, CONFIG.baseAlpha)
+    t.words.forEach((w) => {
+      const l = w.line
+      const b = Math.max(1, CONFIG.band * l.width)
+      // mép quét F (toạ độ dòng) chạy từ 0 tới hết dòng + 2 band
+      const F = l.p * (l.width + 2 * b) - (w.x - l.left)
+      w.el.style.backgroundImage =
+        `linear-gradient(90deg, ${fin} ${(F - 2 * b).toFixed(1)}px, ${acc} ${(F - b).toFixed(1)}px, ${bas} ${F.toFixed(1)}px)`
+    })
+  }
+
+  // tiến độ đích của từng dòng theo vị trí hiện tại
+  function goals(t) {
+    const vh = innerHeight
+    const a = CONFIG.start * vh
+    const span = Math.max(1, (CONFIG.start - CONFIG.end) * vh)
+    const top = t.el.getBoundingClientRect().top
+    return t.lines.map((l) => clamp01((a - (top + l.top)) / span))
+  }
+
+  function frame(t0) {
+    raf = 0
+    const dt = last ? Math.min(0.1, (t0 - last) / 1000) : 1 / 60
+    last = t0
+    const ease = 1 - Math.pow(1 - Math.min(Math.max(CONFIG.smooth, 0.01), 1), dt * 60)
+    let moving = false
+    for (const t of titles) {
+      if (!t.on) continue
+      const g = goals(t)
+      t.lines.forEach((l, i) => {
+        const goal = g[i]
+        l.p += (goal - l.p) * ease
+        if (Math.abs(goal - l.p) < 0.001) l.p = goal
+        else moving = true
+      })
+      paint(t)
+    }
+    if (moving) raf = requestAnimationFrame(frame)
+    else last = 0
+  }
+  const kick = () => {
+    if (!raf && titles.length) raf = requestAnimationFrame(frame)
+  }
+
+  function mount(root = document) {
+    destroy()
+    if (!CONFIG.enabled || reduced) return
+    const scope = root.querySelectorAll ? root : document
+    let els = []
+    try {
+      els = [...scope.querySelectorAll(CONFIG.selector)]
+    } catch {}
+    titles = els.map((el) => {
+      const t = { el, words: split(el).map((w) => ({ el: w, line: null, x: 0 })), lines: [], on: false }
+      el.classList.add('tfx-on')
+      measure(t)
+      // mở trang / dựng lại giữa chừng: vào thẳng trạng thái đúng, không quét lại từ đầu
+      goals(t).forEach((g, i) => (t.lines[i].p = g))
+      paint(t)
+      return t
+    })
+    if (!titles.length) return
+    ro = new ResizeObserver(() => {
+      titles.forEach(measure)
+      kick()
+    })
+    titles.forEach((t) => ro.observe(t.el))
+    io = new IntersectionObserver(
+      (es) => {
+        es.forEach((e) => {
+          const t = titles.find((x) => x.el === e.target)
+          if (t) t.on = e.isIntersecting
+        })
+        kick()
+      },
+      { rootMargin: '20% 0px' },
+    )
+    titles.forEach((t) => io.observe(t.el))
+    addEventListener('scroll', kick, { passive: true })
+    document.fonts?.ready.then(() => {
+      titles.forEach(measure)
+      kick()
+    })
+  }
+
+  function destroy() {
+    io?.disconnect()
+    io = null
+    ro?.disconnect()
+    ro = null
+    removeEventListener('scroll', kick)
+    cancelAnimationFrame(raf)
+    raf = 0
+    last = 0
+    titles.forEach((t) => {
+      t.el.classList.remove('tfx-on')
+      t.words.forEach((w) => w.el.style.removeProperty('background-image'))
+    })
+    titles = []
+  }
+
+  api.mount = mount
+  // bảng setting đổi số: dựng lại (đổi selector / bật tắt) rồi vẽ ngay
+  api.refresh = () => {
+    mount(document)
+    titles.forEach(paint)
+    kick()
+  }
+
+  mount(document)
+  if (window.barba?.hooks) window.barba.hooks.beforeEnter((data) => mount(data.next.container))
+})()

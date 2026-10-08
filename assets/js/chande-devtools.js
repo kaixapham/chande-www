@@ -42,7 +42,8 @@
   const CC = window.CHANDE_CURSOR
   const CTL = window.CHANDE_TILT
   const CPX = window.CHANDE_PARALLAX
-  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL && !CPX) return
+  const CTF = window.CHANDE_TITLEFX
+  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL && !CPX && !CTF) return
 
   const KEY = 'chande-devtools'
   const KEY_SHOTS = 'chande-devtools-shots'
@@ -61,6 +62,7 @@
     CC && { id: 'cursor', label: 'Con trỏ nhân vật', mod: 'cursor' },
     CTL && { id: 'tilt', label: 'Chữ nghiêng khi cuộn (Agenda)', mod: 'tilt' },
     CPX && { id: 'parallax', label: 'Parallax ảnh', mod: 'parallax' },
+    CTF && { id: 'titlefx', label: 'Title Effect', mod: 'titlefx' },
     CT && { id: 'sweep', label: 'Rèm quét', mod: 'transition', variant: 'sweep' },
     CT && { id: 'split', label: 'Rèm chẻ', mod: 'transition', variant: 'split' },
     CT && { id: 'stack', label: 'Trượt thẻ', mod: 'transition', variant: 'stack' },
@@ -244,6 +246,24 @@
         { path: 'speed', label: 'Độ lệch (âm = ảnh nổi lên, dương = lùi sâu)', type: 'range', min: -0.4, max: 0.4, step: 0.01 },
         { path: 'max', label: 'Lệch tối đa (px, kiểu cả ảnh trôi)', type: 'range', min: 10, max: 300, step: 5 },
         { path: 'smooth', label: 'Độ bám (nhỏ = trôi mượt hơn)', type: 'range', min: 0.03, max: 1, step: 0.01 },
+      ] },
+
+    // ---- Title Effect: chữ tô màu dần theo cuộn (chande-titlefx.js) ----
+    { tab: 'titlefx', mod: 'titlefx', title: 'Màu',
+      items: [
+        { path: 'enabled', label: 'Bật', type: 'bool' },
+        { path: 'color', label: 'Màu chữ (tô xong)', type: 'color' },
+        { path: 'accent', label: 'Màu chuyển (mép quét)', type: 'color' },
+        { path: 'base', label: 'Màu chữ chưa tô', type: 'color' },
+        { path: 'baseAlpha', label: 'Độ đậm chữ chưa tô (0 = ẩn)', type: 'range', min: 0, max: 1, step: 0.01 },
+      ] },
+    { tab: 'titlefx', mod: 'titlefx', title: 'Nhịp quét',
+      items: [
+        { path: 'band', label: 'Độ rộng dải chuyển (theo dòng)', type: 'range', min: 0.02, max: 0.6, step: 0.01 },
+        { path: 'start', label: 'Bắt đầu khi dòng ở (0 = đỉnh màn, 1 = đáy)', type: 'range', min: 0.2, max: 1.2, step: 0.01 },
+        { path: 'end', label: 'Tô xong khi dòng ở', type: 'range', min: -0.2, max: 1, step: 0.01 },
+        { path: 'smooth', label: 'Độ bám (nhỏ = mượt hơn)', type: 'range', min: 0.03, max: 1, step: 0.01 },
+        { path: 'selector', label: 'Áp cho (CSS selector)', type: 'text' },
       ] },
 
     // ---- Chữ nghiêng theo quán tính khi cuộn (chande-tilt.js) ----
@@ -459,7 +479,7 @@
       ]) },
   ]
 
-  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL, parallax: CPX }
+  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL, parallax: CPX, titlefx: CTF }
   const get = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o)
   const set = (o, p, v) => {
     const k = p.split('.')

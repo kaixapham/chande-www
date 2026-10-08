@@ -42,6 +42,7 @@ assets/js/chande-settings.js   thông số đã bấm Lưu ở bảng setting �
 assets/js/chande-tilt.js       chữ nghiêng theo quán tính khi cuộn ([data-tilt], cụm tiêu đề Agenda) — 6 preset
 assets/js/chande-imgtiles.js   4 ảnh hero vỡ ô khi rê chuột — cùng kiểu / thông số với effect xanh
 assets/js/chande-parallax.js   parallax ảnh khi cuộn (translate theo khoảng cách tới tâm màn) — tab "Parallax ảnh" trong bảng H
+assets/js/chande-titlefx.js    tiêu đề tô màu dần theo cuộn từng dòng, mép quét có màu chuyển (kiểu unitedcarriers.com) — tab "Title Effect" trong bảng H
 assets/vendor/                 barba 2.10.3, lenis 1.3.17, gsap 3.15 + CustomEase, three 0.185.1
 assets/fonts/Phudu-*.woff2     Phudu SemiBold 600 + Bold 700 (latin / latin-ext / vietnamese)
 assets/img/logo.svg            logo export từ Figma
