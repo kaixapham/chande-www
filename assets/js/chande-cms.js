@@ -10,6 +10,9 @@
  *   data-cms-list="khoá"          một danh sách ảnh:
  *       <script type="application/json">[{ img, … }]  -> danh sách object
  *       data-photos='["…"]'                            -> danh sách đường dẫn
+ *       data-cms-fields="num:Số|name:Tên|url:Website|text:Lời:area"  -> các ô chữ
+ *           của mỗi mục (khoá:nhãn, thêm :area = ô nhiều dòng). Không ghi thì
+ *           mặc định Số / Tên / Căn ảnh (danh sách 4 người hero).
  * Thêm ô ảnh mới vào CMS = thêm đúng các thuộc tính đó vào HTML, không sửa file này.
  *
  * Thay ảnh: ảnh mới được nén thành WebP (giữ nền trong suốt) rộng tối đa 2× ô,
@@ -92,12 +95,19 @@
         try {
           items = JSON.parse(isScript ? l.textContent : l.dataset.photos || '[]')
         } catch {}
+        const fields = (l.dataset.cmsFields || 'num:Số|name:Tên|pos:Căn ảnh')
+          .split('|')
+          .map((f) => {
+            const [k, label, type] = f.split(':')
+            return { k: k.trim(), label: (label || k).trim(), area: type === 'area' }
+          })
         return {
           key: l.dataset.cmsList,
           label: l.dataset.cmsLabel || l.dataset.cmsList,
           w: +l.dataset.cmsW || 600,
           kind: isScript ? 'objects' : 'paths',
           items,
+          fields,
         }
       }),
     }))
@@ -407,10 +417,10 @@
       items.forEach((it, i) => {
         h += `<div class="item" data-i="${i}">
           <div class="ph" data-pick-i style="background-image:url('${esc(shown(it.img || ''))}')" title="Bấm để thay ảnh"><em>Thay ảnh</em></div>
-          <div class="fields">
-            <label>Số<input type="text" data-k="num" value="${esc(it.num)}"></label>
-            <label>Tên<input type="text" data-k="name" value="${esc(it.name)}"></label>
-            <label>Căn ảnh<input type="text" data-k="pos" value="${esc(it.pos || '')}" placeholder="50% 50%"></label>
+          <div class="fields${list.fields.length > 3 ? ' fields--wide' : ''}">
+            ${list.fields.map((f) => f.area
+              ? `<label class="wide">${esc(f.label)}<textarea data-k="${esc(f.k)}" rows="3">${esc(it[f.k] || '')}</textarea></label>`
+              : `<label>${esc(f.label)}<input type="text" data-k="${esc(f.k)}" value="${esc(it[f.k] || '')}"${f.k === 'pos' ? ' placeholder="50% 50%"' : f.k === 'url' ? ' placeholder="https://…"' : ''}></label>`).join('')}
           </div>
           <div class="ops"><button class="btn" type="button" data-move="-1" title="Lên">↑</button><button class="btn" type="button" data-move="1" title="Xuống">↓</button><button class="btn btn--del" type="button" data-del title="Xoá người này">✕ Xoá</button></div>
         </div>`
@@ -547,7 +557,7 @@
     }
   })
 
-  // Sửa chữ (alt / số / tên / căn ảnh)
+  // Sửa chữ (alt / các ô chữ của danh sách)
   document.addEventListener('input', (e) => {
     const { page, sec } = ctx()
     if (!sec) return
@@ -562,7 +572,8 @@
       const i = +e.target.closest('[data-i]').dataset.i
       const op = listOp(page.file, list)
       op.items[i] = { ...op.items[i], [e.target.dataset.k]: e.target.value }
-      if (e.target.dataset.k === 'pos' && !e.target.value) delete op.items[i].pos
+      // ô tuỳ chọn để trống thì bỏ hẳn khoá (giữ JSON gọn)
+      if (!['num', 'name'].includes(e.target.dataset.k) && !e.target.value) delete op.items[i][e.target.dataset.k]
       e.target.closest('.item').classList.add('is-changed')
       renderBar()
       renderTree()

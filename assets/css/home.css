@@ -303,6 +303,15 @@
 .hs-quote__by::before{content:''; width:2px; height:calc(40 * var(--u)); min-height:1.5rem; background:var(--lime)}
 .hs-quote__by div{display:flex; flex-direction:column; gap:12px}
 .hs-quote__by p{margin:0; font-size:1rem; color:#fff; opacity:.3}
+/* Tên người nói: link website cá nhân (CMS: url). Hover cả cụm: tên sáng neon +
+   gạch chân chạy trái -> phải; hai dòng chạy hiệu ứng chữ code (chande-home.js). */
+.hs-quote__by p{transition:opacity .25s, color .25s}
+.hs-quote__name{color:inherit; text-decoration:none; padding-bottom:2px;
+  background:linear-gradient(currentColor, currentColor) left bottom / 0% 1px no-repeat;
+  transition:background-size .45s cubic-bezier(.65,0,.35,1)}
+.hs-quote__by:hover p:first-child{opacity:1; color:var(--lime)}
+.hs-quote__by:hover .hs-quote__name{background-size:100% 1px}
+.hs-quote__name[href]{cursor:pointer}
 .hs-quote__bar{left:calc(492 * var(--u)); bottom:0; width:calc(1316 * var(--u)); height:calc(56 * var(--u)); background:#1c2e22; overflow:hidden}
 .hs-quote__bar span{position:absolute; inset:0; background:var(--lime); transform-origin:0 50%; animation:hs-bar 6s linear infinite}
 @keyframes hs-bar{from{transform:scaleX(0)} to{transform:scaleX(1)}}

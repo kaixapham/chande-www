@@ -350,21 +350,79 @@
       const q = {
         text: quote.querySelector('.hs-quote__text'),
         by: quote.querySelectorAll('.hs-quote__by p'),
+        name: quote.querySelector('.hs-quote__name'),
         img: quote.querySelector('.hs-quote__card img'),
         cap: quote.querySelectorAll('.hs-quote__card p span'),
         bar: quote.querySelector('.hs-quote__bar span'),
       }
-      const list = [{
-        num: q.cap[0]?.textContent,
-        name: q.cap[1]?.textContent,
-        role: q.by[1]?.textContent,
-        text: q.text.textContent,
-        img: q.img.getAttribute('src'),
-      }]
+      const nameEl = q.name || q.by[0]
+      // Danh sách ở <script data-quotes> (CMS sửa). Rỗng thì dùng phần HTML.
+      let list = []
       try {
-        list.push(...JSON.parse(quote.querySelector('[data-quotes]')?.textContent || '[]'))
+        list = JSON.parse(quote.querySelector('[data-quotes]')?.textContent || '[]').filter(Boolean)
       } catch {}
+      if (!list.length)
+        list = [{
+          num: q.cap[0]?.textContent,
+          name: q.cap[1]?.textContent,
+          role: q.by[1]?.textContent,
+          text: q.text.textContent,
+          img: q.img.getAttribute('src'),
+        }]
       list.slice(1).forEach((it) => it.img && (new Image().src = it.img))
+
+      // Dòng tên / vai trò: chữ thật giữ ở dataset.t để hiệu ứng code đọc lại.
+      const setLine = (el, t) => {
+        if (!el) return
+        el.dataset.t = t
+        el.textContent = t
+      }
+      const render = (it, idx) => {
+        q.text.textContent = it.text || ''
+        setLine(nameEl, `[ ${it.name || ''} ]`)
+        setLine(q.by[1], it.role || '')
+        // có website thì tên thành link (mở tab mới), không thì chỉ là chữ
+        if (q.name) {
+          const url = (it.url || '').trim()
+          if (url) q.name.href = /^https?:\/\//i.test(url) ? url : `https://${url}`
+          else q.name.removeAttribute('href')
+        }
+        if (q.cap[0]) q.cap[0].textContent = it.num || String(idx + 1).padStart(2, '0')
+        if (q.cap[1]) q.cap[1].textContent = it.name || ''
+        if (it.img && q.img.getAttribute('src') !== it.img) q.img.src = it.img
+        q.img.alt = it.name || ''
+      }
+      render(list[0], 0)
+
+      // Hover cụm tên: cả hai dòng chạy hiệu ứng "giải mã" — ký tự code ngẫu nhiên
+      // chốt dần từ trái sang phải về chữ thật.
+      const GLYPHS = '!<>-_\\/[]{}=+*^?#%&$01'
+      const scramble = (el, delay = 0) => {
+        if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+        const target = el.dataset.t ?? el.textContent
+        const t0 = performance.now() + delay
+        const dur = 280 + target.length * 22
+        cancelAnimationFrame(el._scr)
+        const tick = (now) => {
+          if (el.dataset.t !== target) return // đã đổi sang cảm nhận khác
+          const k = Math.max(0, (now - t0) / dur)
+          let out = ''
+          for (let c = 0; c < target.length; c++) {
+            const ch = target[c]
+            if (ch === ' ' || c < k * target.length) out += ch
+            else out += GLYPHS[(Math.random() * GLYPHS.length) | 0]
+          }
+          el.textContent = out
+          if (k < 1) el._scr = requestAnimationFrame(tick)
+          else el.textContent = target
+        }
+        el._scr = requestAnimationFrame(tick)
+      }
+      quote.querySelector('.hs-quote__by')?.addEventListener('mouseenter', () => {
+        scramble(nameEl)
+        scramble(q.by[1], 90)
+      })
+
       const many = list.length > 1
       quote.classList.toggle('is-single', !many)
       quote.querySelectorAll('.hs-quote__nav').forEach((b) => b.setAttribute('aria-disabled', String(!many)))
@@ -382,13 +440,7 @@
         clearTimeout(busy)
         quote.classList.add('is-swap')
         busy = setTimeout(() => {
-          q.text.textContent = it.text || ''
-          if (q.by[0]) q.by[0].textContent = `[ ${it.name || ''} ]`
-          if (q.by[1]) q.by[1].textContent = it.role || ''
-          if (q.cap[0]) q.cap[0].textContent = it.num || String(i + 1).padStart(2, '0')
-          if (q.cap[1]) q.cap[1].textContent = it.name || ''
-          if (it.img) q.img.src = it.img
-          q.img.alt = it.name || ''
+          render(it, i)
           quote.classList.remove('is-swap')
         }, 350)
         restartBar()

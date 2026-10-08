@@ -98,6 +98,9 @@ a{color:var(--lime)}
 .item .fields{display:grid; grid-template-columns:70px 1fr 120px; gap:8px}
 .item .fields label{display:flex; flex-direction:column; gap:3px; font-size:11px; color:var(--dim)}
 .item .fields input{height:28px; padding:0 8px; border-radius:6px; border:1px solid var(--line-2); background:var(--bg)}
+.item .fields--wide{grid-template-columns:70px 1fr 1fr 1fr}
+.item .fields .wide{grid-column:1 / -1}
+.item .fields textarea{padding:6px 8px; border-radius:6px; border:1px solid var(--line-2); background:var(--bg); color:inherit; font:inherit; font-size:12px; resize:vertical}
 .item .ops{display:flex; gap:4px}
 .item .ops .btn{height:28px; width:28px; padding:0}
 .chips{display:grid; grid-template-columns:repeat(auto-fill, minmax(120px,1fr)); gap:10px}
