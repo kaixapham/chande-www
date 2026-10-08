@@ -13,6 +13,8 @@
  *       data-cms-fields="num:Số|name:Tên|url:Website|text:Lời:area"  -> các ô chữ
  *           của mỗi mục (khoá:nhãn, thêm :area = ô nhiều dòng). Không ghi thì
  *           mặc định Số / Tên / Căn ảnh (danh sách 4 người hero).
+ *       data-cms-images="img:Ảnh thẻ|bg:Ảnh nền:492"  -> các ô ảnh của mỗi mục
+ *           (khoá:nhãn:bề rộng hiển thị). Không ghi thì một ô `img`.
  * Thêm ô ảnh mới vào CMS = thêm đúng các thuộc tính đó vào HTML, không sửa file này.
  *
  * Thay ảnh: ảnh mới được nén thành WebP (giữ nền trong suốt) rộng tối đa 2× ô,
@@ -101,13 +103,21 @@
             const [k, label, type] = f.split(':')
             return { k: k.trim(), label: (label || k).trim(), area: type === 'area' }
           })
+        const w = +l.dataset.cmsW || 600
+        const images = (l.dataset.cmsImages || 'img::')
+          .split('|')
+          .map((f) => {
+            const [k, label, iw] = f.split(':')
+            return { k: k.trim(), label: (label || '').trim(), w: +iw || w }
+          })
         return {
           key: l.dataset.cmsList,
           label: l.dataset.cmsLabel || l.dataset.cmsList,
-          w: +l.dataset.cmsW || 600,
+          w,
           kind: isScript ? 'objects' : 'paths',
           items,
           fields,
+          images,
         }
       }),
     }))
@@ -189,13 +199,15 @@
     }
     return S.ops.get(k)
   }
-  async function listReplaceImage(file, list, i, f) {
+  // k = khoá ô ảnh của mục (img mặc định; danh sách có data-cms-images thì thêm bg…)
+  async function listReplaceImage(file, list, i, f, k = 'img') {
     const op = listOp(file, list)
-    const img = await processImage(f, list.w)
-    const path = newPath(file, `${list.key}-${i + 1}`, img.ext)
+    const def = list.images?.find((x) => x.k === k)
+    const img = await processImage(f, def?.w || list.w)
+    const path = newPath(file, `${list.key}-${i + 1}${k === 'img' ? '' : `-${k}`}`, img.ext)
     S.previews.set(path, URL.createObjectURL(img.blob))
     op.files.set(path, img.blob)
-    if (op.kind === 'objects') op.items[i] = { ...op.items[i], img: path }
+    if (op.kind === 'objects') op.items[i] = { ...op.items[i], [k]: path }
     else op.items[i] = path
     render()
   }
@@ -258,7 +270,7 @@
       if (op.type === 'img' && op.blob) out.push({ path: op.path, blob: op.blob })
       if (op.type === 'list') {
         // chỉ ảnh còn được dùng trong danh sách sau khi sửa
-        const used = new Set(op.items.map((x) => (typeof x === 'string' ? x : x?.img)))
+        const used = new Set(op.items.flatMap((x) => (typeof x === 'string' ? [x] : Object.values(x || {}))))
         op.files.forEach((blob, path) => used.has(path) && out.push({ path, blob }))
       }
     }
@@ -416,7 +428,7 @@
       h += `<div class="list" data-list="${esc(list.key)}">`
       items.forEach((it, i) => {
         h += `<div class="item" data-i="${i}">
-          <div class="ph" data-pick-i style="background-image:url('${esc(shown(it.img || ''))}')" title="Bấm để thay ảnh"><em>Thay ảnh</em></div>
+          <div class="phs">${list.images.map((im) => `<div class="phw"><div class="ph" data-pick-i data-ik="${esc(im.k)}" style="background-image:url('${esc(shown(it[im.k] || ''))}')" title="Bấm để thay ${esc(im.label || 'ảnh')}"><em>Thay ảnh</em></div>${im.label ? `<small>${esc(im.label)}</small>` : ''}</div>`).join('')}</div>
           <div class="fields${list.fields.length > 3 ? ' fields--wide' : ''}">
             ${list.fields.map((f) => f.area
               ? `<label class="wide">${esc(f.label)}<textarea data-k="${esc(f.k)}" rows="3">${esc(it[f.k] || '')}</textarea></label>`
@@ -553,7 +565,10 @@
           await listReplaceImage(page.file, list, at, f)
         })
       }
-      if (e.target.closest('[data-pick-i]')) return pick((f) => listReplaceImage(page.file, list, i, f))
+      if (e.target.closest('[data-pick-i]')) {
+        const k = e.target.closest('[data-pick-i]').dataset.ik || 'img'
+        return pick((f) => listReplaceImage(page.file, list, i, f, k))
+      }
     }
   })
 
@@ -598,7 +613,7 @@
     if (t.matches('.slot')) replaceSlot(page.file, sec.slots.find((s) => s.key === t.dataset.slot), f)
     else {
       const list = sec.lists.find((l) => l.key === t.closest('[data-list]').dataset.list)
-      listReplaceImage(page.file, list, +t.closest('[data-i]').dataset.i, f)
+      listReplaceImage(page.file, list, +t.closest('[data-i]').dataset.i, f, t.dataset.ik || 'img')
     }
   })
 

@@ -412,36 +412,49 @@
           im.onerror = () => res(null)
           im.src = src
         })
-      let imgBusy = Promise.resolve()
-      const swapImg = (src) => {
+      // Đổi ảnh của một thẻ <img> bằng đoàn shape. Mỗi ảnh một hàng đợi riêng (ảnh
+      // thẻ + ảnh nền chạy song song). Khung tạm chép transform / translate / scale /
+      // clip-path của ảnh (ảnh nền bị lật scaleX(-1); ảnh thẻ có parallax) để shape
+      // khớp đúng hình bên dưới.
+      const swapEl = (el, src) => {
+        const setSrc = () => src && el.getAttribute('src') !== src && (el.src = src)
         const R = window.CHANDE_REVEAL
-        if (!src || q.img.getAttribute('src') === src) return
-        if (!R?.play || matchMedia('(prefers-reduced-motion: reduce)').matches) return setImg(src)
-        imgBusy = imgBusy.then(async () => {
-          const img = q.img
+        if (!src || el.getAttribute('src') === src) return
+        if (!R?.play || matchMedia('(prefers-reduced-motion: reduce)').matches) return setSrc()
+        el._swapQ = (el._swapQ || Promise.resolve()).then(async () => {
+          if (el.getAttribute('src') === src) return
           const dpr = Math.min(devicePixelRatio || 1, 2)
-          const w = Math.max(1, Math.round(img.offsetWidth * dpr))
-          const h = Math.max(1, Math.round(img.offsetHeight * dpr))
-          const [from, to] = await Promise.all([coverCanvas(img.currentSrc || img.src, w, h), coverCanvas(src, w, h)])
-          if (!to) return setImg(src)
+          const w = Math.max(1, Math.round(el.offsetWidth * dpr))
+          const h = Math.max(1, Math.round(el.offsetHeight * dpr))
+          const [from, to] = await Promise.all([coverCanvas(el.currentSrc || el.src, w, h), coverCanvas(src, w, h)])
+          if (!to) return setSrc()
           const box = document.createElement('div')
+          const cs = getComputedStyle(el)
           Object.assign(box.style, {
-            position: 'absolute', left: `${img.offsetLeft}px`, top: `${img.offsetTop}px`,
-            width: `${img.offsetWidth}px`, height: `${img.offsetHeight}px`, pointerEvents: 'none',
-            translate: img.style.translate, scale: img.style.scale, clipPath: img.style.clipPath,
+            position: 'absolute', left: `${el.offsetLeft}px`, top: `${el.offsetTop}px`,
+            width: `${el.offsetWidth}px`, height: `${el.offsetHeight}px`, pointerEvents: 'none',
+            transform: cs.transform === 'none' ? '' : cs.transform,
+            translate: el.style.translate, scale: el.style.scale, clipPath: el.style.clipPath,
           })
-          img.after(box)
+          el.after(box)
           try {
             await R.play(box, { from, to, levels: 0 }).finished
-            setImg(src)
-            await img.decode?.().catch(() => {})
+            setSrc()
+            await el.decode?.().catch(() => {})
           } finally {
             box.remove()
           }
         })
       }
+      const swapImg = (src) => swapEl(q.img, src)
+      // Ảnh nền riêng của từng người (CMS: bg); thiếu thì về ảnh nền mặc định.
+      const strip = quote.querySelector('.hs-quote__strip')
+      const stripDefault = strip?.getAttribute('src')
+      const swapBg = (it) => strip && swapEl(strip, it.bg || stripDefault)
       render(list[0], 0)
       setImg(list[0].img)
+      if (strip && list[0].bg) strip.src = list[0].bg
+      list.forEach((it) => it.bg && (new Image().src = it.bg))
 
       // Hover cụm tên: cả hai dòng chạy hiệu ứng "giải mã" — ký tự code ngẫu nhiên
       // chốt dần từ trái sang phải về chữ thật.
@@ -489,6 +502,7 @@
         clearTimeout(busy)
         quote.classList.add('is-swap')
         swapImg(it.img) // ảnh chạy shape ngay, chữ đổi sau nhịp mờ
+        swapBg(it)
         busy = setTimeout(() => {
           render(it, i)
           quote.classList.remove('is-swap')

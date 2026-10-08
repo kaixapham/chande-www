@@ -91,10 +91,13 @@ a{color:var(--lime)}
 
 /* danh sách (hero người / ảnh footer) */
 .list{display:flex; flex-direction:column; gap:10px}
-.item{display:grid; grid-template-columns:72px 1fr auto; gap:12px; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px}
+.item{display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px}
 .item.is-changed{border-color:var(--warn)}
 .item .ph{width:72px; height:84px; border-radius:6px; background:#222 center/cover no-repeat; cursor:pointer; border:1px dashed transparent}
 .item .ph:hover, .item.is-drag .ph{border-color:var(--lime)}
+.item .phs{display:flex; gap:8px}
+.item .phw{display:flex; flex-direction:column; gap:4px; align-items:center}
+.item .phw small{font-size:10px; color:var(--dim)}
 .item .fields{display:grid; grid-template-columns:70px 1fr 120px; gap:8px}
 .item .fields label{display:flex; flex-direction:column; gap:3px; font-size:11px; color:var(--dim)}
 .item .fields input{height:28px; padding:0 8px; border-radius:6px; border:1px solid var(--line-2); background:var(--bg)}
