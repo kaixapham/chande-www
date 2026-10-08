@@ -289,23 +289,25 @@
 .hs-wall .strip{top:calc(1460 * var(--u))}
 
 /* ---------------------------------------------------------------- 10. QUOTE */
-.hs-quote{height:calc(1028 * var(--u)); background:#000; color:#fffef8}
+/* Cả cụm + menu = 1 màn: cao 100svh − menu; thanh + nút neo đáy, tên người nói
+   giữ khoảng cách cũ tới đáy, thẻ ảnh canh giữa dọc. */
+.hs-quote{height:calc(100svh - var(--bar)); min-height:calc(640 * var(--u)); background:#000; color:#fffef8}
 .hs-quote__strip{left:0; top:0; width:calc(492 * var(--u)); height:100%; object-fit:cover; transform:scaleX(-1)}
 .hs-quote__text{left:calc(540 * var(--u)); top:calc(120 * var(--u)); width:calc(1340 * var(--u)); margin:0;
   font-weight:700; font-size:calc(80 * var(--u)); line-height:.78; letter-spacing:-.02em; text-transform:uppercase; text-box:trim-both cap alphabetic}
-.hs-quote__card{left:calc(57 * var(--u)); top:calc(250 * var(--u)); width:calc(377.48 * var(--u))}
+.hs-quote__card{left:calc(57 * var(--u)); top:calc(50% - 263.75 * var(--u)); width:calc(377.48 * var(--u))}
 .hs-quote__card img{width:100%; height:calc(437.16 * var(--u)); object-fit:cover}
 .hs-quote__card p{margin:0; height:calc(90.34 * var(--u)); padding:0 calc(41.94 * var(--u)); display:flex; align-items:center; gap:calc(25.81 * var(--u));
   background:#236c3c; color:#e9e2c8; font-weight:500; font-size:max(.875rem, calc(22.58 * var(--u))); line-height:.98; letter-spacing:-.02em; text-transform:uppercase; white-space:nowrap}
-.hs-quote__by{left:calc(540 * var(--u)); top:calc(884 * var(--u)); display:flex; align-items:center; gap:calc(24 * var(--u))}
+.hs-quote__by{left:calc(540 * var(--u)); bottom:calc(104 * var(--u)); display:flex; align-items:center; gap:calc(24 * var(--u))}
 .hs-quote__by::before{content:''; width:2px; height:calc(40 * var(--u)); min-height:1.5rem; background:var(--lime)}
 .hs-quote__by div{display:flex; flex-direction:column; gap:12px}
 .hs-quote__by p{margin:0; font-size:1rem; color:#fff; opacity:.3}
-.hs-quote__bar{left:calc(492 * var(--u)); top:calc(972 * var(--u)); width:calc(1316 * var(--u)); height:calc(56 * var(--u)); background:#1c2e22; overflow:hidden}
+.hs-quote__bar{left:calc(492 * var(--u)); bottom:0; width:calc(1316 * var(--u)); height:calc(56 * var(--u)); background:#1c2e22; overflow:hidden}
 .hs-quote__bar span{position:absolute; inset:0; background:var(--lime); transform-origin:0 50%; animation:hs-bar 6s linear infinite}
 @keyframes hs-bar{from{transform:scaleX(0)} to{transform:scaleX(1)}}
 .is-off .hs-quote__bar span{animation-play-state:paused}
-.hs-quote__nav{top:calc(972 * var(--u)); width:calc(56 * var(--u)); height:calc(56 * var(--u)); display:grid; place-items:center; background:var(--lime); border:0; cursor:pointer}
+.hs-quote__nav{bottom:0; width:calc(56 * var(--u)); height:calc(56 * var(--u)); display:grid; place-items:center; background:var(--lime); border:0; cursor:pointer}
 .hs-quote__nav img{width:calc(24 * var(--u)); height:calc(24 * var(--u)); min-width:14px; min-height:14px}
 .hs-quote__nav--prev{left:calc(1807 * var(--u))}
 .hs-quote__nav--prev img{transform:rotate(180deg)}
