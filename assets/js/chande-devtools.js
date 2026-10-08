@@ -249,6 +249,7 @@ const chandeDevtools = () => {
       ] },
     { tab: 'bubble', mod: 'bubble', title: 'Bề mặt',
       items: [
+        { path: 'filmDark', label: 'Viền tối khi không có khúc xạ (iPhone / Safari)', type: 'range', min: 0, max: 1, step: 0.05 },
         { path: 'speed', label: 'Tốc độ óng ánh', type: 'range', min: 0, max: 8, step: 0.1 },
         { path: 'iridescence', label: 'Óng ánh', type: 'range', min: 0, max: 2, step: 0.05 },
         { path: 'intensity', label: 'Độ sáng óng ánh', type: 'range', min: 0, max: 2, step: 0.05 },

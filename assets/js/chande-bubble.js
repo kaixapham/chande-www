@@ -67,6 +67,9 @@
     colorA: '#4a74b8',
     colorB: '#69696a',
     fallbackOpacity: 1,
+    // Không có thấu kính (Safari / iPhone / máy không hỗ trợ backdrop-filter url())
+    // -> màng trắng mờ gần như tàng hình trên nền sáng: thêm viền tối + lòng mờ.
+    filmDark: 0.75,
     // Thấu kính khúc xạ (CSS backdrop-filter + SVG). Shader gốc cũng nhận hai số
     // này nhưng chỉ dùng ở nhánh html-in-canvas.
     refract: true,
@@ -161,6 +164,7 @@ uniform float uTintStrength;
 uniform vec3 uColorA;
 uniform vec3 uColorB;
 uniform float uFallbackAlpha;
+uniform float uFilmDark; // > 0: không có thấu kính -> viền tối cho thấy giọt trên nền sáng
 uniform vec4 uDent; // cầu khoét vết lõm mềm (x, y, z, bán kính) — bán kính 0 = tắt
 uniform float uDentSoft; // độ bo mép (đơn vị toạ độ chuẩn hoá)
 
@@ -320,6 +324,13 @@ void main () {
     vec3 light = glints * uIridescence * 0.65 + vec3(spec * uShine * 1.5) +
       filmTint * (0.55 * max(uRim, 0.4) * edge + 0.03);
     float a = fade * clamp(0.08 + 0.4 * edge, 0.0, 1.0);
+    if (uFilmDark > 0.0) {
+      // Lớp tối nằm DƯỚI lớp màng sáng (premultiplied): viền đậm, lòng hơi mờ.
+      float aD = fade * clamp(uFilmDark, 0.0, 1.0) * (0.12 + 0.75 * pow(edge, 2.0));
+      vec3 dark = vec3(0.06, 0.08, 0.07) * aD;
+      outColor = vec4(light * fade + dark * (1.0 - a), a + aD * (1.0 - a));
+      return;
+    }
     outColor = vec4(light * fade, a);
     return;
   }
@@ -591,6 +602,7 @@ void main () {
     gl.uniform3f(U.uColorA, ...rgb(CONFIG.colorA))
     gl.uniform3f(U.uColorB, ...rgb(CONFIG.colorB))
     gl.uniform1f(U.uFallbackAlpha, Math.min(Math.max(CONFIG.fallbackOpacity, 0), 1))
+    gl.uniform1f(U.uFilmDark, lensOK && CONFIG.refract ? 0 : Math.max(CONFIG.filmDark, 0))
     // Vết lõm mềm: cầu bán kính pr đặt chạm mặt giọt ngay dưới con trỏ (mặt
     // giọt coi như cầu bán kính rho quanh đầu) rồi ấn xuống theo `dent`.
     if (dent > 0.002 && CONFIG.dent) {
