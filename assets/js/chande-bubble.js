@@ -119,7 +119,9 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)')
   const api = { config: CONFIG, defaults: DEFAULTS, refresh() {} }
   window.CHANDE_BUBBLE = api
-  if (!fine.matches || reduced.matches) return
+  // Máy cảm ứng: vẫn dựng giọt nhưng chỉ hiện khi được dắt (lead — trang Gallery
+  // đi theo vịt); tự bám con trỏ thì cần chuột thật.
+  if (reduced.matches) return
 
   const rgb = (hex) => {
     const n = parseInt(String(hex).replace('#', ''), 16) || 0
@@ -761,7 +763,8 @@ void main () {
   addEventListener(
     'pointermove',
     (e) => {
-      if (e.pointerType !== 'mouse') return
+      // Ngón tay chỉ đẩy giọt khi giọt đang được dắt.
+      if (e.pointerType !== 'mouse' && !leader) return
       const dt = Math.max(0.008, (e.timeStamp - ptrT) / 1000)
       if (ptrT && dt < 0.2) {
         ptrVX = ptrVX * 0.5 + ((e.clientX - ptrX) / dt) * 0.5
@@ -791,6 +794,26 @@ void main () {
     },
     { passive: true },
   )
+  // Ngón tay: chạm xuống là có vị trí ngay; nhấc lên là hết đẩy (không có hover).
+  addEventListener(
+    'pointerdown',
+    (e) => {
+      if (e.pointerType === 'mouse' || !leader) return
+      ptrX = e.clientX
+      ptrY = e.clientY
+      ptrT = e.timeStamp
+      ptrVX = ptrVY = 0
+      ptrIn = true
+    },
+    { passive: true },
+  )
+  const lift = (e) => {
+    if (e.pointerType === 'mouse') return
+    ptrIn = false
+    ptrVX = ptrVY = 0
+  }
+  addEventListener('pointerup', lift, { passive: true })
+  addEventListener('pointercancel', lift, { passive: true })
   const leave = () => {
     ptrIn = false
     if (leader) return

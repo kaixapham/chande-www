@@ -345,6 +345,7 @@ const chandeDevtools = () => {
         { path: 'damping', label: 'Giảm chấn (nhỏ = lắc lâu)', type: 'range', min: 0.5, max: 20, step: 0.1 },
         { path: 'maxTip', label: 'Nghiêng tối đa (rad)', type: 'range', min: 0.1, max: 1.2, step: 0.01 },
         { path: 'slide', label: 'Trượt ra xa khi bị đẩy', type: 'range', min: 0, max: 2, step: 0.05 },
+        { path: 'panTilt', label: 'Kéo lưới làm vịt nghiêng (quán tính — cách chọc vịt trên điện thoại)', type: 'range', min: 0, max: 0.01, step: 0.0001 },
       ] },
     // ---- Thảm cỏ 3D (chande-grass.js) — chỉ thấy khi sàn = Cỏ 3D ----
     CGR && { tab: 'gallery', mod: 'grass', title: 'Thảm cỏ 3D — lá',

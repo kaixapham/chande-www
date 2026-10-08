@@ -15,6 +15,9 @@
  * nghỉ một lúc rồi đi tiếp; bị kéo ra khỏi màn thì tăng tốc quay lại.
  * Chuột lại gần / quẹt qua: vịt bị đẩy nghiêng ra xa rồi lắc lư như lật đật
  * (lò xo tắt dần quanh điểm chạm sàn) và trượt nhẹ khỏi con trỏ.
+ * Kéo / vuốt lưới (sàn chạy) cũng tác động: quán tính làm thân vịt trễ lại,
+ * ngả ngược hướng sàn tăng tốc, hãm lại thì chúi theo (CONFIG.panTilt) — trên
+ * điện thoại đây là cách "chọc" vịt.
  * Vịt luôn ghi vệt đường lăn (CHANDE_DUCK.marks). Sàn cỏ 3D (chande-grass.js)
  * dùng vệt đó để rẽ lá cỏ; sàn cỏ pixel (data-floor="grass-pixel") thì file này
  * tự vẽ vệt: giữa rạp sáng, hai mép cỏ dồn tối + ngọn bật ra, dựng lại dần sau
@@ -54,6 +57,7 @@ const CONFIG = {
   damping: 4.5, // giảm chấn — nhỏ thì lắc lâu
   maxTip: 0.6, // rad — nghiêng tối đa
   slide: 0.5, // vịt trượt ra xa bao nhiêu theo lực đẩy (px/s mỗi rad/s²)
+  panTilt: 0.0022, // kéo lưới -> nghiêng theo quán tính (rad/s² mỗi px/s² gia tốc sàn)
   // Giọt bong bóng đi theo (chande-bubble.js): bay sau lưng vịt, lệch một bên
   bubble: {
     gap: 0.75, // khoảng cách sau lưng (× chiều cao vịt)
@@ -591,10 +595,29 @@ function shove(dt, view, now) {
       if (!D.target && f > CONFIG.push * 0.3) D.target = { x: D.x + ux * h * 1.6, y: D.y + uy * h * 1.6 }
     }
   }
+  // Quán tính khi sàn (lưới) bị kéo: gia tốc sàn = đạo hàm vận tốc lưới đã làm
+  // mượt; thân vịt ngả NGƯỢC hướng gia tốc (sàn giật sang phải -> ngả trái).
+  let ix = 0
+  let iz = 0
+  if (CONFIG.panTilt && dt > 0) {
+    const P = D.pan || (D.pan = { x: view.x, y: view.y, vx: 0, vy: 0 })
+    const k2 = 1 - Math.exp(-dt * 14)
+    const vx = P.vx + ((view.x - P.x) / dt - P.vx) * k2
+    const vy = P.vy + ((view.y - P.y) / dt - P.vy) * k2
+    const cap = 40000
+    const ax = Math.max(-cap, Math.min(cap, (vx - P.vx) / dt))
+    const ay = Math.max(-cap, Math.min(cap, (vy - P.vy) / dt))
+    P.x = view.x
+    P.y = view.y
+    P.vx = vx
+    P.vy = vy
+    ix = -ax * CONFIG.panTilt
+    iz = (-ay / Math.sin(D.tilt)) * CONFIG.panTilt
+  }
   const k = CONFIG.spring
   const c = CONFIG.damping
-  D.vx += (fz * 6 - k * D.wx - c * D.vx) * dt
-  D.vz += (fx * 6 - k * D.wz - c * D.vz) * dt
+  D.vx += (fz * 6 + iz - k * D.wx - c * D.vx) * dt
+  D.vz += (fx * 6 + ix - k * D.wz - c * D.vz) * dt
   D.wx += D.vx * dt
   D.wz += D.vz * dt
   const m = CONFIG.maxTip
