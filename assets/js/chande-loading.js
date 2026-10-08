@@ -374,7 +374,13 @@
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:${em(S.dotsGap)}; clip-path:inset(0 0 0 100%);
 }
-.cl__menu svg{display:block; width:${em(S.dotsW)}; height:${em(S.dotsH)}}
+.cl__menu svg{display:block; width:${em(S.dotsW)}; height:${em(S.dotsH)}; overflow:visible}
+/* hover: 4 chấm toả nhẹ ra 4 góc chéo (đơn vị = viewBox 20×6 ≈ px thiết kế) */
+.cl__menu circle{transition:transform .35s cubic-bezier(.3,1.4,.5,1)}
+.cl.is-done .cl__menu:hover svg:first-child circle:first-child{transform:translate(-2px, -2px)}
+.cl.is-done .cl__menu:hover svg:first-child circle:last-child{transform:translate(2px, -2px)}
+.cl.is-done .cl__menu:hover svg:last-child circle:first-child{transform:translate(-2px, 2px)}
+.cl.is-done .cl__menu:hover svg:last-child circle:last-child{transform:translate(2px, 2px)}
 
 /* xong: thanh ở lại làm header, phần còn lại không chặn chuột */
 .cl.is-done{pointer-events:none}
