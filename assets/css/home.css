@@ -329,6 +329,11 @@
 .hs-quote__by:hover::after{animation:hs-line-grow .7s cubic-bezier(.77,0,.18,1) both}
 @keyframes hs-line-grow{from{transform:scaleY(0)} to{transform:scaleY(1)}}
 @keyframes hs-line-in{from{transform:scaleY(0)} to{transform:scaleY(1)}}
+/* khối tên CŨ còn nằm đúng chỗ tới khi chữ cũ trượt hết: vạch cũ rút lên mất ngay
+   (không che vạch mới đang chạy từ dưới lên), rãnh cũ ẩn (không chồng đậm rãnh mới) */
+.hs-quote__by.is-out::before{opacity:0}
+.hs-quote__by.is-out::after{transform-origin:50% 0; animation:hs-line-out .4s cubic-bezier(.77,0,.18,1) both}
+@keyframes hs-line-out{from{transform:scaleY(1)} to{transform:scaleY(0)}}
 .hs-quote__by div{display:flex; flex-direction:column; gap:12px}
 .hs-quote__by p{margin:0; font-size:1rem; color:#fff; opacity:.3}
 /* Tên người nói: link website cá nhân (CMS: url). Hover cả cụm: tên sáng neon +
