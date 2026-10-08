@@ -10,6 +10,10 @@
  * nên các từ nối liền một vệt:  [màu chữ] —band— [màu chuyển] —band— [màu nền chữ]
  * Mép quét là một dải màu chuyển, phía trước là chữ mờ (màu nền chữ + độ đậm).
  *
+ * dither: hai đoạn chuyển không mịn mà thành ô pixel (ma trận Bayer 8×8, mỗi ô
+ * `ditherSize` px): màu trước thưa dần trên nền màu sau. Mỗi đoạn là một ảnh
+ * dốc (canvas → data URL, cache theo số cột + màu) phủ lên nền màu đặc, lặp dọc.
+ *
  * Chỉ tính khi tiêu đề đang gần màn; mỗi khung chỉ ghi background của các từ.
  * Giảm chuyển động / tắt -> chữ về màu gốc.
  *
@@ -29,6 +33,8 @@
     start: 0.95, // dòng bắt đầu tô khi đỉnh dòng ở mốc này (0 = mép trên màn, 1 = mép dưới)
     end: 0.45, // tô xong khi đỉnh dòng tới mốc này
     smooth: 0.2, // 0..1 — độ bám (1 = tức thì)
+    dither: true, // đoạn chuyển thành ô pixel thay vì gradient mịn
+    ditherSize: 4, // px — cỡ một ô dither
   }
   window.CHANDE_SETTINGS_APPLY?.('titlefx', CONFIG)
   const DEFAULTS = structuredClone(CONFIG)
@@ -41,7 +47,7 @@
   // .hs-about__statement span{display:block} sẽ biến từng từ thành khối -> ép inline
   style.textContent =
     '.tfx-w{display:inline !important}' +
-    '.tfx-on .tfx-w{color:transparent; -webkit-background-clip:text; background-clip:text; background-repeat:no-repeat}'
+    '.tfx-on .tfx-w{color:transparent; -webkit-background-clip:text; background-clip:text; background-repeat:no-repeat; image-rendering:pixelated}'
   document.head.appendChild(style)
 
   let titles = [] // { el, words: [{ el, line, x }], lines: [{ top, left, width, p }], on }
@@ -55,6 +61,30 @@
     const h = String(hex || '#000').replace('#', '')
     const n = parseInt(h.length === 3 ? h.replace(/./g, '$&$&') : h.slice(0, 6), 16) || 0
     return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${clamp01(+a)})`
+  }
+
+  // Ảnh dốc dither: `cols` cột × 8 hàng (1px = 1 ô), ô có màu `color` khi ngưỡng
+  // Bayer < 1 − t -> đặc ở trái, thưa dần sang phải.
+  const BAYER = [0, 32, 8, 40, 2, 34, 10, 42, 48, 16, 56, 24, 50, 18, 58, 26, 12, 44, 4, 36, 14, 46, 6, 38, 60, 28, 52, 20, 62, 30, 54, 22,
+    3, 35, 11, 43, 1, 33, 9, 41, 51, 19, 59, 27, 49, 17, 57, 25, 15, 47, 7, 39, 13, 45, 5, 37, 63, 31, 55, 23, 61, 29, 53, 21]
+  const ramps = new Map()
+  function ramp(cols, color) {
+    const key = `${cols}|${color}`
+    let url = ramps.get(key)
+    if (url) return url
+    const c = document.createElement('canvas')
+    c.width = cols
+    c.height = 8
+    const g = c.getContext('2d')
+    g.fillStyle = color
+    for (let x = 0; x < cols; x++) {
+      const t = (x + 0.5) / cols
+      for (let y = 0; y < 8; y++) if ((BAYER[y * 8 + (x % 8)] + 0.5) / 64 < 1 - t) g.fillRect(x, y, 1, 1)
+    }
+    url = `url(${c.toDataURL()})`
+    if (ramps.size > 200) ramps.clear()
+    ramps.set(key, url)
+    return url
   }
 
   // Tách text thành từ (giữ khoảng trắng là text node thường) — chỉ làm một lần.
@@ -106,13 +136,32 @@
     const fin = CONFIG.color
     const acc = CONFIG.accent
     const bas = rgba(CONFIG.base, CONFIG.baseAlpha)
+    const dz = Math.max(1, Math.round(CONFIG.ditherSize))
     t.words.forEach((w) => {
       const l = w.line
-      const b = Math.max(1, CONFIG.band * l.width)
-      // mép quét F (toạ độ dòng) chạy từ 0 tới hết dòng + 2 band
-      const F = l.p * (l.width + 2 * b) - (w.x - l.left)
-      w.el.style.backgroundImage =
-        `linear-gradient(90deg, ${fin} ${(F - 2 * b).toFixed(1)}px, ${acc} ${(F - b).toFixed(1)}px, ${bas} ${F.toFixed(1)}px)`
+      const s = w.el.style
+      if (CONFIG.dither) {
+        // band làm tròn theo ô để ảnh dốc khớp đúng đoạn chuyển
+        const cols = Math.max(1, Math.round((CONFIG.band * l.width) / dz))
+        const b = cols * dz
+        const F = l.p * (l.width + 2 * b) - (w.x - l.left)
+        const x1 = (F - 2 * b).toFixed(1)
+        const x2 = (F - b).toFixed(1)
+        // dưới cùng: ba khối màu đặc; trên: hai ảnh dốc (màu chữ thưa dần trên màu
+        // chuyển, màu chuyển thưa dần trên màu chưa tô)
+        s.backgroundImage = `${ramp(cols, fin)}, ${ramp(cols, acc)}, ` +
+          `linear-gradient(90deg, ${fin} ${x1}px, ${acc} ${x1}px ${x2}px, ${bas} ${x2}px)`
+        s.backgroundSize = `${b}px ${8 * dz}px, ${b}px ${8 * dz}px, 100% 100%`
+        s.backgroundPosition = `${x1}px 0, ${x2}px 0, 0 0`
+        s.backgroundRepeat = 'repeat-y, repeat-y, no-repeat'
+      } else {
+        const b = Math.max(1, CONFIG.band * l.width)
+        // mép quét F (toạ độ dòng) chạy từ 0 tới hết dòng + 2 band
+        const F = l.p * (l.width + 2 * b) - (w.x - l.left)
+        s.backgroundImage =
+          `linear-gradient(90deg, ${fin} ${(F - 2 * b).toFixed(1)}px, ${acc} ${(F - b).toFixed(1)}px, ${bas} ${F.toFixed(1)}px)`
+        s.backgroundSize = s.backgroundPosition = s.backgroundRepeat = ''
+      }
     })
   }
 
@@ -201,7 +250,10 @@
     last = 0
     titles.forEach((t) => {
       t.el.classList.remove('tfx-on')
-      t.words.forEach((w) => w.el.style.removeProperty('background-image'))
+      t.words.forEach((w) => {
+        const s = w.el.style
+        s.backgroundImage = s.backgroundSize = s.backgroundPosition = s.backgroundRepeat = ''
+      })
     })
     titles = []
   }

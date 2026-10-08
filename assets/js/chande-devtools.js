@@ -260,6 +260,8 @@
     { tab: 'titlefx', mod: 'titlefx', title: 'Nhịp quét',
       items: [
         { path: 'band', label: 'Độ rộng dải chuyển (theo dòng)', type: 'range', min: 0.02, max: 0.6, step: 0.01 },
+        { path: 'dither', label: 'Dither (chuyển bằng ô pixel)', type: 'bool' },
+        { path: 'ditherSize', label: 'Cỡ ô dither (px)', type: 'range', min: 1, max: 16, step: 1 },
         { path: 'start', label: 'Bắt đầu khi dòng ở (0 = đỉnh màn, 1 = đáy)', type: 'range', min: 0.2, max: 1.2, step: 0.01 },
         { path: 'end', label: 'Tô xong khi dòng ở', type: 'range', min: -0.2, max: 1, step: 0.01 },
         { path: 'smooth', label: 'Độ bám (nhỏ = mượt hơn)', type: 'range', min: 0.03, max: 1, step: 0.01 },
