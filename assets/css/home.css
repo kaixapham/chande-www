@@ -94,9 +94,13 @@
 .hs-story__panel:last-child{background:#192423}
 .hs-story__panel h3{margin:0; color:#5c6161}
 .hs-story__text{width:calc(360 * var(--u)); min-width:16rem; min-height:calc(216 * var(--u)); display:flex; flex-direction:column; justify-content:space-between; gap:1.5rem}
-.hs-story__text p{margin:0; font-size:1rem; opacity:.3}
+/* mờ bằng màu (không dùng opacity) để link bên trong hover sáng neon được */
+.hs-story__text p{margin:0; font-size:1rem; color:rgba(255,255,255,.3)}
 .hs-story__text div{display:flex; flex-direction:column; gap:calc(32 * var(--u))}
-.hs-story__text a{color:inherit; text-decoration:underline}
+.hs-story__text a{color:inherit; text-decoration:underline; text-underline-offset:.15em; transition:color .25s}
+.hs-story__text a:hover{color:var(--lime)}
+/* đã có gạch chân sẵn -> bỏ gạch chân chạy của [data-scramble] cho khỏi hai vạch */
+.hs-story__text a[data-scramble]{background:none}
 
 /* --------------------------------------------------------- 3. SCHEME (đảo) */
 .scheme{display:flex; flex-direction:column}
@@ -383,7 +387,7 @@
 .hs-foot__cta1{left:calc(726 * var(--u)); top:calc(660 * var(--u)); width:calc(597 * var(--u)); background:#236c3c}
 .hs-foot__cta2{left:calc(1323 * var(--u)); top:calc(660 * var(--u)); width:calc(597 * var(--u)); background:#2c3a38}
 .links{display:flex; justify-content:space-between; width:calc(533 * var(--u)); font-size:.875rem}
-.links .mono{color:#fff; opacity:.3; margin:0; white-space:nowrap}
+.links .mono{color:rgba(255,255,255,.3); margin:0; white-space:nowrap}
 .links ul{margin:calc(32 * var(--u)) 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px}
 .links a{color:#5e6464; text-decoration:none; font-weight:500; line-height:.98; letter-spacing:-.02em; text-transform:uppercase}
 .links a:hover, .links .mono a:hover{color:var(--lime); opacity:1}
