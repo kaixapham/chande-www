@@ -1,0 +1,61 @@
+/* =============================================================================
+ * GALLERY — lưới ảnh vô tận (chande-gallery.js)
+ * Bố cục theo 197historiasilustradas.com: ô vuông, cột cách ~2 ô, ô cột lẻ lệch
+ * xuống tạo nhịp zigzag, mỗi hàng lệch ngang một đoạn khác nhau. Caption dùng
+ * đúng kiểu chữ thân trang chủ (.b16: Phudu 500, hoa, letter-spacing -.02em).
+ * Link ở cả ba trang (Barba thay container nên CSS phải có sẵn).
+ * ========================================================================== */
+.page--gallery{height:100vh; min-height:0; padding:0; overflow:hidden}
+
+.gal{
+  --g-size:10rem;             /* cạnh ô ảnh — JS đọc qua .gal__probe */
+  --g-cap:1.75rem;            /* chỗ cho caption phía trên ảnh */
+  position:fixed; inset:0; overflow:hidden;
+  touch-action:none; user-select:none; -webkit-user-select:none;
+  cursor:grab; background:var(--cream);
+}
+.gal.is-dragging{cursor:grabbing}
+.gal__world{position:absolute; inset:0}
+.gal__probe{position:absolute; width:var(--g-size); height:var(--g-cap); visibility:hidden; pointer-events:none}
+
+.gal__item{
+  position:absolute; top:0; left:0; display:block; width:var(--g-size);
+  text-decoration:none; color:var(--green); will-change:transform;
+  -webkit-user-drag:none;
+}
+.gal__card{transition:transform .5s cubic-bezier(.16,1,.3,1)}
+@media (hover:hover){
+  .gal:not(.is-dragging) .gal__item:hover .gal__card{transform:scale(1.08)}
+}
+
+.gal__cap{
+  display:flex; align-items:flex-end; gap:.5rem; height:var(--g-cap); padding-bottom:.5rem;
+  font-weight:500; font-size:1rem; line-height:.98; letter-spacing:-.02em;
+  text-transform:uppercase; white-space:nowrap; overflow:hidden;
+}
+.gal__num{flex:none; font-variant-numeric:tabular-nums}
+.gal__name{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; text-align:right}
+
+.gal__media{width:var(--g-size); height:var(--g-size); overflow:hidden; background:#e6e4d8}
+.gal__media img{display:block; width:100%; height:100%; object-fit:cover; pointer-events:none}
+
+/* Vịt patin 3D (chande-duck.js) — phủ lên lưới, không ăn chuột */
+.gal__duck{position:absolute; inset:0; pointer-events:none}
+
+/* ---- Lightbox ---- */
+.gal-lb{
+  position:fixed; inset:0; z-index:900; display:grid; place-items:center;
+  background:rgba(244,243,235,.94); cursor:zoom-out;
+}
+.gal-lb__fig{margin:0; display:flex; flex-direction:column; gap:.75rem; align-items:flex-start}
+.gal-lb__img{display:block; max-width:min(80vw, 70rem); max-height:calc(100vh - 14rem); width:auto; height:auto; transform-origin:0 0}
+.gal-lb__cap{
+  display:flex; gap:1rem; color:var(--green);
+  font-weight:500; font-size:1rem; line-height:.98; letter-spacing:-.02em; text-transform:uppercase;
+}
+
+@media (max-width:767px){
+  .gal{--g-size:88px; --g-cap:1.25rem}
+  .gal__cap{font-size:10px; padding-bottom:.35rem}
+  .gal-lb__img{max-width:90vw}
+}
