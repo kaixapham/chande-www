@@ -698,17 +698,14 @@
       quote.querySelector('.hs-quote__nav--next')?.addEventListener('click', () => go(1))
       // hết một vòng thanh thì sang cảm nhận kế
       q.bar?.addEventListener('animationiteration', () => go(1))
-      // Thanh chỉ chạy khi section đã vào màn (≥ 60%): lần đầu chạy lại từ 0, ra khỏi
-      // màn thì dừng, quay lại chạy tiếp.
+      // Thanh chờ ở 0 tới LẦN ĐẦU section vào màn (≥ 60%) thì chạy từ đầu; từ đó chạy
+      // bình thường (ra khỏi màn cũng không dừng).
       if (q.bar) {
-        let started = false
         const barIo = new IntersectionObserver(([e]) => {
-          const on = e.isIntersecting
-          if (on && !started) {
-            started = true
-            restartBar()
-          }
-          q.bar.parentElement.classList.toggle('is-run', on)
+          if (!e.isIntersecting) return
+          barIo.disconnect()
+          restartBar()
+          q.bar.parentElement.classList.add('is-run')
         }, { threshold: 0.6 })
         barIo.observe(quote)
       }
