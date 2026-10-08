@@ -43,7 +43,8 @@
   const CTL = window.CHANDE_TILT
   const CPX = window.CHANDE_PARALLAX
   const CTF = window.CHANDE_TITLEFX
-  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL && !CPX && !CTF) return
+  const CSG = window.CHANDE_SIGN
+  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL && !CPX && !CTF && !CSG) return
 
   const KEY = 'chande-devtools'
   const KEY_SHOTS = 'chande-devtools-shots'
@@ -63,6 +64,7 @@
     CTL && { id: 'tilt', label: 'Chữ nghiêng khi cuộn (Agenda)', mod: 'tilt' },
     CPX && { id: 'parallax', label: 'Parallax ảnh', mod: 'parallax' },
     CTF && { id: 'titlefx', label: 'Title Effect', mod: 'titlefx' },
+    CSG && { id: 'sign', label: 'Chữ ký viết tay (Cảm nhận)', mod: 'sign' },
     CT && { id: 'sweep', label: 'Rèm quét', mod: 'transition', variant: 'sweep' },
     CT && { id: 'split', label: 'Rèm chẻ', mod: 'transition', variant: 'split' },
     CT && { id: 'stack', label: 'Trượt thẻ', mod: 'transition', variant: 'stack' },
@@ -251,6 +253,14 @@
         { path: 'speed', label: 'Độ lệch (âm = ảnh nổi lên, dương = lùi sâu)', type: 'range', min: -0.4, max: 0.4, step: 0.01 },
         { path: 'max', label: 'Lệch tối đa (px, kiểu cả ảnh trôi)', type: 'range', min: 10, max: 300, step: 5 },
         { path: 'smooth', label: 'Độ bám (nhỏ = trôi mượt hơn)', type: 'range', min: 0.03, max: 1, step: 0.01 },
+      ] },
+
+    // ---- Chữ ký viết tay (chande-sign.js) — áp từ lần viết sau ----
+    { tab: 'sign', mod: 'sign', title: 'Nét bút',
+      items: [
+        { path: 'enabled', label: 'Bật hiệu ứng viết', type: 'bool' },
+        { path: 'duration', label: 'Thời gian viết cả chữ ký (giây)', type: 'range', min: 0.4, max: 4, step: 0.1 },
+        { path: 'cover', label: 'Độ dày bút (phủ thân nét)', type: 'range', min: 0.04, max: 0.3, step: 0.01 },
       ] },
 
     // ---- Title Effect: chữ tô màu dần theo cuộn (chande-titlefx.js) ----
@@ -486,7 +496,7 @@
       ]) },
   ]
 
-  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL, parallax: CPX, titlefx: CTF }
+  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL, parallax: CPX, titlefx: CTF, sign: CSG }
   const get = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o)
   const set = (o, p, v) => {
     const k = p.split('.')

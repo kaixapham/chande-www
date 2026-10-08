@@ -494,7 +494,43 @@
         }
         top.decode ? top.decode().then(go, go) : go()
       }
+      // Chữ ký viết tay (chande-sign.js). Trống thì lấy tên đầu + chữ cái đầu của
+      // chữ cuối: "Huy Phan" -> "HuyP".
+      const sign = quote.querySelector('.hs-quote__sign')
+      const signText = (it) => {
+        if ((it.sign || '').trim()) return it.sign.trim()
+        const w = (it.name || '').split(/\s+/).filter((x) => /[\p{L}\d]/u.test(x))
+        return w.length > 1 ? w[0] + w.at(-1)[0] : w[0] || ''
+      }
+      let signShown = false
+      const writeSign = (it, delay = 0) => {
+        const S = window.CHANDE_SIGN
+        if (!sign || !S) return
+        clearTimeout(sign._t)
+        sign.getAnimations().forEach((a) => a.cancel())
+        const fadeOut = sign.childElementCount
+          ? sign.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' }).finished
+          : Promise.resolve()
+        fadeOut.catch(() => {}).then(() => {
+          sign._t = setTimeout(() => {
+            sign.getAnimations().forEach((a) => a.cancel())
+            S.write(sign, signText(it))
+          }, delay)
+        })
+      }
+      if (sign) {
+        // lần đầu: viết khi section vào màn
+        const io = new IntersectionObserver(([e]) => {
+          if (!e.isIntersecting || signShown) return
+          signShown = true
+          io.disconnect()
+          writeSign(cur.it || list[0], 300)
+        }, { threshold: 0.35 })
+        io.observe(quote)
+      }
+
       render(list[0], 0)
+      cur.it = list[0]
       setImg(list[0].img)
       if (strip && list[0].bg) strip.src = list[0].bg
       list.forEach((it) => it.bg && (new Image().src = it.bg))
@@ -556,6 +592,7 @@
         swapImg(it.img)
         swapBg(it)
         restartBar()
+        if (signShown) writeSign(it, 450) // viết sau khi chữ mới bắt đầu trượt vào
         const G = window.gsap
         if (!G || matchMedia('(prefers-reduced-motion: reduce)').matches) {
           clearTimeout(busy)
@@ -639,6 +676,7 @@
         // chưa ra khỏi khung -> sót mẩu chữ thành sọc
         G.set(linesIn, { yPercent: 150 })
         cur = nxt
+        cur.it = it
         if (q.cap[0]) q.cap[0].textContent = it.num || String(i + 1).padStart(2, '0')
         if (q.cap[1]) q.cap[1].textContent = it.name || ''
         q.img.alt = it.name || ''

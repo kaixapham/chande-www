@@ -316,6 +316,9 @@
    là rớt chữ cuối, ví dụ "for me." của Huy Phan) */
 .hs-quote .text-line{white-space:nowrap}
 .hs-quote .is-out{pointer-events:none}
+/* chữ ký viết tay trên tên (Figma: Herr Von Muellerhoff 71.9, trắng 64%) —
+   chande-sign.js vẽ SVG vào; đáy neo cách đáy section như cụm tên */
+.hs-quote__sign{left:calc(540 * var(--u)); bottom:calc(150 * var(--u)); --sign-size:calc(71.927 * var(--u)); color:#fff; opacity:.64; pointer-events:none}
 .hs-quote__by{left:calc(540 * var(--u)); bottom:calc(104 * var(--u)); display:flex; align-items:center; gap:calc(24 * var(--u))}
 .hs-quote__by::before{content:''; width:2px; height:calc(40 * var(--u)); min-height:1.5rem; background:var(--lime)}
 .hs-quote__by div{display:flex; flex-direction:column; gap:12px}
