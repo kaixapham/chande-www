@@ -202,6 +202,9 @@
       items: [
         { path: 'enabled', label: 'Bật bubble', type: 'bool' },
         { path: 'size', label: 'Cỡ giọt (px)', type: 'range', min: 6, max: 120, step: 1 },
+        { path: 'scale', label: 'Cỡ chung (thu / phóng cả giọt)', type: 'range', min: 0.2, max: 1.5, step: 0.05 },
+        { path: 'offsetX', label: 'Lệch khỏi con trỏ — ngang (px)', type: 'range', min: -200, max: 200, step: 5 },
+        { path: 'offsetY', label: 'Lệch khỏi con trỏ — dọc (px)', type: 'range', min: -200, max: 200, step: 5 },
         { path: 'trail', label: 'Độ dài vệt (số cầu)', type: 'range', min: 1, max: 24, step: 1 },
         { path: 'follow', label: 'Bám chuột', type: 'range', min: 0.02, max: 1, step: 0.01 },
         { path: 'blend', label: 'Độ dính', type: 'range', min: 1, max: 40, step: 0.5 },

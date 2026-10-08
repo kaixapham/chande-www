@@ -357,7 +357,7 @@
 .cl.is-done .cl__cell--nav{cursor:pointer}
 .cl.is-done .cl__cell--nav:hover, .cl.is-done .cl__menu:hover{box-shadow:inset 0 0 0 100vmax rgba(0,0,0,.18)}
 .cl__navlink{position:relative; width:fit-content}
-.cl__navlink::after{content:''; position:absolute; left:0; right:0; top:calc(100% + ${em(6)}); height:${em(0.5)};
+.cl__navlink::after{content:''; position:absolute; left:0; width:var(--ul-w, 100%); top:calc(100% + ${em(6)}); height:${em(0.5)};
   background:currentColor; transform:scaleX(0); transform-origin:right center;
   transition:transform .45s cubic-bezier(.65,0,.35,1)}
 .cl.is-done .cl__cell--nav:hover .cl__navlink::after{transform:scaleX(1); transform-origin:left center}
@@ -527,6 +527,31 @@
     brandFlip: $('.cl__cell--brand .cl__flip-in'),
     navFlips: $$('.cl__navlink .cl__flip-in'),
   }
+
+  // Gạch chân hover dài đúng chữ nhãn sau loading (GALLERY / ABOUT): khung lật
+  // rộng theo mặt dài nhất (CHILL & FUN…) nên phải đo riêng chữ của mặt cuối.
+  const measureUnderline = () =>
+    $$('.cl__navlink').forEach((a) => {
+      const t = a.querySelector('.cl__flip-face:last-child .cl__t')
+      if (!t) return
+      // đo các nút TEXT (span bên trong là khối, rộng cả khung)
+      const tw = document.createTreeWalker(t, NodeFilter.SHOW_TEXT)
+      const r = document.createRange()
+      let l = Infinity
+      let rt = -Infinity
+      while (tw.nextNode()) {
+        if (!tw.currentNode.nodeValue.trim()) continue
+        r.selectNodeContents(tw.currentNode)
+        const b = r.getBoundingClientRect()
+        l = Math.min(l, b.left)
+        rt = Math.max(rt, b.right)
+      }
+      const w = rt - l
+      if (w > 0) a.style.setProperty('--ul-w', `${w.toFixed(2)}px`)
+    })
+  document.fonts?.ready.then(measureUnderline)
+  addEventListener('resize', measureUnderline, { passive: true })
+  setTimeout(measureUnderline, 0)
 
   // Cả ô nav bấm được: bấm ngoài dòng chữ thì chuyển cú bấm cho link (Barba
   // vẫn bắt được vì click() phát sự kiện thật, nổi bọt như bấm tay).

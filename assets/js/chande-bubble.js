@@ -75,6 +75,12 @@
     // Trỏ vào nút / link: giọt co còn hoverScale (so với cỡ gốc), rời ra thì về lại.
     hoverOn: true,
     hoverScale: 0.25,
+    // Cỡ chung của cả giọt (nhân với mọi mức co ở trên) và độ lệch khỏi con trỏ
+    // (px ở cỡ gốc, co theo giọt) — giọt nằm chếch bên cạnh để chữ ngay dưới con
+    // trỏ không bị thấu kính bẻ cong, vẫn đọc được.
+    scale: 0.7,
+    offsetX: 70,
+    offsetY: 50,
     hoverSel: 'a, button, [role="button"], [role="tab"], .cl__cell--nav, label, select, input, textarea',
   }
   // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
@@ -448,6 +454,12 @@ void main () {
   let mul = 1
   let mulTarget = 1
   let overBtn = false // con trỏ đang trên nút / link (hoverSel)
+  let ptrX = 0 // vị trí chuột thật; đích của giọt = chuột + độ lệch (co theo giọt)
+  let ptrY = 0
+  const aim = () => {
+    targetX = ptrX + CONFIG.offsetX * mulTarget
+    targetY = ptrY + CONFIG.offsetY * mulTarget
+  }
   const effSize = (m = mul) => Math.max(CONFIG.size, 4) * m
   const effBlend = (m = mul) => Math.max(CONFIG.blend, 0.5) / m
 
@@ -617,8 +629,9 @@ void main () {
     'pointermove',
     (e) => {
       if (e.pointerType !== 'mouse') return
-      targetX = e.clientX
-      targetY = e.clientY
+      ptrX = e.clientX
+      ptrY = e.clientY
+      aim()
       const over = !!(CONFIG.hoverOn && CONFIG.hoverSel && e.target?.closest?.(CONFIG.hoverSel))
       if (over !== overBtn) {
         overBtn = over
@@ -649,8 +662,10 @@ void main () {
     const el = CONFIG.shrinkOn && CONFIG.shrinkFrom ? document.querySelector(CONFIG.shrinkFrom) : null
     let t = el && el.getBoundingClientRect().top < innerHeight * 0.5 ? Math.min(Math.max(CONFIG.shrinkScale, 0.1), 1) : 1
     if (overBtn && CONFIG.hoverOn) t = Math.min(t, Math.min(Math.max(CONFIG.hoverScale, 0.1), 1))
+    t *= Math.min(Math.max(CONFIG.scale, 0.1), 2)
     if (t === mulTarget) return
     mulTarget = t
+    if (hasPointer) aim()
     if (presence > 0.004) start()
     else mul = t
   }
