@@ -306,7 +306,15 @@
 /* viền trắng 2px quanh ảnh thẻ — lớp phủ trên cùng nên shape đổi ảnh / parallax vẫn nằm dưới viền */
 .hs-quote__card::after{content:''; position:absolute; inset:0; border:2px solid #fff; pointer-events:none; z-index:2}
 /* line reveal (SplitText mask): chừa đỉnh / chân chữ khỏi bị mask cắt (dòng đặt sát) */
-.hs-quote .text-line-mask{padding-block:.12em .2em; margin-block:-.12em -.2em}
+/* bù cả về margin-bottom: hai margin âm trên / dưới của khung liền nhau bị GỘP
+   (margin collapsing) chỉ trừ được .2em -> dòng giãn .12em lúc tách, khựng lúc gộp lại */
+.hs-quote .text-line-mask{overflow:clip; padding-block:.12em .2em; margin-bottom:-.32em}
+.hs-quote .text-line{display:block}
+.hs-quote .text-line-mask:first-child{margin-top:-.12em}
+.hs-quote .text-line-mask:last-child{margin-bottom:-.2em}
+/* dòng đã tách không được tự xuống dòng lại (dòng vừa khít bề ngang lệch dưới 1px
+   là rớt chữ cuối, ví dụ "for me." của Huy Phan) */
+.hs-quote .text-line{white-space:nowrap}
 .hs-quote .is-out{pointer-events:none}
 .hs-quote__by{left:calc(540 * var(--u)); bottom:calc(104 * var(--u)); display:flex; align-items:center; gap:calc(24 * var(--u))}
 .hs-quote__by::before{content:''; width:2px; height:calc(40 * var(--u)); min-height:1.5rem; background:var(--lime)}

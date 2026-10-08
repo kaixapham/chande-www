@@ -542,11 +542,11 @@
         void q.bar.offsetWidth
         q.bar.style.animation = ''
       }
-      // Chữ đổi kiểu "line reveal" (GSAP SplitText, mask theo dòng): dòng cũ trượt
+      // Chữ đổi kiểu "line reveal" (GSAP, mask theo dòng): dòng cũ trượt
       // lên khuất, dòng mới trượt từ dưới lên, mỗi dòng trễ một nhịp; hai lượt gối
       // nhau 0.3s. Cũ / mới cùng tồn tại lúc chuyển -> khối mới là bản sao chồng
       // đúng chỗ (abs), xong thì gỡ khối cũ và trả chữ về thường (revert split).
-      // Không có GSAP / SplitText hoặc giảm chuyển động: mờ đi rồi hiện như cũ.
+      // Không có GSAP hoặc giảm chuyển động: mờ đi rồi hiện như cũ.
       let animating = false
       const lineTargets = (t) => [t.text, ...t.by.querySelectorAll('p')]
       const go = (d) => {
@@ -557,8 +557,7 @@
         swapBg(it)
         restartBar()
         const G = window.gsap
-        const ST = window.SplitText
-        if (!G || !ST || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (!G || matchMedia('(prefers-reduced-motion: reduce)').matches) {
           clearTimeout(busy)
           quote.classList.add('is-swap')
           busy = setTimeout(() => {
@@ -568,7 +567,6 @@
           return
         }
         animating = true
-        G.registerPlugin?.(ST)
         const old = cur
         const nxt = { text: old.text.cloneNode(false), by: old.by.cloneNode(true) }
         fillText(nxt, it)
@@ -576,11 +574,70 @@
         old.by.after(nxt.by)
         old.text.classList.add('is-out')
         old.by.classList.add('is-out')
-        const opt = { type: 'lines', mask: 'lines', linesClass: 'text-line' }
-        const sOut = lineTargets(old).map((el) => ST.create(el, opt))
-        const sIn = lineTargets(nxt).map((el) => ST.create(el, opt))
+        // Tách dòng theo ĐÚNG chỗ trình duyệt đang xuống dòng (đo từng ký tự bằng
+        // Range trên chữ đang hiện) rồi bọc mỗi dòng: .text-line-mask > .text-line.
+        // Không dùng SplitText: nó đo từng từ rời rồi cộng, mất co chữ giữa các từ ->
+        // dòng vừa khít rớt chữ cuối ("for me." của Huy Phan) và nhảy lúc trả về.
+        // Một dòng thì bọc nguyên con (giữ <a> tên). Khung che có padding chặn
+        // text-box: trim của khối -> đo chữ đầu trước / sau rồi kéo khung đầu về.
+        const firstGlyph = (el) => {
+          const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+          while (w.nextNode()) {
+            if (!w.currentNode.data.trim()) continue
+            const r = document.createRange()
+            r.setStart(w.currentNode, 0)
+            r.setEnd(w.currentNode, 1)
+            return r.getBoundingClientRect().top
+          }
+          return 0
+        }
+        const wrap = (nodes) => {
+          const m = document.createElement('div')
+          m.className = 'text-line-mask'
+          const l = document.createElement('div')
+          l.className = 'text-line'
+          l.append(...nodes)
+          m.append(l)
+          return m
+        }
+        const split = (el) => {
+          const html = el.innerHTML
+          const y0 = firstGlyph(el)
+          const nodes = []
+          const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+          while (tw.nextNode()) nodes.push(tw.currentNode)
+          const r = document.createRange()
+          let rows = [] // [{ top, text }]
+          if (nodes.length === 1 && el.firstChild === nodes[0]) {
+            const n = nodes[0]
+            for (let i = 0; i < n.length; i++) {
+              r.setStart(n, i)
+              r.setEnd(n, i + 1)
+              const b = r.getClientRects()[0]
+              const top = b ? Math.round(b.top) : rows.at(-1)?.top ?? 0
+              const row = rows.at(-1)
+              if (!row || (b && Math.abs(top - row.top) > b.height / 2)) rows.push({ top, text: n.data[i] })
+              else row.text += n.data[i]
+            }
+          } else rows = null
+          if (rows && rows.length > 1) el.replaceChildren(...rows.map((x) => wrap([document.createTextNode(x.text)])))
+          else el.replaceChildren(wrap([...el.childNodes]))
+          const first = el.querySelector('.text-line-mask')
+          const dy = firstGlyph(el) - y0
+          if (first && Math.abs(dy) > 0.1) first.style.marginTop = `${parseFloat(getComputedStyle(first).marginTop) - dy}px`
+          return {
+            lines: [...el.querySelectorAll('.text-line')],
+            revert() {
+              el.innerHTML = html
+            },
+          }
+        }
+        const sOut = lineTargets(old).map(split)
+        const sIn = lineTargets(nxt).map(split)
         const linesIn = sIn.flatMap((x) => x.lines)
-        G.set(linesIn, { yPercent: 110 })
+        // ±150% (source: 110%): khung che đã nới .12em / .2em cho nét chữ tràn, 110%
+        // chưa ra khỏi khung -> sót mẩu chữ thành sọc
+        G.set(linesIn, { yPercent: 150 })
         cur = nxt
         if (q.cap[0]) q.cap[0].textContent = it.num || String(i + 1).padStart(2, '0')
         if (q.cap[1]) q.cap[1].textContent = it.name || ''
@@ -593,7 +650,7 @@
             animating = false
           },
         })
-          .to(sOut.flatMap((x) => x.lines), { yPercent: -110, duration: 0.6, ease: 'power4.inOut', stagger: { amount: 0.25 } }, 0)
+          .to(sOut.flatMap((x) => x.lines), { yPercent: -150, duration: 0.6, ease: 'power4.inOut', stagger: { amount: 0.25 } }, 0)
           .to(linesIn, { yPercent: 0, duration: 0.7, ease: 'power4.inOut', stagger: { amount: 0.4 } }, '>-=0.3')
       }
       quote.querySelector('.hs-quote__nav--prev')?.addEventListener('click', () => go(-1))
