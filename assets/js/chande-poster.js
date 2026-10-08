@@ -25,14 +25,15 @@
 import { mount as mountStack, easeCurve, RUNTIME_DEFAULTS } from './paper-stack.js'
 
 const CONFIG = {
-  /** Quãng cuộn (vh) cho mỗi tờ đáp. Tờ đầu nằm sẵn nên n tờ = n − 1 quãng. */
+  /** Quãng cuộn (vh) cho mỗi tờ đáp (tờ đầu nằm sẵn thì n tờ = n − 1 quãng). */
   perSheet: 90,
   /** Đè lên RUNTIME_DEFAULTS của paper-stack — chỉ ghi khoá khác mặc định. */
   params: {
     // ratio 'custom' + cw/ch do fit() điền theo cỡ khối dính -> canvas phủ kín
     // bgImage: nền đường đồng mức (Figma "BG" — kem + topo 10%), phủ kín khung
     frame: { ratio: 'custom', cw: 16, ch: 9, bg: '#fffef8', margin: 0.06, bgImage: 'assets/img/home/poster-bg.webp' },
-    stack: { size: 0.84 },
+    // startLaid false: tờ 1 cũng bay vào khi cuộn (true = tờ đầu nằm sẵn trên bàn)
+    stack: { size: 0.84, startLaid: false },
     // Lenis đã làm mượt scroll trang. Để runtime trễ thêm một tầng nữa thì tờ giấy
     // đi sau ngón tay hai nhịp — mượt hai lần là ì.
     motion: { damping: 0 },
@@ -96,8 +97,9 @@ function mount(scope = document) {
   // afterLeave không còn trỏ tới nó nữa → rò WebGL context.
   destroy()
 
-  // tờ đầu nằm sẵn: n tờ = n − 1 quãng; outro thêm một quãng
-  const steps = Math.max(0, sheets.length - 1) + (CONFIG.params.outro?.on ? 1 : 0)
+  // mỗi tờ một quãng (tờ đầu nằm sẵn thì bớt một); outro thêm một quãng
+  const laid = CONFIG.params.stack?.startLaid ?? RUNTIME_DEFAULTS.stack.startLaid
+  const steps = Math.max(0, sheets.length - (laid ? 1 : 0)) + (CONFIG.params.outro?.on ? 1 : 0)
   section.style.setProperty('--poster-scroll', `${steps * CONFIG.perSheet}vh`)
 
   const api = mountStack(pin, { driver: 'page', params: params(pin), sheets })
