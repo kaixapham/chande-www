@@ -72,8 +72,8 @@ function readSheets(section) {
   // đè mất mặc định 1 -> kích thước NaN, tờ biến mất (đã dính ở tờ không ghi scale).
   return list
     .filter((s) => s && s.img)
-    .map(({ img, x, y, rot, scale, from }) =>
-      Object.fromEntries(Object.entries({ src: img, x, y, rot, scale, from }).filter(([, v]) => v !== undefined)),
+    .map(({ img, x, y, rot, scale, from, together }) =>
+      Object.fromEntries(Object.entries({ src: img, x, y, rot, scale, from, together }).filter(([, v]) => v !== undefined)),
     )
 }
 
@@ -99,7 +99,9 @@ function mount(scope = document) {
 
   // mỗi tờ một quãng (tờ đầu nằm sẵn thì bớt một); outro thêm một quãng
   const laid = CONFIG.params.stack?.startLaid ?? RUNTIME_DEFAULTS.stack.startLaid
-  const steps = Math.max(0, sheets.length - (laid ? 1 : 0)) + (CONFIG.params.outro?.on ? 1 : 0)
+  // số LƯỢT rơi (tờ "cùng lượt" — together — đi chung nấc với tờ trước), không phải số tờ
+  const turns = sheets.filter((t, i) => i === 0 || !t.together).length
+  const steps = Math.max(0, turns - (laid ? 1 : 0)) + (CONFIG.params.outro?.on ? 1 : 0)
   section.style.setProperty('--poster-scroll', `${steps * CONFIG.perSheet}vh`)
 
   const api = mountStack(pin, { driver: 'page', params: params(pin), sheets })

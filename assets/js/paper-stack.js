@@ -58,7 +58,8 @@ export const RUNTIME_DEFAULTS = {
   // bgImage (chande-www thêm): ảnh nằm phẳng trên mặt bàn, phủ kín khung; '' = chỉ màu bg
   frame: { ratio: '4:5', cw: 4, ch: 5, bg: '#171717', margin: 0.06, bgImage: '' },
   stack: { size: 0.74, thickness: 0.007, scatter: 0.3, startLaid: true },
-  entry: { from: 42, travel: 1.2, lift: 0.5, tilt: 24, spin: 7, air: 0.42, flySpeed: 1, fade: 0 },
+  // groupStagger (chande-www thêm): các tờ "cùng lượt" rơi lệch nhau bao nhiêu (phần một nấc)
+  entry: { from: 42, travel: 1.2, lift: 0.5, tilt: 24, spin: 7, air: 0.42, flySpeed: 1, fade: 0, groupStagger: 0.18 },
   curl: { bend: 88, twist: 0.16, cross: 0.35, flutter: 0.55, flutterFreq: 7 },
   physics: { push: 1, decay: 0.55, freq: 3.2, damping: 0.24, slide: 0.35, nudge: 0.12, yaw: 0.6, dip: 0.5 },
   motion: { mode: 'snap', anim: 1150, easing: 'power2', easeMode: 'inOut', sensitivity: 1, damping: 240, glide: 420, queue: 1 },
@@ -97,7 +98,8 @@ export const RUNTIME_DEFAULTS = {
 }
 
 /** Mặc định của một tờ: vị trí trên artboard tính theo phần khung (-0.5…0.5). */
-export const SHEET_DEFAULTS = { x: 0, y: 0, rot: 0, scale: 1, from: null }
+// together (chande-www thêm): true = rơi CÙNG NẤC cuộn với tờ ngay trước (nhiều ảnh một lượt)
+export const SHEET_DEFAULTS = { x: 0, y: 0, rot: 0, scale: 1, from: null, together: false }
 
 /* ------------------------------------------------------------------ tiện ích */
 
@@ -874,7 +876,32 @@ export function mount(container, config = {}) {
 
   /* ---- tư thế nghỉ + tiến độ ---- */
 
-  const progressOf = (index) => clamp01(state.head - index)
+  /*
+   * NẤC CUỘN của từng tờ (chande-www thêm "cùng lượt"): tờ có cfg.together rơi chung nấc
+   * với tờ trước. Nấc = số lượt, không còn = số tờ. Trong một lượt nhiều tờ, tờ thứ j
+   * lệch j × groupStagger và cả nhóm vẫn đáp xong trong đúng một nấc.
+   */
+  function slots() {
+    const out = []
+    let step = -1
+    for (let i = 0; i < sheets.length; i++) {
+      if (i === 0 || !sheets[i].cfg.together) out.push({ step: ++step, member: 0, size: 1 })
+      else {
+        const prev = out[i - 1]
+        out.push({ step: prev.step, member: prev.member + 1, size: 1 })
+      }
+    }
+    for (let i = out.length - 1; i >= 0; i--) out[i].size = i + 1 < out.length && out[i + 1].step === out[i].step ? out[i + 1].size : out[i].member + 1
+    return out
+  }
+  const stepCount = () => (sheets.length ? slots().at(-1).step + 1 : 0)
+  const progressOf = (index) => {
+    const sl = slots()[index]
+    if (!sl) return 0
+    const st = clamp(params.entry.groupStagger ?? 0, 0, 0.5)
+    const span = Math.max(0.2, 1 - (sl.size - 1) * st)
+    return clamp01((state.head - sl.step - sl.member * st) / span)
+  }
 
   /**
    * Sàn của `head`. Bật "tờ đầu nằm sẵn" thì chồng giấy không bao giờ rỗng — cuộn ngược
@@ -882,11 +909,11 @@ export function mount(container, config = {}) {
    */
   const minHead = () => (params.stack.startLaid && sheets.length ? 1 : 0)
 
-  /** Nấc cuối của `head`. Bật cảnh sau thì có thêm đúng một nấc: n → n+1. */
-  const maxHead = () => sheets.length + (params.outro.on && sheets.length ? 1 : 0)
+  /** Nấc cuối của `head`. Bật cảnh sau thì có thêm đúng một nấc: n → n+1 (n = số lượt). */
+  const maxHead = () => stepCount() + (params.outro.on && sheets.length ? 1 : 0)
 
   /** Tiến độ cảnh sau, 0 khi chồng giấy chưa bày xong. */
-  const outroProgress = () => (params.outro.on ? clamp01(state.head - sheets.length) : 0)
+  const outroProgress = () => (params.outro.on ? clamp01(state.head - stepCount()) : 0)
 
   /** Hướng bay + nửa đường chéo theo hướng đó. Phải có trước khi xét va đập. */
   function measure(s) {
@@ -1145,7 +1172,7 @@ export function mount(container, config = {}) {
     if (Math.abs(goal - from) < 1e-4) return
     state.lastForce = f
     // Nấc cuối là cảnh sau: nó có nhịp riêng, không dùng thời gian đáp của một tờ giấy.
-    const intoOutro = Math.min(from, goal) >= sheets.length - 1e-6 && sheets.length > 0
+    const intoOutro = Math.min(from, goal) >= stepCount() - 1e-6 && sheets.length > 0
     const T = intoOutro
       ? { air: 1, fly: Math.max(120, params.outro.dur), lay: 0, total: Math.max(120, params.outro.dur) }
       : phaseTimes(params, f, fmul)
@@ -1246,7 +1273,7 @@ export function mount(container, config = {}) {
   /* ---- kịch bản tự chạy (dùng khi xuất video) ---- */
 
   function playScript({ hold = 700, anim, from = null, tail = 900, onDone } = {}) {
-    const n = sheets.length
+    const n = stepCount()
     const start = from !== null ? from : params.stack.startLaid ? Math.min(1, n) : 0
     // Kịch bản dùng ĐÚNG cách chia chặng của lúc cuộn tay, chỉ khác là lực chốt 1×.
     const base = anim ? { ...params, motion: { ...params.motion, anim } } : params
@@ -1657,6 +1684,7 @@ export function mount(container, config = {}) {
     scrollBurst: () => burst,
     lastForce: () => state.lastForce,
     count: () => sheets.length,
+    steps: () => stepCount(),
     stepSnap,
     playScript,
     cancelScript,

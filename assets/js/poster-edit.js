@@ -47,6 +47,7 @@ const GROUPS = {
     from: ['Hướng bay tới (độ)', -180, 180, 1], travel: ['Quãng bay', 0, 3, 0.01], lift: ['Độ nhấc cao', 0, 2, 0.01],
     tilt: ['Chúi mũi (độ)', -90, 90, 1], spin: ['Xoay khi bay (độ)', -45, 45, 0.5], air: ['Phần thời gian bay', 0.02, 0.95, 0.01],
     flySpeed: ['Tốc độ bay', 0.2, 3, 0.05], fade: ['Hiện dần', 0, 1, 0.01],
+    groupStagger: ['Lệch giữa ảnh cùng lượt', 0, 0.5, 0.01],
   }],
   curl: ['Cong giấy', {
     bend: ['Độ cong (độ)', 0, 180, 1], twist: ['Vặn', -1, 1, 0.01], cross: ['Cong ngang', 0, 1, 0.01],
@@ -165,7 +166,13 @@ async function loadSheets() {
   const list = m ? JSON.parse(m[2]) : []
   return list.filter((s) => s && s.img)
 }
-const toRuntime = (s) => ({ src: shown(s.img), x: s.x ?? 0, y: s.y ?? 0, rot: s.rot ?? 0, scale: s.scale ?? 1, from: s.from ?? null })
+const toRuntime = (s) => ({ src: shown(s.img), x: s.x ?? 0, y: s.y ?? 0, rot: s.rot ?? 0, scale: s.scale ?? 1, from: s.from ?? null, together: !!s.together })
+// nấc rơi của từng tờ (tờ "cùng lượt" đi chung nấc với tờ trước)
+function turnOf(i) {
+  let t = -1
+  for (let k = 0; k <= i; k++) if (k === 0 || !sheets[k].together) t++
+  return t
+}
 
 /* ------------------------------------------------------------------ runtime -- */
 function fullParams() {
@@ -268,8 +275,9 @@ function sheetRow(s, i) {
   return `<div class="sheet${i === selected ? ' is-sel' : ''}" data-sheet="${i}">
     <div class="sheet__ph" data-pick="${i}" title="Bấm hoặc thả ảnh vào để thay" style="background-image:url('${shown(s.img)}')"><em>Thay ảnh</em></div>
     <div class="sheet__fields">
-      <div class="sheet__name"><span>${i + 1}. ${s.name || ''} · ${i === 0 && cur.params.stack.startLaid ? 'nằm sẵn' : `rơi ở nấc ${i}`}</span><span class="sheet__ops"><button type="button" data-mv="-1" data-i="${i}" title="Lên">↑</button><button type="button" data-mv="1" data-i="${i}" title="Xuống">↓</button><button type="button" data-del="${i}" title="Xoá tờ này">✕</button></span></div>
+      <div class="sheet__name"><span>${i + 1}. ${s.name || ''} · ${turnOf(i) === 0 && cur.params.stack.startLaid ? 'nằm sẵn' : `lượt ${turnOf(i) + 1}`}</span><span class="sheet__ops"><button type="button" data-addwith="${i}" title="Thêm ảnh rơi cùng lượt, ngay sau tờ này" style="width:auto; padding:0 5px">+ ảnh cùng lượt</button><button type="button" data-mv="-1" data-i="${i}" title="Lên">↑</button><button type="button" data-mv="1" data-i="${i}" title="Xuống">↓</button><button type="button" data-del="${i}" title="Xoá tờ này">✕</button></span></div>
       ${f('x', 0.005)}${f('y', 0.005)}${f('rot', 0.5)}${f('scale', 0.01)}${f('from', 1)}
+      ${i > 0 ? `<label class="sheet__with"><input type="checkbox" data-together="${i}" ${s.together ? 'checked' : ''}> cùng lượt với tờ trên</label>` : ''}
     </div>
   </div>`
 }
@@ -321,6 +329,13 @@ function applyLive(g) {
 
 document.addEventListener('input', (e) => {
   const t = e.target
+  if (t.dataset.together != null) {
+    const i = +t.dataset.together
+    if (t.checked) sheets[i].together = true
+    else delete sheets[i].together
+    resetSheets().then(() => build())
+    return markDirty()
+  }
   if (t.dataset.si != null) {
     const i = +t.dataset.si
     const k = t.dataset.sk
@@ -387,6 +402,14 @@ document.addEventListener('click', async (e) => {
     build()
     return markDirty()
   }
+  const aw = e.target.closest('[data-addwith]')
+  if (aw)
+    return pick(async (f) => {
+      const at = +aw.dataset.addwith + 1
+      sheets.splice(at, 0, { num: String(at + 1).padStart(2, '0'), name: `Poster ${at + 1}`, img: '', x: 0, y: 0, rot: 0, together: true })
+      await useImage(at, f)
+      select(at)
+    })
   if (e.target.closest('[data-add]'))
     return pick(async (f) => {
       const n = sheets.length
