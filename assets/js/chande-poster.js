@@ -67,9 +67,13 @@ function readSheets(section) {
   } catch {}
   // CMS lưu ảnh ở khoá `img`; runtime gọi là `src`. Vị trí (x, y, rot, scale, from)
   // copy từ tool paper-stack — thiếu thì runtime tự rải.
+  // Bỏ khoá không ghi: runtime trộn {...SHEET_DEFAULTS, ...tờ}, một `scale: undefined`
+  // đè mất mặc định 1 -> kích thước NaN, tờ biến mất (đã dính ở tờ không ghi scale).
   return list
     .filter((s) => s && s.img)
-    .map(({ img, x, y, rot, scale, from }) => ({ src: img, x, y, rot, scale, from }))
+    .map(({ img, x, y, rot, scale, from }) =>
+      Object.fromEntries(Object.entries({ src: img, x, y, rot, scale, from }).filter(([, v]) => v !== undefined)),
+    )
 }
 
 // Bộ thông số ĐẦY ĐỦ để gửi runtime (xem lưu ý applyParams ở đầu file).
