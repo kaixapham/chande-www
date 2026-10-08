@@ -696,8 +696,22 @@
       }
       quote.querySelector('.hs-quote__nav--prev')?.addEventListener('click', () => go(-1))
       quote.querySelector('.hs-quote__nav--next')?.addEventListener('click', () => go(1))
-      // hết một vòng thanh 6s thì sang cảm nhận kế
+      // hết một vòng thanh thì sang cảm nhận kế
       q.bar?.addEventListener('animationiteration', () => go(1))
+      // Thanh chỉ chạy khi section đã vào màn (≥ 60%): lần đầu chạy lại từ 0, ra khỏi
+      // màn thì dừng, quay lại chạy tiếp.
+      if (q.bar) {
+        let started = false
+        const barIo = new IntersectionObserver(([e]) => {
+          const on = e.isIntersecting
+          if (on && !started) {
+            started = true
+            restartBar()
+          }
+          q.bar.parentElement.classList.toggle('is-run', on)
+        }, { threshold: 0.6 })
+        barIo.observe(quote)
+      }
     }
 
     if (jobs.length) {
