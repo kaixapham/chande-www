@@ -8,6 +8,7 @@
  * Mắt nhắm sẵn. Khi đỉnh con mắt lên tới mốc `at` của màn (0.7 = đi vào màn
  * khoảng 30%) thì mở ra (mí tách từ giữa, hơi nảy), nhìn trái — phải — giữa một
  * lượt, rồi con ngươi NHÌN THEO CHUỘT và chớp ngẫu nhiên (thỉnh thoảng chớp đúp).
+ * Chuột đứng yên ~2.5 s thì mắt quay về nhìn quanh (lặp) tới khi chuột động lại.
  * Ra khỏi màn thì dừng.
  * Ảnh <img> giữ lại cho CMS nhưng ẩn khi bản SVG chạy.
  *
@@ -84,13 +85,28 @@
       })
     }
     const wait = (ms) => new Promise((r) => (timer = setTimeout(r, ms)))
+    let timer2 = 0
+    const wait2 = (ms) => new Promise((r) => (timer2 = setTimeout(r, ms)))
     const dx = RX * CONFIG.look
+    let px = 0 // vị trí con ngươi đang ghi tay (nhìn theo chuột)
+    let py = 0
 
     const blink = () =>
       play(lid, [{ transform: 'scaleY(1)' }, { transform: 'scaleY(0.06)', offset: 0.45 }, { transform: 'scaleY(1)' }],
         { duration: 260, easing: 'ease-in-out', fill: 'none' })
-    const lookTo = (x, y, ms = 420) =>
-      play(pupil, [{ transform: `translate(${x}px, ${y}px)` }], { duration: ms, easing: 'cubic-bezier(.5,0,.2,1)' })
+    // Đảo con ngươi; xong thì ghi vị trí cuối vào style rồi bỏ animation (nhìn
+    // quanh lặp mãi không chồng chất, nhìn theo chuột ghi tiếp từ đó).
+    const lookTo = (x, y, ms = 420) => {
+      const a = pupil.animate([{ transform: `translate(${x}px, ${y}px)` }],
+        { duration: ms, easing: 'cubic-bezier(.5,0,.2,1)', fill: 'forwards' })
+      anims.push(a)
+      return a.finished.then(() => {
+        a.commitStyles()
+        a.cancel()
+        px = x
+        py = y
+      }).catch(() => {}).finally(() => (anims = anims.filter((v) => v !== a)))
+    }
 
     // Nhìn quanh một lượt (trái — phải — giữa), xong chuyển sang nhìn theo chuột.
     async function intro() {
@@ -104,6 +120,7 @@
       following = true
       follow()
       blinks()
+      armIdle()
     }
 
     // Nhìn theo chuột: hướng từ tâm mắt tới con trỏ, đi xa bao nhiêu theo khoảng
@@ -111,21 +128,66 @@
     let following = false
     let mx = null
     let my = null
-    let px = 0
-    let py = 0
     let raf = 0
+    // Con trỏ đứng yên IDLE ms -> thôi nhìn theo, quay về nhìn quanh (trái — phải
+    // — giữa, lặp). Động chuột lại thì bỏ dở, nhìn theo tiếp từ chỗ đang nhìn.
+    const IDLE = 2500
+    let idleTimer = 0
+    let idling = false
+    let idleId = 0
+    const pupilAnims = () => anims.filter((a) => a.effect?.target === pupil)
+    async function idleLoop() {
+      const id = ++idleId
+      const on = () => idling && id === idleId && live === me && inView
+      while (on()) {
+        await lookTo(-dx, -1.5)
+        if (!on()) break
+        await wait2(650)
+        if (!on()) break
+        await lookTo(dx, 1)
+        if (!on()) break
+        await wait2(700)
+        if (!on()) break
+        await lookTo(0, 0, 350)
+        if (!on()) break
+        await wait2(900)
+      }
+    }
+    const goIdle = () => {
+      if (!following || idling) return
+      idling = true
+      cancelAnimationFrame(raf)
+      raf = 0
+      idleLoop()
+    }
+    const armIdle = () => {
+      clearTimeout(idleTimer)
+      idleTimer = setTimeout(goIdle, IDLE)
+    }
     const onMove = (e) => {
       mx = e.clientX
       my = e.clientY
+      if (idling) {
+        idling = false
+        idleId++
+        // lấy vị trí con ngươi đang ở giữa chừng animation rồi mới bỏ animation
+        const m = new DOMMatrix(getComputedStyle(pupil).transform)
+        px = m.e
+        py = m.f
+        pupil.style.transform = `translate(${px}px, ${py}px)`
+        pupilAnims().forEach((a) => a.cancel())
+        anims = anims.filter((a) => a.effect?.target !== pupil)
+      }
+      if (following) armIdle()
       follow()
     }
     function follow() {
-      if (raf || !following || !inView || live !== me) return
+      if (raf || !following || idling || !inView || live !== me) return
       raf = requestAnimationFrame(step)
     }
     function step() {
       raf = 0
-      if (!following || !inView || live !== me) return
+      if (!following || idling || !inView || live !== me) return
       let gx = 0
       let gy = 0
       if (mx !== null) {
@@ -177,7 +239,8 @@
       inView = r.bottom > 0 && r.top < innerHeight
       if (!opened && r.top < innerHeight * CONFIG.at && r.bottom > 0) open()
       else if (following && inView && !was) {
-        follow()
+        if (idling) idleLoop()
+        else follow()
         blinks()
       }
     }
@@ -191,6 +254,8 @@
       removeEventListener('scroll', check)
       removeEventListener('resize', check)
       clearTimeout(timer)
+      clearTimeout(timer2)
+      clearTimeout(idleTimer)
       anims.forEach((a) => a.cancel())
       anims = []
       inView = false
