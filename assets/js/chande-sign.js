@@ -26,6 +26,9 @@
     duration: 1.4, // giây cho cả chữ ký (bút chạy đều theo chiều dài viền)
     cover: 0.14, // bề dày bút (theo cỡ chữ) — đủ phủ thân nét khi chạy dọc viền
     ease: 'cubic-bezier(.45,.05,.55,.95)', // nhịp bút của từng viền
+    // Gọt mỏng nét (feMorphology erode, đơn vị = cỡ chữ 100). Font chỉ có một độ
+    // đậm; nét script dày 1.25 (nét mảnh) … 6 (nét đậm) -> gọt > ~0.6 là nét mảnh đứt.
+    thin: 0.45,
   }
   window.CHANDE_SETTINGS_APPLY?.('sign', CONFIG)
   const DEFAULTS = structuredClone(CONFIG)
@@ -126,6 +129,21 @@
     fill.setAttribute('d', d)
     fill.setAttribute('fill', 'currentColor')
     fill.setAttribute('mask', `url(#${id})`)
+    if (CONFIG.thin > 0) {
+      const f = document.createElementNS(ns, 'filter')
+      f.id = `${id}t`
+      f.setAttribute('filterUnits', 'userSpaceOnUse') // vùng lọc = cả khung, không cắt đuôi chữ
+      f.setAttribute('x', vb[0])
+      f.setAttribute('y', vb[1])
+      f.setAttribute('width', vb[2])
+      f.setAttribute('height', vb[3])
+      const m = document.createElementNS(ns, 'feMorphology')
+      m.setAttribute('operator', 'erode')
+      m.setAttribute('radius', CONFIG.thin)
+      f.append(m)
+      defs.append(f)
+      fill.setAttribute('filter', `url(#${f.id})`)
+    }
     svg.append(defs, fill)
     box.append(svg)
 

@@ -261,6 +261,7 @@
         { path: 'enabled', label: 'Bật hiệu ứng viết', type: 'bool' },
         { path: 'duration', label: 'Thời gian viết cả chữ ký (giây)', type: 'range', min: 0.4, max: 4, step: 0.1 },
         { path: 'cover', label: 'Độ dày bút (phủ thân nét)', type: 'range', min: 0.04, max: 0.3, step: 0.01 },
+        { path: 'thin', label: 'Độ mảnh nét (gọt; > 0.6 nét mảnh bắt đầu đứt)', type: 'range', min: 0, max: 1.2, step: 0.05 },
       ] },
 
     // ---- Title Effect: chữ tô màu dần theo cuộn (chande-titlefx.js) ----

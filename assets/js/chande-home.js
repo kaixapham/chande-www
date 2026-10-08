@@ -606,6 +606,7 @@
         animating = true
         const old = cur
         const nxt = { text: old.text.cloneNode(false), by: old.by.cloneNode(true) }
+        nxt.by.classList.add('is-enter') // vạch lime chạy từ dưới lên cùng chữ mới
         fillText(nxt, it)
         old.text.after(nxt.text)
         old.by.after(nxt.by)
@@ -684,6 +685,8 @@
           onComplete: () => {
             old.text.remove()
             old.by.remove()
+            // gỡ sau khi vạch chạy xong (đổi tên animation khi hover không làm chạy lại lượt vào)
+            setTimeout(() => nxt.by.classList.remove('is-enter'), 900)
             sIn.forEach((x) => x.revert())
             animating = false
           },
