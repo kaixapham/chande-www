@@ -820,6 +820,93 @@
       )
     }
 
+    // About: rê vào từng vai trò -> số bên phải = thứ tự (01…), ảnh bên trái đổi bằng
+    // đoàn shape của 4 ảnh hero (CHANDE_REVEAL.play; lượt đang chạy không cắt ngang,
+    // xong thì sang thẳng vai trò mới nhất), vai trò đang chọn gạch chân. Rời chuột
+    // thì giữ vai trò vừa chọn. Mở trang chọn sẵn vai trò ứng với số đang ghi (03).
+    const roles = scope.querySelector('[data-role-photos]')
+    const roleImg = scope.querySelector('.hs-about__friends')
+    const roleNum = scope.querySelector('.hs-about__count')
+    if (roles && roleImg) {
+      let photos = []
+      try {
+        photos = JSON.parse(roles.dataset.photos || '[]')
+      } catch {}
+      photos.forEach((src) => (new Image().src = src))
+      const items = [...roles.querySelectorAll('li')]
+      const photoOf = (i) => photos.length ? photos[i % photos.length] : roleImg.getAttribute('src')
+      const cover = (src, w, h) =>
+        new Promise((res) => {
+          const im = new Image()
+          im.onload = () => {
+            const c = document.createElement('canvas')
+            c.width = w
+            c.height = h
+            const k = Math.max(w / im.naturalWidth, h / im.naturalHeight)
+            c.getContext('2d').drawImage(im, (w - im.naturalWidth * k) / 2, (h - im.naturalHeight * k) / 2, im.naturalWidth * k, im.naturalHeight * k)
+            res(c)
+          }
+          im.onerror = () => res(null)
+          im.src = src
+        })
+      let want = ''
+      let running = false
+      const pump = async () => {
+        if (running) return
+        running = true
+        try {
+          while (want && roleImg.getAttribute('src') !== want) {
+            const src = want
+            const R = window.CHANDE_REVEAL
+            if (!R?.play || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+              roleImg.src = src
+              break
+            }
+            const dpr = Math.min(devicePixelRatio || 1, 2)
+            const w = Math.max(1, Math.round(roleImg.offsetWidth * dpr))
+            const h = Math.max(1, Math.round(roleImg.offsetHeight * dpr))
+            const [from, to] = await Promise.all([cover(roleImg.currentSrc || roleImg.src, w, h), cover(src, w, h)])
+            if (!to) {
+              roleImg.src = src
+              break
+            }
+            // khung tạm chồng khít ảnh, chép cả parallax (translate / scale / clip-path)
+            const box = document.createElement('div')
+            Object.assign(box.style, {
+              position: 'absolute', left: `${roleImg.offsetLeft}px`, top: `${roleImg.offsetTop}px`,
+              width: `${roleImg.offsetWidth}px`, height: `${roleImg.offsetHeight}px`, pointerEvents: 'none',
+              translate: roleImg.style.translate, scale: roleImg.style.scale, clipPath: roleImg.style.clipPath,
+            })
+            roleImg.after(box)
+            try {
+              await R.play(box, { from, to, levels: 0 }).finished
+              roleImg.src = src
+              await roleImg.decode?.().catch(() => {})
+            } finally {
+              box.remove()
+            }
+          }
+        } finally {
+          running = false
+        }
+      }
+      let active = null
+      const select = (li, animate = true) => {
+        if (!li || li === active) return
+        active?.classList.remove('is-active')
+        active = li
+        li.classList.add('is-active')
+        const i = items.indexOf(li)
+        if (roleNum) roleNum.textContent = String(i + 1).padStart(2, '0')
+        want = photoOf(i)
+        if (animate) pump()
+        else roleImg.src = want
+      }
+      const start = Math.max(0, Math.min(items.length - 1, (parseInt(roleNum?.textContent, 10) || 1) - 1))
+      select(items[start], false)
+      roles.addEventListener('pointerover', (e) => select(e.target.closest?.('li')))
+    }
+
     scope.querySelectorAll('[role=tablist]').forEach((list) =>
       list.addEventListener('click', (e) => {
         const tab = e.target.closest('[role=tab]')
