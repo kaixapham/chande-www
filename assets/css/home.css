@@ -393,7 +393,10 @@
 .hs-foot__hr{left:calc(726 * var(--u)); right:0; top:calc(1021 * var(--u)); height:1px; background:rgba(255,255,255,.08)}
 .hs-foot__vr{left:calc(1323 * var(--u)); top:calc(752 * var(--u)); width:1px; height:calc(269 * var(--u)); background:rgba(255,255,255,.08)}
 .hs-foot__legal{left:calc(758 * var(--u)); top:calc(1045 * var(--u)); width:calc(1130 * var(--u)); display:flex; justify-content:space-between; font-size:.875rem; color:#fff}
-.hs-foot__legal p{margin:0; opacity:.3}
+.hs-foot__legal p{margin:0; color:rgba(255,255,255,.3)}
+/* credit hover: sáng neon như link footer (chữ code + gạch chân: chande-scramble.js) */
+.hs-foot__legal a{color:inherit; text-decoration:none}
+.hs-foot__legal [data-scramble]:hover{color:var(--lime)}
 
 /* Chân trang vừa ĐÚNG 1 màn hình, tính cả thanh menu 80px đè lên trên cùng:
    - cụm dưới (CTA, effect, panel link, bản quyền) bám ĐÁY, giữ nguyên số đo Figma
