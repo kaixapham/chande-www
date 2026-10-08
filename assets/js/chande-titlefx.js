@@ -44,9 +44,12 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
 
   const style = document.createElement('style')
-  // .hs-about__statement span{display:block} sẽ biến từng từ thành khối -> ép inline
+  // .hs-about__statement span{display:block} sẽ biến từng từ thành khối -> ép inline.
+  // background-clip:text chỉ tô trong hộp của từ, mà nét chữ Phudu tràn khỏi hộp
+  // (dòng đặt rất sát; đỉnh A, mép phải P) -> nới hộp bằng padding, margin âm bù
+  // lại nên chữ không xê dịch. Toạ độ gradient đo theo hộp đã nới nên vẫn khớp.
   style.textContent =
-    '.tfx-w{display:inline !important}' +
+    '.tfx-w{display:inline !important; padding:.25em .15em; margin:0 -.15em}' +
     '.tfx-on .tfx-w{color:transparent; -webkit-background-clip:text; background-clip:text; background-repeat:no-repeat; image-rendering:pixelated}'
   document.head.appendChild(style)
 
@@ -118,7 +121,7 @@
     t.words.forEach((w) => {
       const r = w.el.getBoundingClientRect()
       const top = r.top - base.top
-      let ln = lines.find((l) => Math.abs(l.top - top) < r.height / 2)
+      let ln = lines.find((l) => Math.abs(l.top - top) < r.height / 4)
       if (!ln) {
         ln = { top, h: r.height, left: Infinity, right: -Infinity, p: t.lines?.[lines.length]?.p ?? 0 }
         lines.push(ln)
