@@ -357,7 +357,7 @@
 .cl.is-done .cl__cell--nav{cursor:pointer}
 .cl.is-done .cl__cell--nav:hover, .cl.is-done .cl__menu:hover{box-shadow:inset 0 0 0 100vmax rgba(0,0,0,.18)}
 .cl__navlink{position:relative; width:fit-content}
-.cl__navlink::after{content:''; position:absolute; left:0; right:0; top:calc(100% + ${em(6)}); height:${em(2)};
+.cl__navlink::after{content:''; position:absolute; left:0; right:0; top:calc(100% + ${em(6)}); height:${em(0.5)};
   background:currentColor; transform:scaleX(0); transform-origin:right center;
   transition:transform .45s cubic-bezier(.65,0,.35,1)}
 .cl.is-done .cl__cell--nav:hover .cl__navlink::after{transform:scaleX(1); transform-origin:left center}

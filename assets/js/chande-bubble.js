@@ -72,6 +72,10 @@
     shrinkOn: true,
     shrinkFrom: '.hs-poster',
     shrinkScale: 0.5,
+    // Trỏ vào nút / link: giọt co còn hoverScale (so với cỡ gốc), rời ra thì về lại.
+    hoverOn: true,
+    hoverScale: 0.25,
+    hoverSel: 'a, button, [role="button"], [role="tab"], .cl__cell--nav, label, select, input, textarea',
   }
   // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
   window.CHANDE_SETTINGS_APPLY?.('bubble', CONFIG)
@@ -443,6 +447,7 @@ void main () {
   // Hệ số thu nhỏ hiện tại (đuổi theo mulTarget mỗi khung) — xem shrinkOn.
   let mul = 1
   let mulTarget = 1
+  let overBtn = false // con trỏ đang trên nút / link (hoverSel)
   const effSize = (m = mul) => Math.max(CONFIG.size, 4) * m
   const effBlend = (m = mul) => Math.max(CONFIG.blend, 0.5) / m
 
@@ -614,6 +619,11 @@ void main () {
       if (e.pointerType !== 'mouse') return
       targetX = e.clientX
       targetY = e.clientY
+      const over = !!(CONFIG.hoverOn && CONFIG.hoverSel && e.target?.closest?.(CONFIG.hoverSel))
+      if (over !== overBtn) {
+        overBtn = over
+        checkShrink()
+      }
       if (!hasPointer) {
         headX = targetX
         headY = targetY
@@ -633,10 +643,12 @@ void main () {
   }
   document.documentElement.addEventListener('pointerleave', leave)
   addEventListener('blur', leave)
-  // Thu nhỏ theo vị trí cuộn (section shrinkFrom). Giọt đang ẩn thì đặt luôn.
+  // Thu nhỏ theo vị trí cuộn (section shrinkFrom) và khi trỏ vào nút (hoverSel) —
+  // lấy mức nhỏ hơn. Giọt đang ẩn thì đặt luôn.
   function checkShrink() {
     const el = CONFIG.shrinkOn && CONFIG.shrinkFrom ? document.querySelector(CONFIG.shrinkFrom) : null
-    const t = el && el.getBoundingClientRect().top < innerHeight * 0.5 ? Math.min(Math.max(CONFIG.shrinkScale, 0.1), 1) : 1
+    let t = el && el.getBoundingClientRect().top < innerHeight * 0.5 ? Math.min(Math.max(CONFIG.shrinkScale, 0.1), 1) : 1
+    if (overBtn && CONFIG.hoverOn) t = Math.min(t, Math.min(Math.max(CONFIG.hoverScale, 0.1), 1))
     if (t === mulTarget) return
     mulTarget = t
     if (presence > 0.004) start()
