@@ -543,6 +543,60 @@
           line.append(nm)
         })
       })
+      // Khung đang mở mà trỏ sang tên khác: đổi ảnh bằng đoàn shape của 4 ảnh hero
+      // (CHANDE_REVEAL.play, như ảnh thẻ Cảm nhận). Một lượt đang chạy thì KHÔNG cắt
+      // ngang (cắt là giật về ảnh cũ) — ghi lại tên mới nhất, chạy xong thì sang
+      // thẳng ảnh đó. Khung đang đóng thì đặt ảnh rồi mở khung như cũ.
+      const coverCanvas = (src, w, h) =>
+        new Promise((res) => {
+          const im = new Image()
+          im.onload = () => {
+            const c = document.createElement('canvas')
+            c.width = w
+            c.height = h
+            const k = Math.max(w / im.naturalWidth, h / im.naturalHeight)
+            c.getContext('2d').drawImage(im, (w - im.naturalWidth * k) / 2, (h - im.naturalHeight * k) / 2, im.naturalWidth * k, im.naturalHeight * k)
+            res(c)
+          }
+          im.onerror = () => res(null)
+          im.src = src
+        })
+      let want = '' // ảnh cần hiện (tên đang trỏ)
+      let running = false
+      const pump = async () => {
+        const R = window.CHANDE_REVEAL
+        if (running) return
+        running = true
+        try {
+          while (want && face.classList.contains('is-on') && img.getAttribute('src') !== want) {
+            const src = want
+            if (!R?.play || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+              img.src = src
+              break
+            }
+            const dpr = Math.min(devicePixelRatio || 1, 2)
+            const w = Math.max(1, Math.round(img.offsetWidth * dpr))
+            const h = Math.max(1, Math.round(img.offsetHeight * dpr))
+            const [from, to] = await Promise.all([coverCanvas(img.currentSrc || img.src, w, h), coverCanvas(src, w, h)])
+            if (!to) {
+              img.src = src
+              break
+            }
+            const box = document.createElement('div')
+            box.style.cssText = 'position:absolute;inset:0;pointer-events:none'
+            face.append(box)
+            try {
+              await R.play(box, { from, to, levels: 0 }).finished
+              img.src = src
+              await img.decode?.().catch(() => {})
+            } finally {
+              box.remove()
+            }
+          }
+        } finally {
+          running = false
+        }
+      }
       let active = null
       foot.addEventListener('pointerover', (e) => {
         const nm = e.target.closest('.nm')
@@ -550,14 +604,18 @@
         active?.classList.remove('is-active')
         active = nm
         nm.classList.add('is-active')
-        img.src = nm.dataset.photo
         img.alt = nm.textContent
-        face.classList.add('is-on')
+        want = nm.dataset.photo
+        if (!face.classList.contains('is-on')) {
+          img.src = want
+          face.classList.add('is-on')
+        } else pump()
       })
       foot.querySelectorAll('.names').forEach((block) =>
         block.addEventListener('pointerleave', () => {
           active?.classList.remove('is-active')
           active = null
+          want = ''
           face.classList.remove('is-on')
         }),
       )

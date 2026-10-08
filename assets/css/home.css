@@ -368,9 +368,13 @@
 .hs-foot__face{left:calc(32 * var(--u)); top:calc(356 * var(--u)); width:calc(235 * var(--u)); height:calc(272 * var(--u)); overflow:hidden;
   clip-path:inset(100% 0 0 0); transition:clip-path .45s cubic-bezier(.76,0,.24,1)}
 .hs-foot__face.is-on{clip-path:inset(0)}
+.hs-foot__col > .hs-foot__face{position:relative} /* chứa lớp shape khi đổi ảnh */
 .hs-foot__face img{width:100%; height:100%; object-fit:cover}
 /* Tên hover được (chande-home.js bọc từng tên thành .nm) */
-.names .nm{display:inline; cursor:default; transition:color .15s}
+.names .nm{display:inline; cursor:default; transition:color .15s, background-size .4s cubic-bezier(.65,0,.35,1);
+  background:linear-gradient(currentColor, currentColor) right 100% / 0% 1px no-repeat}
+/* trỏ vào tên: gạch chân chạy trái -> phải */
+.names .nm:hover, .names .nm.is-active{background-size:100% 1px; background-position:left 100%}
 .names .nm:hover, .names .nm.is-active{color:#fff}
 .hs-foot__logo{left:calc(1018 * var(--u)); top:calc(28 * var(--u)); width:calc(870 * var(--u)); height:auto}
 .hs-foot__field{left:0; top:calc(752 * var(--u)); width:calc(726 * var(--u)); height:calc(328 * var(--u))}
