@@ -42,6 +42,7 @@ window.CHANDE_SETTINGS = {
   "hero.retract": 750,
   "hero.revealStagger": 240,
   "hero.swapDuration": 540,
+  "poster.params.light.key": 2.25,
   "reveal.speed": 0.4,
   "tilt.damping": 9,
   "tilt.drag": 0.6,
