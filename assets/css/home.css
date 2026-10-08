@@ -313,7 +313,7 @@
 .hs-quote__by:hover .hs-quote__name{background-size:100% 1px}
 .hs-quote__name[href]{cursor:pointer}
 .hs-quote__bar{left:calc(492 * var(--u)); bottom:0; width:calc(1316 * var(--u)); height:calc(56 * var(--u)); background:#1c2e22; overflow:hidden}
-.hs-quote__bar span{position:absolute; inset:0; background:var(--lime); transform-origin:0 50%; animation:hs-bar 6s linear infinite}
+.hs-quote__bar span{position:absolute; inset:0; background:var(--lime); transform-origin:0 50%; animation:hs-bar 9s linear infinite}
 @keyframes hs-bar{from{transform:scaleX(0)} to{transform:scaleX(1)}}
 .is-off .hs-quote__bar span{animation-play-state:paused}
 .hs-quote__nav{bottom:0; width:calc(56 * var(--u)); height:calc(56 * var(--u)); display:grid; place-items:center; background:var(--lime); border:0; cursor:pointer}
