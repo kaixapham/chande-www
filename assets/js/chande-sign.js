@@ -28,7 +28,7 @@
     ease: 'cubic-bezier(.45,.05,.55,.95)', // nhịp bút của từng viền
     // Gọt mỏng nét (feMorphology erode, đơn vị = cỡ chữ 100). Font chỉ có một độ
     // đậm; nét script dày 1.25 (nét mảnh) … 6 (nét đậm) -> gọt > ~0.6 là nét mảnh đứt.
-    thin: 0.3, // dày hơn bản 0.45 cũ 15% (nét trung bình 2.1 -> 2.4)
+    thin: 0.18, // nét trung bình ~2.64 (bản 0.45: 2.1 -> +15% 0.3: 2.4 -> +10%)
   }
   window.CHANDE_SETTINGS_APPLY?.('sign', CONFIG)
   const DEFAULTS = structuredClone(CONFIG)
