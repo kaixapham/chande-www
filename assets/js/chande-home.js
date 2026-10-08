@@ -389,10 +389,59 @@
         }
         if (q.cap[0]) q.cap[0].textContent = it.num || String(idx + 1).padStart(2, '0')
         if (q.cap[1]) q.cap[1].textContent = it.name || ''
-        if (it.img && q.img.getAttribute('src') !== it.img) q.img.src = it.img
         q.img.alt = it.name || ''
       }
+      const setImg = (src) => {
+        if (src && q.img.getAttribute('src') !== src) q.img.src = src
+      }
+      // Đổi ảnh thẻ bằng đoàn shape của 4 ảnh hero (CHANDE_REVEAL.play) — như cặp
+      // ảnh Agenda: ảnh cũ / mới vẽ cover thành canvas đúng cỡ khung, shape chạy
+      // trong khung tạm chồng khít lên ảnh. Không có REVEAL / giảm chuyển động thì
+      // đổi thẳng.
+      const coverCanvas = (src, w, h) =>
+        new Promise((res) => {
+          const im = new Image()
+          im.onload = () => {
+            const c = document.createElement('canvas')
+            c.width = w
+            c.height = h
+            const k = Math.max(w / im.naturalWidth, h / im.naturalHeight)
+            c.getContext('2d').drawImage(im, (w - im.naturalWidth * k) / 2, (h - im.naturalHeight * k) / 2, im.naturalWidth * k, im.naturalHeight * k)
+            res(c)
+          }
+          im.onerror = () => res(null)
+          im.src = src
+        })
+      let imgBusy = Promise.resolve()
+      const swapImg = (src) => {
+        const R = window.CHANDE_REVEAL
+        if (!src || q.img.getAttribute('src') === src) return
+        if (!R?.play || matchMedia('(prefers-reduced-motion: reduce)').matches) return setImg(src)
+        imgBusy = imgBusy.then(async () => {
+          const img = q.img
+          const dpr = Math.min(devicePixelRatio || 1, 2)
+          const w = Math.max(1, Math.round(img.offsetWidth * dpr))
+          const h = Math.max(1, Math.round(img.offsetHeight * dpr))
+          const [from, to] = await Promise.all([coverCanvas(img.currentSrc || img.src, w, h), coverCanvas(src, w, h)])
+          if (!to) return setImg(src)
+          const box = document.createElement('div')
+          Object.assign(box.style, {
+            position: 'absolute', left: `${img.offsetLeft}px`, top: `${img.offsetTop}px`,
+            width: `${img.offsetWidth}px`, height: `${img.offsetHeight}px`, pointerEvents: 'none',
+            translate: img.style.translate, scale: img.style.scale, clipPath: img.style.clipPath,
+          })
+          img.after(box)
+          try {
+            await R.play(box, { from, to, levels: 0 }).finished
+            setImg(src)
+            await img.decode?.().catch(() => {})
+          } finally {
+            box.remove()
+          }
+        })
+      }
       render(list[0], 0)
+      setImg(list[0].img)
 
       // Hover cụm tên: cả hai dòng chạy hiệu ứng "giải mã" — ký tự code ngẫu nhiên
       // chốt dần từ trái sang phải về chữ thật.
@@ -439,6 +488,7 @@
         const it = list[i]
         clearTimeout(busy)
         quote.classList.add('is-swap')
+        swapImg(it.img) // ảnh chạy shape ngay, chữ đổi sau nhịp mờ
         busy = setTimeout(() => {
           render(it, i)
           quote.classList.remove('is-swap')
