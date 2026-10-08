@@ -22,7 +22,7 @@
  *
  * Không có WebGL hoặc danh sách rỗng thì section giữ nguyên ảnh tĩnh `poster.webp`.
  */
-import { mount as mountStack, easeCurve } from './paper-stack.js'
+import { mount as mountStack, easeCurve, RUNTIME_DEFAULTS } from './paper-stack.js'
 
 const CONFIG = {
   /** Quãng cuộn (vh) cho mỗi tờ đáp. Tờ đầu nằm sẵn nên n tờ = n − 1 quãng. */
@@ -30,7 +30,8 @@ const CONFIG = {
   /** Đè lên RUNTIME_DEFAULTS của paper-stack — chỉ ghi khoá khác mặc định. */
   params: {
     // ratio 'custom' + cw/ch do fit() điền theo cỡ khối dính -> canvas phủ kín
-    frame: { ratio: 'custom', cw: 16, ch: 9, bg: '#fffef8', margin: 0.06 },
+    // bgImage: nền đường đồng mức (Figma "BG" — kem + topo 10%), phủ kín khung
+    frame: { ratio: 'custom', cw: 16, ch: 9, bg: '#fffef8', margin: 0.06, bgImage: 'assets/img/home/poster-bg.webp' },
     stack: { size: 0.84 },
     // Lenis đã làm mượt scroll trang. Để runtime trễ thêm một tầng nữa thì tờ giấy
     // đi sau ngón tay hai nhịp — mượt hai lần là ì.
@@ -40,6 +41,13 @@ const CONFIG = {
     outro: { on: true },
   },
 }
+
+// Thông số đã Lưu từ trang chỉnh riêng (poster-edit.html) nằm trong chande-settings.js
+// dạng "poster.params.<nhóm>.<khoá>" / "poster.perSheet". APPLY chỉ ghi vào nhóm ĐÃ
+// có -> dựng đủ nhóm của runtime trước (rỗng = giữ mặc định runtime).
+for (const g of Object.keys(RUNTIME_DEFAULTS)) CONFIG.params[g] ??= {}
+const CODE = structuredClone(CONFIG) // mặc định trong code (trang chỉnh so với bản này)
+window.CHANDE_SETTINGS_APPLY?.('poster', CONFIG)
 
 let live = null
 
@@ -205,6 +213,8 @@ if (window.barba?.hooks) {
 
 window.CHANDE_POSTER = {
   config: CONFIG,
+  defaults: CODE,
+  readSheets,
   mount,
   destroy,
   get api() {

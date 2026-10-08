@@ -55,7 +55,8 @@ export const EASE_MODES = [
 
 /** Mặc định của runtime. state.js của tool phủ thêm phần `output` lên trên. */
 export const RUNTIME_DEFAULTS = {
-  frame: { ratio: '4:5', cw: 4, ch: 5, bg: '#171717', margin: 0.06 },
+  // bgImage (chande-www thêm): ảnh nền phủ kín khung (cover) vẽ lên màu bg; '' = chỉ màu
+  frame: { ratio: '4:5', cw: 4, ch: 5, bg: '#171717', margin: 0.06, bgImage: '' },
   stack: { size: 0.74, thickness: 0.007, scatter: 0.3, startLaid: true },
   entry: { from: 42, travel: 1.2, lift: 0.5, tilt: 24, spin: 7, air: 0.42, flySpeed: 1, fade: 0 },
   curl: { bend: 88, twist: 0.16, cross: 0.35, flutter: 0.55, flutterFreq: 7 },
@@ -451,6 +452,63 @@ export function mount(container, config = {}) {
 
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(params.frame.bg)
+
+  /*
+   * Nền ảnh (frame.bgImage — chande-www thêm, tool gốc không có): vẽ màu bg rồi ảnh
+   * phủ kín khung kiểu cover lên một canvas đúng cỡ khung vẽ, dùng làm
+   * scene.background (CanvasTexture). Sàn chỉ hứng bóng nên bóng giấy vẫn rơi lên ảnh.
+   * Vẽ lại khi đổi cỡ / đổi ảnh / đổi màu bg.
+   */
+  let bgSrc = ''
+  let bgImg = null
+  let bgCanvas = null
+  let bgTex = null
+  function drawBackground() {
+    const src = params.frame.bgImage || ''
+    if (!src) {
+      bgSrc = ''
+      scene.background = new THREE.Color(params.frame.bg)
+      return
+    }
+    if (src !== bgSrc) {
+      bgSrc = src
+      bgImg = new Image()
+      bgImg.crossOrigin = 'anonymous'
+      bgImg.onload = () => {
+        drawBackground()
+        dirty = true
+      }
+      bgImg.src = src
+    }
+    if (!bgImg || !bgImg.complete || !bgImg.naturalWidth) {
+      scene.background = new THREE.Color(params.frame.bg)
+      return
+    }
+    const pr = renderer.getPixelRatio()
+    const w = Math.max(2, Math.round((viewW || 2) * pr))
+    const h = Math.max(2, Math.round((viewH || 2) * pr))
+    bgCanvas ??= document.createElement('canvas')
+    if (bgCanvas.width !== w || bgCanvas.height !== h) {
+      bgCanvas.width = w
+      bgCanvas.height = h
+    }
+    const g = bgCanvas.getContext('2d')
+    g.fillStyle = params.frame.bg
+    g.fillRect(0, 0, w, h)
+    const k = Math.max(w / bgImg.naturalWidth, h / bgImg.naturalHeight)
+    const dw = bgImg.naturalWidth * k
+    const dh = bgImg.naturalHeight * k
+    g.imageSmoothingQuality = 'high'
+    g.drawImage(bgImg, (w - dw) / 2, (h - dh) / 2, dw, dh)
+    if (!bgTex) {
+      bgTex = new THREE.CanvasTexture(bgCanvas)
+      bgTex.colorSpace = THREE.SRGBColorSpace
+    } else {
+      bgTex.image = bgCanvas
+      bgTex.needsUpdate = true
+    }
+    scene.background = bgTex
+  }
   const camera = new THREE.PerspectiveCamera(params.camera.fov, 1, 0.05, 60)
   camera.up.set(0, 0, -1)
 
@@ -1454,6 +1512,7 @@ export function mount(container, config = {}) {
     renderer.setSize(viewW, viewH, false)
     camera.aspect = aspect
     camera.updateProjectionMatrix()
+    drawBackground()
     dirty = true
   }
 
@@ -1487,7 +1546,7 @@ export function mount(container, config = {}) {
       for (const k of Object.keys(next)) Object.assign(params[k], next[k])
     }
     applyFrame()
-    scene.background = new THREE.Color(params.frame.bg)
+    drawBackground()
     ambient.intensity = params.light.ambient
     key.intensity = params.light.key
     fill.intensity = params.light.fill
@@ -1613,6 +1672,7 @@ export function mount(container, config = {}) {
       io?.disconnect()
       container.removeEventListener('wheel', onWheel)
       while (sheets.length) disposeSheet(sheets.pop())
+      bgTex?.dispose()
       overlayQuad.geometry.dispose()
       overlayQuad.material.dispose()
       renderer.dispose()
