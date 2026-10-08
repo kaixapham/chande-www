@@ -448,9 +448,42 @@
       }
       const swapImg = (src) => swapEl(q.img, src)
       // Ảnh nền riêng của từng người (CMS: bg); thiếu thì về ảnh nền mặc định.
+      // Đổi kiểu đơn giản: ảnh mới (bản sao chồng khít, giữ lật scaleX(-1) của CSS)
+      // mờ dần hiện lên, xong thì gán vào ảnh thật rồi gỡ. Không phóng: ảnh lật
+      // phóng ra sẽ tràn sang khung chữ.
       const strip = quote.querySelector('.hs-quote__strip')
       const stripDefault = strip?.getAttribute('src')
-      const swapBg = (it) => strip && swapEl(strip, it.bg || stripDefault)
+      let bgTop = null
+      const swapBg = (it) => {
+        const src = it.bg || stripDefault
+        if (!strip || !src || strip.getAttribute('src') === src) return
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return void (strip.src = src)
+        bgTop?.remove()
+        const top = strip.cloneNode()
+        top.removeAttribute('data-cms')
+        top.removeAttribute('loading')
+        top.src = src
+        strip.after(top)
+        bgTop = top
+        const go = () => {
+          if (bgTop !== top) return
+          const a = top.animate(
+            [{ opacity: 0 }, { opacity: 1 }],
+            { duration: 900, easing: 'cubic-bezier(.33,0,.2,1)', fill: 'both' },
+          )
+          a.finished.then(() => {
+            if (bgTop !== top) return
+            strip.src = src
+            return strip.decode?.().catch(() => {})
+          }).catch(() => {}).finally(() => {
+            if (bgTop === top) {
+              top.remove()
+              bgTop = null
+            }
+          })
+        }
+        top.decode ? top.decode().then(go, go) : go()
+      }
       render(list[0], 0)
       setImg(list[0].img)
       if (strip && list[0].bg) strip.src = list[0].bg
