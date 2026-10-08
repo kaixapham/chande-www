@@ -188,11 +188,13 @@
 .hs-about__friends{left:calc(492 * var(--u)); top:calc(1603 * var(--u)); width:calc(234 * var(--u)); height:calc(311 * var(--u)); object-fit:cover}
 .hs-about__roots{left:calc(24 * var(--u)); top:auto; bottom:calc(1176 * var(--u)); width:calc(234 * var(--u)); margin:0; font-size:1rem; color:#000; opacity:.3}
 .hs-about__roles{left:calc(960 * var(--u)); top:auto; bottom:calc(1176 * var(--u)); width:calc(368 * var(--u)); margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:0} /* sát nhau như Figma: 10 dòng × .78em ≈ 374u, vừa khoảng 1538 → 1914 */
-.hs-about__roles li{white-space:nowrap; width:fit-content; cursor:default;
-  background:linear-gradient(currentColor, currentColor) right 100% / 0% max(1px, .04em) no-repeat;
-  transition:background-size .45s cubic-bezier(.65,0,.35,1)}
-/* vai trò đang chọn / đang trỏ: gạch chân chạy trái -> phải */
-.hs-about__roles li.is-active{background-size:100% max(1px, .04em); background-position:left 100%}
+.hs-about__roles li{position:relative; white-space:nowrap; width:fit-content; cursor:default}
+/* vai trò đang chọn / đang trỏ: gạch chân 1px chạy trái -> phải, nằm NGAY DƯỚI chân
+   chữ (đáy dòng = baseline, các dòng sát nhau) — dòng sau vẽ đè lên nên gạch không
+   cắt vào chữ dòng dưới */
+.hs-about__roles li::after{content:''; position:absolute; left:0; right:0; top:100%; height:1px; background:currentColor;
+  transform:scaleX(0); transform-origin:right center; transition:transform .45s cubic-bezier(.65,0,.35,1)}
+.hs-about__roles li.is-active::after{transform:scaleX(1); transform-origin:left center}
 .hs-about__count{left:calc(1848 * var(--u)); top:calc(1614 * var(--u)); margin:0}
 /* số trượt theo dòng vai trò đang chọn (top do chande-home.js đặt) */
 .hs-about__count.is-follow{transition:top .5s cubic-bezier(.65,0,.35,1)}
