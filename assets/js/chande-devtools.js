@@ -238,6 +238,7 @@
         { path: 'shrinkScale', label: 'Còn bao nhiêu (1 = không thu)', type: 'range', min: 0.2, max: 1, step: 0.05 },
         { path: 'hoverOn', label: 'Thu nhỏ khi trỏ vào nút / link', type: 'bool' },
         { path: 'hoverScale', label: 'Khi trỏ vào nút còn (so với cỡ gốc)', type: 'range', min: 0.1, max: 1, step: 0.05 },
+        { path: 'hoverTitleScale', label: 'Khi trỏ vào tiêu đề (vai trò About) còn', type: 'range', min: 0.05, max: 1, step: 0.05 },
       ] },
     { tab: 'bubble', mod: 'bubble', title: 'Hiệu năng',
       items: [

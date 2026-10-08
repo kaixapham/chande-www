@@ -823,7 +823,7 @@
     // About: rê vào từng vai trò -> số bên phải = thứ tự (01…), ảnh bên trái đổi bằng
     // đoàn shape của 4 ảnh hero (CHANDE_REVEAL.play; lượt đang chạy không cắt ngang,
     // xong thì sang thẳng vai trò mới nhất), vai trò đang chọn gạch chân. Rời chuột
-    // thì giữ vai trò vừa chọn. Mở trang chọn sẵn vai trò ứng với số đang ghi (03).
+    // thì giữ vai trò vừa chọn. Mở trang chọn sẵn vai trò ứng với số đang ghi (01).
     const roles = scope.querySelector('[data-role-photos]')
     const roleImg = scope.querySelector('.hs-about__friends')
     const roleNum = scope.querySelector('.hs-about__count')
@@ -879,7 +879,8 @@
             })
             roleImg.after(box)
             try {
-              await R.play(box, { from, to, levels: 0 }).finished
+              // levels 6 = shape có dither y như 4 ảnh hero (data-levels của ô hero)
+              await R.play(box, { from, to, levels: 6 }).finished
               roleImg.src = src
               await roleImg.decode?.().catch(() => {})
             } finally {

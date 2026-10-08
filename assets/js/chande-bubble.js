@@ -82,6 +82,9 @@
     offsetX: 70,
     offsetY: 50,
     hoverSel: 'a, button, [role="button"], [role="tab"], .cl__cell--nav, label, select, input, textarea',
+    // Trỏ vào tiêu đề hover được (vai trò About…): co nhỏ hơn nữa, còn hoverTitleScale.
+    hoverTitleSel: '.hs-about__roles li',
+    hoverTitleScale: 0.15,
   }
   // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
   window.CHANDE_SETTINGS_APPLY?.('bubble', CONFIG)
@@ -632,7 +635,8 @@ void main () {
       ptrX = e.clientX
       ptrY = e.clientY
       aim()
-      const over = !!(CONFIG.hoverOn && CONFIG.hoverSel && e.target?.closest?.(CONFIG.hoverSel))
+      const title = !!(CONFIG.hoverOn && CONFIG.hoverTitleSel && e.target?.closest?.(CONFIG.hoverTitleSel))
+      const over = title ? 'title' : !!(CONFIG.hoverOn && CONFIG.hoverSel && e.target?.closest?.(CONFIG.hoverSel))
       if (over !== overBtn) {
         overBtn = over
         checkShrink()
@@ -661,7 +665,10 @@ void main () {
   function checkShrink() {
     const el = CONFIG.shrinkOn && CONFIG.shrinkFrom ? document.querySelector(CONFIG.shrinkFrom) : null
     let t = el && el.getBoundingClientRect().top < innerHeight * 0.5 ? Math.min(Math.max(CONFIG.shrinkScale, 0.1), 1) : 1
-    if (overBtn && CONFIG.hoverOn) t = Math.min(t, Math.min(Math.max(CONFIG.hoverScale, 0.1), 1))
+    if (overBtn && CONFIG.hoverOn) {
+      const k = overBtn === 'title' ? CONFIG.hoverTitleScale : CONFIG.hoverScale
+      t = Math.min(t, Math.min(Math.max(k, 0.05), 1))
+    }
     t *= Math.min(Math.max(CONFIG.scale, 0.1), 2)
     if (t === mulTarget) return
     mulTarget = t
