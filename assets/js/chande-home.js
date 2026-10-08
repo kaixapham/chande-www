@@ -355,7 +355,13 @@
         cap: quote.querySelectorAll('.hs-quote__card p span'),
         bar: quote.querySelector('.hs-quote__bar span'),
       }
-      const nameEl = q.name || q.by[0]
+      // Khối chữ ĐANG hiện (đổi người là thay bằng khối mới, xem go()).
+      let cur = { text: q.text, by: quote.querySelector('.hs-quote__by') }
+      const parts = (t) => ({
+        text: t.text,
+        name: t.by.querySelector('.hs-quote__name') || t.by.querySelector('p'),
+        role: t.by.querySelectorAll('p')[1],
+      })
       // Danh sách ở <script data-quotes> (CMS sửa). Rỗng thì dùng phần HTML.
       let list = []
       try {
@@ -377,16 +383,20 @@
         el.dataset.t = t
         el.textContent = t
       }
-      const render = (it, idx) => {
-        q.text.textContent = it.text || ''
-        setLine(nameEl, `[ ${it.name || ''} ]`)
-        setLine(q.by[1], it.role || '')
+      const fillText = (t, it) => {
+        const p = parts(t)
+        p.text.textContent = it.text || ''
+        setLine(p.name, `[ ${it.name || ''} ]`)
+        setLine(p.role, it.role || '')
         // có website thì tên thành link (mở tab mới), không thì chỉ là chữ
-        if (q.name) {
+        if (p.name?.tagName === 'A') {
           const url = (it.url || '').trim()
-          if (url) q.name.href = /^https?:\/\//i.test(url) ? url : `https://${url}`
-          else q.name.removeAttribute('href')
+          if (url) p.name.href = /^https?:\/\//i.test(url) ? url : `https://${url}`
+          else p.name.removeAttribute('href')
         }
+      }
+      const render = (it, idx) => {
+        fillText(cur, it)
         if (q.cap[0]) q.cap[0].textContent = it.num || String(idx + 1).padStart(2, '0')
         if (q.cap[1]) q.cap[1].textContent = it.name || ''
         q.img.alt = it.name || ''
@@ -513,9 +523,13 @@
         }
         el._scr = requestAnimationFrame(tick)
       }
-      quote.querySelector('.hs-quote__by')?.addEventListener('mouseenter', () => {
-        scramble(nameEl)
-        scramble(q.by[1], 90)
+      // bắt ở cả section: khối tên được thay bằng khối mới mỗi lần đổi người
+      quote.addEventListener('pointerover', (e) => {
+        const by = e.target.closest?.('.hs-quote__by')
+        if (!by || by.classList.contains('is-out') || by.contains(e.relatedTarget)) return
+        const p = parts({ text: cur.text, by })
+        scramble(p.name)
+        scramble(p.role, 90)
       })
 
       const many = list.length > 1
@@ -528,19 +542,59 @@
         void q.bar.offsetWidth
         q.bar.style.animation = ''
       }
+      // Chữ đổi kiểu "line reveal" (GSAP SplitText, mask theo dòng): dòng cũ trượt
+      // lên khuất, dòng mới trượt từ dưới lên, mỗi dòng trễ một nhịp; hai lượt gối
+      // nhau 0.3s. Cũ / mới cùng tồn tại lúc chuyển -> khối mới là bản sao chồng
+      // đúng chỗ (abs), xong thì gỡ khối cũ và trả chữ về thường (revert split).
+      // Không có GSAP / SplitText hoặc giảm chuyển động: mờ đi rồi hiện như cũ.
+      let animating = false
+      const lineTargets = (t) => [t.text, ...t.by.querySelectorAll('p')]
       const go = (d) => {
-        if (!many) return
+        if (!many || animating) return
         i = (i + d + list.length) % list.length
         const it = list[i]
-        clearTimeout(busy)
-        quote.classList.add('is-swap')
-        swapImg(it.img) // ảnh chạy shape ngay, chữ đổi sau nhịp mờ
+        swapImg(it.img)
         swapBg(it)
-        busy = setTimeout(() => {
-          render(it, i)
-          quote.classList.remove('is-swap')
-        }, 350)
         restartBar()
+        const G = window.gsap
+        const ST = window.SplitText
+        if (!G || !ST || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          clearTimeout(busy)
+          quote.classList.add('is-swap')
+          busy = setTimeout(() => {
+            render(it, i)
+            quote.classList.remove('is-swap')
+          }, 350)
+          return
+        }
+        animating = true
+        G.registerPlugin?.(ST)
+        const old = cur
+        const nxt = { text: old.text.cloneNode(false), by: old.by.cloneNode(true) }
+        fillText(nxt, it)
+        old.text.after(nxt.text)
+        old.by.after(nxt.by)
+        old.text.classList.add('is-out')
+        old.by.classList.add('is-out')
+        const opt = { type: 'lines', mask: 'lines', linesClass: 'text-line' }
+        const sOut = lineTargets(old).map((el) => ST.create(el, opt))
+        const sIn = lineTargets(nxt).map((el) => ST.create(el, opt))
+        const linesIn = sIn.flatMap((x) => x.lines)
+        G.set(linesIn, { yPercent: 110 })
+        cur = nxt
+        if (q.cap[0]) q.cap[0].textContent = it.num || String(i + 1).padStart(2, '0')
+        if (q.cap[1]) q.cap[1].textContent = it.name || ''
+        q.img.alt = it.name || ''
+        G.timeline({
+          onComplete: () => {
+            old.text.remove()
+            old.by.remove()
+            sIn.forEach((x) => x.revert())
+            animating = false
+          },
+        })
+          .to(sOut.flatMap((x) => x.lines), { yPercent: -110, duration: 0.6, ease: 'power4.inOut', stagger: { amount: 0.25 } }, 0)
+          .to(linesIn, { yPercent: 0, duration: 0.7, ease: 'power4.inOut', stagger: { amount: 0.4 } }, '>-=0.3')
       }
       quote.querySelector('.hs-quote__nav--prev')?.addEventListener('click', () => go(-1))
       quote.querySelector('.hs-quote__nav--next')?.addEventListener('click', () => go(1))
