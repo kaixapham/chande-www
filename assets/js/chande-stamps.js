@@ -218,7 +218,7 @@ function mount(root = document) {
   scene.add(new THREE.HemisphereLight(0xfffdf4, 0x8f9a80, 1.35))
   const key = new THREE.DirectionalLight(0xffffff, 2.4)
   key.castShadow = true
-  key.shadow.mapSize.set(2048, 2048)
+  key.shadow.mapSize.set(1024, 1024)
   key.shadow.radius = 6
   key.shadow.bias = -0.0005
   scene.add(key, key.target)
@@ -274,13 +274,14 @@ function mount(root = document) {
     R: CONFIG.size,
     ptr: null,
     held: null,
-    eatClick: false,
+    eatClick: 0,
     printList: [],
     urls: [],
     raf: 0,
     last: performance.now(),
     off: [],
     ray: new THREE.Raycaster(),
+    dirty: true,
   }
 
   // Mẫu in: vết mực (màu ink) + nhãn trên núm (màu label).
@@ -303,6 +304,7 @@ function mount(root = document) {
         s.labelMat.map = tex
         s.labelMat.opacity = 0.92
         s.labelMat.needsUpdate = true
+        D.dirty = true
       })
       .catch((e) => console.warn('[chande-stamps] không nạp được', s.def.svg, e))
   })
@@ -353,6 +355,7 @@ function resize() {
   D.vw = r.width
   D.vh = r.height
   D.renderer.setSize(D.vw, D.vh, false)
+  D.dirty = true
   D.canvas.style.width = D.vw + 'px'
   D.canvas.style.height = D.vh + 'px'
   const { cam, key } = D
@@ -449,8 +452,8 @@ function onUp(e) {
   e.stopPropagation()
   const s = D.held
   D.held = null
-  D.eatClick = true
-  setTimeout(() => D && (D.eatClick = false), 0)
+  // click đến sau pointerup (có khi trễ một nhịp) — nuốt trong 400ms.
+  D.eatClick = performance.now() + 400
   D.stage.classList.remove('is-stamp-hold')
   if (e.type === 'pointercancel') return void (s.state = 'back')
   if (D.ptr?.moved) {
@@ -472,8 +475,8 @@ function onUp(e) {
 
 // Thả dấu trên một ảnh không được mở lightbox.
 function onClickEat(e) {
-  if (!D?.eatClick) return
-  D.eatClick = false
+  if (!D || performance.now() > D.eatClick) return
+  D.eatClick = 0
   e.stopPropagation()
   e.preventDefault()
 }
@@ -514,14 +517,16 @@ function tick(now) {
   const view = galleryView()
   if (view) D.prints.style.transform = `translate3d(${view.x.toFixed(2)}px, ${view.y.toFixed(2)}px, 0)`
 
-  const R = D.R
-  for (const s of D.stamps) step(s, now, dt, R)
-  D.renderer.render(D.scene, D.cam)
+  // Chỉ vẽ lại khi có dấu đang động (đứng yên ở góc thì khung hình giữ nguyên).
+  let busy = D.dirty
+  for (const s of D.stamps) busy = step(s, now, dt) || busy
+  if (busy) D.renderer.render(D.scene, D.cam)
+  D.dirty = false
 }
 
 const PRESS = { down: 0.1, hold: 0.2 } // s — dập xuống / đè giữ
 
-function step(s, now, dt, R) {
+function step(s, now, dt) {
   const t = (now - s.t0) / 1000
   let hT = s.hovered ? CONFIG.hover : 0
   let gx = s.x
@@ -611,6 +616,14 @@ function step(s, now, dt, R) {
   s.tip.rotation.z = Math.max(-lim, Math.min(lim, s.tz))
   const q = Math.max(-0.12, Math.min(0.12, s.sq * 0.06))
   s.squash.scale.set(1 - q * 0.5, 1 + q, 1 - q * 0.5)
+  const e = 1e-3
+  return (
+    s.state !== 'idle' ||
+    Math.abs(gx - s.x) + Math.abs(gy - s.y) > 0.05 ||
+    Math.abs(hT - s.h) + Math.abs(s.hv) > e ||
+    Math.abs(s.tx) + Math.abs(s.tz) + Math.abs(s.vtx) + Math.abs(s.vtz) > e ||
+    Math.abs(s.sq) + Math.abs(s.vsq) > e
+  )
 }
 
 /* -------------------------------------------------------------- Khởi động */
