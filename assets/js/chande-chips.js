@@ -35,7 +35,11 @@
   const style = document.createElement('style')
   style.textContent =
     '.chip__icon{position:absolute; left:calc(12 * var(--u)); top:calc(10 * var(--u)); width:calc(100% - 24 * var(--u)); height:calc(100% - 20 * var(--u)); z-index:1; overflow:visible; color:#0f1513; transition:color .6s ease}' +
-    'html.hero-row-dark .chip__icon{color:#f4f3eb}'
+    'html.hero-row-dark .chip__icon{color:#f4f3eb}' +
+    // miệng: nét + chấm cùng màu lòng miệng (= lòng trắng mắt) trên nền tối; răng màu
+    // con ngươi cho nổi trên lòng miệng
+    'html.hero-row-dark .chip__icon--mouth{color:var(--mouth-fill)}' +
+    '.chip__teeth{stroke:var(--mouth-ink)}'
   document.head.appendChild(style)
 
   const svgIn = (chip, vb) => {
@@ -336,14 +340,18 @@
     let mouth = null
     if (green) {
       const svg = svgIn(green, '-92 -27 184 54')
+      const eye = window.CHANDE_EYE?.config || {}
+      svg.classList.add('chip__icon--mouth')
+      svg.style.setProperty('--mouth-fill', eye.sclera || '#f8e7bf')
+      svg.style.setProperty('--mouth-ink', eye.pupil || '#151611')
       const g = el('g', { fill: 'none', stroke: 'currentColor', 'stroke-width': 1.6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg)
       const cid = `mclip${Math.random().toString(36).slice(2, 7)}`
       mouth = {
         // lòng miệng tô cùng màu lòng trắng con mắt (chande-eye.js · sclera), nằm dưới nét
-        inside: el('path', { fill: window.CHANDE_EYE?.config?.sclera || '#f8e7bf', stroke: 'none' }, g),
+        inside: el('path', { fill: 'var(--mouth-fill)', stroke: 'none' }, g),
         upper: el('path', {}, g),
         lower: el('path', {}, g),
-        teeth: el('path', { 'clip-path': `url(#${cid})` }, g),
+        teeth: el('path', { class: 'chip__teeth', 'clip-path': `url(#${cid})` }, g),
         tongue: el('path', {}, g),
         clip: el('path', {}, el('clipPath', { id: cid }, el('defs', {}, svg))),
         dl: el('circle', { r: 3, fill: 'currentColor', stroke: 'none' }, svg),
