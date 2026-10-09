@@ -182,7 +182,9 @@
   // Giá trị đã bấm Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
   window.CHANDE_SETTINGS_APPLY?.('loading', CONFIG)
 
-  if (!CONFIG.enabled) return
+  // gỡ lớp che khung hình đầu (cl-boot, đặt trong <head> của trang)
+  const unboot = () => document.documentElement.classList.remove('cl-boot')
+  if (!CONFIG.enabled) return void unboot()
   // html.cl-loading = màn loading đang chạy (nhân vật con trỏ + bubble ẩn theo cờ này)
   document.documentElement.classList.add('cl-loading')
 
@@ -964,6 +966,7 @@
   /* ------------------------------------------------------------- khởi động - */
   async function boot() {
     document.body.appendChild(root)
+    requestAnimationFrame(unboot) // màn loading đã phủ -> bỏ che
     wordifyAll()
     el.pct = $('.cl__pct .cl__wt') || $('.cl__pct')
     el.clock = $('.cl__clock .cl__wt') || $('.cl__clock')

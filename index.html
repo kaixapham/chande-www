@@ -9,6 +9,10 @@
 <link rel="stylesheet" href="assets/css/site.css">
 <link rel="stylesheet" href="assets/css/home.css">
 <link rel="stylesheet" href="assets/css/gallery.css">
+<!-- Khung hình đầu: màn loading do JS dựng ở cuối trang, nên trước đó tô nền tối + ẩn
+     nội dung (không chớp nền kem). chande-loading.js gỡ cl-boot ngay khi đã gắn màn loading. -->
+<style>html.cl-boot,html.cl-boot body{background:#182220}html.cl-boot body>:not(.cl){visibility:hidden}</style>
+<script>document.documentElement.classList.add('cl-boot');setTimeout(function(){document.documentElement.classList.remove('cl-boot')},5000)</script>
 </head>
 <body data-barba="wrapper">
 
