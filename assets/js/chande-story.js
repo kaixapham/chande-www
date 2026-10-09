@@ -22,7 +22,7 @@
     slide: 10, // độ trượt hình trong ô (% chiều cao ô, tổng quãng)
     zoom: 1.14, // phóng hình trong ô để có chỗ trượt
     appear: 0.12, // ảnh nhỏ bật ra trong đoạn đầu này của quãng nở (0…1)
-    bandsFrom: 0.5, // dải màu bắt đầu trồi ra khi ảnh nở được bao nhiêu (0…1)
+    bandsFrom: 0.9, // dải màu bắt đầu trồi ra khi ảnh cao tới bao nhiêu chiều cao khung (0…1)
     bandLead: 0.0084, // mỗi dải đi trước dải trong nó bao nhiêu (theo quãng nở) = độ dày dải
   }
   window.CHANDE_SETTINGS_APPLY?.('story', CONFIG)
@@ -55,7 +55,8 @@
       return cell
     })
     // dải màu: lấy bảng màu của shape reveal (hero), dải đầu = ngoài cùng, chạy trước
-    const colors = window.CHANDE_REVEAL?.config?.colors || ['#68f12b', '#f4f3eb', '#236c3c', '#c4ff6b', '#182220']
+    // chỉ 3 màu cuối của bảng (xanh rêu · lime nhạt · mực)
+    const colors = (window.CHANDE_REVEAL?.config?.colors || ['#68f12b', '#f4f3eb', '#236c3c', '#c4ff6b', '#182220']).slice(-3)
     const bands = colors.map((c) => {
       const b = document.createElement('span')
       b.className = 'hs-story__band-c'
@@ -133,7 +134,7 @@
       const w = gw * pop
       const h = gh * pop
       // dải màu: trồi dần từ mép ảnh (độ đi trước tăng từ 0), dải ngoài cùng đi trước nhất
-      const e = Math.min(1, Math.max(0, (f - CONFIG.bandsFrom) / Math.max(0.01, 1 - CONFIG.bandsFrom)))
+      const e = Math.min(1, Math.max(0, (gh / H - CONFIG.bandsFrom) / Math.max(0.01, 1 - CONFIG.bandsFrom)))
       const lead = e * e * (3 - 2 * e)
       let bandFull = -1
       bands.forEach((b, j) => {
