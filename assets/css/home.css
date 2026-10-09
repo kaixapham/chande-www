@@ -189,7 +189,7 @@
 .circle .tex--dim{opacity:.2}
 .circle .core{left:calc(72 * var(--u)); top:calc(72 * var(--u)); width:calc(324 * var(--u)); height:calc(324 * var(--u))}
 .circle .peek{display:none} /* ảnh nguồn (CMS) — vẽ thành lưới ô lên .peek-cv (chande-circles.js) */
-.circle .peek-cv{position:absolute; left:calc(72 * var(--u)); top:calc(72 * var(--u)); width:calc(324 * var(--u)); height:calc(324 * var(--u)); border-radius:50%; pointer-events:none}
+.circle .peek-cv{position:absolute; inset:0; width:100%; height:100%; border-radius:50%; pointer-events:none}
 /* Đoạn chữ trái / ảnh giữa / danh sách vai trò: BẰNG ĐÁY nhau, cách đường kẻ đứt
    (top 1930) 16 -> đáy ở 1914 = bottom 3090 − 1914 = 1176. Neo theo đáy nên chữ
    (cỡ rem, không co theo màn) dài ra thì mọc lên trên, không lấn qua đường kẻ. */

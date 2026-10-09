@@ -3,7 +3,7 @@
  * -----------------------------------------------------------------------------
  * Bubble vẫn đi theo chuột như thường (KHÔNG hút, không bắt đứng yên). Lại gần
  * vòng tròn thì bubble phình to hơn lõi một chút. Ảnh .peek (giữ cho CMS) được vẽ
- * lên canvas phủ lõi: lòng bubble là ảnh LIỀN, chỉ dải sát MÉP bubble tách thành ô
+ * lên canvas (phủ cả vòng): lòng bubble là ảnh LIỀN, chỉ dải sát MÉP bubble tách thành ô
  * (như các mảng gạch mosaic ở hero) — càng ra ngoài ô càng co nhỏ và ngả dần sang màu
  * lõi, mép so le theo từng ô. Bubble đè lên lõi tới đâu thì lộ ảnh tới đó, chạm mép cũng thấy vài ô.
  *
@@ -34,6 +34,9 @@
       .map((c) => ({ c, core: c.querySelector('.core') || c, peek: c.querySelector('.peek') }))
       .filter((o) => o.peek)
     const dpr = Math.min(devicePixelRatio || 1, 2)
+    const CORE = 324 / 468 // lõi / vòng ngoài (home.css)
+    // so le mép theo từng ô (cố định, không nhấp nháy)
+    const jit = Array.from({ length: 997 }, () => Math.random() - 0.5)
     for (const o of circles) {
       o.peek.loading = 'eager' // ảnh nguồn bị ẩn (display:none) — lazy thì không bao giờ tải
       o.cv = document.createElement('canvas')
@@ -56,10 +59,10 @@
       }
       if (o.core.complete && o.core.naturalWidth) readTint()
       else o.core.addEventListener('load', readTint, { once: true })
-      // so le mép theo từng ô (cố định, không nhấp nháy)
-      o.jit = Array.from({ length: CONFIG.cells * CONFIG.cells }, () => Math.random() - 0.5)
     }
-    // vẽ ảnh thành lưới ô: (bx, by, R) = bubble trong toạ độ canvas (px CSS)
+    // Vẽ lên canvas phủ cả vòng tròn ngoài; (bx, by, R) = bubble trong toạ độ canvas (px CSS).
+    // Lớp 1: phần vòng NGOÀI nằm dưới bubble đổi sang màu lõi. Lớp 2 (cắt theo lõi): ảnh.
+    // Cả hai: lòng bubble liền, dải sát mép bubble tách ô co nhỏ dần.
     const paint = (o, bx, by, R) => {
       const W = o.cv.clientWidth
       if (!W) return
@@ -70,45 +73,72 @@
       o.drawn = false
       const img = o.peek
       if (!img.complete || !img.naturalWidth || R < 1) return
-      const n = CONFIG.cells
-      const c = W / n
-      // ảnh phủ kín lõi (cover)
-      const sc = Math.max(W / img.naturalWidth, W / img.naturalHeight)
-      const ox = (W - img.naturalWidth * sc) / 2
-      const oy = (W - img.naturalHeight * sc) / 2
+      const D = W * CORE // đường kính lõi
+      const co = (W - D) / 2
+      const c = D / CONFIG.cells
+      const nn = Math.ceil(W / c)
       const band = c * CONFIG.edge
-      // lòng bubble: ảnh liền (không tách ô)
       const inner = R - band
-      if (inner > 0) {
+      // ảnh phủ kín lõi (cover)
+      const sc = Math.max(D / img.naturalWidth, D / img.naturalHeight)
+      const ox = co + (D - img.naturalWidth * sc) / 2
+      const oy = co + (D - img.naturalHeight * sc) / 2
+      const tint = o.tint ? `rgb(${o.tint})` : null
+      // các ô trong dải mép bubble: cb(dx, dy, sz, k)
+      const edgeCells = (cb) => {
+        for (let j = 0; j < nn; j++)
+          for (let i = 0; i < nn; i++) {
+            const x = (i + 0.5) * c
+            const y = (j + 0.5) * c
+            const d = Math.hypot(x - bx, y - by)
+            const e = (R + jit[(j * 97 + i) % jit.length] * c * 0.9 - d) / band
+            if (e <= 0 || d + c * 0.71 < inner) continue
+            const k = Math.min(1, e)
+            const sz = c * (1 - CONFIG.gap) * (0.35 + 0.65 * k)
+            cb(x - sz / 2, y - sz / 2, sz, k)
+          }
+      }
+      const disc = (r) => {
+        ctx.beginPath()
+        ctx.arc(bx, by, r, 0, Math.PI * 2)
+      }
+      // lớp 1: vòng ngoài dưới bubble -> màu lõi
+      if (tint) {
         ctx.save()
         ctx.beginPath()
-        ctx.arc(bx, by, inner, 0, Math.PI * 2)
+        ctx.arc(W / 2, W / 2, W / 2, 0, Math.PI * 2)
         ctx.clip()
-        ctx.drawImage(img, ox, oy, img.naturalWidth * sc, img.naturalHeight * sc)
+        ctx.fillStyle = tint
+        if (inner > 0) {
+          disc(inner)
+          ctx.fill()
+        }
+        edgeCells((dx, dy, sz) => ctx.fillRect(dx, dy, sz, sz))
         ctx.restore()
         o.drawn = true
       }
-      // chỉ dải sát mép bubble mới tách ô
-      for (let j = 0; j < n; j++)
-        for (let i = 0; i < n; i++) {
-          const x = (i + 0.5) * c
-          const y = (j + 0.5) * c
-          const e = (R + o.jit[j * n + i] * c * 0.9 - Math.hypot(x - bx, y - by)) / band
-          if (e <= 0) continue
-          // ô nằm trọn trong lòng (đã vẽ liền) thì bỏ qua
-          if (Math.hypot(x - bx, y - by) + c * 0.71 < inner) continue
-          const k = Math.min(1, e)
-          const sz = c * (1 - CONFIG.gap) * (0.35 + 0.65 * k)
-          const dx = x - sz / 2
-          const dy = y - sz / 2
-          ctx.drawImage(img, (dx - ox) / sc, (dy - oy) / sc, sz / sc, sz / sc, dx, dy, sz, sz)
-          // càng ra ngoài càng phủ màu lõi
-          if (o.tint && k < 1) {
-            ctx.fillStyle = `rgba(${o.tint},${((1 - k) * 0.95).toFixed(3)})`
-            ctx.fillRect(dx, dy, sz, sz)
-          }
-          o.drawn = true
+      // lớp 2: ảnh, chỉ trong lõi
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(W / 2, W / 2, D / 2, 0, Math.PI * 2)
+      ctx.clip()
+      if (inner > 0) {
+        ctx.save()
+        disc(inner)
+        ctx.clip()
+        ctx.drawImage(img, ox, oy, img.naturalWidth * sc, img.naturalHeight * sc)
+        ctx.restore()
+      }
+      edgeCells((dx, dy, sz, k) => {
+        ctx.drawImage(img, (dx - ox) / sc, (dy - oy) / sc, sz / sc, sz / sc, dx, dy, sz, sz)
+        // càng ra ngoài càng phủ màu lõi
+        if (o.tint && k < 1) {
+          ctx.fillStyle = `rgba(${o.tint},${((1 - k) * 0.95).toFixed(3)})`
+          ctx.fillRect(dx, dy, sz, sz)
         }
+      })
+      ctx.restore()
+      o.drawn = true
     }
     if (!circles.length) return
     const ptr = { x: -1e4, y: -1e4 }
