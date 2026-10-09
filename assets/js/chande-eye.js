@@ -1,7 +1,7 @@
 /* =============================================================================
  * CHANDE — Con mắt ở Intro (.hs-intro__eye): mở mắt rồi đảo mắt nhìn quanh
  * -----------------------------------------------------------------------------
- * Ảnh gốc là một mảnh cắt từ sprite (eye.webp) nên con ngươi không tách ra được:
+ * Vẽ hoàn toàn bằng SVG (bản ảnh sprite eye.webp cũ đã bỏ, CMS không còn ô ảnh này):
  * vẽ lại bằng SVG đúng màu / tỉ lệ đo từ ảnh — lòng trắng kem hình lá, con ngươi
  * đen cắt theo viền mắt (đảo sát mép thì bị mí che như mắt thật).
  *
@@ -11,7 +11,6 @@
  * Chuột đứng yên ~2.5 s thì mắt quay về nhìn quanh (lặp) tới khi chuột động lại.
  * Con trỏ (giọt bubble) đậu lên mắt thì mắt chớp liên tục (giọt co còn 50% — bubble).
  * Ra khỏi màn thì dừng.
- * Ảnh <img> giữ lại cho CMS nhưng ẩn khi bản SVG chạy.
  *
  * API: window.CHANDE_EYE = { config, mount(root) }
  * ========================================================================== */

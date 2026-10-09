@@ -70,7 +70,6 @@
 .chip--yellow{left:calc(995 * var(--u)); top:calc(494 * var(--u)); width:calc(302 * var(--u)); background:#fab700}
 .chip--orange{left:calc(1669 * var(--u)); top:calc(494 * var(--u)); width:calc(128 * var(--u)); background:#f65500}
 .hs-intro__eye{left:calc(1698 * var(--u)); top:calc(510 * var(--u)); width:calc(70 * var(--u)); height:calc(42 * var(--u)); overflow:hidden; z-index:1}
-.hs-intro__eye img{position:absolute; left:-146.48%; top:-441.67%; width:396.48%; height:1190.48%; max-width:none}
 
 /* ---------------------------------------------------------------- 2. STORY */
 /* Cụm ảnh + cột chữ luôn cao đúng 1 màn trừ thanh menu (--sh). Bên trong khung ảnh
