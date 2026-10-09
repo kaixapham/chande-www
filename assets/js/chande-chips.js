@@ -509,6 +509,11 @@
     window.CHANDE_BUBBLE?.lure?.(lureFn)
     addEventListener('pointermove', onMove, { passive: true })
 
+    let waveT = 0
+    let lastScroll = 0
+    const onScrollWave = () => (lastScroll = performance.now())
+    addEventListener('scroll', onScrollWave, { passive: true })
+
     let raf = 0
     let inView = false
     // s: 0 khép … 1 cười, chạy bằng lò xo hơi thiếu tắt dần (mở lố rồi dội).
@@ -524,8 +529,12 @@
       const dt = Math.min(0.05, last ? (now - last) / 1000 : 1 / 60)
       last = now
       if (waveEl) {
+        // đồng hồ riêng của sóng: đang cuộn thì bỏ nhịp đứng -> cục dồn liên tục, không khựng
+        const period = Math.max(0.3, CONFIG.waveSpeed || 1.7)
+        waveT += dt
+        if (now - lastScroll < 180 && (waveT / period) % 1 > WAVE.push) waveT = Math.ceil(waveT / period) * period
         stepString(dt)
-        waveEl.setAttribute('d', wavePath(now / 1000, stringY))
+        waveEl.setAttribute('d', wavePath(waveT, stringY))
       }
       if (mouth) {
         const pr = preset()
@@ -615,6 +624,7 @@
         removeEventListener('resize', check)
         removeEventListener('pointermove', onMove)
         removeEventListener('pointermove', onString)
+        removeEventListener('scroll', onScrollWave)
         window.CHANDE_BUBBLE?.lure?.(null)
         cancelAnimationFrame(raf)
       },
