@@ -51,7 +51,7 @@
   const imgs = byPos([
     ...$$('.hero__dark, .hero__pills', hero),
     ...$$('.hero-card__media', hero),
-    ...$$('.hero__recap img', document),
+    ...$$('.hero__recap img, .hero__recap video', document),
   ])
   const texts = byPos([
     ...$$('.hero__mark, .hero__sub, .hero__year, .hero__scroll', hero),
