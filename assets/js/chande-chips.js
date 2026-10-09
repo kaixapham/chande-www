@@ -174,15 +174,13 @@
       label: 'Nói chuyện',
       closed: shape({ lx: -37.5, rx: 37.5 }), // như Figma 762: đường thẳng
       open: shape({ lx: -46, rx: 46, up: -8, low: 16 }),
+      // khi đã mở: NÓI một lúc (nhịp âm tiết lúc to lúc nhỏ) -> NGẬM lại nghỉ -> nói tiếp
+      talk: { on: [1.8, 3.2], off: [0.9, 1.8] },
       idleClosed: [
         // lẩm bẩm: hé mở 2 nhịp nhỏ
         { dur: 900, fn: (k) => ({ up: -2.5 * Math.abs(wave(k, 2)), low: 3 * Math.abs(wave(k, 2)) }) },
       ],
-      idleOpen: [
-        // lép bép: nhịp mở / khép không đều như âm tiết
-        { dur: 1600, fn: (k) => { const a = Math.abs(Math.sin(k * 23) * Math.sin(k * 7.3)); return { up: 4 * (1 - a), low: -9 * (1 - a), lx: 3 * a, rx: -3 * a } } },
-        { dur: 900, fn: (k) => ({ lx: -6 * bell(k), rx: 6 * bell(k), up: 4 * bell(k), low: -6 * bell(k) }) },
-      ],
+      idleOpen: [],
     },
     laugh: {
       label: 'Cười haha',
@@ -381,6 +379,33 @@
     }
     drawMouth(preset().closed)
 
+    // ---- nói / ngậm (preset có `talk`): chu kỳ ngẫu nhiên trong khoảng on / off (giây)
+    let talkCycle = null
+    const rnd = ([a, b]) => a + Math.random() * (b - a)
+    const talkAmt = (t, cfg) => {
+      if (!talkCycle || t > talkCycle.t0 + talkCycle.on + talkCycle.off) talkCycle = { t0: talkCycle && t - talkCycle.t0 < 10 ? talkCycle.t0 + talkCycle.on + talkCycle.off : t, on: rnd(cfg.on), off: rnd(cfg.off) }
+      const x = t - talkCycle.t0
+      if (x > talkCycle.on) return 0
+      const env = smooth(clamp01(x / 0.18)) * smooth(clamp01((talkCycle.on - x) / 0.22))
+      const syl = 0.3 + 0.7 * Math.abs(Math.sin(x * 10.5) * Math.sin(x * 3.3 + 1.2)) // nhịp âm tiết
+      return env * syl
+    }
+    // ---- theo chuột (u, quanh tâm khung xanh)
+    const FOLLOW = { x: 14, y: 5, idle: 2500, ease: 6 }
+    const mouse = { dx: 0, dy: 0, t: 0, on: false }
+    const look = { x: 0, y: 0 }
+    const onMove = (e) => {
+      if (!green) return
+      const r = green.getBoundingClientRect()
+      const nx = (e.clientX - (r.left + r.width / 2)) / (innerWidth * 0.5)
+      const ny = (e.clientY - (r.top + r.height / 2)) / (innerHeight * 0.5)
+      mouse.dx = FOLLOW.x * Math.max(-1, Math.min(1, nx))
+      mouse.dy = FOLLOW.y * Math.max(-1, Math.min(1, ny))
+      mouse.t = performance.now()
+      mouse.on = true
+    }
+    addEventListener('pointermove', onMove, { passive: true })
+
     let raf = 0
     let inView = false
     // s: 0 khép … 1 cười, chạy bằng lò xo hơi thiếu tắt dần (mở lố rồi dội).
@@ -404,7 +429,9 @@
         const z = opening ? 0.55 : 0.8
         v += (k * (goal - s) - 2 * z * Math.sqrt(k) * v) * dt
         s += v * dt
-        let m = pr.stages ? mixStages(pr.stages, s) : mix(pr.closed, pr.open, s)
+        let open = s
+        if (pr.talk) open = s * talkAmt(now / 1000, pr.talk)
+        let m = pr.stages ? mixStages(pr.stages, s) : mix(pr.closed, pr.open, open)
         if (act) {
           const t = clamp01((now - act.t0) / act.dur)
           const d = act.fn(t, act.sgn)
@@ -418,6 +445,17 @@
           const pick = list[(Math.random() * list.length) | 0]
           if (pick) act = { ...pick, t0: now, sgn: Math.random() < 0.5 ? -1 : 1 }
         }
+        // theo chuột: cả miệng lệch nhẹ về phía con trỏ; chuột đứng yên lâu thì về giữa
+        const still = now - mouse.t > FOLLOW.idle
+        const tx = still || !mouse.on ? 0 : mouse.dx
+        const ty = still || !mouse.on ? 0 : mouse.dy
+        const f = 1 - Math.exp(-dt * FOLLOW.ease)
+        look.x += (tx - look.x) * f
+        look.y += (ty - look.y) * f
+        m.lx += look.x
+        m.rx += look.x
+        m.ly += look.y
+        m.ry += look.y
         drawMouth(m)
       }
       if (inView) raf = requestAnimationFrame(tick)
@@ -457,6 +495,7 @@
         io.disconnect()
         removeEventListener('scroll', check)
         removeEventListener('resize', check)
+        removeEventListener('pointermove', onMove)
         cancelAnimationFrame(raf)
       },
       // thử ngay một cử động (bảng setting)
