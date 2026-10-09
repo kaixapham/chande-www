@@ -1,7 +1,7 @@
 /* =============================================================================
  * CHANDE — Story (06 years / Chande.): dính lại, ẢNH NHỎ NỞ RA lấp khung
  * -----------------------------------------------------------------------------
- * Lúc đầu chỉ có 2 ảnh: ảnh nền phủ khung + một ảnh nhỏ ở giữa (chỗ .hs-story__small).
+ * Lúc đầu chỉ có ảnh nền; cuộn vào quãng dính thì ảnh nhỏ bật ra ở giữa (chỗ .hs-story__small).
  * Khi khung ảnh chạm thanh menu thì khung + cột chữ ĐỨNG YÊN (dịch xuống bù cuộn); cuộn
  * tiếp thì ảnh nền đứng im, chỉ ảnh nhỏ nở ra (cỡ chạy đều theo log, tâm trôi về giữa
  * khung) tới khi phủ kín. Chỉ 2 ảnh: ảnh nền + ảnh nhỏ (ảnh nổi giữa chỉ dùng ở mobile;
@@ -21,6 +21,7 @@
     stepScroll: 1, // quãng cuộn cho mỗi lần một ảnh nở kín khung (× chiều cao khung)
     slide: 10, // độ trượt hình trong ô (% chiều cao ô, tổng quãng)
     zoom: 1.14, // phóng hình trong ô để có chỗ trượt
+    appear: 0.12, // ảnh nhỏ bật ra trong đoạn đầu này của quãng nở (0…1)
     bandsFrom: 0.5, // dải màu bắt đầu trồi ra khi ảnh nở được bao nhiêu (0…1)
     bandLead: 0.0084, // mỗi dải đi trước dải trong nó bao nhiêu (theo quãng nở) = độ dày dải
   }
@@ -122,9 +123,15 @@
         const g = (h - sh) / Math.max(1e-3, H - sh)
         return [sx + sw / 2 + (W / 2 - (sx + sw / 2)) * g - w / 2, sy + sh / 2 + (H / 2 - (sy + sh / 2)) * g - h / 2, w, h]
       }
-      const [ix, iy, w, h] = grow(f)
-      const cx = ix + w / 2
-      const cy = iy + h / 2
+      const [ix, iy, gw, gh] = grow(f)
+      const cx = ix + gw / 2
+      const cy = iy + gh / 2
+      // lúc chưa cuộn vào quãng dính chưa có ảnh nhỏ: nó bật ra từ một chấm ở giữa
+      // trong đoạn đầu (appear) rồi mới nở tiếp
+      const a = Math.min(1, Math.max(0, f / CONFIG.appear))
+      const pop = t <= 0 ? 0 : 1 - (1 - a) ** 3
+      const w = gw * pop
+      const h = gh * pop
       // dải màu: trồi dần từ mép ảnh (độ đi trước tăng từ 0), dải ngoài cùng đi trước nhất
       const e = Math.min(1, Math.max(0, (f - CONFIG.bandsFrom) / Math.max(0.01, 1 - CONFIG.bandsFrom)))
       const lead = e * e * (3 - 2 * e)
@@ -151,6 +158,10 @@
           if (bandFull >= 0) el.style.visibility = 'hidden'
         }
         else if (i === k + 1) {
+          if (pop <= 0) {
+            el.style.visibility = 'hidden'
+            return
+          }
           place(el, cx - w / 2, cy - h / 2, w, h)
           el.style.zIndex = '2' // trên các dải màu
         } else {
