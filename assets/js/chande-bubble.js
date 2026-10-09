@@ -38,7 +38,8 @@
  * API: window.CHANDE_BUBBLE = { config, defaults, refresh(), state, lead(fn), lure(fn) }
  *   lure(fn, key = 'default'): mỗi khung fn() trả { x, y, r, hide } -> giọt bị hút về
  *   (x, y), đổi bán kính thành r (px), hide = tan mất (bị nuốt); trả null -> về lại theo
- *   chuột. Nhiều module hút cùng lúc được (mỗi module một key); fn(null) gỡ key đó.
+ *   chuột; bỏ x / y thì chỉ đổi cỡ. Nhiều module hút cùng lúc được (mỗi module một key);
+ *   fn(null) gỡ key đó.
  *   lead(fn): giọt bỏ chuột, bám theo điểm fn() trả về ({x, y} toạ độ màn,
  *   null = tan đi) mỗi khung — trang Gallery cho giọt đi theo vịt patin
  *   (chande-duck.js). lead(null) trả giọt về cho chuột.
@@ -665,8 +666,11 @@ void main () {
     let lu = null
     if (!leader) for (const fn of lures.values()) if ((lu = fn())) break
     if (lu) {
-      targetX = lu.x
-      targetY = lu.y
+      // không có x / y = chỉ đổi cỡ, vẫn bám chuột
+      if (lu.x != null) {
+        targetX = lu.x
+        targetY = lu.y
+      }
       presenceTarget = lu.hide ? 0 : 1
       mulTarget = Math.max(0.02, lu.r / Math.max(1, pooledRadius(1)))
       luring = true
