@@ -211,8 +211,16 @@ function destroy() {
 
 // Chồng poster (three.js + 8 ảnh) nằm giữa trang: dựng sau khi trang tải xong để không
 // chen vào lúc loading; vẫn kịp trước khi người xem cuộn tới.
-if (document.readyState === 'complete') mount(document)
-else addEventListener('load', () => mount(document), { once: true })
+// Dựng khi 'load' tới HOẶC sau tối đa 3s — trên mạng chậm 'load' có thể tới rất muộn.
+{
+  let started = false
+  const go = () => !started && ((started = true), mount(document))
+  if (document.readyState === 'complete') go()
+  else {
+    addEventListener('load', go, { once: true })
+    setTimeout(go, 3000)
+  }
+}
 
 if (window.barba?.hooks) {
   // Cùng nhịp với hero: dựng ở beforeEnter; `sync: true` nên afterLeave tới SAU

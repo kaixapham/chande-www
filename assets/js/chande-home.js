@@ -33,8 +33,16 @@
     preloadBusy = true
     idle(preloadStep)
   }
-  if (document.readyState === 'complete') setTimeout(preloadRun, 1200)
-  else addEventListener('load', () => setTimeout(preloadRun, 1200), { once: true })
+  // chạy khi trang tải xong HOẶC sau tối đa `max` ms (một file treo trên mạng chậm có thể
+  // làm 'load' tới rất muộn / không tới — đừng để phần sau trang chờ theo)
+  const afterLoad = (fn, max = 4000) => {
+    let done = false
+    const go = () => !done && ((done = true), fn())
+    if (document.readyState === 'complete') return setTimeout(go, 0)
+    addEventListener('load', go, { once: true })
+    setTimeout(go, max)
+  }
+  afterLoad(() => setTimeout(preloadRun, 1200))
   // Video (ô recap): chỉ tải + phát sau khi trang tải xong — trước đó hiện ảnh bìa
   const startVideos = () =>
     document.querySelectorAll('video[data-src]').forEach((v) => {
@@ -43,8 +51,7 @@
       v.autoplay = true
       v.play?.().catch(() => {})
     })
-  if (document.readyState === 'complete') setTimeout(startVideos, 300)
-  else addEventListener('load', () => setTimeout(startVideos, 300), { once: true })
+  afterLoad(() => setTimeout(startVideos, 300), 2500)
   window.barba?.hooks?.afterEnter(() => setTimeout(startVideos, 300))
 
   function preloadLater(list) {

@@ -41,7 +41,10 @@
       // ảnh nguồn bị ẩn (display:none) — lazy thì không bao giờ tải; cho tải sau khi trang tải xong
       const eager = () => (o.peek.loading = 'eager')
       if (document.readyState === 'complete') eager()
-      else addEventListener('load', eager, { once: true })
+      else {
+        addEventListener('load', eager, { once: true })
+        setTimeout(eager, 4000) // 'load' có thể tới rất muộn trên mạng chậm
+      }
       o.cv = document.createElement('canvas')
       o.cv.className = 'peek-cv'
       o.cv.setAttribute('aria-hidden', 'true')
