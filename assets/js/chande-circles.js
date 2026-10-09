@@ -61,8 +61,8 @@
       else o.core.addEventListener('load', readTint, { once: true })
     }
     // Vẽ lên canvas phủ cả vòng tròn ngoài; (bx, by, R) = bubble trong toạ độ canvas (px CSS).
-    // Lớp 1: phần vòng NGOÀI nằm dưới bubble đổi sang màu lõi. Lớp 2 (cắt theo lõi): ảnh.
-    // Cả hai: lòng bubble liền, dải sát mép bubble tách ô co nhỏ dần.
+    // Lớp 1: phần vòng NGOÀI nằm dưới bubble đổi sang màu lõi (hình tròn trơn theo bubble).
+    // Lớp 2 (cắt theo lõi): ảnh — lòng bubble liền, dải sát mép bubble tách ô co nhỏ dần.
     const paint = (o, bx, by, R) => {
       const W = o.cv.clientWidth
       if (!W) return
@@ -109,11 +109,8 @@
         ctx.arc(W / 2, W / 2, W / 2, 0, Math.PI * 2)
         ctx.clip()
         ctx.fillStyle = tint
-        if (inner > 0) {
-          disc(inner)
-          ctx.fill()
-        }
-        edgeCells((dx, dy, sz) => ctx.fillRect(dx, dy, sz, sz))
+        disc(R) // trơn theo mép bubble, không tách ô
+        ctx.fill()
         ctx.restore()
         o.drawn = true
       }
