@@ -6,8 +6,9 @@
  * tiếp thì ảnh nền đứng im, chỉ ảnh nhỏ nở ra (cỡ chạy đều theo log, tâm trôi về giữa
  * khung) tới khi phủ kín -> nó thành ảnh nền, ảnh kế tiếp hiện nhỏ ở giữa, lặp lại.
  * Thứ tự: ảnh nền -> ảnh nhỏ -> ảnh nổi giữa -> 3 ảnh .hs-story__z (6 ảnh, sửa trong CMS).
- * Hết ảnh thì hết dính, trang cuộn tiếp. Ảnh đặt left/top/width/height mỗi khung nên
- * luôn nét. Màn ≤ 899px (xếp dọc) thì không chạy.
+ * Hết ảnh thì hết dính, trang cuộn tiếp. Mỗi ảnh được bọc trong ô cắt (.hs-story__cell)
+ * đặt left/top/width/height mỗi khung (luôn nét); hình trong ô TRƯỢT dọc từ dưới lên
+ * suốt đời ảnh (từ lúc nở tới lúc bị ảnh sau phủ kín) cho có độ trôi khi cuộn. Màn ≤ 899px (xếp dọc) thì không chạy.
  *
  * API: window.CHANDE_STORY = { config, mount(root), destroy() }
  * ========================================================================== */
@@ -16,6 +17,8 @@
 
   const CONFIG = {
     stepScroll: 0.7, // quãng cuộn cho mỗi lần một ảnh nở kín khung (× chiều cao khung)
+    slide: 10, // độ trượt hình trong ô (% chiều cao ô, tổng quãng)
+    zoom: 1.14, // phóng hình trong ô để có chỗ trượt
   }
   window.CHANDE_SETTINGS_APPLY?.('story', CONFIG)
   const api = { config: CONFIG, mount() {}, destroy() {} }
@@ -40,6 +43,14 @@
     ].filter(Boolean)
     if (!media || !small || imgs.length < 2) return
 
+    // bọc từng ảnh trong ô cắt — ô nở / đặt chỗ, hình trong ô trượt
+    const cells = imgs.map((img) => {
+      const cell = document.createElement('span')
+      cell.className = 'hs-story__cell'
+      img.before(cell)
+      cell.append(img)
+      return cell
+    })
     let W = 0
     let H = 0
     let bar = 0
@@ -50,15 +61,18 @@
     const measure = () => {
       const on = wide.matches
       section.classList.toggle('is-zoom', on)
-      for (const el of imgs) el.style.cssText = ''
+      for (const el of [...imgs, ...cells]) el.style.cssText = ''
       media.style.transform = ''
       if (col) col.style.transform = ''
+      section.classList.toggle('is-cells', on)
       if (!on) return
       W = media.clientWidth
       H = media.clientHeight
       bar = innerHeight - H
       const box = media.getBoundingClientRect()
+      section.classList.remove('is-cells') // đo ô ảnh nhỏ theo CSS gốc
       const r = small.getBoundingClientRect()
+      section.classList.add('is-cells')
       seed = [r.left - box.left, r.top - box.top, r.width, r.height]
       pin = Math.round(H * CONFIG.stepScroll * (imgs.length - 1))
       section.style.setProperty('--story-pin', `${pin}px`)
@@ -94,12 +108,18 @@
       const g = (h - sh) / Math.max(1e-3, H - sh)
       const cx = sx + sw / 2 + (W / 2 - (sx + sw / 2)) * g
       const cy = sy + sh / 2 + (H / 2 - (sy + sh / 2)) * g
-      imgs.forEach((el, i) => {
+      cells.forEach((el, i) => {
         if (i === k) place(el, 0, 0, W, H)
         else if (i === k + 1) {
           place(el, cx - w / 2, cy - h / 2, w, h)
           el.style.zIndex = '1'
-        } else el.style.visibility = 'hidden'
+        } else {
+          el.style.visibility = 'hidden'
+          return
+        }
+        // đời ảnh i: nở trong chặng i − 1, làm nền trong chặng i -> u 0…1
+        const u = Math.min(1, Math.max(0, (x - (i - 1)) / 2))
+        imgs[i].style.transform = `translate3d(0, ${((0.5 - u) * CONFIG.slide).toFixed(2)}%, 0) scale(${CONFIG.zoom})`
       })
     }
     const onScroll = () => {
@@ -120,7 +140,9 @@
         cancelAnimationFrame(raf)
         section.classList.remove('is-zoom')
         section.style.removeProperty('--story-pin')
-        for (const el of imgs) el.style.cssText = ''
+        for (const el of [...imgs, ...cells]) el.style.cssText = ''
+        cells.forEach((cell, i) => cell.replaceWith(imgs[i]))
+        section.classList.remove('is-cells')
         media.style.transform = ''
         if (col) col.style.transform = ''
       },
