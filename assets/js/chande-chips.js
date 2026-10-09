@@ -59,13 +59,15 @@
   const clamp01 = (v) => Math.min(1, Math.max(0, v))
 
   /* ------------------------------------------------------------ sóng (vàng) */
-  // Toạ độ u trong khung 278 × 54 (đường giữa y = 0): đường mảnh đầu tròn x 25…253, ở
-  // giữa 3 cục to – nhỏ – to (tâm 95 · 139 · 183, cách 44). Animation DỒN TỪNG CỤC: cả
+  // Toạ độ u trong khung 278 × 54 (đường giữa y = 0): đường mảnh chạy SUỐT khung, hai đầu
+  // cắm vào viền vàng (x -8…286), màu chuyển vàng -> trắng; là DÂY CHUN: chuột chạm vào thì
+  // bị kéo theo, tuột ra thì bật tưng tưng rồi tắt dần (mô phỏng chuỗi lò xo). Ở giữa 3 cục to – nhỏ – to (tâm 95 · 139 · 183, cách 44). Animation DỒN TỪNG CỤC: cả
   // chuỗi cục bị đẩy sang phải đúng một nấc (44) rồi dừng một nhịp; cỡ cục theo VỊ TRÍ
   // (to ở 95 / 183, bóp nhỏ ở 139, xẹp hẳn ở 51 / 227) -> cục đi qua giữa bị bóp lại,
   // ra mép thì chìm vào đường kẻ, ở đầu kia cục mới phồng lên.
-  const WAVE = { x0: 25, x1: 253, line: 1, step: 44, first: 51, push: 0.55 }
-  function wavePath(t) {
+  const WAVE = { x0: -8, x1: 286, line: 1, step: 44, first: 51, push: 0.55 }
+  // yAt(x): độ lệch dọc của dây chun tại x
+  function wavePath(t, yAt = () => 0) {
     const period = Math.max(0.3, CONFIG.waveSpeed || 1.7)
     const k = (t / period) % 1
     const e = smooth(clamp01(k / WAVE.push)) // đẩy (ease) … rồi đứng
@@ -93,11 +95,11 @@
     const bot = []
     for (let x = WAVE.x0; x <= WAVE.x1; x += 1) {
       const h = half(x)
-      top.push(`${x},${(-h).toFixed(2)}`)
-      bot.push(`${x},${h.toFixed(2)}`)
+      const y = yAt(x)
+      top.push(`${x},${(y - h).toFixed(2)}`)
+      bot.push(`${x},${(y + h).toFixed(2)}`)
     }
-    const r = WAVE.line
-    return `M${top.join('L')}A${r},${r} 0 0 1 ${bot[bot.length - 1]}L${bot.reverse().join('L')}A${r},${r} 0 0 1 ${top[0]}Z`
+    return `M${top.join('L')}L${bot.reverse().join('L')}Z` // hai đầu chìm trong viền vàng
   }
 
   /* ------------------------------------------------------------ miệng (xanh) */
@@ -332,9 +334,14 @@
 
     // sóng
     let waveEl = null
+    let ysvg = null
     if (yellow) {
       const svg = svgIn(yellow, '0 -27 278 54')
-      waveEl = el('path', { fill: 'currentColor', d: wavePath(0) }, svg)
+      ysvg = svg
+      const gid = `wgrad${Math.random().toString(36).slice(2, 7)}`
+      const grad = el('linearGradient', { id: gid, gradientUnits: 'userSpaceOnUse', x1: 0, y1: 0, x2: 278, y2: 0 }, el('defs', {}, svg))
+      for (const [o, c] of [[0, '#fab700'], [0.2, 'currentColor'], [0.8, 'currentColor'], [1, '#fab700']]) el('stop', { offset: o, 'stop-color': c }, grad)
+      waveEl = el('path', { fill: `url(#${gid})`, d: wavePath(0) }, svg)
     }
     // miệng
     let mouth = null
@@ -398,6 +405,55 @@
       const syl = 0.3 + 0.7 * Math.abs(Math.sin(x * 10.5) * Math.sin(x * 3.3 + 1.2)) // nhịp âm tiết
       return env * syl
     }
+    // ---- dây chun (khung vàng): chuỗi N đoạn, hai đầu cố định trong viền vàng
+    const STR = { n: 24, tension: 36000, damp: 2.6, grab: 5, snap: 17 }
+    const SX = (i) => WAVE.x0 + ((WAVE.x1 - WAVE.x0) * i) / STR.n
+    const sy = new Float32Array(STR.n + 1)
+    const sv = new Float32Array(STR.n + 1)
+    const pull = { on: false, x: 0, y: 0, ly: null }
+    const stringY = (x) => {
+      const f = clamp01((x - WAVE.x0) / (WAVE.x1 - WAVE.x0)) * STR.n
+      const i = Math.min(STR.n - 1, Math.floor(f))
+      return sy[i] + (sy[i + 1] - sy[i]) * (f - i)
+    }
+    const stepString = (dt) => {
+      const sub = Math.ceil(dt / 0.002) // bước nhỏ cho ổn định (tension · h² < 1)
+      const h = dt / sub
+      for (let k = 0; k < sub; k++) {
+        for (let i = 1; i < STR.n; i++) sv[i] += (STR.tension * (sy[i - 1] - 2 * sy[i] + sy[i + 1]) - STR.damp * sv[i]) * h
+        for (let i = 1; i < STR.n; i++) sy[i] += sv[i] * h
+      }
+      if (pull.on) {
+        // bị kéo tại một điểm: dây căng thành hình tam giác qua con trỏ
+        for (let i = 1; i < STR.n; i++) {
+          const x = SX(i)
+          const w = x < pull.x ? (x - WAVE.x0) / (pull.x - WAVE.x0) : (WAVE.x1 - x) / (WAVE.x1 - pull.x)
+          const y = pull.y * w
+          sv[i] = (y - sy[i]) / Math.max(dt, 1e-3)
+          sy[i] = y
+        }
+      }
+    }
+    const onString = (e) => {
+      if (!ysvg) return
+      const r = ysvg.getBoundingClientRect()
+      const x = ((e.clientX - r.left) / r.width) * 278
+      const y = ((e.clientY - r.top) / r.height) * 54 - 27
+      const inX = x > 4 && x < 274
+      if (pull.on) {
+        // kéo quá xa hoặc ra khỏi khung -> tuột, dây bật lại
+        if (!inX || Math.abs(y) > STR.snap) pull.on = false
+        else Object.assign(pull, { x, y })
+      } else if (inX && Math.abs(y) < 27) {
+        const s0 = stringY(x)
+        const crossed = pull.ly != null && (pull.ly - s0) * (y - s0) < 0
+        if (Math.abs(y - s0) < STR.grab || crossed) Object.assign(pull, { on: true, x, y: Math.max(-STR.snap, Math.min(STR.snap, y)) })
+      }
+      pull.ly = inX && Math.abs(y) < 27 ? y : null
+      kick()
+    }
+    addEventListener('pointermove', onString, { passive: true })
+
     // ---- theo chuột (u, quanh tâm khung xanh)
     const FOLLOW = { x: 14, y: 5, idle: 2500, ease: 6 }
     const mouse = { dx: 0, dy: 0, t: 0, on: false }
@@ -428,7 +484,10 @@
       raf = 0
       const dt = Math.min(0.05, last ? (now - last) / 1000 : 1 / 60)
       last = now
-      if (waveEl) waveEl.setAttribute('d', wavePath(now / 1000))
+      if (waveEl) {
+        stepString(dt)
+        waveEl.setAttribute('d', wavePath(now / 1000, stringY))
+      }
       if (mouth) {
         const pr = preset()
         // mở nhanh (cứng, hơi lố) — khép chậm (mềm, gần như không lố)
@@ -504,6 +563,7 @@
         removeEventListener('scroll', check)
         removeEventListener('resize', check)
         removeEventListener('pointermove', onMove)
+        removeEventListener('pointermove', onString)
         cancelAnimationFrame(raf)
       },
       // thử ngay một cử động (bảng setting)
