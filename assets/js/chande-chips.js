@@ -177,12 +177,12 @@
     talk: {
       label: 'Nói chuyện',
       closed: shape({ lx: -37.5, rx: 37.5 }), // như Figma 762: đường thẳng
-      open: shape({ lx: -46, rx: 46, up: -8, low: 16 }),
+      open: shape({ lx: -46, rx: 46, low: 20 }), // môi trên luôn thẳng, chỉ môi dưới cong
       // khi đã mở: NÓI một lúc (nhịp âm tiết lúc to lúc nhỏ) -> NGẬM lại nghỉ -> nói tiếp
       talk: { on: [1.8, 3.2], off: [0.9, 1.8] },
       idleClosed: [
         // lẩm bẩm: hé mở 2 nhịp nhỏ
-        { dur: 900, fn: (k) => ({ up: -2.5 * Math.abs(wave(k, 2)), low: 3 * Math.abs(wave(k, 2)) }) },
+        { dur: 900, fn: (k) => ({ low: 4 * Math.abs(wave(k, 2)) }) },
       ],
       idleOpen: [],
     },
