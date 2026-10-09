@@ -22,7 +22,7 @@
     slide: 10, // độ trượt hình trong ô (% chiều cao ô, tổng quãng)
     zoom: 1.14, // phóng hình trong ô để có chỗ trượt
     bandsFrom: 0.5, // dải màu bắt đầu trồi ra khi ảnh nở được bao nhiêu (0…1)
-    bandLead: 0.07, // mỗi dải đi trước dải trong nó bao nhiêu (theo quãng nở)
+    bandLead: 0.028, // mỗi dải đi trước dải trong nó bao nhiêu (theo quãng nở) = độ dày dải
   }
   window.CHANDE_SETTINGS_APPLY?.('story', CONFIG)
   const api = { config: CONFIG, mount() {}, destroy() {} }
