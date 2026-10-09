@@ -34,6 +34,9 @@
   if (!gsap || !hero || !root.classList.contains('cl-loading')) return
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
+  // mảng gạch neon (chande-field.js, vẽ WebGL chung một canvas — clip khung không ăn):
+  // ẩn hết gạch từ đầu, loading xong thì cho từng viên bung ra
+  window.CHANDE_FIELD_INTRO = 0
   const $$ = (sel, scope = document) => [...scope.querySelectorAll(sel)]
   // thứ tự xuất hiện theo vị trí trên màn
   const byPos = (els) =>
@@ -46,7 +49,7 @@
   const title = hero.querySelector('.hero__title')
 
   const imgs = byPos([
-    ...$$('.hero__field, .hero__dark, .hero__pills', hero),
+    ...$$('.hero__dark, .hero__pills', hero),
     ...$$('.hero-card__media', hero),
     ...$$('.hero__recap img', document),
   ])
@@ -74,6 +77,18 @@
   gsap.set(neonText, { yPercent: 110 })
 
   const play = () => {
+    window.CHANDE_FIELD?.playIntro?.(1600)
+    // màn loading giữ clip-path của các khối này bằng Web Animations (fill forwards) — style
+    // inline bị đè, nên quét bằng .animate(): animation tạo sau nằm trên, xong thì tự gỡ.
+    // Gọi ngay (không chờ delay của timeline) để không nháy một khung hiện đủ.
+    barNeon.forEach((el, i) =>
+      el.animate([{ clipPath: 'inset(0% 100% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)' }], {
+        duration: 900,
+        delay: i * 120,
+        easing: 'cubic-bezier(.87,0,.13,1)',
+        fill: 'backwards',
+      }),
+    )
     const tl = gsap.timeline({ delay: CONFIG.delay })
     tl.to(imgs, {
       clipPath: SHOW,
@@ -98,13 +113,6 @@
       stagger: CONFIG.textStagger,
       clearProps: 'clipPath,transform',
     }, 0.25)
-    tl.fromTo(barNeon, { clipPath: 'inset(0% 100% 0% 0%)' }, {
-      clipPath: 'inset(0% 0% 0% 0%)',
-      duration: 0.9,
-      ease: 'expo.inOut',
-      stagger: 0.12,
-      clearProps: 'clipPath',
-    }, 0)
     tl.to(neon, {
       clipPath: 'inset(0% 0% 0% 0%)',
       duration: 0.9,

@@ -34,7 +34,8 @@
  * Rê chuột có 5 preset (HOVER_PRESETS): Thấu kính · Tản ô · Nam châm · Dạt ô · Gợn sóng.
  *
  * API: window.CHANDE_FIELD = { config, defaults, mount(root), destroy(), refresh(),
- *                            park() -> Promise, release(), applyHoverPreset(tên) }
+ *                            park() -> Promise, release(), applyHoverPreset(tên),
+ *                            playIntro(ms) — gạch bung ra lần lượt (sau màn loading) }
  * ========================================================================== */
 (() => {
   'use strict'
@@ -158,6 +159,7 @@ uniform float uHoverFlat;
 uniform vec2 uPad;          // khung vẽ nới ra mỗi phía (tỉ lệ theo cỡ vùng) cho ô dạt tràn ra
 uniform float uHoverMode;   // 0 push · 1 ripple · 2 scatter (dạt ô)
 uniform float uHoverTime;   // giây, cho sóng
+uniform float uIntro;       // 0..1 — xuất hiện sau màn loading: từng viên gạch bung ra lần lượt
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
 
@@ -227,6 +229,13 @@ float brickAt(vec2 g, vec2 c, vec2 grid, float scatter, out vec3 lit, out float 
   vec3 tint = shadeAt(cellUv - away / grid * infl * uHoverWarp);
 
   float extent = (0.5 - uMosaicGap * 0.5) * (1.0 - uHoverShrink * infl);
+  // intro: mỗi viên một ngưỡng (theo hàng + chút ngẫu nhiên), bung từ 0 lên đủ cỡ
+  if (uIntro < 0.999) {
+    float seed = fract(sin(dot(c, vec2(12.9898, 78.233))) * 43758.5453);
+    float order = (c.y / max(grid.y, 1.0)) * 0.6 + seed * 0.4;
+    float ik = clamp((uIntro * 1.35 - order) / 0.35, 0.0, 1.0);
+    extent *= ik * ik * (3.0 - 2.0 * ik);
+  }
   vec2 local = g - (c + 0.5);
   if (scatter > 0.5) {
     local -= away * clamp(uHoverPush * infl, 0.0, 1.0) * 0.9;
@@ -313,6 +322,8 @@ void main() {
       }
     }
     color = mix(rampColor(0.0) * 0.3, clamp(lit, 0.0, 1.0), brick);
+    // intro: khe giữa các viên trong suốt tới gần cuối mới lấp nền
+    if (uIntro < 0.999) alpha *= mix(brick, 1.0, smoothstep(0.85, 1.0, uIntro));
     // Khe trong vùng chuột: bão hoà nhanh (infl 0.15 đã trắng hẳn) để không còn
     // dải xám pha giữa khe tối và nền trắng ở rìa vùng ảnh hưởng.
     reveal = (1.0 - brick) * smoothstep(0.0, 0.15, inflMax) * inside;
@@ -341,7 +352,7 @@ void main() {
     'uResolution', 'uPhase', 'uLineCount', 'uLineOffset', 'uLineOrder', 'uSoftness',
     'uMosaicOn', 'uMosaicDetail', 'uMosaicGap', 'uMosaicCorners', 'uMosaicBevel',
     'uMosaicStuds', 'uContrast', 'uSaturation', 'uVignette', 'uGrainAmount', 'uGrainSize',
-  'uFlip', 'uMouse', 'uHover', 'uHoverRadius', 'uHoverShrink', 'uHoverPush', 'uHoverWarp', 'uHoverGlow', 'uHoverGap', 'uHoverFlat', 'uHoverMode', 'uHoverTime', 'uPad',
+  'uFlip', 'uMouse', 'uHover', 'uHoverRadius', 'uHoverShrink', 'uHoverPush', 'uHoverWarp', 'uHoverGlow', 'uHoverGap', 'uHoverFlat', 'uHoverMode', 'uHoverTime', 'uPad', 'uIntro',
   ]
 
   const hexToRgb = (hex) => {
@@ -402,6 +413,7 @@ void main() {
         gl.viewport(x - pad, gy - pad, w + 2 * pad, h + 2 * pad)
         gl.scissor(x - pad, gy - pad, w + 2 * pad, h + 2 * pad)
         gl.uniform2f(u.uPad, pad / w, pad / h)
+        gl.uniform1f(u.uIntro, intro.v)
         gl.uniform1f(u.uFlip, flip ? 1 : 0)
         gl.uniform2f(u.uMouse, mouse ? mouse.x : -9, mouse ? mouse.y : -9)
         gl.uniform1f(u.uHover, mouse ? mouse.on : 0)
@@ -462,6 +474,19 @@ void main() {
   // Đồng hồ chung, tự tích luỹ (không đọc thẳng performance.now) để đỗ được.
   // phase 0 = điểm nghỉ: slatPluck đã lắng hẳn về 0, mọi cột đứng thẳng hàng.
   const clock = { phase: 0, holds: 0, parked: false, waiters: [], t: 0 }
+  // Xuất hiện sau màn loading: chande-entrance.js đặt CHANDE_FIELD_INTRO = 0 (ẩn hết
+  // gạch) rồi gọi playIntro(ms) khi loading xong -> intro.v chạy 0 -> 1.
+  const intro = { v: window.CHANDE_FIELD_INTRO ?? 1, t0: 0, dur: 0 }
+  function playIntro(ms = 1400) {
+    intro.v = 0
+    intro.t0 = performance.now()
+    intro.dur = Math.max(1, ms)
+  }
+  function stepIntro(now) {
+    if (!intro.dur) return
+    intro.v = Math.min(1, (now - intro.t0) / intro.dur)
+    if (intro.v >= 1) intro.dur = 0
+  }
   function settleWaiters() {
     clock.waiters.splice(0).forEach((fn) => fn())
   }
@@ -609,6 +634,7 @@ void main() {
       frameScale = last ? Math.min(4, (t - last) / (1000 / 30)) : 1
       last = t
       advance(t)
+      stepIntro(t)
       groups.forEach((g) => {
         if (!g.visible) return
         any = true
@@ -736,5 +762,5 @@ void main() {
     window.barba.hooks.afterLeave((data) => destroy(data.current.container))
   }
 
-  window.CHANDE_FIELD = { config: CONFIG, defaults: DEFAULTS, mount, destroy, refresh, park, release, applyHoverPreset, HOVER_PRESETS }
+  window.CHANDE_FIELD = { config: CONFIG, defaults: DEFAULTS, mount, destroy, refresh, park, release, applyHoverPreset, HOVER_PRESETS, playIntro }
 })()
