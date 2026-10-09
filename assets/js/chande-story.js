@@ -1,11 +1,11 @@
 /* =============================================================================
- * CHANDE — Story (06 years / Chande.): dính lại, ẢNH TRONG NỞ RA lấp khung, lặp 6 ảnh
+ * CHANDE — Story (06 years / Chande.): dính lại, ẢNH NHỎ NỞ RA lấp khung
  * -----------------------------------------------------------------------------
  * Lúc đầu chỉ có 2 ảnh: ảnh nền phủ khung + một ảnh nhỏ ở giữa (chỗ .hs-story__small).
  * Khi khung ảnh chạm thanh menu thì khung + cột chữ ĐỨNG YÊN (dịch xuống bù cuộn); cuộn
  * tiếp thì ảnh nền đứng im, chỉ ảnh nhỏ nở ra (cỡ chạy đều theo log, tâm trôi về giữa
- * khung) tới khi phủ kín -> nó thành ảnh nền, ảnh kế tiếp hiện nhỏ ở giữa, lặp lại.
- * Thứ tự: ảnh nền -> ảnh nhỏ -> ảnh nổi giữa -> 3 ảnh .hs-story__z (6 ảnh, sửa trong CMS).
+ * khung) tới khi phủ kín. Chỉ 2 ảnh: ảnh nền + ảnh nhỏ (ảnh nổi giữa chỉ dùng ở mobile;
+ * thêm ảnh vào danh sách imgs thì tự lặp: ảnh vừa phủ kín thành nền, ảnh kế nở tiếp).
  * Hết ảnh thì hết dính, trang cuộn tiếp. Mỗi ảnh được bọc trong ô cắt (.hs-story__cell)
  * đặt left/top/width/height mỗi khung (luôn nét); hình trong ô TRƯỢT dọc từ dưới lên
  * suốt đời ảnh (từ lúc nở tới lúc bị ảnh sau phủ kín) cho có độ trôi khi cuộn.
@@ -18,7 +18,7 @@
   'use strict'
 
   const CONFIG = {
-    stepScroll: 0.7, // quãng cuộn cho mỗi lần một ảnh nở kín khung (× chiều cao khung)
+    stepScroll: 1, // quãng cuộn cho mỗi lần một ảnh nở kín khung (× chiều cao khung)
     slide: 10, // độ trượt hình trong ô (% chiều cao ô, tổng quãng)
     zoom: 1.14, // phóng hình trong ô để có chỗ trượt
     bandsFrom: 0.5, // dải màu bắt đầu trồi ra khi ảnh nở được bao nhiêu (0…1)
@@ -42,8 +42,6 @@
     const imgs = [
       section.querySelector('.hs-story__photo'),
       small,
-      section.querySelector('.hs-story__card'),
-      ...section.querySelectorAll('.hs-story__z'),
     ].filter(Boolean)
     if (!media || !small || imgs.length < 2) return
 

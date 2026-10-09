@@ -85,7 +85,7 @@
 .hs-story.is-zoom{height:calc(280 * var(--u) + var(--sh) + var(--story-pin, 0px))}
 .hs-story.is-zoom .hs-story__col{top:calc(280 * var(--u)); bottom:auto}
 .hs-story__media, .hs-story__col{will-change:transform}
-.hs-story__z{left:50%; top:50%; width:0; height:0; object-fit:cover}
+.hs-story.is-cells .hs-story__card{display:none} /* bản zoom chỉ dùng ảnh nền + ảnh nhỏ */
 .hs-story__cell{display:contents}
 .hs-story__band-c{position:absolute; visibility:hidden; z-index:1; pointer-events:none}
 .hs-story.is-cells .hs-story__cell{display:block; position:absolute; overflow:hidden}
