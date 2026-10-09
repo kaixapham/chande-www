@@ -877,11 +877,8 @@ void main () {
   // lấy mức nhỏ hơn. Giọt đang ẩn thì đặt luôn.
   function hiddenHere() {
     if (!CONFIG.hideIn) return false
-    for (const el of document.querySelectorAll(CONFIG.hideIn)) {
-      const r = el.getBoundingClientRect()
-      if (ptrX >= r.left && ptrX <= r.right && ptrY >= r.top && ptrY <= r.bottom) return true
-    }
-    return false
+    // phần tử nằm TRÊN CÙNG dưới con trỏ (section sau trượt lên phủ thì không tính nữa)
+    return !!document.elementFromPoint(ptrX, ptrY)?.closest?.(CONFIG.hideIn)
   }
   function checkShrink() {
     const el = CONFIG.shrinkOn && CONFIG.shrinkFrom ? document.querySelector(CONFIG.shrinkFrom) : null
