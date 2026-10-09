@@ -377,111 +377,132 @@
     save.disabled = !n || S.mode === 'none'
   }
 
+  // Chỉ những trang / section CÓ ảnh để sửa mới hiện (section chỉ có màu / effect bị ẩn).
+  const pagesWith = () => S.pages.filter((p) => p.sections.some((s) => count(s)))
+  const sectionsWith = (p) => p.sections.filter((s) => count(s))
+  // Ảnh xem trước của một section: ô ảnh + ảnh đầu của các danh sách (tối đa n)
+  function thumbsOf(file, sec, n = 4) {
+    const out = []
+    for (const sl of sec.slots) {
+      const op = S.ops.get(opKey(file, sl.key))
+      out.push(shown(op?.path || sl.src))
+    }
+    for (const l of sec.lists) {
+      const items = S.ops.get(opKey(file, l.key))?.items || l.items
+      for (const it of items.slice(0, 4)) out.push(shown(l.kind === 'objects' ? it[l.images[0]?.k || 'img'] : it))
+    }
+    return out.filter(Boolean).slice(0, n)
+  }
+  const itemsCount = (sec) => sec.slots.length + sec.lists.reduce((a, l) => a + l.items.length, 0)
+
   function renderTree() {
     const tree = $('[data-tree]')
     const cur = S.view
-    const total = S.pages.reduce((a, p) => a + p.sections.reduce((b, s) => b + count(s), 0), 0)
-    let h = `<button class="node node--root" data-go="root" aria-current="${cur.kind === 'root'}">CMS tổng<span class="c">${total} ô</span></button><div class="kids">`
-    for (const p of S.pages) {
-      const n = p.sections.reduce((b, s) => b + count(s), 0)
+    let h = ''
+    for (const p of pagesWith()) {
       const pageChanged = p.sections.some((s) => sectionChanged(p.file, s))
-      h += `<button class="node node--page ${pageChanged ? 'has-change' : ''}" data-go="page" data-file="${p.file}" aria-current="${cur.kind === 'page' && cur.file === p.file}">${esc(p.label)}<i class="dot"></i><span class="c">${p.missing ? 'không đọc được' : `${n} ô`}</span></button>`
-      if (p.sections.length) {
-        h += '<div class="kids">'
-        for (const s of p.sections) {
-          const on = cur.kind === 'section' && cur.file === p.file && cur.n === s.n
-          h += `<button class="node ${count(s) ? '' : 'is-empty'} ${sectionChanged(p.file, s) ? 'has-change' : ''}" data-go="section" data-file="${p.file}" data-n="${s.n}" aria-current="${on}"><span class="n">${s.n}</span>${esc(s.label)}<i class="dot"></i><span class="c">${count(s) || '–'}</span></button>`
-        }
-        h += '</div>'
+      h += `<button class="node node--page ${pageChanged ? 'has-change' : ''}" data-go="page" data-file="${p.file}" aria-current="${cur.kind === 'page' && cur.file === p.file}">${esc(p.label)}<i class="dot"></i></button><div class="kids">`
+      for (const s of sectionsWith(p)) {
+        const on = cur.kind === 'section' && cur.file === p.file && cur.n === s.n
+        h += `<button class="node ${sectionChanged(p.file, s) ? 'has-change' : ''}" data-go="section" data-file="${p.file}" data-n="${s.n}" aria-current="${on}">${esc(s.label)}<i class="dot"></i><span class="c">${itemsCount(s)}</span></button>`
       }
+      h += '</div>'
     }
-    tree.innerHTML = h + '</div>'
+    tree.innerHTML = h || '<p class="hint">Chưa có ảnh nào gắn <code>data-cms</code>.</p>'
   }
 
   function slotCard(file, slot) {
     const op = S.ops.get(opKey(file, slot.key))
     const src = op?.path || slot.src
     const hidden = op?.hidden ?? slot.hidden
-    // Thao tác ngay trên ảnh: bấm ảnh = thay; nút Thay / Xoá (ẩn khỏi trang) / Hiện lại / Hoàn tác
+    const tip = `${src}\nNên dùng ảnh rộng ≥ ${slot.w * 2}px`
     return `<article class="slot ${op ? 'is-changed' : ''} ${hidden ? 'is-hidden' : ''}" data-slot="${esc(slot.key)}">
-      <div class="thumb" data-pick title="Bấm để thay ảnh — hoặc kéo-thả ảnh vào đây"><span class="tag">CHƯA LƯU</span><img src="${esc(shown(src))}" alt="">
-        ${hidden ? '<span class="gone">ĐÃ ẨN KHỎI TRANG</span>' : ''}
+      <div class="thumb" data-pick title="${esc(tip)}"><img src="${esc(shown(src))}" alt="">
+        ${op ? '<span class="tag">Chưa lưu</span>' : ''}${hidden ? '<span class="gone">Đã ẩn khỏi trang</span>' : ''}
         <span class="tbar">
           <button class="tbtn" type="button" data-pick>Thay ảnh</button>
-          ${hidden ? '<button class="tbtn" type="button" data-unhide>Hiện lại</button>' : '<button class="tbtn tbtn--bad" type="button" data-remove>Xoá</button>'}
+          ${hidden ? '<button class="tbtn" type="button" data-unhide>Hiện lại</button>' : '<button class="tbtn tbtn--bad" type="button" data-remove>Ẩn</button>'}
           ${op ? '<button class="tbtn" type="button" data-undo>Hoàn tác</button>' : ''}
         </span>
       </div>
-      <div class="meta"><b>${esc(slot.label)}</b>
-        <code>${esc(src)}</code>
-        <span class="size">${op?.note ? esc(op.note) : `Nên dùng ảnh rộng ≥ ${slot.w * 2}px (ô hiển thị ${slot.w}px khổ 1920)`}</span>
-        <div class="row"><input type="text" data-alt value="${esc(op?.alt ?? slot.alt)}" placeholder="Mô tả ảnh (alt) — để trống nếu là ảnh trang trí"></div>
-      </div>
+      <div class="meta"><b>${esc(slot.label)}</b>${op?.note ? `<span class="note">${esc(op.note)}</span>` : ''}
+        <input type="text" data-alt value="${esc(op?.alt ?? slot.alt)}" placeholder="Mô tả ảnh (alt)"></div>
     </article>`
   }
 
   function listBlock(file, list) {
     const op = S.ops.get(opKey(file, list.key))
     const items = op ? op.items : list.items
-    let h = `<h4 style="margin:28px 0 6px">${esc(list.label)}</h4><p class="hint">Thả ảnh vào ô để thay · ảnh nén về rộng ${list.w * 2}px${op ? ' · <b style="color:var(--warn)">có thay đổi chưa lưu</b> <button class="btn btn--ghost" type="button" data-list-undo="' + esc(list.key) + '" style="height:24px">Hoàn tác danh sách</button>' : ''}</p>`
+    let h = `<section class="panel${op ? ' is-changed' : ''}"><header class="panel__head"><b>${esc(list.label)}</b><span class="c">${items.length}</span>${op ? `<button class="btn btn--ghost btn--sm" type="button" data-list-undo="${esc(list.key)}">Hoàn tác</button>` : ''}</header>`
     if (list.kind === 'objects') {
-      h += `<div class="list" data-list="${esc(list.key)}">`
+      h += `<div class="cards" data-list="${esc(list.key)}">`
       items.forEach((it, i) => {
-        h += `<div class="item" data-i="${i}">
-          <div class="phs">${list.images.map((im) => `<div class="phw"><div class="ph" data-pick-i data-ik="${esc(im.k)}" style="background-image:url('${esc(shown(it[im.k] || ''))}')" title="Bấm để thay ${esc(im.label || 'ảnh')}"><em>Thay ảnh</em></div>${im.label ? `<small>${esc(im.label)}</small>` : ''}</div>`).join('')}</div>
-          <div class="fields${list.fields.length > 3 ? ' fields--wide' : ''}">
+        h += `<div class="card" data-i="${i}">
+          <div class="phs">${list.images.map((im) => `<div class="ph" data-pick-i data-ik="${esc(im.k)}" style="background-image:url('${esc(shown(it[im.k] || ''))}')" title="Bấm / thả ảnh để thay ${esc(im.label || 'ảnh')}"><em>Thay</em>${im.label && list.images.length > 1 ? `<small>${esc(im.label)}</small>` : ''}</div>`).join('')}</div>
+          <div class="fields">
             ${list.fields.map((f) => f.area
-              ? `<label class="wide">${esc(f.label)}<textarea data-k="${esc(f.k)}" rows="3">${esc(it[f.k] || '')}</textarea></label>`
-              : `<label>${esc(f.label)}<input type="text" data-k="${esc(f.k)}" value="${esc(it[f.k] || '')}"${f.k === 'pos' ? ' placeholder="50% 50%"' : f.k === 'url' ? ' placeholder="https://…"' : ''}></label>`).join('')}
+              ? `<textarea data-k="${esc(f.k)}" rows="3" placeholder="${esc(f.label)}">${esc(it[f.k] || '')}</textarea>`
+              : `<input type="text" class="f-${esc(f.k)}${!['num', 'name'].includes(f.k) && !it[f.k] ? ' is-opt' : ''}" data-k="${esc(f.k)}" value="${esc(it[f.k] || '')}" placeholder="${esc(f.label)}" title="${esc(f.label)}">`).join('')}
           </div>
-          <div class="ops"><button class="btn" type="button" data-move="-1" title="Lên">↑</button><button class="btn" type="button" data-move="1" title="Xuống">↓</button><button class="btn btn--del" type="button" data-del title="Xoá người này">✕ Xoá</button></div>
+          <div class="ops"><button class="ico" type="button" data-move="-1" title="Lên">↑</button><button class="ico" type="button" data-move="1" title="Xuống">↓</button><button class="ico ico--bad" type="button" data-del title="Xoá">✕</button></div>
         </div>`
       })
-      h += `<button class="btn" type="button" data-add style="align-self:flex-start">+ Thêm người</button></div>`
+      h += `<button class="card addbox" type="button" data-add>+ Thêm</button></div>`
     } else {
       h += `<div class="chips" data-list="${esc(list.key)}">`
       items.forEach((p, i) => {
-        h += `<div class="chip" data-i="${i}" data-pick-i style="background-image:url('${esc(shown(p))}')" title="Bấm để thay — ${esc(p)}"><span>${i + 1}</span><em>Thay ảnh</em><button type="button" data-del title="Xoá ảnh này khỏi danh sách">✕ Xoá</button></div>`
+        h += `<div class="chip" data-i="${i}" data-pick-i style="background-image:url('${esc(shown(p))}')" title="Bấm / thả ảnh để thay"><span>${i + 1}</span><em>Thay</em><button type="button" data-del title="Xoá ảnh này">✕</button></div>`
       })
       h += `<button class="addbox chip" type="button" data-add>+ Thêm ảnh</button></div>`
     }
-    return h
+    return h + '</section>'
+  }
+
+  // ô bento của một section / một trang: ghép tối đa 4 ảnh xem trước
+  function bentoTile(attrs, title, sub, thumbs, size, changed) {
+    const pics = thumbs.map((t) => `<i style="background-image:url('${esc(t)}')"></i>`).join('')
+    return `<button class="tile tile--${size}${changed ? ' has-change' : ''}" type="button" ${attrs}>
+      <span class="tile__pics n${thumbs.length}">${pics}</span>
+      <span class="tile__txt"><b>${esc(title)}</b><span>${esc(sub)}</span></span><i class="dot"></i></button>`
   }
 
   function renderMain() {
     const main = $('[data-main]')
     const v = S.view
-    if (v.kind === 'root') {
-      let h = '<div class="crumb">CMS tổng</div><h3>Toàn bộ ảnh của site</h3><p class="hint">Chọn một trang hoặc một section ở cây bên trái. Số ô của mỗi section đọc thẳng từ HTML — thêm thuộc tính <code>data-cms</code> vào ảnh nào thì ảnh đó tự xuất hiện ở đây.</p><div class="grid">'
-      for (const p of S.pages) {
-        const n = p.sections.reduce((b, s) => b + count(s), 0)
-        h += `<article class="slot"><div class="meta"><b>${esc(p.label)}</b><code>${p.file}</code><span class="size">${p.sections.length} section · ${n} ô ảnh</span></div><div class="acts"><button class="btn" type="button" data-go="page" data-file="${p.file}">Mở</button></div></article>`
+    const pages = pagesWith()
+    if (v.kind === 'root' || !pages.some((p) => p.file === v.file)) {
+      let h = '<h3>Nội dung có thể sửa</h3><div class="bento">'
+      for (const p of pages) {
+        const secs = sectionsWith(p)
+        const thumbs = secs.flatMap((s) => thumbsOf(p.file, s, 1)).slice(0, 4)
+        h += bentoTile(`data-go="page" data-file="${p.file}"`, p.label, `${secs.length} section`, thumbs, 'xl', p.sections.some((s) => sectionChanged(p.file, s)))
       }
       main.innerHTML = h + '</div>'
       return
     }
     const page = S.pages.find((p) => p.file === v.file)
+    const secs = sectionsWith(page)
     if (v.kind === 'page') {
-      let h = `<div class="crumb">CMS tổng / ${esc(page.label)}</div><h3>${esc(page.label)}</h3>`
-      if (!page.sections.length) h += '<div class="empty">Trang này chưa có section nào gắn <code>data-cms-section</code>.</div>'
-      else {
-        h += '<div class="grid">'
-        for (const s of page.sections)
-          h += `<article class="slot"><div class="meta"><b>Section ${s.n} · ${esc(s.label)}</b><span class="size">${count(s) ? `${count(s)} ô ảnh` : 'Không có ảnh để thay'}</span></div>${count(s) ? `<div class="acts"><button class="btn" type="button" data-go="section" data-file="${page.file}" data-n="${s.n}">Mở</button></div>` : ''}</article>`
-        h += '</div>'
+      let h = `<h3>${esc(page.label)}</h3><div class="bento">`
+      for (const s of secs) {
+        const n = itemsCount(s)
+        const size = n >= 8 ? 'xl' : n >= 3 ? 'l' : 'm'
+        h += bentoTile(`data-go="section" data-file="${page.file}" data-n="${s.n}"`, s.label, `${n} ảnh`, thumbsOf(page.file, s), size, sectionChanged(page.file, s))
       }
-      main.innerHTML = h
+      main.innerHTML = h + '</div>'
       return
     }
     const sec = page.sections.find((s) => s.n === v.n)
-    let h = `<div class="crumb">CMS tổng / ${esc(page.label)} / Section ${sec.n}</div><h3>${esc(sec.label)}</h3>`
-    if (!count(sec)) h += '<div class="empty">Section này không có ảnh để thay (chỉ có màu / effect).</div>'
-    else {
-      h += '<p class="hint">Bấm "Thay ảnh" hoặc kéo-thả ảnh vào ô. Ảnh được nén sẵn trong trình duyệt; chưa ghi gì cho tới khi bấm Lưu.</p>'
-      if (sec.slots.length) h += `<div class="grid">${sec.slots.map((sl) => slotCard(page.file, sl)).join('')}</div>`
-      sec.lists.forEach((l) => (h += listBlock(page.file, l)))
+    const at = secs.indexOf(sec)
+    const nav = (d, txt) => {
+      const t = secs[at + d]
+      return t ? `<button class="btn btn--ghost btn--sm" type="button" data-go="section" data-file="${page.file}" data-n="${t.n}" title="${esc(t.label)}">${txt}</button>` : ''
     }
-    main.innerHTML = h
+    let h = `<div class="sechead"><button class="btn btn--ghost btn--sm" type="button" data-go="page" data-file="${page.file}">← ${esc(page.label)}</button><h3>${esc(sec.label)}</h3><span class="sp"></span>${nav(-1, '‹ Trước')}${nav(1, 'Sau ›')}</div>`
+    h += '<div class="bento bento--slots">'
+    h += sec.slots.map((sl) => slotCard(page.file, sl)).join('')
+    sec.lists.forEach((l) => (h += listBlock(page.file, l)))
+    main.innerHTML = h + '</div>'
   }
 
   function render() {
@@ -589,7 +610,7 @@
       op.items[i] = { ...op.items[i], [e.target.dataset.k]: e.target.value }
       // ô tuỳ chọn để trống thì bỏ hẳn khoá (giữ JSON gọn)
       if (!['num', 'name'].includes(e.target.dataset.k) && !e.target.value) delete op.items[i][e.target.dataset.k]
-      e.target.closest('.item').classList.add('is-changed')
+      e.target.closest('.card')?.classList.add('is-changed')
       renderBar()
       renderTree()
     }
@@ -600,7 +621,7 @@
     const t = e.target.closest('.slot[data-slot], [data-pick-i]')
     if (!t) return
     e.preventDefault()
-    t.closest('.slot, .item, .chip')?.classList.add('is-drag')
+    t.closest('.slot, .card, .chip')?.classList.add('is-drag')
   })
   document.addEventListener('dragleave', (e) => e.target.closest?.('.is-drag')?.classList.remove('is-drag'))
   document.addEventListener('drop', (e) => {
@@ -663,8 +684,8 @@
   ;(async () => {
     await detectMode()
     await loadAll()
-    const first = S.pages[0]
-    S.view = first?.sections.length ? { kind: 'page', file: first.file } : { kind: 'root' }
+    const first = pagesWith()[0]
+    S.view = first ? { kind: 'page', file: first.file } : { kind: 'root' }
     render()
   })()
 })()
