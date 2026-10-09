@@ -180,12 +180,31 @@
     probe.className = 'gal__probe'
     stage.appendChild(probe)
 
-    // Nạp sẵn mọi thumb (nhẹ) để ô mới hiện ra khi kéo không bị nháy trắng.
-    items.forEach((it) => {
-      const im = new Image()
-      im.decoding = 'async'
-      im.src = it.img
-    })
+    // Nạp sẵn mọi thumb để ô mới hiện ra khi kéo không bị nháy trắng — nhưng SAU khi các ô
+    // đang thấy đã tải xong (nạp hết 110 ảnh cùng lúc thì ảnh trên màn phải xếp hàng chung
+    // -> mãi mới hiện), mỗi lần vài ảnh lúc rảnh.
+    {
+      let i = 0
+      const idle = window.requestIdleCallback || ((f) => setTimeout(f, 60))
+      const step = () => {
+        const batch = items.slice(i, (i += 4)).map(
+          (it) => new Promise((ok) => {
+            const im = new Image()
+            im.decoding = 'async'
+            im.onload = im.onerror = ok
+            im.src = it.img
+          }),
+        )
+        if (batch.length) Promise.all(batch).then(() => idle(step))
+      }
+      let begun = false
+      const begin = () => !begun && ((begun = true), setTimeout(() => idle(step), 800))
+      if (document.readyState === 'complete') begin()
+      else {
+        addEventListener('load', begin, { once: true })
+        setTimeout(begin, 4000) // 'load' có thể rất muộn trên mạng chậm
+      }
+    }
 
     G = {
       stage,
@@ -554,7 +573,7 @@
       el.draggable = false
       el.innerHTML =
         '<div class="gal__card"><div class="gal__cap"><span class="gal__num"></span><span class="gal__name"></span></div>' +
-        '<div class="gal__media"><img alt="" draggable="false" decoding="async"></div></div>'
+        '<div class="gal__media"><img alt="" draggable="false" decoding="async" fetchpriority="high"></div></div>'
       el._media = el.querySelector('.gal__media')
       el._cap = el.querySelector('.gal__cap')
       el._img = el.querySelector('img')
