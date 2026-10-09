@@ -9,6 +9,7 @@
  * khoảng 30%) thì mở ra (mí tách từ giữa, hơi nảy), nhìn trái — phải — giữa một
  * lượt, rồi con ngươi NHÌN THEO CHUỘT và chớp ngẫu nhiên (thỉnh thoảng chớp đúp).
  * Chuột đứng yên ~2.5 s thì mắt quay về nhìn quanh (lặp) tới khi chuột động lại.
+ * Con trỏ (giọt bubble) đậu lên mắt thì mắt chớp liên tục (giọt co còn 50% — bubble).
  * Ra khỏi màn thì dừng.
  * Ảnh <img> giữ lại cho CMS nhưng ẩn khi bản SVG chạy.
  *
@@ -180,6 +181,19 @@
       }
       if (following) armIdle()
       follow()
+      // con trỏ (giọt bubble) đậu lên mắt -> chớp liên tục tới khi rời ra
+      const r = box.getBoundingClientRect()
+      const over = mx > r.left && mx < r.right && my > r.top && my < r.bottom
+      if (over && !fluttering && opened) flutter()
+      fluttering = over && opened
+    }
+    let fluttering = false
+    async function flutter() {
+      fluttering = true
+      while (fluttering && live === me && inView) {
+        await blink()
+        await wait2(70 + Math.random() * 90)
+      }
     }
     function follow() {
       if (raf || !following || idling || !inView || live !== me) return

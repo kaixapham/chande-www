@@ -181,7 +181,7 @@
       closed: shape({ lx: -37.5, rx: 37.5 }), // như Figma 762: đường thẳng
       open: shape({ lx: -46, rx: 46, low: 20 }), // môi trên luôn thẳng, chỉ môi dưới cong
       // khi đã mở: NÓI một lúc (nhịp âm tiết lúc to lúc nhỏ) -> NGẬM lại nghỉ -> nói tiếp
-      talk: { on: [1.8, 3.2], off: [0.9, 1.8] },
+      talk: { on: [2.6, 4.2], off: [1.2, 2.2] },
       idleClosed: [
         // lẩm bẩm: hé mở 2 nhịp nhỏ
         { dur: 900, fn: (k) => ({ low: 4 * Math.abs(wave(k, 2)) }) },
@@ -354,6 +354,7 @@
       const g = el('g', { fill: 'none', stroke: 'currentColor', 'stroke-width': 1.6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg)
       const cid = `mclip${Math.random().toString(36).slice(2, 7)}`
       mouth = {
+        svgEl: svg,
         // lòng miệng tô cùng màu lòng trắng con mắt (chande-eye.js · sclera), nằm dưới nét
         inside: el('path', { fill: 'var(--mouth-fill)', stroke: 'none' }, g),
         upper: el('path', {}, g),
@@ -401,12 +402,12 @@
       if (!talkCycle || t > talkCycle.t0 + talkCycle.on + talkCycle.off) talkCycle = { t0: talkCycle && t - talkCycle.t0 < 10 ? talkCycle.t0 + talkCycle.on + talkCycle.off : t, on: rnd(cfg.on), off: rnd(cfg.off) }
       const x = t - talkCycle.t0
       if (x > talkCycle.on) return 0
-      const env = smooth(clamp01(x / 0.18)) * smooth(clamp01((talkCycle.on - x) / 0.22))
-      const syl = 0.3 + 0.7 * Math.abs(Math.sin(x * 10.5) * Math.sin(x * 3.3 + 1.2)) // nhịp âm tiết
+      const env = smooth(clamp01(x / 0.35)) * smooth(clamp01((talkCycle.on - x) / 0.4))
+      const syl = 0.35 + 0.65 * Math.abs(Math.sin(x * 5.2) * Math.sin(x * 1.7 + 1.2)) // nhịp âm tiết — chậm, từ tốn
       return env * syl
     }
     // ---- dây chun (khung vàng): chuỗi N đoạn, hai đầu cố định trong viền vàng
-    const STR = { n: 24, tension: 36000, damp: 2.6, grab: 5, snap: 17 }
+    const STR = { n: 24, tension: 22000, damp: 7, grab: 5, snap: 8 } // snap = kéo xa tối đa trước khi tuột (nhỏ = nảy nhẹ)
     const SX = (i) => WAVE.x0 + ((WAVE.x1 - WAVE.x0) * i) / STR.n
     const sy = new Float32Array(STR.n + 1)
     const sv = new Float32Array(STR.n + 1)
@@ -456,7 +457,7 @@
 
     // ---- theo chuột (u, quanh tâm khung xanh)
     const FOLLOW = { x: 14, y: 5, idle: 2500, ease: 6 }
-    const mouse = { dx: 0, dy: 0, t: 0, on: false }
+    const mouse = { dx: 0, dy: 0, t: 0, on: false, cx: -1e4, cy: -1e4 }
     const look = { x: 0, y: 0 }
     const onMove = (e) => {
       if (!green) return
@@ -467,7 +468,45 @@
       mouse.dy = FOLLOW.y * Math.max(-1, Math.min(1, ny))
       mouse.t = performance.now()
       mouse.on = true
+      mouse.cx = e.clientX
+      mouse.cy = e.clientY
     }
+
+    // ---- nuốt giọt (bubble): chuột lại gần -> miệng HÁ, hút giọt vào, co vừa lòng miệng
+    // -> ĐỚP ngậm lại (giọt tan) -> nhai một nhịp; chuột đi xa hẳn mới trả giọt.
+    const EAT = { near: 0.45, far: 0.9, open: 650, chomp: 520 } // near / far × bề ngang khung
+    const EAT_OPEN = shape({ lx: -27, rx: 27, up: -11, low: 15 })
+    const eat = { phase: null, t0: 0, k: 0, mouth: null }
+    const eatDist = () => {
+      const r = green.getBoundingClientRect()
+      const ex = Math.max(0, Math.abs(mouse.cx - (r.left + r.width / 2)) - r.width / 2)
+      const ey = Math.max(0, Math.abs(mouse.cy - (r.top + r.height / 2)) - r.height / 2)
+      return Math.hypot(ex, ey) / r.width
+    }
+    const updateEat = (now) => {
+      if (!mouse.on) return
+      const d = eatDist()
+      if (!eat.phase && d < EAT.near) Object.assign(eat, { phase: 'open', t0: now })
+      else if (eat.phase && d > EAT.far) eat.phase = null
+      else if (eat.phase === 'open' && now - eat.t0 > EAT.open) Object.assign(eat, { phase: 'chomp', t0: now })
+      else if (eat.phase === 'chomp' && now - eat.t0 > EAT.chomp) eat.phase = 'full'
+    }
+    // điểm hút cho chande-bubble.js: tâm lòng miệng (px màn hình) + bán kính vừa miệng
+    const lureFn = () => {
+      if (!inView || !eat.phase || !eat.mouth || !mouth) return null
+      const m = eat.mouth
+      const r = mouth.svgEl.getBoundingClientRect()
+      const sc = r.width / 184
+      const cx = (m.lx + m.rx) / 2
+      const cy = (m.ly + m.ry) / 2 + (m.up + m.low) / 2
+      return {
+        x: r.left + (cx + 92) * sc,
+        y: r.top + (cy + 27) * sc,
+        r: Math.max(1, ((m.low - m.up) / 2) * sc * 0.75),
+        hide: eat.phase !== 'open',
+      }
+    }
+    window.CHANDE_BUBBLE?.lure?.(lureFn)
     addEventListener('pointermove', onMove, { passive: true })
 
     let raf = 0
@@ -512,6 +551,17 @@
           const pick = list[(Math.random() * list.length) | 0]
           if (pick) act = { ...pick, t0: now, sgn: Math.random() < 0.5 ? -1 : 1 }
         }
+        // nuốt giọt: há (phủ dáng EAT_OPEN) -> đớp ngậm lại + nhai một nhịp
+        updateEat(now)
+        const want = eat.phase === 'open' ? 1 : 0
+        eat.k += (want - eat.k) * (1 - Math.exp(-dt * (want ? 9 : 16)))
+        if (eat.k > 0.002) m = mix(m, EAT_OPEN, eat.k)
+        if (eat.phase === 'chomp') {
+          const c = clamp01((now - eat.t0) / EAT.chomp)
+          m.low += 5 * Math.sin(Math.PI * c) * Math.sin(Math.PI * 2 * c)
+          m.lx += 2 * Math.sin(Math.PI * c)
+          m.rx -= 2 * Math.sin(Math.PI * c)
+        }
         // theo chuột: cả miệng lệch nhẹ về phía con trỏ; chuột đứng yên lâu thì về giữa
         const still = now - mouse.t > FOLLOW.idle
         const tx = still || !mouse.on ? 0 : mouse.dx
@@ -523,6 +573,7 @@
         m.rx += look.x
         m.ly += look.y
         m.ry += look.y
+        eat.mouth = m
         drawMouth(m)
       }
       if (inView) raf = requestAnimationFrame(tick)
@@ -564,6 +615,7 @@
         removeEventListener('resize', check)
         removeEventListener('pointermove', onMove)
         removeEventListener('pointermove', onString)
+        window.CHANDE_BUBBLE?.lure?.(null)
         cancelAnimationFrame(raf)
       },
       // thử ngay một cử động (bảng setting)

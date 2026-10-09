@@ -35,7 +35,9 @@
  *     thấu kính không phải tính lại backdrop). Chuột rời cửa sổ: giọt tan rồi dừng.
  * Chỉ bật với chuột thật và khi không reduced-motion.
  *
- * API: window.CHANDE_BUBBLE = { config, defaults, refresh(), state, lead(fn) }
+ * API: window.CHANDE_BUBBLE = { config, defaults, refresh(), state, lead(fn), lure(fn) }
+ *   lure(fn): mỗi khung fn() trả { x, y, r, hide } -> giọt bị hút về (x, y), co còn bán
+ *   kính r (px), hide = tan mất (bị nuốt); trả null -> về lại theo chuột như thường.
  *   lead(fn): giọt bỏ chuột, bám theo điểm fn() trả về ({x, y} toạ độ màn,
  *   null = tan đi) mỗi khung — trang Gallery cho giọt đi theo vịt patin
  *   (chande-duck.js). lead(null) trả giọt về cho chuột.
@@ -97,6 +99,9 @@
     // Trỏ vào tiêu đề hover được (vai trò About…): co nhỏ hơn nữa, còn hoverTitleScale.
     hoverTitleSel: '.hs-about__roles li',
     hoverTitleScale: 0.15,
+    // Trỏ vào con mắt ở Intro: co còn hoverEyeScale (mắt thì chớp liên tục — chande-eye.js).
+    hoverEyeSel: '.hs-intro__eye',
+    hoverEyeScale: 0.5,
     // Con trỏ đẩy giọt văng đi (khi giọt đi theo vịt), lò xo kéo về
     push: true,
     pushReach: 1.6, // bán kính con trỏ bắt đầu đẩy (× bán kính giọt)
@@ -503,6 +508,8 @@ void main () {
   let mulTarget = 1
   let overBtn = false // con trỏ đang trên nút / link (hoverSel)
   let leader = null // lead(fn): giọt đi theo fn() thay vì chuột
+  let lure = null // lure(fn): bị hút về một điểm (miệng ở Intro nuốt giọt)
+  let luring = false
   let ptrIn = false // chuột đang trong cửa sổ (kể cả khi giọt đang được dắt)
   let ptrVX = 0 // vận tốc con trỏ (px/s, tắt dần khi chuột đứng yên)
   let ptrVY = 0
@@ -653,6 +660,23 @@ void main () {
         presenceTarget = 1
       } else presenceTarget = 0
     }
+    // Bị hút (lure): bay về điểm hút, co theo cỡ yêu cầu, có thể tan mất (bị nuốt)
+    const lu = !leader && lure ? lure() : null
+    if (lu) {
+      targetX = lu.x
+      targetY = lu.y
+      presenceTarget = lu.hide ? 0 : 1
+      mulTarget = Math.max(0.02, lu.r / Math.max(1, pooledRadius(1)))
+      luring = true
+    } else if (luring) {
+      luring = false
+      mulTarget = -1
+      checkShrink()
+      if (hasPointer) {
+        aim()
+        presenceTarget = 1
+      }
+    }
     headX += (targetX - headX) * kHead
     // Đẩy: con trỏ gần / lao vào giọt -> lực hất ra xa con trỏ; lò xo kéo về.
     if (leader) {
@@ -715,7 +739,7 @@ void main () {
     placeLens()
     // Đang được dắt (lead) thì không dừng dù giọt đang tan — vật dắt có thể
     // hiện ra lại bất cứ lúc nào.
-    if (presence < 0.004 && presenceTarget === 0 && !leader) {
+    if (presence < 0.004 && presenceTarget === 0 && !leader && !lu) {
       presence = 0
       running = false
       state.moving = false
@@ -728,7 +752,7 @@ void main () {
     for (let i = 1; i < c && spread < 0.25; i++) spread += Math.abs(trailX[i] - headX) + Math.abs(trailY[i] - headY)
     state.moving = spread >= 0.25
     // Đang đi theo vật khác thì không dừng vòng chạy (vật có thể đi tiếp bất cứ lúc nào).
-    if (!state.moving && !leader) {
+    if (!state.moving && !leader && !lu) {
       running = false
       return
     }
@@ -789,7 +813,8 @@ void main () {
       if (leader) return
       aim()
       const title = !!(CONFIG.hoverOn && CONFIG.hoverTitleSel && e.target?.closest?.(CONFIG.hoverTitleSel))
-      const over = title ? 'title' : !!(CONFIG.hoverOn && CONFIG.hoverSel && e.target?.closest?.(CONFIG.hoverSel))
+      const eye = !title && !!(CONFIG.hoverOn && CONFIG.hoverEyeSel && e.target?.closest?.(CONFIG.hoverEyeSel))
+      const over = title ? 'title' : eye ? 'eye' : !!(CONFIG.hoverOn && CONFIG.hoverSel && e.target?.closest?.(CONFIG.hoverSel))
       if (over !== overBtn) {
         overBtn = over
         checkShrink()
@@ -841,7 +866,7 @@ void main () {
     const el = CONFIG.shrinkOn && CONFIG.shrinkFrom ? document.querySelector(CONFIG.shrinkFrom) : null
     let t = el && el.getBoundingClientRect().top < innerHeight * 0.5 ? Math.min(Math.max(CONFIG.shrinkScale, 0.1), 1) : 1
     if (overBtn && CONFIG.hoverOn) {
-      const k = overBtn === 'title' ? CONFIG.hoverTitleScale : CONFIG.hoverScale
+      const k = overBtn === 'title' ? CONFIG.hoverTitleScale : overBtn === 'eye' ? CONFIG.hoverEyeScale : CONFIG.hoverScale
       t = Math.min(t, Math.min(Math.max(k, 0.05), 1))
     }
     t *= Math.min(Math.max(CONFIG.scale, 0.1), 2)
@@ -868,6 +893,11 @@ void main () {
       presenceTarget = hasPointer ? 1 : 0
       if (hasPointer) aim()
     }
+    start()
+  }
+
+  api.lure = (fn) => {
+    lure = typeof fn === 'function' ? fn : null
     start()
   }
 
