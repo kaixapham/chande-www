@@ -74,7 +74,7 @@ const chandeDevtools = () => {
     CPX && { id: 'parallax', label: 'Parallax ảnh', mod: 'parallax' },
     CTF && { id: 'titlefx', label: 'Title Effect', mod: 'titlefx' },
     CSG && { id: 'sign', label: 'Chữ ký viết tay (Cảm nhận)', mod: 'sign' },
-    CGA && { id: 'gallery', label: 'Gallery (lưới, vịt, cỏ, dấu)', mod: 'gallery' },
+    CGA && { id: 'gallery', label: 'Gallery (lưới, vịt, cỏ, dụng cụ)', mod: 'gallery' },
     CT && { id: 'sweep', label: 'Rèm quét', mod: 'transition', variant: 'sweep' },
     CT && { id: 'split', label: 'Rèm chẻ', mod: 'transition', variant: 'split' },
     CT && { id: 'stack', label: 'Trượt thẻ', mod: 'transition', variant: 'stack' },
@@ -349,14 +349,14 @@ const chandeDevtools = () => {
         { path: 'slide', label: 'Trượt ra xa khi bị đẩy', type: 'range', min: 0, max: 2, step: 0.05 },
         { path: 'panTilt', label: 'Kéo lưới làm vịt nghiêng (quán tính — cách chọc vịt trên điện thoại)', type: 'range', min: 0, max: 0.01, step: 0.0001 },
       ] },
-    // ---- Hộp con dấu 3D (chande-stamps.js) ----
-    CST && { tab: 'gallery', mod: 'stamps', title: 'Con dấu — màu',
+    // ---- Hộp dụng cụ 3D: con dấu, bút, tẩy (chande-stamps.js) ----
+    CST && { tab: 'gallery', mod: 'stamps', title: 'Dụng cụ — con dấu: màu',
       items: CST.config.stamps.flatMap((d, i) => [
         { path: `stamps.${i}.handle`, label: `${d.name} · cán`, type: 'color' },
         { path: `stamps.${i}.base`, label: `${d.name} · đế`, type: 'color' },
         { path: `stamps.${i}.ink`, label: `${d.name} · mực`, type: 'color' },
       ]) },
-    CST && { tab: 'gallery', mod: 'stamps', title: 'Con dấu — cầm & in',
+    CST && { tab: 'gallery', mod: 'stamps', title: 'Dụng cụ — con dấu: cầm & in',
       items: [
         { path: 'size', label: 'Bán kính dấu khi cầm (px)', type: 'range', min: 30, max: 120, step: 1 },
         { path: 'lift', label: 'Lơ lửng khi cầm (× bán kính)', type: 'range', min: 0.2, max: 2, step: 0.05 },
@@ -366,6 +366,20 @@ const chandeDevtools = () => {
         { path: 'ink.1', label: 'Độ đậm mực — nhiều nhất', type: 'range', min: 0.2, max: 1, step: 0.01 },
         { path: 'spin', label: 'Vết in xoay ngẫu nhiên ± (độ)', type: 'range', min: 0, max: 180, step: 1 },
         { path: 'maxPrints', label: 'Số vết giữ lại tối đa', type: 'range', min: 4, max: 150, step: 1 },
+      ] },
+    CST && { tab: 'gallery', mod: 'stamps', title: 'Dụng cụ — bút',
+      items: [
+        { path: 'pen.color', label: 'Màu mực (ngòi, vòng, nắp)', type: 'color' },
+        { path: 'pen.body', label: 'Thân bút', type: 'color' },
+        { path: 'pen.width', label: 'Độ dày nét (px)', type: 'range', min: 1, max: 16, step: 0.5 },
+        { path: 'pen.size', label: 'Cỡ bút khi cầm', type: 'range', min: 12, max: 60, step: 1 },
+      ] },
+    CST && { tab: 'gallery', mod: 'stamps', title: 'Dụng cụ — tẩy',
+      items: [
+        { path: 'eraser.body', label: 'Cao su', type: 'color' },
+        { path: 'eraser.sleeve', label: 'Vỏ bọc', type: 'color' },
+        { path: 'eraser.radius', label: 'Bán kính vùng tẩy (px)', type: 'range', min: 6, max: 60, step: 1 },
+        { path: 'eraser.size', label: 'Cỡ tẩy khi cầm', type: 'range', min: 16, max: 70, step: 1 },
       ] },
     // ---- Thảm cỏ 3D (chande-grass.js) — chỉ thấy khi sàn = Cỏ 3D ----
     CGR && { tab: 'gallery', mod: 'grass', title: 'Thảm cỏ 3D — lá',

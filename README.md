@@ -475,23 +475,26 @@ window.CHANDE_POSTER = { config, mount(scope), destroy(), api }   // api = runti
 
 ---
 
-## 8. Hộp con dấu 3D (`chande-stamps.js`)
+## 8. Hộp dụng cụ 3D — con dấu, bút, tẩy (`chande-stamps.js`)
 
-Khay bo tròn ở góc dưới phải canvas gallery, như khay bút của app vẽ: đứng sẵn
-hai con dấu cao su 3D (three.js) và một nút màu. Mẫu in là các SVG trong
-`assets/img/gallery/stamps/` (vẽ màu gì cũng được — code chỉ lấy hình rồi tô lại).
+Khay bo tròn ở góc dưới phải canvas gallery, như khay bút của app vẽ: hai con
+dấu cao su, một cây bút, một cục tẩy — tất cả 3D (three.js). Bấm một món là cầm
+nó ra (to lên, lơ lửng theo chuột); bấm lại hoặc Esc là cất về khay.
 
-- Bấm một con dấu trong khay: cầm dấu ra, dấu lơ lửng theo chuột, vòng ngắm mờ
-  dưới sàn chỉ chỗ sẽ in. Bấm lại hoặc Esc: cất về khay.
-- Đang cầm: bấm (không kéo) vào canvas là dập — vết in nhoè mực, ăn mực không
-  đều, giấy hằn theo nét. Kéo thì vẫn kéo lưới. Điện thoại: chạm chỗ nào dấu
-  bay tới dập chỗ đó.
-- Nút màu: màu cán / đế / mực cho từng dấu (bảng màu Chande + màu tự chọn), nhớ
-  theo trình duyệt. Bảng H → tab Gallery cũng có mục *Con dấu* (màu, cỡ, độ nhoè,
-  độ hằn…), bấm Lưu để thành mặc định cho mọi người.
+- **Con dấu** (mẫu in: SVG trong `assets/img/gallery/stamps/`, vẽ màu gì cũng
+  được — code chỉ lấy hình rồi tô màu mực): bấm (không kéo) vào canvas là dập —
+  vết in nhoè mực, ăn mực không đều, giấy hằn theo nét. Kéo thì vẫn kéo lưới.
+  Mực mặc định đỏ.
+- **Bút**: giữ và kéo để viết / vẽ, ngòi bám đúng con trỏ.
+- **Tẩy**: giữ và chà lên nét bút / vết dấu để xoá.
+- Đang cầm bút / tẩy thì kéo là vẽ / tẩy (lăn chuột vẫn đi lưới được). Điện
+  thoại: chạm để dập, vuốt để vẽ / tẩy.
+- Màu, cỡ, độ nhoè, độ hằn, độ dày nét, vùng tẩy: bảng H → tab Gallery → các mục
+  *Dụng cụ*, bấm Lưu để thành mặc định.
 
 ```js
-window.CHANDE_STAMPS = { config, defaults, mount(scope), destroy(), refresh(), setColor(i, part, hex), pick(i | null), clear() }
+window.CHANDE_STAMPS = { config, defaults, mount(scope), destroy(), refresh(), pick(i | null), clear() }
+// pick: 0, 1 = con dấu, 2 = bút, 3 = tẩy
 ```
 
 ---

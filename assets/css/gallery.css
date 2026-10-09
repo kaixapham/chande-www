@@ -109,12 +109,14 @@
   .gal-lb__img{max-width:90vw}
 }
 
-/* ---- Hộp con dấu 3D (chande-stamps.js) ----
+/* ---- Hộp dụng cụ 3D: con dấu, bút, tẩy (chande-stamps.js) ----
    Khay bo tròn ở góc dưới phải, như khay bút của app vẽ. Ô trong khay là nút
-   trong suốt — con dấu 3D vẽ ở canvas .gal__stamps (nằm TRÊN khay, không ăn
-   chuột). Màu dấu chỉnh ở bảng H. Vết mực ngay trên lưới ảnh, trôi theo lưới:
-   lớp mực multiply để thấm vào ảnh / nền, lớp hằn giấy (bóng + gờ sáng) đè lên. */
+   trong suốt — dụng cụ 3D vẽ ở canvas .gal__stamps (nằm TRÊN khay, không ăn
+   chuột). Màu chỉnh ở bảng H. Vết dấu + nét bút nằm ngay trên lưới ảnh, trôi
+   theo lưới: mực multiply để thấm vào ảnh / nền, lớp hằn giấy đè lên. */
 .gal__stamps{position:absolute; inset:0; z-index:2; pointer-events:none}
+/* Đang cầm dụng cụ: giấu con trỏ trên canvas (dụng cụ 3D chính là con trỏ) */
+html.gal-tool-held .gal, html.gal-tool-held .gal__world *{cursor:none !important}
 .gal-tools{
   --tray-bg:#fbfaf4; --tray-line:rgba(15,21,19,.08); --tray-focus:#245535;
   --slot-w:4.25rem; --slot-h:5.5rem;
@@ -129,14 +131,19 @@
   background:transparent; transition:background-color .25s ease;
 }
 .gal-tools__slot:hover{background:rgba(15,21,19,.04)}
+.gal-tools__slot--pen, .gal-tools__slot--eraser{width:calc(var(--slot-w) * .72)}
 /* Dấu đang được cầm ra: ô còn lại vòng đế mờ */
 .gal-tools__slot[aria-pressed="true"]::after{
   content:""; position:absolute; left:50%; bottom:.9rem; width:70%; aspect-ratio:1 / .88; translate:-50% 0;
   border:1.5px dashed rgba(15,21,19,.28); border-radius:50%;
 }
+.gal-tools__slot--pen[aria-pressed="true"]::after, .gal-tools__slot--eraser[aria-pressed="true"]::after{width:50%; aspect-ratio:1 / .7}
 .gal-tools :focus-visible{outline:2px solid var(--tray-focus); outline-offset:2px}
 
 .gal__prints{position:absolute; top:0; left:0; width:0; height:0; pointer-events:none; will-change:transform}
+.gal__ink{position:absolute; top:0; left:0; overflow:visible; mix-blend-mode:multiply; z-index:1}
+.gal__stroke{fill:none; stroke-linecap:round; stroke-linejoin:round; opacity:.94; transition:opacity .4s ease}
+.gal__stroke.is-gone{opacity:0}
 .gal__print{
   position:absolute; pointer-events:none;
   transform:rotate(var(--rot, 0deg));
@@ -145,7 +152,7 @@
 }
 .gal__print canvas{position:absolute; inset:0; width:100%; height:100%; display:block}
 .gal__print-ink{mix-blend-mode:multiply; opacity:var(--ink, .9)}
-.gal__print.is-gone{opacity:0}
+.gal__print.is-gone{opacity:0; transition-duration:.4s}
 @keyframes gal-print{
   from{opacity:0; transform:rotate(var(--rot, 0deg)) scale(1.05)}
   to{opacity:1; transform:rotate(var(--rot, 0deg)) scale(1)}

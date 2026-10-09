@@ -1,19 +1,23 @@
 /* =============================================================================
- * CHANDE — Hộp con dấu 3D ở góc dưới phải gallery
+ * CHANDE — Hộp dụng cụ 3D ở góc dưới phải gallery (con dấu, bút, tẩy)
  * -----------------------------------------------------------------------------
  * Như khay bút của app vẽ: một khay bo tròn ở góc dưới phải canvas, đứng sẵn
- * hai con dấu cao su 3D (three.js — đế tròn có vành, cán tiện tròn, nhựa bóng).
- *   • Bấm một con dấu trong khay: cầm dấu ra — dấu to lên, lơ lửng theo chuột
- *     (vòng ngắm mờ dưới sàn chỉ chỗ sẽ in). Bấm lại / Esc: cất dấu về khay.
- *   • Đang cầm dấu: bấm (không kéo) vào canvas là dập xuống đúng chỗ đó. Kéo
- *     thì vẫn kéo lưới như thường. Điện thoại: chạm chỗ nào dấu bay tới dập.
- *   • Màu cán / đế / mực của từng dấu: chỉnh ở bảng H (devtools) → tab Gallery
- *     → mục "Con dấu". Mực mặc định đỏ như mẫu SVG gốc.
+ * hai con dấu cao su, một cây bút và một cục tẩy — tất cả 3D (three.js, nhựa
+ * bóng). Bấm một món trong khay là cầm nó ra (to lên, lơ lửng theo chuột);
+ * bấm lại hoặc Esc là cất về khay.
+ *   • Con dấu: bấm (không kéo) vào canvas là dập xuống đúng chỗ đó; kéo thì vẫn
+ *     kéo lưới. Điện thoại: chạm chỗ nào dấu bay tới dập chỗ đó.
+ *   • Bút: giữ và kéo để viết / vẽ lên canvas (ngòi bám đúng con trỏ).
+ *   • Tẩy: giữ và chà lên nét bút hoặc vết dấu để xoá.
+ *   Đang cầm bút / tẩy thì kéo là vẽ / tẩy, không kéo lưới — lăn chuột vẫn đi
+ *   được, hoặc cất về khay rồi kéo.
+ * Màu, cỡ, độ nhoè, độ hằn… chỉnh ở bảng H (devtools) → tab Gallery → các mục
+ * "Dụng cụ". Mực dấu mặc định đỏ như mẫu SVG gốc.
  * Vết in: tô màu mẫu SVG (assets/img/gallery/stamps/*.svg) bằng canvas — mực
  * nhoè loang nhẹ ra mép, ăn mực không đều (một phía đậm một phía nhạt, lốm đốm
  * chỗ thiếu mực), và giấy bị HẰN theo nét mẫu (bóng tối trong mép trên-trái,
- * gờ sáng mép dưới-phải). Mỗi vết loang / lốm đốm một kiểu. Vết gắn toạ độ thế
- * giới gallery nên trôi theo lưới; giữ tối đa CONFIG.maxPrints vết.
+ * gờ sáng mép dưới-phải). Mỗi vết loang / lốm đốm một kiểu. Vết in và nét bút
+ * gắn toạ độ thế giới gallery nên trôi theo lưới.
  * Camera trực giao nghiêng CONFIG.tilt độ như vịt (chande-duck.js): điểm sàn
  * (X, 0, Z) hiện ở màn (X, Z·sin tilt), độ cao Y đẩy lên màn Y·cos tilt.
  * Module — nạp three từ assets/vendor/three. Mount / gỡ theo Barba.
@@ -21,9 +25,9 @@
 import * as THREE from '../vendor/three/three.module.min.js'
 
 const CONFIG = {
-  size: 60, // px — bán kính đế khi cầm ra (khổ desktop)
+  size: 60, // px — bán kính đế dấu khi cầm ra (khổ desktop)
   tilt: 62, // độ — góc camera so với mặt sàn
-  lift: 0.9, // × bán kính — độ cao lơ lửng khi cầm
+  lift: 0.9, // × bán kính — độ cao lơ lửng của dấu khi cầm
   maxPrints: 48,
   ink: [0.86, 0.97], // độ đậm vết mực (ngẫu nhiên trong khoảng)
   spin: 24, // độ — vết mực xoay ngẫu nhiên ±spin
@@ -33,6 +37,20 @@ const CONFIG = {
     { name: 'Dấu 1', svg: 'assets/img/gallery/stamps/stamp-001.svg', handle: '#68f12b', base: '#245535', ink: '#d00000' },
     { name: 'Dấu 2', svg: 'assets/img/gallery/stamps/stamp-002.svg', handle: '#e8e2cb', base: '#1b2625', ink: '#d00000' },
   ],
+  pen: {
+    name: 'Bút',
+    size: 34, // px — một đơn vị hình bút khi cầm (bút dài ~3 đơn vị)
+    color: '#1b2625', // màu mực (ngòi, vòng, nắp)
+    body: '#e8e2cb', // thân bút
+    width: 3, // px — độ dày nét
+  },
+  eraser: {
+    name: 'Tẩy',
+    size: 34, // px — một đơn vị hình tẩy khi cầm
+    body: '#f4f3eb', // cao su
+    sleeve: '#245535', // vỏ bọc
+    radius: 18, // px — bán kính vùng tẩy
+  },
 }
 // Giá trị đã Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
 window.CHANDE_SETTINGS_APPLY?.('stamps', CONFIG)
@@ -110,20 +128,40 @@ function paint(mat, hex) {
   mat.sheenColor.set(hex).lerp(new THREE.Color('#ffffff'), 0.5)
 }
 
-function buildStamp(def) {
-  const root = new THREE.Group() // vị trí trên sàn + tỉ lệ (= bán kính px)
-  const hover = new THREE.Group() // độ nhấc (y)
-  const tip = new THREE.Group() // nghiêng theo quán tính
-  const squash = new THREE.Group() // nảy khi dập
+// Bộ khung chung của mọi dụng cụ:
+// root (vị trí sàn + tỉ lệ px) > hover (độ nhấc) > tip (nghiêng theo quán tính)
+// > orient (tư thế: bút lật ngược khi nằm khay) > squash (nảy khi chạm).
+function rig() {
+  const root = new THREE.Group()
+  const hover = new THREE.Group()
+  const tip = new THREE.Group()
+  const orient = new THREE.Group()
+  const squash = new THREE.Group()
   root.add(hover)
   hover.add(tip)
-  tip.add(squash)
+  tip.add(orient)
+  orient.add(squash)
   const add = (geo, mat) => {
     const m = new THREE.Mesh(geo, mat)
     m.castShadow = true
     m.receiveShadow = true
     squash.add(m)
+    return m
   }
+  return { root, hover, tip, orient, squash, add }
+}
+
+// Vòng ngắm dưới sàn (chỉ chỗ sẽ in / vẽ / tẩy) — nằm ngoài khối nhấc.
+function ringOf(hex, r0 = 0.9, r1 = 0.97) {
+  const ringMat = new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0, depthWrite: false })
+  const ring = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 72), ringMat)
+  ring.rotation.x = -Math.PI / 2
+  return { ring, ringMat }
+}
+
+function buildStamp(def) {
+  const R = rig()
+  const { add, squash } = R
   const pad = new THREE.CylinderGeometry(0.955, 0.94, PAD_H, 96)
   pad.translate(0, PAD_H / 2, 0)
   add(pad, new THREE.MeshStandardMaterial({ color: '#0f1513', roughness: 0.85 }))
@@ -145,12 +183,67 @@ function buildStamp(def) {
   label.position.y = TOP_Y + 0.002
   squash.add(label)
 
-  // Vòng ngắm dưới sàn (chỉ chỗ sẽ in) — nằm ngoài khối nhấc.
-  const ringMat = new THREE.MeshBasicMaterial({ color: def.ink, transparent: true, opacity: 0, depthWrite: false })
-  const ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 0.97, 72), ringMat)
-  ring.rotation.x = -Math.PI / 2
+  return { ...R, ...ringOf(def.ink), baseMat, handleMat, labelMat, top: TOP_Y, wide: 2, foot: 2 }
+}
 
-  return { root, hover, tip, squash, baseMat, handleMat, labelMat, ring, ringMat }
+// Bút: ngòi ở gốc toạ độ, thân dọc +Y. Ngòi + vòng + nắp màu mực, thân kem,
+// phần vót màu gỗ.
+const PEN_L = 2.97
+function buildPen(def) {
+  const R = rig()
+  const { add } = R
+  const inkMat = plastic(def.color)
+  const bodyMat = plastic(def.body)
+  const woodMat = new THREE.MeshStandardMaterial({ color: '#d6ceab', roughness: 0.7 })
+  add(lathe([[0.001, 0], [0.045, 0.05], [0.09, 0.22]], 0), inkMat)
+  add(lathe([[0.09, 0.22], [0.15, 0.42], [0.2, 0.62]], 16), woodMat)
+  add(lathe([[0.2, 0.62], [0.2, 2.5]], 0), bodyMat)
+  const band = new THREE.CylinderGeometry(0.206, 0.206, 0.16, 48)
+  band.translate(0, 2.08, 0)
+  add(band, inkMat)
+  add(lathe([[0.206, 2.5], [0.208, 2.8], [0.19, 2.9], [0.12, 2.96], [0.001, PEN_L]], 24), inkMat)
+  // Thân gốc không có mặt dưới / trên — lathe kín từ đầu này tới đầu kia là đủ.
+  return { ...R, ...ringOf(def.color, 0.55, 0.75), inkMat, bodyMat, top: PEN_L, wide: 0.42, foot: 0.42 }
+}
+
+// Tẩy: khối chữ nhật bo góc dựng đứng — nửa dưới cao su, nửa trên bọc vỏ.
+const ERASER_H = 1.7
+function roundRect(w, h, r) {
+  const s = new THREE.Shape()
+  const x = -w / 2
+  const y = -h / 2
+  s.moveTo(x + r, y)
+  s.lineTo(x + w - r, y)
+  s.quadraticCurveTo(x + w, y, x + w, y + r)
+  s.lineTo(x + w, y + h - r)
+  s.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+  s.lineTo(x + r, y + h)
+  s.quadraticCurveTo(x, y + h, x, y + h - r)
+  s.lineTo(x, y + r)
+  s.quadraticCurveTo(x, y, x + r, y)
+  return s
+}
+function block(w, d, y0, y1, r, bevel) {
+  const g = new THREE.ExtrudeGeometry(roundRect(w, d, r), {
+    depth: y1 - y0 - 2 * bevel,
+    bevelEnabled: true,
+    bevelThickness: bevel,
+    bevelSize: bevel,
+    bevelSegments: 4,
+    curveSegments: 8,
+  })
+  g.rotateX(-Math.PI / 2) // trục đùn (z) -> trục đứng (y)
+  g.translate(0, y0 + bevel, 0)
+  return g
+}
+function buildEraser(def) {
+  const R = rig()
+  const { add } = R
+  const bodyMat = new THREE.MeshPhysicalMaterial({ color: def.body, roughness: 0.62, sheen: 0.4, sheenColor: new THREE.Color('#ffffff') })
+  const sleeveMat = plastic(def.sleeve)
+  add(block(0.72, 0.5, 0, ERASER_H, 0.12, 0.06), bodyMat)
+  add(block(0.8, 0.58, ERASER_H * 0.42, ERASER_H * 0.96, 0.14, 0.035), sleeveMat)
+  return { ...R, ...ringOf(def.sleeve, 0.62, 0.7), bodyMat, sleeveMat, top: ERASER_H, wide: 0.8, foot: 0.6 }
 }
 
 /* -------------------------------------------------------- mẫu in (canvas) -- */
@@ -280,19 +373,22 @@ function makePrint(img, n, hex) {
   return { ink, deboss: deb }
 }
 
+
+const SVGNS = 'http://www.w3.org/2000/svg'
+
 /* ---------------------------------------------------------------- khay UI -- */
-function buildUI() {
-  const tools = document.createElement('div')
-  tools.className = 'gal-tools'
-  tools.setAttribute('role', 'toolbar')
-  tools.setAttribute('aria-label', 'Con dấu')
-  tools.innerHTML = CONFIG.stamps
+function buildUI(tools) {
+  const el = document.createElement('div')
+  el.className = 'gal-tools'
+  el.setAttribute('role', 'toolbar')
+  el.setAttribute('aria-label', 'Dụng cụ')
+  el.innerHTML = tools
     .map(
-      (d, i) =>
-        `<button type="button" class="gal-tools__slot" data-slot="${i}" aria-pressed="false" aria-label="${d.name}" title="${d.name}"></button>`,
+      (t, i) =>
+        `<button type="button" class="gal-tools__slot gal-tools__slot--${t.kind}" data-slot="${i}" aria-pressed="false" aria-label="${t.def.name}" title="${t.def.name}"></button>`,
     )
     .join('')
-  return tools
+  return el
 }
 
 /* --------------------------------------------------------------- sân khấu -- */
@@ -304,15 +400,29 @@ function mount(root = document) {
   if (!stage) return
   destroy()
 
+  // Lớp vẽ trên lưới ảnh: nét bút (SVG) + vết dấu, trôi theo lưới.
   const world = stage.querySelector('[data-gallery-world]')
   const prints = document.createElement('div')
   prints.className = 'gal__prints'
+  const ink = document.createElementNS(SVGNS, 'svg')
+  ink.setAttribute('class', 'gal__ink')
+  ink.setAttribute('width', '1')
+  ink.setAttribute('height', '1')
+  prints.appendChild(ink)
   if (world) world.after(prints)
   else stage.prepend(prints)
 
-  // Khay nằm DƯỚI canvas 3D (dấu đứng "trong" khay).
-  const tools = buildUI()
-  stage.appendChild(tools)
+  const defs = [
+    ...CONFIG.stamps.map((def) => ['stamp', def]),
+    ['pen', CONFIG.pen],
+    ['eraser', CONFIG.eraser],
+  ]
+  const build = { stamp: buildStamp, pen: buildPen, eraser: buildEraser }
+  const items = defs.map(([kind, def], i) => ({ kind, def, i, ...build[kind](def) }))
+
+  // Khay nằm DƯỚI canvas 3D (dụng cụ đứng "trong" khay).
+  const tray = buildUI(items)
+  stage.appendChild(tray)
   const cv = document.createElement('canvas')
   cv.className = 'gal__stamps'
   stage.appendChild(cv)
@@ -344,18 +454,14 @@ function mount(root = document) {
   floor.receiveShadow = true
   scene.add(floor)
 
-  const stamps = CONFIG.stamps.map((def, i) => {
-    const s = buildStamp(def)
-    scene.add(s.root, s.ring)
-    return {
-      i,
-      def,
-      ...s,
-      slot: tools.querySelector(`[data-slot="${i}"]`),
-      x: 0, // toạ độ màn (px) của tâm đáy dấu khi nằm trên sàn
+  const tools = items.map((t) => {
+    scene.add(t.root, t.ring)
+    return Object.assign(t, {
+      slot: tray.querySelector(`[data-slot="${t.i}"]`),
+      x: 0, // toạ độ màn (px) của điểm chạm sàn (tâm đáy dấu / ngòi bút / đáy tẩy)
       y: 0,
-      r: 0, // bán kính hiện tại (px) — nhỏ trong khay, to khi cầm
-      h: 0, // độ nhấc (× bán kính)
+      u: 0, // cỡ hiện tại (px mỗi đơn vị hình) — nhỏ trong khay, to khi cầm
+      h: 0, // độ nhấc (đơn vị hình)
       hv: 0,
       tx: 0,
       tz: 0,
@@ -364,6 +470,7 @@ function mount(root = document) {
       sq: 0,
       vsq: 0,
       ringA: 0,
+      pose: 0, // 0 = tư thế trong khay, 1 = tư thế khi cầm (bút: lật ngòi xuống, nghiêng)
       state: 'tray', // tray | held | aim | press | back
       after: null,
       t0: 0,
@@ -371,75 +478,77 @@ function mount(root = document) {
       hovered: false,
       img: null,
       printed: false,
-    }
+    })
   })
 
   D = {
     stage,
     prints,
-    tools,
+    ink,
+    tray,
     canvas: cv,
     renderer,
     scene,
     cam,
     key,
     tilt,
-    stamps,
+    tools,
     vw: 0,
     vh: 0,
-    R: CONFIG.size,
-    trayR: 22,
+    trayU: {},
     ptr: null,
     down: null,
     held: null,
+    stroke: null, // nét bút đang vẽ
+    strokes: [], // {pts: [[x, y]...] (toạ độ thế giới), el}
+    printList: [], // {el, x, y, r} (toạ độ thế giới)
     eatClick: 0,
-    printList: [],
     raf: 0,
     last: performance.now(),
     off: [],
     dirty: true,
   }
 
-  stamps.forEach((s) => {
-    loadImage(s.def.svg)
-      .then((img) => {
-        if (!D || D.stamps[s.i] !== s) return
-        s.img = img
-        updateLabel(s)
-      })
-      .catch((e) => console.warn('[chande-stamps]', e.message))
-  })
+  tools
+    .filter((t) => t.kind === 'stamp')
+    .forEach((t) => {
+      loadImage(t.def.svg)
+        .then((img) => {
+          if (!D || D.tools[t.i] !== t) return
+          t.img = img
+          updateLabel(t)
+        })
+        .catch((e) => console.warn('[chande-stamps]', e.message))
+    })
 
   const on = (el, ev, fn, opt) => {
     el.addEventListener(ev, fn, opt)
     D.off.push(() => el.removeEventListener(ev, fn, opt))
   }
   // Khay không kéo lưới, không mở lightbox.
-  on(tools, 'pointerdown', (e) => e.stopPropagation())
-  on(tools, 'wheel', (e) => e.stopPropagation())
-  on(tools, 'click', (e) => e.stopPropagation())
-  stamps.forEach((s) => {
-    on(s.slot, 'click', () => toggle(s))
-    on(s.slot, 'pointerenter', () => (s.hovered = true))
-    on(s.slot, 'pointerleave', () => (s.hovered = false))
+  on(tray, 'pointerdown', (e) => e.stopPropagation())
+  on(tray, 'wheel', (e) => e.stopPropagation())
+  on(tray, 'click', (e) => e.stopPropagation())
+  tools.forEach((t) => {
+    on(t.slot, 'click', () => toggle(t))
+    on(t.slot, 'pointerenter', () => (t.hovered = true))
+    on(t.slot, 'pointerleave', () => (t.hovered = false))
   })
   on(window, 'pointerdown', onDown, true)
-  on(window, 'pointermove', onMove, { passive: true })
+  on(window, 'pointermove', onMove, true)
   on(window, 'pointerup', onUp, true)
-  on(window, 'pointercancel', () => D && (D.down = null), true)
+  on(window, 'pointercancel', onUp, true)
   on(window, 'click', onClickEat, true)
-  on(window, 'keydown', (e) => {
-    if (e.key === 'Escape' && D?.held) putBack()
-  })
+  on(window, 'keydown', (e) => e.key === 'Escape' && D?.held && putBack())
   on(window, 'resize', () => resize())
   resize()
-  stamps.forEach((s) => {
-    const h = home(s)
-    s.x = h.x
-    s.y = h.y
-    s.r = D.trayR
+  tools.forEach((t) => {
+    const h = home(t)
+    t.x = h.x
+    t.y = h.y
+    t.u = D.trayU[t.kind]
   })
-  syncUI()
+  applyColors()
 
   D.raf = requestAnimationFrame(tick)
 }
@@ -458,9 +567,17 @@ function destroy() {
   D.renderer.dispose()
   D.canvas.remove()
   D.prints.remove()
-  D.tools.remove()
-  D.stage.classList.remove('is-stamping')
+  D.tray.remove()
+  document.documentElement.classList.remove('gal-tool-held')
   D = null
+}
+
+// Cỡ khi cầm (px mỗi đơn vị hình) — màn hẹp thì nhỏ lại theo ô ảnh.
+function heldU(t) {
+  const tile = D.stage.querySelector('.gal__probe')?.offsetWidth || 160
+  const k = Math.min(1, (D.vw * 0.11) / CONFIG.size, (tile * 0.75) / CONFIG.size)
+  const base = t.kind === 'stamp' ? CONFIG.size : t.def.size
+  return Math.max(base * 0.5, base * k)
 }
 
 function resize() {
@@ -477,13 +594,16 @@ function resize() {
   cam.top = D.vh / 2
   cam.bottom = -D.vh / 2
   cam.updateProjectionMatrix()
-  const tile = D.stage.querySelector('.gal__probe')?.offsetWidth || 160
-  D.R = Math.max(30, Math.min(CONFIG.size, D.vw * 0.11, tile * 0.75))
-  // Trong khay: dấu vừa ô (cỡ ô do CSS quyết theo khổ màn).
-  const slot = D.stamps[0]?.slot?.getBoundingClientRect()
-  const tall = 2 * Math.sin(D.tilt) + TOP_Y * Math.cos(D.tilt) // chiều cao khối dấu trên màn (× bán kính)
-  D.trayR = slot?.width ? Math.min(slot.width * 0.42, (slot.height / tall) * 0.9) : 22
-  const span = Math.max(D.vw, D.vh / Math.sin(D.tilt)) * 0.6 + D.R * 3
+  // Trong khay: mỗi món vừa ô của nó (cỡ ô do CSS quyết theo khổ màn).
+  const sin = Math.sin(D.tilt)
+  const cos = Math.cos(D.tilt)
+  D.tools.forEach((t) => {
+    const b = t.slot.getBoundingClientRect()
+    const tall = t.top * cos + t.foot * sin // chiều cao trên màn (đơn vị hình)
+    const fit = t.kind === 'eraser' ? 0.62 : 0.8 // tẩy khối đặc, nhìn to hơn -> thu bớt
+    D.trayU[t.kind] = b.width ? Math.min((b.width * 0.84) / t.wide, (b.height * fit) / tall) : 20
+  })
+  const span = Math.max(D.vw, D.vh / sin) * 0.6 + CONFIG.size * 3
   key.position.set(-420, 1100, -380)
   const sc = key.shadow.camera
   sc.left = sc.bottom = -span
@@ -493,46 +613,59 @@ function resize() {
   sc.updateProjectionMatrix()
 }
 
-// Chỗ đứng trong khay (toạ độ màn của tâm đáy) — để cả khối dấu nằm giữa ô.
-function home(s) {
+// Chỗ đứng trong khay (toạ độ màn của điểm chạm sàn) — cả khối nằm giữa ô.
+function home(t) {
   const st = D.stage.getBoundingClientRect()
-  const b = s.slot.getBoundingClientRect()
-  const R = D.trayR
+  const b = t.slot.getBoundingClientRect()
+  const u = D.trayU[t.kind]
   return {
     x: b.left - st.left + b.width / 2,
-    y: b.top - st.top + b.height / 2 + (R * TOP_Y * Math.cos(D.tilt)) / 2,
+    y: b.top - st.top + b.height / 2 + (u * t.top * Math.cos(D.tilt)) / 2,
   }
 }
 
 const galleryView = () => window.CHANDE_GALLERY?.view?.() || null
 
-/* --------------------------------------------------------------- màu dấu -- */
-function updateLabel(s) {
-  if (!s.img) return
-  const tex = new THREE.CanvasTexture(shapeOf(s.img, 512, labelColor(s.def)))
+/* -------------------------------------------------------------- màu dụng cụ -- */
+function updateLabel(t) {
+  if (!t.img) return
+  const tex = new THREE.CanvasTexture(shapeOf(t.img, 512, labelColor(t.def)))
   tex.colorSpace = THREE.SRGBColorSpace
   tex.anisotropy = 4
-  s.labelMat.map?.dispose()
-  s.labelMat.map = tex
-  s.labelMat.opacity = 0.94
-  s.labelMat.needsUpdate = true
+  t.labelMat.map?.dispose()
+  t.labelMat.map = tex
+  t.labelMat.opacity = 0.94
+  t.labelMat.needsUpdate = true
   D.dirty = true
 }
 
 // Áp màu trong CONFIG lên khối 3D (sau khi đổi ở bảng H).
 function applyColors() {
-  D.stamps.forEach((s) => {
-    paint(s.handleMat, s.def.handle)
-    paint(s.baseMat, s.def.base)
-    s.ringMat.color.set(s.def.ink)
-    updateLabel(s)
+  D.tools.forEach((t) => {
+    const d = t.def
+    if (t.kind === 'stamp') {
+      paint(t.handleMat, d.handle)
+      paint(t.baseMat, d.base)
+      t.ringMat.color.set(d.ink)
+      updateLabel(t)
+    } else if (t.kind === 'pen') {
+      paint(t.inkMat, d.color)
+      paint(t.bodyMat, d.body)
+      t.ringMat.color.set(d.color)
+    } else {
+      t.bodyMat.color.set(d.body)
+      paint(t.sleeveMat, d.sleeve)
+      t.ringMat.color.set(d.sleeve)
+    }
   })
-  syncUI()
+  D.ink.style.setProperty('--pen', CONFIG.pen.color)
   D.dirty = true
 }
 
 function syncUI() {
-  D.stamps.forEach((s) => s.slot.setAttribute('aria-pressed', String(D.held === s)))
+  D.tools.forEach((t) => t.slot.setAttribute('aria-pressed', String(D.held === t)))
+  document.documentElement.classList.toggle('gal-tool-held', !!D.held)
+  D.stage.dataset.tool = D.held?.kind || ''
 }
 
 /* ------------------------------------------------------------- tương tác -- */
@@ -540,56 +673,79 @@ const localPt = (e) => {
   const r = D.stage.getBoundingClientRect()
   return { x: e.clientX - r.left, y: e.clientY - r.top }
 }
-// Chỗ in được: trong canvas gallery, không phải khay / lightbox.
+// Chỗ dùng được: trong canvas gallery, không phải khay / lightbox.
 const onCanvas = (e) =>
   e.target instanceof Element &&
   D.stage.contains(e.target) &&
   !e.target.closest('.gal-tools') &&
   !document.querySelector('.gal-lb')
+const toWorld = (p) => {
+  const v = galleryView() || { x: 0, y: 0 }
+  return [p.x - v.x, p.y - v.y]
+}
 
-function toggle(s) {
-  if (D.held === s) return putBack()
+function toggle(t) {
+  if (D.held === t) return putBack()
   if (D.held) putBack()
-  if (s.state !== 'tray' && s.state !== 'back') return
-  D.held = s
-  s.state = 'held'
-  D.stage.classList.add('is-stamping')
+  if (t.state !== 'tray' && t.state !== 'back') return
+  D.held = t
+  t.state = 'held'
   syncUI()
 }
 
 function putBack() {
-  const s = D.held
-  if (!s) return
+  const t = D.held
+  if (!t) return
+  endStroke()
   D.held = null
-  if (s.state === 'held') s.state = 'back'
-  else s.after = 'back' // đang dập dở thì dập xong mới về
-  D.stage.classList.remove('is-stamping')
+  if (t.state === 'held') t.state = 'back'
+  else t.after = 'back' // dấu đang dập dở thì dập xong mới về
   syncUI()
 }
 
 function onDown(e) {
-  if (!D?.held || e.button !== 0 || !onCanvas(e)) return
+  const t = D?.held
+  if (!t || e.button !== 0 || !onCanvas(e)) return
   const p = localPt(e)
   D.down = { ...p, id: e.pointerId }
-  D.ptr = p // chạm (điện thoại): dấu bay tới chỗ chạm
+  D.ptr = p // chạm (điện thoại): dụng cụ bay tới chỗ chạm
+  if (t.kind === 'stamp') return // kéo vẫn kéo lưới, bấm mới in
+  // Bút / tẩy: kéo là vẽ / tẩy -> không cho lưới nhận cú kéo này.
+  e.stopPropagation()
+  e.preventDefault()
+  try {
+    D.stage.setPointerCapture(e.pointerId)
+  } catch {}
+  if (t.kind === 'pen') startStroke(p)
+  else erase(p, p)
 }
 
 function onMove(e) {
-  if (D) D.ptr = localPt(e)
+  if (!D) return
+  const p = localPt(e)
+  const last = D.ptr
+  D.ptr = p
+  const d = D.down
+  if (!d || e.pointerId !== d.id || !D.held) return
+  if (D.held.kind === 'pen') addPoint(p)
+  else if (D.held.kind === 'eraser') erase(last || p, p)
 }
 
 function onUp(e) {
   const d = D?.down
   if (!d || e.pointerId !== d.id) return
   D.down = null
-  const p = localPt(e)
-  if (Math.hypot(p.x - d.x, p.y - d.y) > 6) return // kéo lưới, không in
-  const s = D.held
-  if (!s || s.state !== 'held') return
+  const t = D.held
+  if (!t) return
   D.eatClick = performance.now() + 400 // không mở lightbox ảnh bên dưới
-  s.aim = p
-  s.state = 'aim'
-  s.t0 = performance.now()
+  if (t.kind === 'pen') return endStroke()
+  if (t.kind !== 'stamp' || e.type === 'pointercancel') return
+  const p = localPt(e)
+  if (Math.hypot(p.x - d.x, p.y - d.y) > 6) return void (D.eatClick = 0) // kéo lưới, không in
+  if (t.state !== 'held') return
+  t.aim = p
+  t.state = 'aim'
+  t.t0 = performance.now()
 }
 
 function onClickEat(e) {
@@ -599,13 +755,90 @@ function onClickEat(e) {
   e.preventDefault()
 }
 
+/* --------------------------------------------------------------- nét bút -- */
+function startStroke(p) {
+  const el = document.createElementNS(SVGNS, 'path')
+  el.setAttribute('class', 'gal__stroke')
+  el.style.stroke = CONFIG.pen.color
+  el.style.strokeWidth = CONFIG.pen.width
+  D.ink.appendChild(el)
+  D.stroke = { pts: [toWorld(p)], el }
+  D.strokes.push(D.stroke)
+  drawStroke(D.stroke)
+}
+function addPoint(p) {
+  const s = D.stroke
+  if (!s) return
+  const w = toWorld(p)
+  const l = s.pts[s.pts.length - 1]
+  if (Math.hypot(w[0] - l[0], w[1] - l[1]) < 1.5) return
+  s.pts.push(w)
+  drawStroke(s)
+}
+function endStroke() {
+  D.stroke = null
+}
+// Đường cong mượt qua trung điểm các cặp điểm (chấm tròn nếu chỉ một điểm).
+function drawStroke(s) {
+  const P = s.pts
+  const f = (n) => n.toFixed(1)
+  let d = `M${f(P[0][0])} ${f(P[0][1])}`
+  if (P.length === 1) d += `l0.01 0`
+  for (let i = 1; i < P.length - 1; i++) {
+    const mx = (P[i][0] + P[i + 1][0]) / 2
+    const my = (P[i][1] + P[i + 1][1]) / 2
+    d += `Q${f(P[i][0])} ${f(P[i][1])} ${f(mx)} ${f(my)}`
+  }
+  if (P.length > 1) d += `L${f(P[P.length - 1][0])} ${f(P[P.length - 1][1])}`
+  s.el.setAttribute('d', d)
+}
+
+/* -------------------------------------------------------------------- tẩy -- */
+// Khoảng cách điểm -> đoạn thẳng.
+function segDist(px, py, ax, ay, bx, by) {
+  const dx = bx - ax
+  const dy = by - ay
+  const L = dx * dx + dy * dy
+  const k = L ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L)) : 0
+  return Math.hypot(px - ax - dx * k, py - ay - dy * k)
+}
+// Chà từ a tới b (toạ độ màn): nét bút / vết dấu nào chạm vùng tẩy thì mất.
+function erase(a, b) {
+  const [ax, ay] = toWorld(a)
+  const [bx, by] = toWorld(b)
+  const r = CONFIG.eraser.radius * (heldU(D.held) / CONFIG.eraser.size)
+  D.strokes = D.strokes.filter((s) => {
+    const w = r + CONFIG.pen.width / 2
+    const hit = s.pts.some((p, i) => {
+      const q = s.pts[i + 1] || p
+      // Đoạn nét gần đoạn chà: thử hai đầu đoạn chà với đoạn nét, và ngược lại.
+      return (
+        segDist(ax, ay, p[0], p[1], q[0], q[1]) < w ||
+        segDist(bx, by, p[0], p[1], q[0], q[1]) < w ||
+        segDist(p[0], p[1], ax, ay, bx, by) < w
+      )
+    })
+    if (hit) fadeOut(s.el)
+    return !hit
+  })
+  D.printList = D.printList.filter((pr) => {
+    const hit = segDist(pr.x, pr.y, ax, ay, bx, by) < pr.r * 0.85 + r * 0.5
+    if (hit) fadeOut(pr.el)
+    return !hit
+  })
+}
+function fadeOut(el) {
+  el.classList.add('is-gone')
+  setTimeout(() => el.remove(), 450)
+}
+
 /* ---------------------------------------------------------------- vết mực -- */
-function print(s) {
+function print(t) {
   const view = galleryView()
-  if (!s.img || !view) return
-  const d = D.R * 2 * 0.955 // đường kính mặt cao su
+  if (!t.img || !view) return
+  const d = heldU(t) * 2 * 0.955 // đường kính mặt cao su
   const n = Math.round(Math.min(640, d * Math.min(2, devicePixelRatio || 1)))
-  const { ink, deboss } = makePrint(s.img, n, s.def.ink)
+  const { ink, deboss } = makePrint(t.img, n, t.def.ink)
   const el = document.createElement('div')
   el.className = 'gal__print'
   ink.className = 'gal__print-ink'
@@ -613,18 +846,16 @@ function print(s) {
   el.append(ink, deboss)
   const rot = (Math.random() * 2 - 1) * CONFIG.spin
   const a = CONFIG.ink[0] + Math.random() * (CONFIG.ink[1] - CONFIG.ink[0])
+  const x = t.aim.x - view.x
+  const y = t.aim.y - view.y
   el.style.width = el.style.height = d + 'px'
-  el.style.left = s.aim.x - view.x - d / 2 + 'px'
-  el.style.top = s.aim.y - view.y - d / 2 + 'px'
+  el.style.left = x - d / 2 + 'px'
+  el.style.top = y - d / 2 + 'px'
   el.style.setProperty('--rot', rot.toFixed(1) + 'deg')
   el.style.setProperty('--ink', a.toFixed(2))
   D.prints.appendChild(el)
-  D.printList.push(el)
-  while (D.printList.length > CONFIG.maxPrints) {
-    const old = D.printList.shift()
-    old.classList.add('is-gone')
-    setTimeout(() => old.remove(), 700)
-  }
+  D.printList.push({ el, x, y, r: d / 2 })
+  while (D.printList.length > CONFIG.maxPrints) fadeOut(D.printList.shift().el)
 }
 
 /* -------------------------------------------------------------- mỗi frame -- */
@@ -637,129 +868,148 @@ function tick(now) {
   const view = galleryView()
   if (view) D.prints.style.transform = `translate3d(${view.x.toFixed(2)}px, ${view.y.toFixed(2)}px, 0)`
 
-  // Chỉ vẽ lại khi có dấu đang động.
+  // Chỉ vẽ lại khi có món đang động.
   let busy = D.dirty
-  for (const s of D.stamps) busy = step(s, now, dt) || busy
+  for (const t of D.tools) busy = step(t, now, dt) || busy
   if (busy) D.renderer.render(D.scene, D.cam)
   D.dirty = false
 }
 
-const PRESS = { down: 0.1, hold: 0.2 } // s — dập xuống / đè giữ
+const PRESS = { down: 0.1, hold: 0.2 } // s — dấu dập xuống / đè giữ
+// Tư thế bút khi cầm: ngòi xuống, thân ngả sang phải + ra sau (trông dài, như tay phải cầm viết).
+const PEN_HELD = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.38, 0, -0.5))
+const PEN_TRAY = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, Math.PI)) // ngòi chổng lên
+const UP = new THREE.Vector3()
 
-function step(s, now, dt) {
-  const t = (now - s.t0) / 1000
+function step(t, now, dt) {
+  const time = (now - t.t0) / 1000
+  const isStamp = t.kind === 'stamp'
+  const lift = isStamp ? CONFIG.lift : t.kind === 'pen' ? 0.35 : 0.3 // đơn vị hình
+  const using = D.held === t && !!D.down && !isStamp // đang vẽ / đang tẩy
   let hT = 0
-  let gx = s.x
-  let gy = s.y
-  let rT = D.R
+  let gx = t.x
+  let gy = t.y
+  let uT = heldU(t)
   let follow = 8
   let ringT = 0
-  const px = s.x
-  const py = s.y
+  let poseT = 1
+  const px = t.x
+  const py = t.y
 
-  if (s.state === 'tray' || s.state === 'back') {
-    const h = home(s)
+  if (t.state === 'tray' || t.state === 'back') {
+    const h = home(t)
     gx = h.x
     gy = h.y
-    rT = D.trayR
-    hT = s.hovered && s.state === 'tray' ? 0.18 : 0
-    if (s.state === 'back') {
-      const d = Math.hypot(h.x - s.x, h.y - s.y)
-      hT = d > 3 ? CONFIG.lift * 0.6 * Math.min(1, d / 120) : 0
+    uT = D.trayU[t.kind]
+    poseT = 0
+    hT = t.hovered && t.state === 'tray' ? 0.18 : 0
+    if (t.state === 'back') {
+      const d = Math.hypot(h.x - t.x, h.y - t.y)
+      hT = d > 3 ? Math.max(lift, 0.5) * 0.6 * Math.min(1, d / 120) : 0
       follow = 7
-      if (d < 1 && Math.abs(s.r - rT) < 0.2) s.state = 'tray'
+      if (d < 1 && Math.abs(t.u - uT) < 0.2) t.state = 'tray'
     }
-  } else if (s.state === 'held') {
-    hT = CONFIG.lift
-    follow = 16
-    ringT = 0.42
+  } else if (t.state === 'held') {
+    hT = using ? 0 : lift
+    follow = using ? 60 : 16 // đang vẽ thì ngòi bám sát con trỏ
+    ringT = using ? 0.2 : 0.42
     if (D.ptr) {
       gx = D.ptr.x
       gy = D.ptr.y
     }
-  } else if (s.state === 'aim') {
-    gx = s.aim.x
-    gy = s.aim.y
-    hT = CONFIG.lift
+  } else if (t.state === 'aim') {
+    gx = t.aim.x
+    gy = t.aim.y
+    hT = lift
     follow = 18
     ringT = 0.6
-    if (Math.hypot(gx - s.x, gy - s.y) < 2 || t > 0.5) {
-      s.state = 'press'
-      s.t0 = now
-      s.printed = false
+    if (Math.hypot(gx - t.x, gy - t.y) < 2 || time > 0.5) {
+      t.state = 'press'
+      t.t0 = now
+      t.printed = false
     }
-  } else if (s.state === 'press') {
-    gx = s.aim.x
-    gy = s.aim.y
+  } else if (t.state === 'press') {
+    gx = t.aim.x
+    gy = t.aim.y
     follow = 24
-    if (t < PRESS.down) {
-      const k = t / PRESS.down
-      s.h = CONFIG.lift * (1 - k * k) // rơi nhanh dần
-      s.hv = 0
+    if (time < PRESS.down) {
+      const k = time / PRESS.down
+      t.h = lift * (1 - k * k) // rơi nhanh dần
+      t.hv = 0
     } else {
-      s.h = 0
-      s.hv = 0
-      if (!s.printed) {
-        s.printed = true
-        s.vsq -= 9 // nén lại khi chạm
-        print(s)
+      t.h = 0
+      t.hv = 0
+      if (!t.printed) {
+        t.printed = true
+        t.vsq -= 9 // nén lại khi chạm
+        print(t)
       }
-      if (t > PRESS.down + PRESS.hold) {
-        s.state = s.after || (D.held === s ? 'held' : 'back')
-        s.after = null
-        s.t0 = now
+      if (time > PRESS.down + PRESS.hold) {
+        t.state = t.after || (D.held === t ? 'held' : 'back')
+        t.after = null
+        t.t0 = now
       }
     }
   }
 
   const k = 1 - Math.exp(-dt * follow)
-  s.x += (gx - s.x) * k
-  s.y += (gy - s.y) * k
-  s.r += (rT - s.r) * (1 - Math.exp(-dt * 9))
-  // Quán tính: thân ngả ngược hướng di chuyển.
+  t.x += (gx - t.x) * k
+  t.y += (gy - t.y) * k
+  t.u += (uT - t.u) * (1 - Math.exp(-dt * 9))
+  t.pose += (poseT - t.pose) * (1 - Math.exp(-dt * 8))
+  // Quán tính: thân ngả ngược hướng di chuyển (tẩy đang chà thì lắc mạnh hơn).
   let ax = 0
   let az = 0
-  if (dt > 0 && s.state !== 'tray') {
-    ax = (-(s.y - py) / dt / Math.sin(D.tilt)) * 0.00035
-    az = ((s.x - px) / dt) * 0.00035
+  if (dt > 0 && t.state !== 'tray') {
+    const g = t.kind === 'eraser' && using ? 0.0011 : t.kind === 'pen' ? 0.00012 : 0.00035
+    ax = (-(t.y - py) / dt / Math.sin(D.tilt)) * g
+    az = ((t.x - px) / dt) * g
   }
-  if (s.state !== 'press') {
-    s.hv += ((hT - s.h) * 170 - s.hv * 18) * dt
-    s.h += s.hv * dt
+  if (t.state !== 'press') {
+    t.hv += ((hT - t.h) * 170 - t.hv * 18) * dt
+    t.h += t.hv * dt
   }
-  s.vtx += ((ax - s.tx) * 120 - s.vtx * 11) * dt
-  s.vtz += ((az - s.tz) * 120 - s.vtz * 11) * dt
-  s.tx += s.vtx * dt
-  s.tz += s.vtz * dt
-  s.vsq += (-s.sq * 260 - s.vsq * 14) * dt
-  s.sq += s.vsq * dt
-  s.ringA += (ringT - s.ringA) * (1 - Math.exp(-dt * 10))
+  t.vtx += ((ax - t.tx) * 120 - t.vtx * 11) * dt
+  t.vtz += ((az - t.tz) * 120 - t.vtz * 11) * dt
+  t.tx += t.vtx * dt
+  t.tz += t.vtz * dt
+  t.vsq += (-t.sq * 260 - t.vsq * 14) * dt
+  t.sq += t.vsq * dt
+  t.ringA += (ringT - t.ringA) * (1 - Math.exp(-dt * 10))
 
   // Đặt vào cảnh: điểm màn (x, y) -> điểm sàn (X, 0, Z).
-  const X = s.x - D.vw / 2
-  const Z = (s.y - D.vh / 2) / Math.sin(D.tilt)
-  s.root.position.set(X, 0, Z)
-  s.root.scale.setScalar(s.r)
-  s.hover.position.y = Math.max(0, s.h)
+  const X = t.x - D.vw / 2
+  const Z = (t.y - D.vh / 2) / Math.sin(D.tilt)
+  t.root.position.set(X, 0, Z)
+  t.root.scale.setScalar(t.u)
+  t.hover.position.y = Math.max(0, t.h)
   const lim = 0.45
-  s.tip.rotation.x = Math.max(-lim, Math.min(lim, s.tx))
-  s.tip.rotation.z = Math.max(-lim, Math.min(lim, s.tz))
-  const q = Math.max(-0.12, Math.min(0.12, s.sq * 0.06))
-  s.squash.scale.set(1 - q * 0.5, 1 + q, 1 - q * 0.5)
-  s.ring.position.set(X, 0.3, Z)
-  s.ring.scale.setScalar(s.r)
-  s.ringMat.opacity = s.ringA
-  s.ring.visible = s.ringA > 0.01
+  t.tip.rotation.x = Math.max(-lim, Math.min(lim, t.tx))
+  t.tip.rotation.z = Math.max(-lim, Math.min(lim, t.tz))
+  if (t.kind === 'pen') {
+    // Khay: ngòi chổng lên, đáy chạm sàn. Cầm: ngòi xuống, đúng điểm chạm sàn.
+    t.orient.quaternion.slerpQuaternions(PEN_TRAY, PEN_HELD, t.pose)
+    UP.set(0, PEN_L / 2, 0).applyQuaternion(t.orient.quaternion)
+    t.orient.position.set(UP.x * t.pose, PEN_L / 2 + (UP.y - PEN_L / 2) * t.pose, UP.z * t.pose)
+    t.squash.position.y = -PEN_L / 2
+  }
+  const q = Math.max(-0.12, Math.min(0.12, t.sq * 0.06))
+  t.squash.scale.set(1 - q * 0.5, 1 + q, 1 - q * 0.5)
+  t.ring.position.set(X, 0.3, Z)
+  t.ring.scale.setScalar(t.u)
+  t.ringMat.opacity = t.ringA
+  t.ring.visible = t.ringA > 0.01
 
   const e = 1e-3
   return (
-    s.state !== 'tray' ||
-    Math.abs(gx - s.x) + Math.abs(gy - s.y) > 0.05 ||
-    Math.abs(rT - s.r) > 0.02 ||
-    Math.abs(hT - s.h) + Math.abs(s.hv) > e ||
-    Math.abs(s.tx) + Math.abs(s.tz) + Math.abs(s.vtx) + Math.abs(s.vtz) > e ||
-    Math.abs(s.sq) + Math.abs(s.vsq) > e ||
-    s.ringA > 0.01
+    t.state !== 'tray' ||
+    Math.abs(gx - t.x) + Math.abs(gy - t.y) > 0.05 ||
+    Math.abs(uT - t.u) > 0.02 ||
+    Math.abs(poseT - t.pose) > e ||
+    Math.abs(hT - t.h) + Math.abs(t.hv) > e ||
+    Math.abs(t.tx) + Math.abs(t.tz) + Math.abs(t.vtx) + Math.abs(t.vtz) > e ||
+    Math.abs(t.sq) + Math.abs(t.vsq) > e ||
+    t.ringA > 0.01
   )
 }
 
@@ -784,17 +1034,19 @@ window.CHANDE_STAMPS = {
     applyColors()
     resize()
   },
-  // Cầm dấu thứ i ra (null = cất về khay).
+  // Cầm món thứ i trong khay ra (0, 1 = dấu, 2 = bút, 3 = tẩy; null = cất về khay).
   pick(i) {
     if (!D) return
     if (i == null) return putBack()
-    toggle(D.stamps[i])
+    toggle(D.tools[i])
   },
-  // Xoá hết vết mực trên lưới.
+  // Xoá hết vết dấu + nét bút trên lưới.
   clear() {
     if (!D) return
-    D.printList.forEach((el) => el.remove())
+    D.printList.forEach((p) => p.el.remove())
+    D.strokes.forEach((s) => s.el.remove())
     D.printList = []
+    D.strokes = []
   },
   get state() {
     return D
