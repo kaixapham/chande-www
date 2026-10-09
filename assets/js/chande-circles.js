@@ -3,9 +3,9 @@
  * -----------------------------------------------------------------------------
  * Bubble vẫn đi theo chuột như thường (KHÔNG hút, không bắt đứng yên). Lại gần
  * vòng tròn thì bubble phình to hơn lõi một chút. Ảnh .peek (giữ cho CMS) được vẽ
- * lên canvas phủ lõi thành LƯỚI Ô TÁCH RỜI (như các mảng gạch mosaic ở hero): ô nằm
- * trong bubble thì hiện đủ, càng ra mép bubble ô càng co nhỏ lại (mép hơi so le theo
- * từng ô) — bubble đè lên lõi tới đâu thì lộ ảnh tới đó, chạm mép cũng thấy vài ô.
+ * lên canvas phủ lõi: lòng bubble là ảnh LIỀN, chỉ dải sát MÉP bubble tách thành ô
+ * (như các mảng gạch mosaic ở hero) — càng ra ngoài ô càng co nhỏ, mép so le theo
+ * từng ô. Bubble đè lên lõi tới đâu thì lộ ảnh tới đó, chạm mép cũng thấy vài ô.
  *
  * API: window.CHANDE_CIRCLES = { config, mount(root), destroy() }
  * ========================================================================== */
@@ -63,12 +63,26 @@
       const ox = (W - img.naturalWidth * sc) / 2
       const oy = (W - img.naturalHeight * sc) / 2
       const band = c * CONFIG.edge
+      // lòng bubble: ảnh liền (không tách ô)
+      const inner = R - band
+      if (inner > 0) {
+        ctx.save()
+        ctx.beginPath()
+        ctx.arc(bx, by, inner, 0, Math.PI * 2)
+        ctx.clip()
+        ctx.drawImage(img, ox, oy, img.naturalWidth * sc, img.naturalHeight * sc)
+        ctx.restore()
+        o.drawn = true
+      }
+      // chỉ dải sát mép bubble mới tách ô
       for (let j = 0; j < n; j++)
         for (let i = 0; i < n; i++) {
           const x = (i + 0.5) * c
           const y = (j + 0.5) * c
           const e = (R + o.jit[j * n + i] * c * 0.9 - Math.hypot(x - bx, y - by)) / band
           if (e <= 0) continue
+          // ô nằm trọn trong lòng (đã vẽ liền) thì bỏ qua
+          if (Math.hypot(x - bx, y - by) + c * 0.71 < inner) continue
           const k = Math.min(1, e)
           const sz = c * (1 - CONFIG.gap) * (0.35 + 0.65 * k)
           const dx = x - sz / 2
