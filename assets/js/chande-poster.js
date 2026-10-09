@@ -52,13 +52,23 @@ window.CHANDE_SETTINGS_APPLY?.('poster', CONFIG)
 
 let live = null
 
+// Có WebGL VÀ chạy bằng GPU thật. Máy không có / bị chặn GPU (và máy chấm điểm như
+// PageSpeed) vẽ WebGL bằng phần mềm (SwiftShader, llvmpipe…): chồng poster 3D làm đứng
+// trang cả giây -> dùng ảnh poster tĩnh như máy không có WebGL.
+let glOK = null
 function hasWebGL() {
+  if (glOK !== null) return glOK
   try {
     const c = document.createElement('canvas')
-    return !!(c.getContext('webgl2') || c.getContext('webgl'))
+    const gl = c.getContext('webgl2') || c.getContext('webgl')
+    const dbg = gl && gl.getExtension('WEBGL_debug_renderer_info')
+    const name = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : ''
+    glOK = !!gl && !/swiftshader|llvmpipe|softpipe|software|basic render/i.test(name)
+    gl?.getExtension('WEBGL_lose_context')?.loseContext()
   } catch {
-    return false
+    glOK = false
   }
+  return glOK
 }
 
 function readSheets(section) {
@@ -220,22 +230,24 @@ function destroy() {
   live = null
 }
 
-// Chồng poster (three.js + 8 ảnh) nằm giữa trang: dựng sau khi trang tải xong để không
-// chen vào lúc loading; vẫn kịp trước khi người xem cuộn tới.
-// Dựng khi 'load' tới HOẶC sau tối đa 3s — trên mạng chậm 'load' có thể tới rất muộn.
+// Chồng poster (three.js + 8 ảnh) nằm gần cuối trang và là phần nặng nhất (tải texture,
+// dựng cảnh): chỉ dựng khi người xem cuộn tới gần (cách ~1.5 màn) — dựng ngay lúc tải
+// trang làm đứng trang cả giây trên máy yếu. Chưa dựng xong thì ảnh poster tĩnh đứng chỗ.
 // Chiều cao thì chốt ngay (presize) để bố cục trang không đổi lúc dựng xong.
 {
   const sec = document.querySelector('[data-poster-stack]')
   if (sec && hasWebGL()) {
     const sh = readSheets(sec)
     if (sh.length) presize(sec, sh)
-  }
-  let started = false
-  const go = () => !started && ((started = true), mount(document))
-  if (document.readyState === 'complete') go()
-  else {
-    addEventListener('load', go, { once: true })
-    setTimeout(go, 3000)
+    const io = new IntersectionObserver(
+      (es) => {
+        if (!es.some((e) => e.isIntersecting)) return
+        io.disconnect()
+        mount(document)
+      },
+      { rootMargin: '150% 0px' },
+    )
+    io.observe(sec)
   }
 }
 
