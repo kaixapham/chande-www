@@ -20,7 +20,7 @@
   const CONFIG = {
     stepScroll: 1, // quãng cuộn cho mỗi lần một ảnh nở kín khung (× chiều cao khung)
     slide: 10, // độ trượt hình trong ô (% chiều cao ô, tổng quãng)
-    zoom: 1.14, // phóng hình trong ô để có chỗ trượt
+    zoom: 1.2, // phóng hình trong ô để có chỗ trượt (cả parallax trước / sau quãng dính)
     appear: 0.12, // ảnh nhỏ bật ra trong đoạn đầu này của quãng nở (0…1)
     bandsFrom: 0.7, // dải màu bắt đầu trồi ra khi ảnh cao tới bao nhiêu chiều cao khung (0…1)
     bandLead: 0.0084, // mỗi dải đi trước dải trong nó bao nhiêu (theo quãng nở) = độ dày dải
@@ -113,6 +113,9 @@
       if (col) col.style.transform = `translate3d(0, ${t}px, 0)`
       const n = imgs.length - 1
       const x = (t / pin) * n
+      // parallax: cả TRƯỚC và SAU quãng dính hình trong ô vẫn trôi theo cuộn (như ảnh
+      // khác trên trang) — nối liền với độ trượt trong quãng dính
+      const xr = Math.min(n + 1.5, Math.max(-1.5, ((bar - top) / pin) * n))
       const k = Math.min(n - 1, Math.floor(x)) // ảnh nền hiện tại
       const f = x - k // ảnh k + 1 nở ra được bao nhiêu
       // nở đều theo log: rộng / cao đi từ ô nhỏ tới cỡ khung, tâm trôi theo cùng nhịp
@@ -170,7 +173,7 @@
           return
         }
         // đời ảnh i: nở trong chặng i − 1, làm nền trong chặng i -> u 0…1
-        const u = Math.min(1, Math.max(0, (x - (i - 1)) / 2))
+        const u = Math.min(1.3, Math.max(-0.3, (xr - (i - 1)) / 2))
         imgs[i].style.transform = `translate3d(0, ${((0.5 - u) * CONFIG.slide).toFixed(2)}%, 0) scale(${CONFIG.zoom})`
       })
     }

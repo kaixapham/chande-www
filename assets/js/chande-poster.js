@@ -117,7 +117,8 @@ function mount(scope = document) {
   }
   me.ro = new ResizeObserver(() => me.fit())
   me.ro.observe(pin)
-  me.under = underRings(api, pin, scope.querySelector('.agenda__dates > div'))
+  // cụm ngày + 2 tag Agenda / Bootcamp nằm DƯỚI các vòng: chỉ lộ trong vòng trong cùng
+  me.under = [scope.querySelector('.agenda__dates > div'), scope.querySelector('.agenda .pills')].map((el) => underRings(api, pin, el))
   live = me
   // Chỉ đổi sang bản chạy khi ảnh đã nạp xong — trước đó vẫn là ảnh tĩnh, không nháy trắng.
   api.ready
@@ -201,7 +202,7 @@ function underRings(api, pin, el) {
 function destroy() {
   if (!live) return
   live.ro?.disconnect()
-  live.under?.dispose()
+  live.under?.forEach((u) => u?.dispose())
   live.api.dispose()
   live.section.classList.remove('is-live')
   live.section.style.removeProperty('--poster-scroll')
