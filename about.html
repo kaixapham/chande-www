@@ -9,9 +9,9 @@
 <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/vendor/lenis.css">
-<link rel="stylesheet" href="assets/css/site.css?v=202610091508">
-<link rel="stylesheet" href="assets/css/home.css?v=202610091508">
-<link rel="stylesheet" href="assets/css/gallery.css?v=202610091508">
+<link rel="stylesheet" href="assets/css/site.css?v=202610091804">
+<link rel="stylesheet" href="assets/css/home.css?v=202610091804">
+<link rel="stylesheet" href="assets/css/gallery.css?v=202610091804">
 <!-- Khung hình đầu: màn loading do JS dựng ở cuối trang, nên trước đó tô nền tối + ẩn
      nội dung (không chớp nền kem). chande-loading.js gỡ cl-boot ngay khi đã gắn màn loading. -->
 <style>html.cl-boot,html.cl-boot body{background:#182220}html.cl-boot body>:not(.cl){visibility:hidden}</style>
@@ -24,9 +24,41 @@
 
 <main data-barba="container" data-barba-namespace="about">
   <div class="page">
-    <div class="shot shot--b" data-shot="b">
-      <p class="shot__ph">Page B — About<br>nạp ảnh demo ở bảng dưới</p>
-    </div>
+    <!-- HERO ABOUT — Figma node 594:47170. Hai hàng, mỗi hàng nửa phần viewport dưới
+         header (1000 / 2 = 500 ở khổ 1920×1080), chia đôi trái / phải ở 960:
+           trên: ảnh nhà sàn | mảng tối dither + chữ giới thiệu
+           dưới: mảng kem dither + tiêu đề lớn | mảng gạch neon (chande-field.js) -->
+    <section class="ab-hero" data-cms-section="About — Hero" aria-label="Về Chande Bootcamp">
+      <!-- data-bubble-logo: bubble thành khối thuỷ tinh hình logo, đứng ở tâm stage (giao 4 mảng) -->
+      <div class="ab-hero__stage field-root" data-field-root data-bubble-logo>
+        <div class="ab-hero__photo" data-hero-dither="#182220" data-levels="8">
+          <img data-parallax data-cms="about-hero-photo" data-cms-label="Ảnh lớn hero About" data-cms-w="960"
+               src="assets/img/about/hero-mountain.webp" alt="Người nằm thư giãn trên đồi cỏ, phía xa là dãy núi đá và mây">
+        </div>
+        <div class="ab-hero__dark" data-hero-dither="#131313" data-levels="8">
+          <div class="ab-hero__intro">
+            <p>Mingg Patreon<br>Established in 2020</p>
+            <p>A community connecting event<br>for Vietnamese designers.<br>In the most peaceful way.</p>
+          </div>
+          <!-- Scroll more (giống hero trang chủ), cách lề phải 24, chân chữ thẳng chân chữ giới thiệu -->
+          <div class="ab-hero__scroll">
+            <div class="hero__scroll">
+              <span>Scroll more</span>
+              <span class="hero__dots" aria-hidden="true"><img src="assets/img/home/dot.svg" alt="" width="4" height="4"><img src="assets/img/home/dot.svg" alt="" width="4" height="4"><img src="assets/img/home/dot.svg" alt="" width="4" height="4"></span>
+            </div>
+          </div>
+        </div>
+        <div class="ab-hero__cream" data-hero-dither="#f4f3eb" data-levels="8">
+          <!-- thanh tối + dải viên chạy ở đầu hàng dưới, ngay dưới ảnh (kiểu ảnh ngày 2 Agenda trang chủ) -->
+          <div class="ab-hero__bar" aria-hidden="true">
+            <div class="pillrun pillrun--sm" data-marquee><div class="pillrun__track"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+          </div>
+          <h1 class="ab-hero__title">A design<br>community that<br>stands apart</h1>
+          <p class="ab-hero__year" aria-hidden="true">(<span>©</span>26)</p>
+        </div>
+        <div class="ab-hero__field field" data-field></div>
+      </div>
+    </section>
   </div>
 </main>
 
@@ -37,31 +69,33 @@
 <script src="assets/vendor/gsap.min.js"></script>
 <script src="assets/vendor/CustomEase.min.js"></script>
 
-<script src="assets/js/chande-settings.js?v=202610091508"></script>
-<script src="assets/js/chande-loading.js?v=202610091508"></script>
-<script src="assets/js/chande-transition.js?v=202610091508"></script>
-<script src="assets/js/chande-reveal.js?v=202610091508"></script>
-<script src="assets/js/chande-hero.js?v=202610091508"></script>
-<script src="assets/js/chande-field.js?v=202610091508"></script>
-<script src="assets/js/chande-home.js?v=202610091508"></script>
-<script src="assets/js/chande-cursor.js?v=202610091508"></script>
-<script src="assets/js/chande-bubble.js?v=202610091508"></script>
-<script src="assets/js/chande-tilt.js?v=202610091508"></script>
-<script src="assets/js/chande-imgtiles.js?v=202610091508"></script>
-<script src="assets/js/chande-parallax.js?v=202610091508"></script>
-<script src="assets/js/chande-titlefx.js?v=202610091508"></script>
-<script src="assets/js/chande-eye.js?v=202610091508"></script>
-<script src="assets/js/chande-chips.js?v=202610091508"></script>
-<script src="assets/js/chande-scramble.js?v=202610091508"></script>
-<script src="assets/js/chande-sign.js?v=202610091508"></script>
-<script src="assets/js/chande-gallery.js?v=202610091508"></script>
+<script src="assets/js/chande-settings.js?v=202610091804"></script>
+<script src="assets/js/chande-loading.js?v=202610091804"></script>
+<script src="assets/js/chande-transition.js?v=202610091804"></script>
+<script src="assets/js/chande-reveal.js?v=202610091804"></script>
+<script src="assets/js/chande-hero.js?v=202610091804"></script>
+<script src="assets/js/chande-field.js?v=202610091804"></script>
+<script src="assets/js/chande-home.js?v=202610091804"></script>
+<script src="assets/js/chande-cursor.js?v=202610091804"></script>
+<script src="assets/js/chande-bubble.js?v=202610091804"></script>
+<script src="assets/js/chande-tilt.js?v=202610091804"></script>
+<script src="assets/js/chande-imgtiles.js?v=202610091804"></script>
+<script src="assets/js/chande-parallax.js?v=202610091804"></script>
+<script src="assets/js/chande-titlefx.js?v=202610091804"></script>
+<script src="assets/js/chande-eye.js?v=202610091804"></script>
+<script src="assets/js/chande-chips.js?v=202610091804"></script>
+<script src="assets/js/chande-scramble.js?v=202610091804"></script>
+<script src="assets/js/chande-sign.js?v=202610091804"></script>
+<script src="assets/js/chande-gallery.js?v=202610091804"></script>
 <!-- Module: tự nạp paper-stack.js + three (assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-poster.js?v=202610091508"></script>
+<script type="module" src="assets/js/chande-poster.js?v=202610091804"></script>
 <!-- Module: vịt patin 3D trên lưới gallery (three ở assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-duck.js?v=202610091508"></script>
+<script type="module" src="assets/js/chande-duck.js?v=202610091804"></script>
 <!-- Module: thảm cỏ 3D dưới lưới gallery (preset data-floor="grass-3d"). -->
-<script type="module" src="assets/js/chande-grass.js?v=202610091508"></script>
+<script type="module" src="assets/js/chande-grass.js?v=202610091804"></script>
+<!-- Module: cá koi 3D bơi trong lõi vòng tròn About khi bubble ở tâm (three nạp động). -->
+<script type="module" src="assets/js/chande-koi.js?v=202610091804"></script>
 <!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
-<script src="assets/js/chande-devtools.js?v=202610091508"></script>
+<script src="assets/js/chande-devtools.js?v=202610091804"></script>
 </body>
 </html>

@@ -42,10 +42,11 @@
     smooth: 0.18, // 0..1 — độ bám (1 = tức thì)
     selector:
       '.hs-intro img, .hs-story img, .hs-land__bg, .hs-about img, .hs-agenda img, .hs-wall img, .hs-quote img, .hs-foot img, [data-parallax]',
-    // ảnh có chuyển động / clip-path riêng, và icon nhỏ (chấm, mũi tên, tem)
+    // ảnh có chuyển động / clip-path riêng, icon nhỏ (chấm, mũi tên, tem), và cả cụm vòng
+    // tròn About (vòng, vạch .tex, lõi là hình vector xếp khít — trôi lệch là lệch tâm)
     exclude:
       '.hero *, .hs-land *:not(.hs-land__bg), .hs-poster *, .agenda__dates *, .cl *, [data-name-photo] *, ' +
-      '.cta *, .pill *, .hs-quote__nav *, .hs-quote__strip, .agenda__nav *, .agenda__stamp, .hs-story__media *, .circle .peek, img[src$=".svg"]',
+      '.cta *, .pill *, .hs-quote__nav *, .hs-quote__strip, .agenda__nav *, .agenda__stamp, .hs-story__media *, .circle *, img[src$=".svg"]',
   }
   window.CHANDE_SETTINGS_APPLY?.('parallax', CONFIG)
   const DEFAULTS = structuredClone(CONFIG)

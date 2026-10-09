@@ -19,6 +19,8 @@
     cells: 18, // số ô theo bề ngang lõi
     gap: 0.12, // khe giữa các ô (× cạnh ô)
     edge: 2.2, // ô co dần trong dải mép rộng bằng edge × cạnh ô
+    spin: 14, // bubble vào giữa lõi -> vòng vạch (.tex) xoay quanh tâm (độ / giây, 0 = tắt)
+    spinIn: 0.55, // tâm bubble cách tâm lõi < spinIn × bán kính lõi thì xoay
   }
   window.CHANDE_SETTINGS_APPLY?.('circles', CONFIG)
   const api = { config: CONFIG, mount() {}, destroy() {} }
@@ -31,15 +33,16 @@
     destroy()
     const scope = root.querySelector ? root : document
     const circles = [...scope.querySelectorAll('.hs-about .circle')]
-      .map((c) => ({ c, core: c.querySelector('.core') || c, peek: c.querySelector('.peek') }))
-      .filter((o) => o.peek)
+      // data-peek-fill="#màu": lòng bubble là màu trơn thay cho ảnh (vòng 1 — nền trắng cho bướm 3D)
+      .map((c) => ({ c, core: c.querySelector('.core') || c, peek: c.querySelector('.peek'), fill: c.dataset.peekFill, tex: c.querySelector('.tex'), rot: 0, vel: 0 }))
+      .filter((o) => o.peek || o.fill)
     const dpr = Math.min(devicePixelRatio || 1, 2)
     const CORE = 324 / 468 // lõi / vòng ngoài (home.css)
     // so le mép theo từng ô (cố định, không nhấp nháy)
     const jit = Array.from({ length: 997 }, () => Math.random() - 0.5)
     for (const o of circles) {
       // ảnh nguồn bị ẩn (display:none) — lazy thì không bao giờ tải; cho tải sau khi trang tải xong
-      const eager = () => (o.peek.loading = 'eager')
+      const eager = () => o.peek && (o.peek.loading = 'eager')
       if (document.readyState === 'complete') eager()
       else {
         addEventListener('load', eager, { once: true })
@@ -48,7 +51,7 @@
       o.cv = document.createElement('canvas')
       o.cv.className = 'peek-cv'
       o.cv.setAttribute('aria-hidden', 'true')
-      o.peek.after(o.cv)
+      ;(o.peek || o.core).after(o.cv)
       o.ctx = o.cv.getContext('2d')
       o.drawn = false
       // màu lõi (đọc điểm giữa hình lõi) — ô ngoài cùng hoà dần vào màu này
@@ -78,17 +81,17 @@
       ctx.clearRect(0, 0, W, W)
       o.drawn = false
       const img = o.peek
-      if (!img.complete || !img.naturalWidth || R < 1) return
+      if (R < 1 || (!o.fill && (!img.complete || !img.naturalWidth))) return
       const D = W * CORE // đường kính lõi
       const co = (W - D) / 2
       const c = D / CONFIG.cells
       const nn = Math.ceil(W / c)
       const band = c * CONFIG.edge
       const inner = R - band
-      // ảnh phủ kín lõi (cover)
-      const sc = Math.max(D / img.naturalWidth, D / img.naturalHeight)
-      const ox = co + (D - img.naturalWidth * sc) / 2
-      const oy = co + (D - img.naturalHeight * sc) / 2
+      // ảnh phủ kín lõi (cover) — vòng dùng màu trơn thì không cần
+      const sc = o.fill ? 1 : Math.max(D / img.naturalWidth, D / img.naturalHeight)
+      const ox = o.fill ? 0 : co + (D - img.naturalWidth * sc) / 2
+      const oy = o.fill ? 0 : co + (D - img.naturalHeight * sc) / 2
       const tint = o.tint ? `rgb(${o.tint})` : null
       // các ô trong dải mép bubble: cb(dx, dy, sz, k)
       const edgeCells = (cb) => {
@@ -129,11 +132,17 @@
         ctx.save()
         disc(inner)
         ctx.clip()
-        ctx.drawImage(img, ox, oy, img.naturalWidth * sc, img.naturalHeight * sc)
+        if (o.fill) {
+          ctx.fillStyle = o.fill
+          ctx.fillRect(0, 0, W, W)
+        } else ctx.drawImage(img, ox, oy, img.naturalWidth * sc, img.naturalHeight * sc)
         ctx.restore()
       }
       edgeCells((dx, dy, sz, k) => {
-        ctx.drawImage(img, (dx - ox) / sc, (dy - oy) / sc, sz / sc, sz / sc, dx, dy, sz, sz)
+        if (o.fill) {
+          ctx.fillStyle = o.fill
+          ctx.fillRect(dx, dy, sz, sz)
+        } else ctx.drawImage(img, (dx - ox) / sc, (dy - oy) / sc, sz / sc, sz / sc, dx, dy, sz, sz)
         // càng ra ngoài càng phủ màu lõi
         if (o.tint && k < 1) {
           ctx.fillStyle = `rgba(${o.tint},${((1 - k) * 0.95).toFixed(3)})`
@@ -158,8 +167,11 @@
 
     let raf = 0
     let inView = false
-    const tick = () => {
+    let lastT = 0
+    const tick = (now = performance.now()) => {
       raf = 0
+      const dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 0
+      lastT = now
       const B = window.CHANDE_BUBBLE?.state
       const R = B ? (B.size + B.swell) * B.presence * CONFIG.reveal : 0
       near = null
@@ -167,6 +179,17 @@
         const k = o.core.getBoundingClientRect()
         const kr = k.width / 2
         if (Math.hypot(ptr.x - (k.left + kr), ptr.y - (k.top + kr)) < kr * CONFIG.grow) near = kr * CONFIG.size
+        // Bubble vào giữa lõi: vòng vạch xoay chậm quanh tâm — tăng / giảm tốc mượt,
+        // rời ra thì dừng dần ở góc đang có (không giật về chỗ cũ)
+        if (o.tex) {
+          const inside = B && B.presence > 0.3 && Math.hypot(B.x - (k.left + kr), B.y - (k.top + kr)) < kr * CONFIG.spinIn
+          o.vel += ((inside ? CONFIG.spin : 0) - o.vel) * (1 - Math.exp(-dt * 2.5))
+          if (Math.abs(o.vel) < 0.01 && !inside) o.vel = 0
+          if (o.vel) {
+            o.rot = (o.rot + o.vel * dt) % 360
+            o.tex.style.transform = `rotate(${o.rot.toFixed(3)}deg)`
+          }
+        }
         const p = o.cv.getBoundingClientRect()
         const over = B && R >= 1 && Math.hypot(B.x - (p.left + p.width / 2), B.y - (p.top + p.height / 2)) < R + p.width / 2
         if (over) paint(o, B.x - p.left, B.y - p.top, R)
@@ -177,7 +200,10 @@
     const io = new IntersectionObserver(([e]) => {
       inView = e.isIntersecting
       if (inView && !raf) raf = requestAnimationFrame(tick)
-      if (!inView) near = null
+      if (!inView) {
+        near = null
+        lastT = 0
+      }
     })
     io.observe(circles[0].c.closest('.circles') || circles[0].c)
 
@@ -188,7 +214,10 @@
         cancelAnimationFrame(raf)
         removeEventListener('pointermove', onMove)
         window.CHANDE_BUBBLE?.lure?.(null, 'circles')
-        for (const o of circles) o.cv.remove()
+        for (const o of circles) {
+          o.cv.remove()
+          if (o.tex) o.tex.style.transform = ''
+        }
       },
     }
   }

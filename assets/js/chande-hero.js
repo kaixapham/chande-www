@@ -206,7 +206,18 @@
     })
   }
 
+  // Mảng màu phẳng có dither ([data-hero-dither="#màu"]) ở NGOÀI hero trang chủ (vd.
+  // hero trang About) — hero trang chủ tự gắn trong mount như cũ.
+  function ditherOutside(root) {
+    root.querySelectorAll?.('[data-hero-dither]').forEach((el) => {
+      if (el.closest('[data-hero]')) return
+      el.style.backgroundImage = flatTile(el.dataset.heroDither, +el.dataset.levels || 8)
+      el.style.backgroundSize = `${CONFIG.bayer / CONFIG.scale}px`
+    })
+  }
+
   function mount(root) {
+    ditherOutside(root)
     const hero = root.querySelector?.('[data-hero]') || (root.matches?.('[data-hero]') ? root : null)
     if (!hero || H?.hero === hero) return
     destroy()

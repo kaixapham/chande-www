@@ -113,6 +113,12 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
 /* Gộp canvas: một canvas phủ cả root, vẽ mọi vùng [data-field] bên trong. Khi
    canvas đã chạy, các vùng thành ô trong suốt để lộ canvas phía dưới. */
 .field-root.is-live .field{background:none}
+/* Vùng đứng lẻ (tự làm root của chính nó — dải strip, footer…): lớp is-live gắn lên CHÍNH
+   nó nên quy tắc trên không bắt. Canvas phóng từ độ phân giải thấp hơn + mép phải / dưới
+   cố ý vẽ hụt (không lấn khối bên cạnh) -> điểm ảnh mép hơi trong: để ảnh dự phòng xanh
+   thì thành vạch xanh, để trống thì thành vạch nền kem. Nền đen = màu khe giữa các viên
+   -> mép liền với khe, không thấy vạch. */
+.field.is-live{background:#000}
 
 .hero__field{position:absolute}
 .hero__field--a{left:0; top:0; width:calc(492 * var(--u)); height:var(--y3)}

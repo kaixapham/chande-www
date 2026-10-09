@@ -9,9 +9,9 @@
 <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/vendor/lenis.css">
-<link rel="stylesheet" href="assets/css/site.css?v=202610091508">
-<link rel="stylesheet" href="assets/css/home.css?v=202610091508">
-<link rel="stylesheet" href="assets/css/gallery.css?v=202610091508">
+<link rel="stylesheet" href="assets/css/site.css?v=202610091804">
+<link rel="stylesheet" href="assets/css/home.css?v=202610091804">
+<link rel="stylesheet" href="assets/css/gallery.css?v=202610091804">
 <!-- Khung hình đầu: màn loading do JS dựng ở cuối trang, nên trước đó tô nền tối + ẩn
      nội dung (không chớp nền kem). chande-loading.js gỡ cl-boot ngay khi đã gắn màn loading. -->
 <style>html.cl-boot,html.cl-boot body{background:#182220}html.cl-boot body>:not(.cl){visibility:hidden}</style>
@@ -243,10 +243,10 @@
 
       <i class="dash" style="top:calc(1006 * var(--u))" aria-hidden="true"></i>
       <div class="abs circles" aria-hidden="true">
-        <div class="circle"><img class="ring" src="assets/img/home/circle-1-ring.svg" alt=""><img class="tex" src="assets/img/home/circle-1-tex.webp" alt=""><img class="core" src="assets/img/home/circle-1-core.svg" alt=""><img class="peek" data-cms="circle-1-peek" data-cms-label="Vòng 1 — ảnh lộ qua bubble" data-cms-w="900" src="assets/img/home/circle-1-butterfly.webp" alt="Bướm xanh" loading="lazy"></div>
+        <div class="circle" data-creature="butterfly" data-peek-fill="#ffffff"><img class="ring" src="assets/img/home/circle-1-ring.svg" alt=""><img class="tex" src="assets/img/home/circle-1-tex.webp" alt=""><img class="core" src="assets/img/home/circle-1-core.svg" alt=""></div>
         <div>
-          <div class="circle"><img class="ring" src="assets/img/home/circle-2-ring.svg" alt=""><img class="tex tex--dim" src="assets/img/home/circle-2-tex.webp" alt=""><img class="core" src="assets/img/home/circle-2-core.svg" alt=""><img class="peek" data-cms="circle-2-peek" data-cms-label="Vòng 2 — ảnh lộ qua bubble" data-cms-w="900" src="assets/img/home/circle-2-marble.webp" alt="Giấy vân loang xanh lá" loading="lazy"></div>
-          <div class="circle"><img class="ring" src="assets/img/home/circle-3-ring.svg" alt=""><img class="core" src="assets/img/home/circle-3-core.svg" alt=""><img class="tex tex--dim" src="assets/img/home/circle-3-tex.webp" alt=""><img class="peek" data-cms="circle-3-peek" data-cms-label="Vòng 3 — ảnh lộ qua bubble" data-cms-w="900" src="assets/img/home/circle-3-water.webp" alt="Mặt nước trong có đàn cá" loading="lazy"></div>
+          <div class="circle" data-creature="koi"><img class="ring" src="assets/img/home/circle-2-ring.svg" alt=""><img class="tex tex--dim" src="assets/img/home/circle-2-tex.webp" alt=""><img class="core" src="assets/img/home/circle-2-core.svg" alt=""><img class="peek" data-cms="circle-2-peek" data-cms-label="Vòng 2 — ảnh lộ qua bubble" data-cms-w="900" src="assets/img/home/circle-2-marble.webp" alt="Giấy vân loang xanh lá" loading="lazy"></div>
+          <div class="circle" data-creature="frog"><img class="ring" src="assets/img/home/circle-3-ring.svg" alt=""><img class="core" src="assets/img/home/circle-3-core.svg" alt=""><img class="tex tex--dim" src="assets/img/home/circle-3-tex.webp" alt=""><img class="peek" data-cms="circle-3-peek" data-cms-label="Vòng 3 — ảnh lộ qua bubble" data-cms-w="900" src="assets/img/home/circle-3-water.webp" alt="Mặt nước trong có đàn cá" loading="lazy"></div>
         </div>
       </div>
       <i class="dash" style="top:calc(1522 * var(--u))" aria-hidden="true"></i>
@@ -254,10 +254,7 @@
       <p class="abs b16 hs-about__who"><span>Who is included</span><span>in this event</span></p>
       <img data-cms="about-friends" data-cms-label="Ảnh nhóm bạn" data-cms-w="234" class="abs hs-about__friends" src="assets/img/home/insta-friends.webp" alt="" loading="lazy">
       <p class="abs mono hs-about__roots">We do not only stop at roles around UI/UX design; we believe design has a common root, and each role will have interesting perspectives and connections with one another.</p>
-      <!-- Rê vào vai trò: số bên phải = thứ tự, ảnh bên trái đổi (đoàn shape như hero), vai
-           trò đang chọn gạch chân (chande-home.js), mặc định vai trò 01. Ảnh lần lượt theo thứ tự vai trò. -->
-      <ul class="abs d48 hs-about__roles" data-role-photos data-cms-list="about-roles" data-cms-label="Ảnh theo từng vai trò (lần lượt theo thứ tự vai trò)" data-cms-w="234"
-          data-photos='["assets/img/home/insta-friends.webp", "assets/img/home/pin-grass.webp", "assets/img/home/quote-card.webp", "assets/img/home/kenny.webp", "assets/img/home/huy.webp", "assets/img/home/about-photo.webp", "assets/img/home/binh.webp", "assets/img/home/mingg.webp", "assets/img/home/story-rock-crop.webp", "assets/img/cms/index/agenda-1-muye74sc.webp"]'>
+      <ul class="abs d48 hs-about__roles">
         <li>Art director</li><li>Founder studio</li><li>Gamer</li><li>Awards winner</li><li>Product designer</li>
         <li>Planter</li><li>UI.UX designer</li><li>Motion designer</li><li>3D designer</li><li>Photographer</li>
       </ul>
@@ -458,34 +455,36 @@
 <script src="assets/vendor/gsap.min.js"></script>
 <script src="assets/vendor/CustomEase.min.js"></script>
 
-<script src="assets/js/chande-settings.js?v=202610091508"></script>
-<script src="assets/js/chande-loading.js?v=202610091508"></script>
-<script src="assets/js/chande-transition.js?v=202610091508"></script>
-<script src="assets/js/chande-reveal.js?v=202610091508"></script>
-<script src="assets/js/chande-hero.js?v=202610091508"></script>
-<script src="assets/js/chande-entrance.js?v=202610091508"></script>
-<script src="assets/js/chande-field.js?v=202610091508"></script>
-<script src="assets/js/chande-home.js?v=202610091508"></script>
-<script src="assets/js/chande-cursor.js?v=202610091508"></script>
-<script src="assets/js/chande-bubble.js?v=202610091508"></script>
-<script src="assets/js/chande-tilt.js?v=202610091508"></script>
-<script src="assets/js/chande-imgtiles.js?v=202610091508"></script>
-<script src="assets/js/chande-parallax.js?v=202610091508"></script>
-<script src="assets/js/chande-titlefx.js?v=202610091508"></script>
-<script src="assets/js/chande-eye.js?v=202610091508"></script>
-<script src="assets/js/chande-chips.js?v=202610091508"></script>
-<script src="assets/js/chande-story.js?v=202610091508"></script>
-<script src="assets/js/chande-circles.js?v=202610091508"></script>
-<script src="assets/js/chande-scramble.js?v=202610091508"></script>
-<script src="assets/js/chande-sign.js?v=202610091508"></script>
-<script src="assets/js/chande-gallery.js?v=202610091508"></script>
+<script src="assets/js/chande-settings.js?v=202610091804"></script>
+<script src="assets/js/chande-loading.js?v=202610091804"></script>
+<script src="assets/js/chande-transition.js?v=202610091804"></script>
+<script src="assets/js/chande-reveal.js?v=202610091804"></script>
+<script src="assets/js/chande-hero.js?v=202610091804"></script>
+<script src="assets/js/chande-entrance.js?v=202610091804"></script>
+<script src="assets/js/chande-field.js?v=202610091804"></script>
+<script src="assets/js/chande-home.js?v=202610091804"></script>
+<script src="assets/js/chande-cursor.js?v=202610091804"></script>
+<script src="assets/js/chande-bubble.js?v=202610091804"></script>
+<script src="assets/js/chande-tilt.js?v=202610091804"></script>
+<script src="assets/js/chande-imgtiles.js?v=202610091804"></script>
+<script src="assets/js/chande-parallax.js?v=202610091804"></script>
+<script src="assets/js/chande-titlefx.js?v=202610091804"></script>
+<script src="assets/js/chande-eye.js?v=202610091804"></script>
+<script src="assets/js/chande-chips.js?v=202610091804"></script>
+<script src="assets/js/chande-story.js?v=202610091804"></script>
+<script src="assets/js/chande-circles.js?v=202610091804"></script>
+<script src="assets/js/chande-scramble.js?v=202610091804"></script>
+<script src="assets/js/chande-sign.js?v=202610091804"></script>
+<script src="assets/js/chande-gallery.js?v=202610091804"></script>
 <!-- Module: tự nạp paper-stack.js + three (assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-poster.js?v=202610091508"></script>
+<script type="module" src="assets/js/chande-poster.js?v=202610091804"></script>
 <!-- Module: vịt patin 3D trên lưới gallery (three ở assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-duck.js?v=202610091508"></script>
+<script type="module" src="assets/js/chande-duck.js?v=202610091804"></script>
 <!-- Module: thảm cỏ 3D dưới lưới gallery (preset data-floor="grass-3d"). -->
-<script type="module" src="assets/js/chande-grass.js?v=202610091508"></script>
+<script type="module" src="assets/js/chande-grass.js?v=202610091804"></script>
+<!-- Module: cá koi 3D bơi trong lõi vòng tròn About khi bubble ở tâm (three nạp động). -->
+<script type="module" src="assets/js/chande-koi.js?v=202610091804"></script>
 <!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
-<script src="assets/js/chande-devtools.js?v=202610091508"></script>
+<script src="assets/js/chande-devtools.js?v=202610091804"></script>
 </body>
 </html>

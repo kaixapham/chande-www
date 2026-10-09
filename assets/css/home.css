@@ -185,7 +185,8 @@
 .circle img{position:absolute}
 .circle .ring{inset:0; width:100%; height:100%}
 .circle .tex{left:calc(8 * var(--u)); top:calc(8 * var(--u)); width:calc(452 * var(--u)); height:calc(452 * var(--u))}
-.circle .tex--dim{opacity:.2}
+/* .tex--dim: ảnh vạch vòng 2 / 3 đã có sẵn độ đậm ~20% (alpha tối đa 51) như Figma — KHÔNG
+   làm mờ thêm (opacity .2 chồng lên thì vạch chỉ còn ~4%, gần như không thấy) */
 .circle .core{left:calc(72 * var(--u)); top:calc(72 * var(--u)); width:calc(324 * var(--u)); height:calc(324 * var(--u))}
 .circle .peek{display:none} /* ảnh nguồn (CMS) — vẽ thành lưới ô lên .peek-cv (chande-circles.js) */
 .circle .peek-cv{position:absolute; inset:0; width:100%; height:100%; border-radius:50%; pointer-events:none}
@@ -198,15 +199,7 @@
 .hs-about__roots{left:calc(24 * var(--u)); top:auto; bottom:calc(1176 * var(--u)); width:calc(234 * var(--u)); margin:0; font-size:1rem; color:#000; opacity:.3}
 .hs-about__roles{left:calc(960 * var(--u)); top:auto; bottom:calc(1176 * var(--u)); width:calc(368 * var(--u)); margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:0} /* sát nhau như Figma: 10 dòng × .78em ≈ 374u, vừa khoảng 1538 → 1914 */
 .hs-about__roles li{position:relative; white-space:nowrap; width:fit-content; cursor:default}
-/* vai trò đang chọn / đang trỏ: gạch chân 1px chạy trái -> phải, nằm NGAY DƯỚI chân
-   chữ (đáy dòng = baseline, các dòng sát nhau) — dòng sau vẽ đè lên nên gạch không
-   cắt vào chữ dòng dưới */
-.hs-about__roles li::after{content:''; position:absolute; left:0; right:0; top:100%; height:1px; background:currentColor;
-  transform:scaleX(0); transform-origin:right center; transition:transform .45s cubic-bezier(.65,0,.35,1)}
-.hs-about__roles li.is-active::after{transform:scaleX(1); transform-origin:left center}
 .hs-about__count{left:calc(1848 * var(--u)); top:calc(1614 * var(--u)); margin:0}
-/* số trượt theo dòng vai trò đang chọn (top do chande-home.js đặt) */
-.hs-about__count.is-follow{transition:top .5s cubic-bezier(.65,0,.35,1)}
 .hs-about__pills{left:calc(492 * var(--u)); top:calc(2230 * var(--u))}
 /* +1px chui dưới ảnh đá (ảnh vẽ sau, nằm trên): hai mép trùng ở toạ độ lẻ thì
    điểm ảnh mép phủ không đủ, lộ nền kem thành vạch sáng 1px. */
@@ -581,4 +574,75 @@
 }
 @media (prefers-reduced-motion:reduce){
   .pillrun__track, .dotrun__track, .hs-quote__bar span{animation:none}
+}
+
+/* =============================================================================
+ * TRANG ABOUT — Hero (Figma node 594:47170, khổ 1920×1080)
+ * `--u` = 1px bản thiết kế khổ 1920 (theo bề rộng .page). Hai hàng cao bằng nhau,
+ * mỗi hàng nửa phần viewport dưới header (500 ở 1080), không thấp hơn 360u:
+ *   trên  [0..960] ảnh nhà sàn (trên nền tối dither) | [960..1920] mảng tối dither,
+ *         chữ giới thiệu ở cột 1428, chân cách đáy hàng 40
+ *   dưới  [0..960] mảng kem dither, tiêu đề + (©26) chân cách đáy 24
+ *         | [960..1920] mảng gạch neon
+ * Mảng dither do chande-hero.js gắn tile (data-hero-dither), gạch neon do
+ * chande-field.js (cả stage là một field-root: một canvas).
+ * ========================================================================== */
+.ab-hero{background:var(--cream)}
+.ab-hero__stage{
+  --u:calc(100cqw / 1920);
+  --band:max(calc((100svh - var(--bar)) / 2), calc(360 * var(--u)));
+  position:relative; height:calc(2 * var(--band));
+}
+.ab-hero__photo, .ab-hero__dark, .ab-hero__cream, .ab-hero__field{position:absolute; height:var(--band)}
+.ab-hero__photo{left:0; top:0; width:calc(960 * var(--u)); overflow:hidden; background-color:#182220}
+.ab-hero__photo img{display:block; width:100%; height:100%; object-fit:cover; object-position:50% 50%}
+/* thanh tối 57 + dải viên nhỏ ở đầu mảng kem, ngay dưới ảnh (kiểu .agenda__house) */
+.ab-hero__bar{position:absolute; left:0; right:0; top:0; height:calc(57 * var(--u)); background:#1b2524}
+.ab-hero__bar .pillrun{position:absolute; left:calc(14.25 * var(--u)); right:calc(14.25 * var(--u)); top:calc(11.88 * var(--u)); height:calc(33.25 * var(--u))}
+.ab-hero__dark{left:calc(960 * var(--u)); right:0; top:0; background-color:#131313}
+.ab-hero__cream{left:0; top:var(--band); width:calc(960 * var(--u)); background-color:#f4f3eb}
+.ab-hero__field{left:calc(960 * var(--u)); right:0; top:var(--band)}
+
+.ab-hero__intro{
+  position:absolute; left:calc(468 * var(--u)); bottom:calc(40 * var(--u)); width:calc(234 * var(--u));
+  display:flex; flex-direction:column; gap:1.5rem;
+  color:#f4f3eb; font-weight:500; font-size:1rem; line-height:calc(.98em + 2px); letter-spacing:-.02em;
+  white-space:nowrap;
+}
+/* cắt sát đỉnh cap / chân chữ: đáy khối = chân dòng cuối -> thẳng hàng chân chữ "Scroll more" */
+.ab-hero__intro p{margin:0; text-box:trim-both cap alphabetic}
+/* Scroll more (kiểu .hero__scroll trang chủ), không nền: cách lề phải 24, chân chữ
+   thẳng chân dòng cuối chữ giới thiệu (cùng cách đáy hàng 40, cả hai cắt sát chân chữ) */
+.ab-hero__scroll{
+  position:absolute; right:calc(24 * var(--u)); bottom:calc(40 * var(--u));
+}
+.ab-hero__scroll .hero__scroll{position:static}
+
+/* Tiêu đề 3 dòng + (©26): cùng kiểu chữ tiêu đề hero trang chủ, chân chữ cách đáy 24 */
+.ab-hero__title, .ab-hero__year{
+  position:absolute; bottom:calc(24 * var(--u)); margin:0;
+  color:#000; font-weight:700; font-size:6.6687rem; line-height:.72; letter-spacing:-.04em;
+  text-box:trim-both cap alphabetic;
+}
+.ab-hero__title{left:calc(24 * var(--u)); width:calc(708 * var(--u)); white-space:nowrap} /* đúng 3 dòng như Figma (<br>) */
+.ab-hero__year{right:calc(24 * var(--u)); white-space:nowrap}
+.ab-hero__year span{font-family:'Google Sans Flex','Phudu',sans-serif; font-size:.645em; letter-spacing:0; vertical-align:.37em}
+
+/* Màn hẹp: xếp dọc — ảnh, chữ giới thiệu, tiêu đề, gạch neon */
+@media (max-width:899px){
+  .ab-hero__stage{height:auto; display:flex; flex-direction:column}
+  .ab-hero__photo, .ab-hero__dark, .ab-hero__cream, .ab-hero__field{position:relative; left:auto; right:auto; top:auto; width:auto}
+  .ab-hero__photo{height:auto; aspect-ratio:960 / 500}
+  /* mảng kem full ngang = 960 của thiết kế; thanh vào luồng, sát mép trên */
+  .ab-hero__bar{--u:calc(100cqw / 960); position:relative; align-self:stretch; margin:-3rem -1.25rem 1.5rem}
+  .ab-hero__dark{height:auto; padding:2rem 1.25rem}
+  .ab-hero__intro{position:static; width:auto}
+  .ab-hero__scroll{display:none}
+  /* tiêu đề giữ 3 dòng: cỡ chữ co theo bề ngang để dòng dài nhất ("COMMUNITY THAT"
+     ≈ 6.5 lần cỡ chữ) vừa khít; (©26) xuống dưới, căn phải */
+  .ab-hero__cream{height:auto; padding:3rem 1.25rem 1.5rem; display:flex; flex-direction:column; align-items:flex-start; gap:1rem}
+  .ab-hero__title, .ab-hero__year{position:static; font-size:min(5rem, calc((100vw - 2.5rem) / 6.6))}
+  .ab-hero__year{align-self:flex-end}
+  .ab-hero__title{width:auto}
+  .ab-hero__field{height:auto; aspect-ratio:960 / 500}
 }

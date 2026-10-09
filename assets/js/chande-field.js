@@ -283,7 +283,10 @@ void main() {
   float reveal = 0.0; // phần nền trắng lộ ra dưới ô khi rê chuột
 
   if (uMosaicOn > 0.5) {
-    vec2 grid = vec2(uMosaicDetail, max(1.0, floor(uMosaicDetail / max(aspect, 0.001))));
+    // Số hàng = số cột / tỉ lệ khung, làm tròn tới số GẦN NHẤT (giữ trọn hàng, không có
+    // hàng cụt ở mép). Làm tròn xuống thì dải mỏng — vd 10.5:1, 40 cột = 3.8 hàng -> 3 —
+    // ô bị kéo cao ~27%; làm tròn gần nhất (-> 4) ô lệch vuông tối đa nửa hàng.
+    vec2 grid = vec2(uMosaicDetail, max(1.0, floor(uMosaicDetail / max(aspect, 0.001) + 0.5)));
     vec2 g = uv * grid; // toạ độ theo ô
     vec2 cell = floor(g);
     vec3 lit;
@@ -578,14 +581,18 @@ void main() {
     const order = [...g.regions].sort((a, b) => (a.target ? 1 : 0) - (b.target ? 1 : 0))
     order.forEach((rg) => {
       if (rg.w < 1 || rg.h < 1) return
-      const x = Math.round(rg.x * dpr)
-      const y = Math.round(rg.y * dpr)
       // Vùng lẻ (canvas nới ra ngoài phần tử): làm tròn XUỐNG ở mép phải / dưới —
       // làm tròn lên thì điểm ảnh mép lấn qua mép thật, lộ ra thành vạch xanh ở
       // chỗ giáp khối bên cạnh (vd. footer: mảng xanh | panel tối).
+      // Vùng trong root / canvas khít phần tử: vẽ TRÀN ra trọn điểm ảnh ở mọi mép (floor
+      // / ceil). Canvas vẽ ở độ phân giải thấp hơn rồi phóng lên, điểm ảnh mép bị làm tròn
+      // thiếu thì hơi trong -> nền kem / ảnh dự phòng lộ thành vạch sáng 1px (vd. đỉnh
+      // thanh process ở hero). Phần tràn nằm DƯỚI khối kế bên (canvas là lớp dưới cùng).
       const inner = g.pad > 0
-      const w = (inner ? Math.floor((rg.x + rg.w) * dpr) : Math.round((rg.x + rg.w) * dpr)) - x
-      const h = (inner ? Math.floor((rg.y + rg.h) * dpr) : Math.round((rg.y + rg.h) * dpr)) - y
+      const x = inner ? Math.round(rg.x * dpr) : Math.floor(rg.x * dpr)
+      const y = inner ? Math.round(rg.y * dpr) : Math.floor(rg.y * dpr)
+      const w = Math.min(g.canvas.width, inner ? Math.floor((rg.x + rg.w) * dpr) : Math.ceil((rg.x + rg.w) * dpr)) - x
+      const h = Math.min(g.canvas.height, inner ? Math.floor((rg.y + rg.h) * dpr) : Math.ceil((rg.y + rg.h) * dpr)) - y
       const phase = (clock.phase + (+rg.el.dataset.fieldShift || 0)) % 1
       const o = regionOptions(rg.el)
       const mouse = easeMouse(rg)
