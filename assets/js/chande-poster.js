@@ -87,6 +87,18 @@ function params(pin) {
   return p
 }
 
+// Chốt chiều cao cuối cùng của section NGAY từ đầu (is-sized) — để lúc chồng poster
+// chuyển sang bản chạy (is-live) trang không bị đẩy đi một đoạn khi người xem đang lướt.
+function presize(section, sheets) {
+  // mỗi tờ một quãng (tờ đầu nằm sẵn thì bớt một); outro thêm một quãng
+  const laid = CONFIG.params.stack?.startLaid ?? RUNTIME_DEFAULTS.stack.startLaid
+  // số LƯỢT rơi (tờ "cùng lượt" — together — đi chung nấc với tờ trước), không phải số tờ
+  const turns = sheets.filter((t, i) => i === 0 || !t.together).length
+  const steps = Math.max(0, turns - (laid ? 1 : 0)) + (CONFIG.params.outro?.on ? 1 : 0)
+  section.style.setProperty('--poster-scroll', `${steps * CONFIG.perSheet}vh`)
+  section.classList.add('is-sized')
+}
+
 function mount(scope = document) {
   const section = scope.querySelector('[data-poster-stack]')
   if (!section || live?.section === section) return
@@ -97,12 +109,7 @@ function mount(scope = document) {
   // afterLeave không còn trỏ tới nó nữa → rò WebGL context.
   destroy()
 
-  // mỗi tờ một quãng (tờ đầu nằm sẵn thì bớt một); outro thêm một quãng
-  const laid = CONFIG.params.stack?.startLaid ?? RUNTIME_DEFAULTS.stack.startLaid
-  // số LƯỢT rơi (tờ "cùng lượt" — together — đi chung nấc với tờ trước), không phải số tờ
-  const turns = sheets.filter((t, i) => i === 0 || !t.together).length
-  const steps = Math.max(0, turns - (laid ? 1 : 0)) + (CONFIG.params.outro?.on ? 1 : 0)
-  section.style.setProperty('--poster-scroll', `${steps * CONFIG.perSheet}vh`)
+  presize(section, sheets)
 
   const api = mountStack(pin, { driver: 'page', params: params(pin), sheets })
   const me = { section, api, pin }
@@ -125,7 +132,11 @@ function mount(scope = document) {
     .then(() => {
       if (live !== me) return
       section.classList.add('is-live')
-      requestAnimationFrame(() => me.fit()) // khối dính vừa đổi cỡ (100svh − header)
+      // vẽ NGAY trong khung này (canvas vừa hết display:none) — chờ khung sau thì lộ
+      // một khung canvas trống (đen)
+      fitKey = ''
+      me.fit()
+      api.renderOnce()
     })
     .catch(() => {
       if (live === me) destroy()
@@ -212,7 +223,13 @@ function destroy() {
 // Chồng poster (three.js + 8 ảnh) nằm giữa trang: dựng sau khi trang tải xong để không
 // chen vào lúc loading; vẫn kịp trước khi người xem cuộn tới.
 // Dựng khi 'load' tới HOẶC sau tối đa 3s — trên mạng chậm 'load' có thể tới rất muộn.
+// Chiều cao thì chốt ngay (presize) để bố cục trang không đổi lúc dựng xong.
 {
+  const sec = document.querySelector('[data-poster-stack]')
+  if (sec && hasWebGL()) {
+    const sh = readSheets(sec)
+    if (sh.length) presize(sec, sh)
+  }
   let started = false
   const go = () => !started && ((started = true), mount(document))
   if (document.readyState === 'complete') go()

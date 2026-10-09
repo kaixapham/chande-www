@@ -44,12 +44,15 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
 
   const style = document.createElement('style')
-  // .hs-about__statement span{display:block} sẽ biến từng từ thành khối -> ép inline.
+  // .hs-about__statement span{display:block} sẽ biến từng từ thành khối -> ép inline-block.
   // background-clip:text chỉ tô trong hộp của từ, mà nét chữ Phudu tràn khỏi hộp
   // (dòng đặt rất sát; đỉnh A, mép phải P) -> nới hộp bằng padding, margin âm bù
   // lại nên chữ không xê dịch. Toạ độ gradient đo theo hộp đã nới nên vẫn khớp.
+  // Mỗi từ là inline-block + lớp riêng (will-change): đổi nền một từ chỉ vẽ lại từ đó,
+  // không phải cả đoạn chữ to — Safari vẽ lại cả đoạn background-clip:text mỗi khung là giật.
+  // Padding dọc .5em + margin âm bù lại nên dòng không cao thêm, chữ không xê dịch.
   style.textContent =
-    '.tfx-w{display:inline !important; padding:.25em .15em; margin:0 -.15em}' +
+    '.tfx-w{display:inline-block !important; padding:.5em .15em; margin:-.5em -.15em; will-change:transform}' +
     '.tfx-on .tfx-w{color:transparent; -webkit-background-clip:text; background-clip:text; background-repeat:no-repeat; image-rendering:pixelated}'
   document.head.appendChild(style)
 

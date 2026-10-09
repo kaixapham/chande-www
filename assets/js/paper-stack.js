@@ -444,7 +444,7 @@ export function mount(container, config = {}) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
-    alpha: false,
+    alpha: true, // canvas trong suốt + nền CSS = màu khung: lỡ có khung bị xoá (đổi cỡ) thì lộ nền chứ không lộ ĐEN
     preserveDrawingBuffer: true,
   })
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1, Math.sqrt(4.2e6 / Math.max(1, innerWidth * innerHeight)))) // ngân sách điểm ảnh cho màn rất lớn
@@ -454,6 +454,7 @@ export function mount(container, config = {}) {
 
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(params.frame.bg)
+  canvas.style.backgroundColor = params.frame.bg
 
   /*
    * Nền ảnh (frame.bgImage — chande-www thêm, tool gốc không có): ảnh nằm PHẲNG TRÊN
@@ -467,6 +468,7 @@ export function mount(container, config = {}) {
   let floor = null
   function drawBackground() {
     scene.background = new THREE.Color(params.frame.bg)
+    canvas.style.backgroundColor = params.frame.bg
     const src = params.frame.bgImage || ''
     if (!src) {
       bgSrc = ''

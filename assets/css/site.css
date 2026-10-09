@@ -135,6 +135,10 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
 .hero__dark{
   position:absolute; left:0; top:var(--y3); bottom:0; width:calc(960 * var(--u));
   background-color:#182220;
+  /* tile dither vẽ 1 ô ảnh = nửa px CSS: lọc mịn khi trình duyệt vẽ lại ở tỉ lệ khác
+     (lúc cuộn, zoom ≠ 100%) làm mảng tối nháy sáng -> lấy điểm gần nhất + lớp riêng
+     (vẽ một lần rồi chỉ dịch, không vẽ lại mỗi khung cuộn) */
+  image-rendering:pixelated; will-change:transform;
 }
 .hero__dark--col{width:calc(492 * var(--u)); background-color:#131313}
 

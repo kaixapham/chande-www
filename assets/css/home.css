@@ -228,8 +228,8 @@
    `top` của khối dính để khớp quãng cuộn — đổi `top` ở đây không cần sửa JS.
    Canvas bị runtime gắn `display:block` inline nên phải !important mới ẩn được. */
 .hs-poster:not(.is-live) canvas{display:none !important}
-.hs-poster.is-live{height:calc(var(--poster-scroll) + 100svh - var(--bar))}
-.hs-poster.is-live .hs-poster__pin{position:sticky; top:var(--bar); height:calc(100svh - var(--bar));
+.hs-poster.is-sized{height:calc(var(--poster-scroll) + 100svh - var(--bar))}
+.hs-poster.is-sized .hs-poster__pin{position:sticky; top:var(--bar); height:calc(100svh - var(--bar));
   display:grid; place-items:center}
 .hs-poster.is-live .hs-poster__pin > img{display:none}
 
@@ -241,7 +241,7 @@
 /* +1px: viền dưới 1px của .hs-poster — không bù thì khối dính nhảy lên 1px lúc
    chuyển từ "pin dính trong section" sang "cả section dính". */
 .stack-over > .hs-poster{position:sticky; top:calc(100svh - 1080 * var(--u) + 1px); z-index:0}
-.stack-over > .hs-poster.is-live{top:calc(var(--bar) - var(--poster-scroll) + 1px)}
+.stack-over > .hs-poster.is-sized{top:calc(var(--bar) - var(--poster-scroll) + 1px)}
 .stack-over > .hs-agenda{z-index:1}
 /* Nền tối khi cụm ngày dính chạm ảnh của một ngày (chande-home.js .is-dark) */
 .hs-agenda{transition:background-color .5s ease, color .5s ease}
@@ -252,7 +252,7 @@
    nổi lên trên; phía sau nó luôn là khối poster đang đứng yên, outro kết thúc
    bằng màu kem #FDFBF4 nên đọc vẫn như nền sáng cũ. Chỉ áp khi chồng poster chạy
    thật — bản ảnh tĩnh dự phòng giữ nền trắng, không gối. */
-.stack-over > .hs-poster.is-live + .hs-agenda{margin-top:calc(-1 * var(--agenda-overlap, 70svh)); background:transparent}
+.stack-over > .hs-poster.is-sized + .hs-agenda{margin-top:calc(-1 * var(--agenda-overlap, 70svh)); background:transparent}
 
 /* --------------------------------------------------------------- 8. AGENDA */
 .hs-agenda{height:calc(3160 * var(--u)); background:#fff; color:#112020; overflow:visible}
