@@ -87,6 +87,7 @@
 .hs-story__media, .hs-story__col{will-change:transform}
 .hs-story__z{left:50%; top:50%; width:0; height:0; object-fit:cover}
 .hs-story__cell{display:contents}
+.hs-story__band-c{position:absolute; visibility:hidden; z-index:1; pointer-events:none}
 .hs-story.is-cells .hs-story__cell{display:block; position:absolute; overflow:hidden}
 .hs-story.is-cells .hs-story__cell > img{left:0; top:0; width:100%; height:100%; object-fit:cover; object-position:50% 50%; will-change:transform}
 .hs-story__small{left:calc(50% - 19 * var(--k)); top:calc(473 * var(--k)); width:calc(62 * var(--k)); height:calc(83 * var(--k)); object-fit:cover; object-position:33% 50%}

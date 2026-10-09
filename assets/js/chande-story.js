@@ -8,7 +8,9 @@
  * Thứ tự: ảnh nền -> ảnh nhỏ -> ảnh nổi giữa -> 3 ảnh .hs-story__z (6 ảnh, sửa trong CMS).
  * Hết ảnh thì hết dính, trang cuộn tiếp. Mỗi ảnh được bọc trong ô cắt (.hs-story__cell)
  * đặt left/top/width/height mỗi khung (luôn nét); hình trong ô TRƯỢT dọc từ dưới lên
- * suốt đời ảnh (từ lúc nở tới lúc bị ảnh sau phủ kín) cho có độ trôi khi cuộn. Màn ≤ 899px (xếp dọc) thì không chạy.
+ * suốt đời ảnh (từ lúc nở tới lúc bị ảnh sau phủ kín) cho có độ trôi khi cuộn.
+ * Gần nở kín thì các DẢI MÀU (bảng màu shape reveal ở hero) trồi ra quanh ảnh và chạy
+ * trước nó như đoàn shape: dải ngoài cùng phủ kín khung trước, ảnh là toa cuối. Màn ≤ 899px (xếp dọc) thì không chạy.
  *
  * API: window.CHANDE_STORY = { config, mount(root), destroy() }
  * ========================================================================== */
@@ -19,6 +21,8 @@
     stepScroll: 0.7, // quãng cuộn cho mỗi lần một ảnh nở kín khung (× chiều cao khung)
     slide: 10, // độ trượt hình trong ô (% chiều cao ô, tổng quãng)
     zoom: 1.14, // phóng hình trong ô để có chỗ trượt
+    bandsFrom: 0.5, // dải màu bắt đầu trồi ra khi ảnh nở được bao nhiêu (0…1)
+    bandLead: 0.07, // mỗi dải đi trước dải trong nó bao nhiêu (theo quãng nở)
   }
   window.CHANDE_SETTINGS_APPLY?.('story', CONFIG)
   const api = { config: CONFIG, mount() {}, destroy() {} }
@@ -51,6 +55,15 @@
       cell.append(img)
       return cell
     })
+    // dải màu: lấy bảng màu của shape reveal (hero), dải đầu = ngoài cùng, chạy trước
+    const colors = window.CHANDE_REVEAL?.config?.colors || ['#68f12b', '#f4f3eb', '#236c3c', '#c4ff6b', '#182220']
+    const bands = colors.map((c) => {
+      const b = document.createElement('span')
+      b.className = 'hs-story__band-c'
+      b.style.background = c
+      media.append(b)
+      return b
+    })
     let W = 0
     let H = 0
     let bar = 0
@@ -62,6 +75,7 @@
       const on = wide.matches
       section.classList.toggle('is-zoom', on)
       for (const el of [...imgs, ...cells]) el.style.cssText = ''
+      for (const b of bands) b.style.visibility = 'hidden'
       media.style.transform = ''
       if (col) col.style.transform = ''
       section.classList.toggle('is-cells', on)
@@ -103,16 +117,44 @@
       const f = x - k // ảnh k + 1 nở ra được bao nhiêu
       // nở đều theo log: rộng / cao đi từ ô nhỏ tới cỡ khung, tâm trôi theo cùng nhịp
       const [sx, sy, sw, sh] = seed
-      const w = sw * (W / sw) ** f
-      const h = sh * (H / sh) ** f
-      const g = (h - sh) / Math.max(1e-3, H - sh)
-      const cx = sx + sw / 2 + (W / 2 - (sx + sw / 2)) * g
-      const cy = sy + sh / 2 + (H / 2 - (sy + sh / 2)) * g
+      const grow = (q) => {
+        q = Math.min(1, Math.max(0, q))
+        const w = sw * (W / sw) ** q
+        const h = sh * (H / sh) ** q
+        const g = (h - sh) / Math.max(1e-3, H - sh)
+        return [sx + sw / 2 + (W / 2 - (sx + sw / 2)) * g - w / 2, sy + sh / 2 + (H / 2 - (sy + sh / 2)) * g - h / 2, w, h]
+      }
+      const [ix, iy, w, h] = grow(f)
+      const cx = ix + w / 2
+      const cy = iy + h / 2
+      // dải màu: trồi dần từ mép ảnh (độ đi trước tăng từ 0), dải ngoài cùng đi trước nhất
+      const e = Math.min(1, Math.max(0, (f - CONFIG.bandsFrom) / Math.max(0.01, 1 - CONFIG.bandsFrom)))
+      const lead = e * e * (3 - 2 * e)
+      let bandFull = -1
+      bands.forEach((b, j) => {
+        const q = f + (bands.length - j) * CONFIG.bandLead * lead
+        if (lead <= 0.001 || k + 1 >= imgs.length) {
+          b.style.visibility = 'hidden'
+          return
+        }
+        const [bx, by, bw, bh] = grow(q)
+        if (q >= 1) bandFull = j
+        b.style.visibility = 'visible'
+        b.style.left = `${bx.toFixed(2)}px`
+        b.style.top = `${by.toFixed(2)}px`
+        b.style.width = `${bw.toFixed(2)}px`
+        b.style.height = `${bh.toFixed(2)}px`
+      })
+      // dải đã phủ kín khung thì mọi dải ngoài nó (và ảnh nền) không còn thấy
+      bands.forEach((b, j) => j < bandFull && (b.style.visibility = 'hidden'))
       cells.forEach((el, i) => {
-        if (i === k) place(el, 0, 0, W, H)
+        if (i === k) {
+          place(el, 0, 0, W, H)
+          if (bandFull >= 0) el.style.visibility = 'hidden'
+        }
         else if (i === k + 1) {
           place(el, cx - w / 2, cy - h / 2, w, h)
-          el.style.zIndex = '1'
+          el.style.zIndex = '2' // trên các dải màu
         } else {
           el.style.visibility = 'hidden'
           return
@@ -141,6 +183,7 @@
         section.classList.remove('is-zoom')
         section.style.removeProperty('--story-pin')
         for (const el of [...imgs, ...cells]) el.style.cssText = ''
+        bands.forEach((b) => b.remove())
         cells.forEach((cell, i) => cell.replaceWith(imgs[i]))
         section.classList.remove('is-cells')
         media.style.transform = ''
