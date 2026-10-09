@@ -86,8 +86,10 @@
     // nhỏ tới hết trang, cuộn ngược lên thì to lại (chuyển mượt). Cả giọt co đều:
     // cỡ × s và độ dính ÷ s (phần phình do các cầu hoà vào nhau tỉ lệ 1/độ dính).
     shrinkOn: true,
-    shrinkFrom: '.hs-poster',
+    shrinkFrom: '.hs-intro', // section đầu tiên sau hero -> rời hero là co
     shrinkScale: 0.5,
+    // Con trỏ nằm trong các section này thì giọt tan đi (ra khỏi thì hiện lại)
+    hideIn: '.hs-land',
     // Trỏ vào nút / link: giọt co còn hoverScale (so với cỡ gốc), rời ra thì về lại.
     hoverOn: true,
     hoverScale: 0.25,
@@ -818,6 +820,11 @@ void main () {
       ptrIn = true
       if (leader) return
       aim()
+      if (hiddenHere()) {
+        presenceTarget = 0
+        start()
+        return
+      }
       const title = !!(CONFIG.hoverOn && CONFIG.hoverTitleSel && e.target?.closest?.(CONFIG.hoverTitleSel))
       const eye = !title && !!(CONFIG.hoverOn && CONFIG.hoverEyeSel && e.target?.closest?.(CONFIG.hoverEyeSel))
       const over = title ? 'title' : eye ? 'eye' : !!(CONFIG.hoverOn && CONFIG.hoverSel && e.target?.closest?.(CONFIG.hoverSel))
@@ -868,6 +875,14 @@ void main () {
   addEventListener('blur', leave)
   // Thu nhỏ theo vị trí cuộn (section shrinkFrom) và khi trỏ vào nút (hoverSel) —
   // lấy mức nhỏ hơn. Giọt đang ẩn thì đặt luôn.
+  function hiddenHere() {
+    if (!CONFIG.hideIn) return false
+    for (const el of document.querySelectorAll(CONFIG.hideIn)) {
+      const r = el.getBoundingClientRect()
+      if (ptrX >= r.left && ptrX <= r.right && ptrY >= r.top && ptrY <= r.bottom) return true
+    }
+    return false
+  }
   function checkShrink() {
     const el = CONFIG.shrinkOn && CONFIG.shrinkFrom ? document.querySelector(CONFIG.shrinkFrom) : null
     let t = el && el.getBoundingClientRect().top < innerHeight * 0.5 ? Math.min(Math.max(CONFIG.shrinkScale, 0.1), 1) : 1
@@ -883,6 +898,19 @@ void main () {
     else mul = t
   }
   addEventListener('scroll', checkShrink, { passive: true })
+  // cuộn mà chuột đứng yên: section ẩn giọt có thể trôi tới / trôi khỏi dưới con trỏ
+  addEventListener(
+    'scroll',
+    () => {
+      if (leader || !hasPointer) return
+      const want = hiddenHere() ? 0 : 1
+      if (want !== presenceTarget) {
+        presenceTarget = want
+        start()
+      }
+    },
+    { passive: true },
+  )
   window.barba?.hooks?.afterEnter(() => checkShrink())
   checkShrink()
 
