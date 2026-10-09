@@ -81,7 +81,7 @@
     }
 
     // Dải màu 3D [data-flip3d]: vạch i mặt trước màu i, mặt dưới màu (n−1−i). Tâm
-    // dải đi từ 90% xuống 60% chiều cao màn (lật xong khi dải lên 40% màn) thì các khối lăn 0 -> 90° (lệch nhau
+    // dải đi từ 85% xuống 55% chiều cao màn (lật xong khi dải lên 45% màn) thì các khối lăn 0 -> 90° (lệch nhau
     // `FLIP_STAGGER` mỗi vạch) — đảo thứ tự màu. Góc đuổi theo đích bằng lerp mỗi
     // khung cho mượt; cuộn ngược thì lăn về.
     const FLIP_STAGGER = 0.07
@@ -125,7 +125,7 @@
         const r = sc.getBoundingClientRect()
         if (r.bottom < -innerHeight || r.top > innerHeight * 2) return
         const c = (r.top + r.bottom) / 2
-        const t = Math.min(Math.max((innerHeight * 0.9 - c) / (innerHeight * 0.3), 0), 1)
+        const t = Math.min(Math.max((innerHeight * 0.85 - c) / (innerHeight * 0.3), 0), 1)
         const span = 1 - (n - 1) * FLIP_STAGGER
         lines.forEach((_, i) => {
           const x = Math.min(Math.max((t - i * FLIP_STAGGER) / span, 0), 1)
