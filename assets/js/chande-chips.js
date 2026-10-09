@@ -5,8 +5,10 @@
  *   với 5 hạt to / nhỏ xen kẽ). Mỗi khung hình tính lại cỡ từng hạt theo một làn sóng
  *   chạy trái -> phải: hạt to co dần thành hạt nhỏ rồi phình lại, lặp liên tục.
  * • Khung XANH = CHIẾC MIỆNG — 6 PRESET (CONFIG.preset, bảng H tab "Miệng (Intro)").
- *   Mỗi preset có dáng KHÉP (tâm khung chưa qua 50% màn) và dáng CƯỜI (đã qua), chuyển
- *   bằng lò xo (mở lố rồi dội), cộng các cử động nhỏ ngẫu nhiên mỗi idleMin–idleMax s.
+ *   Mỗi preset có dáng KHÉP và dáng CƯỜI; độ cười chạy LIÊN TỤC THEO CUỘN (khung từ
+ *   đáy màn lên quá giữa màn: 0 -> 1), qua lò xo cho mượt (mở lố rồi dội), cộng các cử
+ *   động nhỏ ngẫu nhiên mỗi idleMin–idleMax s. Preset `hs` (kiểu poster Headspace): nét
+ *   dày đầu tròn + dải viền nhạt to quanh môi; há miệng thì lòng tô đặc, lưỡi cam, răng.
  *   Một cái miệng = 2 khoé (L, R) + môi trên / môi dưới là 2 đường cong quadratic giữa
  *   hai khoé (up / low = độ cong, âm = cong lên) + lấp lòng miệng (fill) + răng + lưỡi.
  * Toạ độ theo đơn vị thiết kế (u): khung trong (inset 10/12) = 278 × 54 (vàng),
@@ -17,7 +19,7 @@
   'use strict'
 
   const CONFIG = {
-    preset: 'grin', // grin · talk · laugh · whistle · smirk · cheeky
+    preset: 'swoosh', // swoosh · gape · buck (kiểu Headspace) · grin · talk · laugh · whistle · smirk · cheeky
     idleMin: 1.8, // giây — khoảng nghỉ giữa hai cử động nhỏ
     idleMax: 4,
     spring: 170, // độ cứng lò xo khi khép <-> cười
@@ -32,7 +34,9 @@
   const style = document.createElement('style')
   style.textContent =
     '.chip__icon{position:absolute; left:calc(12 * var(--u)); top:calc(10 * var(--u)); width:calc(100% - 24 * var(--u)); height:calc(100% - 20 * var(--u)); z-index:1; overflow:visible; color:#0f1513; transition:color .6s ease}' +
-    'html.hero-row-dark .chip__icon{color:#f4f3eb}'
+    'html.hero-row-dark .chip__icon{color:#f4f3eb}' +
+    // lòng miệng (kiểu Headspace): nền kem -> đậm như nét; nền tối -> đen hẳn cho nổi dải viền
+    '.chip__mouth-in{fill:#0f1513} html.hero-row-dark .chip__mouth-in{fill:#000}'
   document.head.appendChild(style)
 
   const svgIn = (chip, vb) => {
@@ -92,6 +96,42 @@
   // Preset: closed / open = dáng; idleClosed / idleOpen = cử động nhỏ (hàm k 0…1, sgn ±1
   // -> phần CỘNG THÊM vào dáng), dur = thời lượng (ms).
   const PRESETS = {
+    // --- kiểu Headspace (nét dày + dải viền nhạt) ---
+    swoosh: {
+      label: 'Vệt cười (Headspace)',
+      hs: true,
+      closed: shape({ lx: -64, ly: 9, rx: 62, ry: -11, low: 3, lowX: -26 }),
+      open: shape({ lx: -64, ly: 5, rx: 64, ry: -16, low: 13, lowX: -20 }),
+      idleClosed: [{ dur: 900, fn: (k) => ({ low: 4 * bell(k), ry: -4 * bell(k) }) }],
+      idleOpen: [
+        { dur: 1000, fn: (k) => ({ lx: -4 * bell(k), rx: 4 * bell(k), low: 3.5 * bell(k) }) },
+        { dur: 700, fn: (k) => ({ low: 3 * wave(k, 4) * (1 - k) }) },
+      ],
+    },
+    gape: {
+      label: 'Há miệng (Headspace)',
+      hs: true,
+      closed: shape({ lx: -64, ly: 9, rx: 62, ry: -11, low: 3, lowX: -26 }),
+      open: shape({ lx: -56, ly: 6, rx: 60, ry: -16, up: -4, upX: 10, low: 22, lowX: -6, fill: 1, tongue: 1 }),
+      idleClosed: [{ dur: 900, fn: (k) => ({ low: 4 * bell(k) }) }],
+      idleOpen: [
+        { dur: 1400, fn: (k) => { const a = Math.abs(Math.sin(k * 21) * Math.sin(k * 6.7)); return { low: -10 * (1 - a), up: 3 * (1 - a) } } },
+        { dur: 800, fn: (k) => ({ tx: 7 * wave(k, 3) }) },
+      ],
+    },
+    buck: {
+      label: 'Răng thỏ (Headspace)',
+      hs: true,
+      closed: shape({ lx: -64, ly: 9, rx: 62, ry: -11, low: 3, lowX: -26 }),
+      open: shape({ lx: -64, ly: 4, rx: 62, ry: -14, up: 1, low: 17, lowX: -10, fill: 1, teeth: 1 }),
+      idleClosed: [{ dur: 900, fn: (k) => ({ low: 4 * bell(k) }) }],
+      idleOpen: [
+        // nhai nhai
+        { dur: 1000, fn: (k) => ({ low: -6 * Math.abs(wave(k, 3)) }) },
+        { dur: 900, fn: (k) => ({ lx: -4 * bell(k), rx: 4 * bell(k) }) },
+      ],
+    },
+    // --- kiểu nét mảnh ---
     grin: {
       label: 'Toe (theo Figma)',
       closed: shape({ lx: -37.5, rx: 37.5 }),
@@ -241,7 +281,20 @@
     if (green) {
       const svg = svgIn(green, '-92 -27 184 54')
       const g = el('g', { fill: 'none', stroke: 'currentColor', 'stroke-width': 1.6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg)
+      // lớp kiểu Headspace: dải viền nhạt (to) · lòng miệng · lưỡi + răng (cắt theo lòng) · nét
+      const hs = el('g', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg)
+      const cid = `mclip${Math.random().toString(36).slice(2, 7)}`
+      const clip = el('clipPath', { id: cid }, el('defs', {}, hs))
+      const clipPath = el('path', {}, clip)
       mouth = {
+        hs,
+        hsBand: el('path', { fill: 'currentColor', 'fill-opacity': 0.38, stroke: 'currentColor', 'stroke-opacity': 0.38, 'stroke-width': 15 }, hs),
+        hsIn: el('path', { class: 'chip__mouth-in', stroke: 'none' }, hs),
+        hsTongue: el('path', { fill: '#ff6a3d', stroke: 'none', 'clip-path': `url(#${cid})` }, hs),
+        hsTeeth: el('path', { fill: '#fffef8', stroke: 'none', 'clip-path': `url(#${cid})` }, hs),
+        hsLine: el('path', { fill: 'none', stroke: 'currentColor', 'stroke-width': 6.5 }, hs),
+        clipPath,
+        thin: [],
         fill: el('path', { fill: 'currentColor', stroke: 'none' }, g),
         upper: el('path', {}, g),
         lower: el('path', {}, g),
@@ -252,8 +305,52 @@
       }
     }
     const preset = () => PRESETS[CONFIG.preset] || PRESETS.grin
+    const drawHs = (m) => {
+      const P = mouthPaths(m)
+      const open = clamp01(m.fill)
+      // khép: một vệt (môi dưới); há: hình kín (môi trên + môi dưới)
+      const line = open > 0.02 ? P.fill : P.lower || P.upper
+      mouth.hsBand.setAttribute('d', line)
+      mouth.hsBand.setAttribute('fill-opacity', (0.38 * open).toFixed(3))
+      mouth.hsIn.setAttribute('d', open > 0.02 ? P.fill : '')
+      mouth.hsIn.setAttribute('fill-opacity', open.toFixed(3))
+      mouth.clipPath.setAttribute('d', P.fill)
+      // lưỡi: khối tròn ở góc dưới bên phải lòng miệng
+      const tg = clamp01(m.tongue) * open
+      if (tg > 0.02) {
+        // tâm lưỡi trên môi dưới ở 62% bề ngang (lệch phải như poster), nhích lên trong lòng
+        const mx = (m.lx + m.rx) / 2
+        const my = (m.ly + m.ry) / 2
+        const clx = mx + m.lowX
+        const cly = my + 2 * m.low
+        const t = 0.62
+        const bx = (1 - t) ** 2 * m.lx + 2 * t * (1 - t) * clx + t * t * m.rx
+        const by = (1 - t) ** 2 * m.ly + 2 * t * (1 - t) * cly + t * t * m.ry
+        const r = 11 + 9 * tg
+        const cx = bx + m.tx
+        const cy = by + r * 0.35 // tâm dưới môi dưới -> chỉ lộ phần trên, như lưỡi thè từ đáy
+        mouth.hsTongue.setAttribute('d', `M${(cx - r).toFixed(2)},${cy.toFixed(2)}a${r},${r} 0 1,0 ${(2 * r).toFixed(2)},0a${r},${r} 0 1,0 ${(-2 * r).toFixed(2)},0Z`)
+      } else mouth.hsTongue.setAttribute('d', '')
+      // răng: hai khối bo tròn treo dưới môi trên, gần giữa
+      const tk = clamp01(m.teeth) * open
+      if (tk > 0.02) {
+        const mx = (m.lx + m.rx) / 2 + 4
+        const my = (m.ly + m.ry) / 2 + m.up - 1
+        const w = 9
+        const h = 5 + 8 * tk
+        let d = ''
+        for (const x of [mx - w - 0.6, mx + 0.6]) d += `M${x.toFixed(2)},${(my - 3).toFixed(2)}h${w}v${(h + 3 - 2.5).toFixed(2)}q0,2.5 -2.5,2.5h-${w - 5}q-2.5,0 -2.5,-2.5Z`
+        mouth.hsTeeth.setAttribute('d', d)
+      } else mouth.hsTeeth.setAttribute('d', '')
+      mouth.hsLine.setAttribute('d', open > 0.02 ? '' : line)
+      mouth.hsLine.setAttribute('stroke-opacity', (1 - open).toFixed(3))
+    }
     const drawMouth = (m) => {
       if (!mouth) return
+      const isHs = !!preset().hs
+      mouth.hs.style.display = isHs ? '' : 'none'
+      for (const n of [mouth.fill, mouth.upper, mouth.lower, mouth.teeth, mouth.tongue, mouth.dl, mouth.dr]) n.style.display = isHs ? 'none' : ''
+      if (isHs) return drawHs(m)
       const P = mouthPaths(m)
       mouth.upper.setAttribute('d', P.upper)
       mouth.lower.setAttribute('d', P.lower)
@@ -305,7 +402,7 @@
             nextAct = now + idleGap()
           }
         } else if (now > nextAct && Math.abs(goal - s) < 0.03 && Math.abs(v) < 0.1) {
-          const list = goal ? pr.idleOpen : pr.idleClosed
+          const list = goal >= 0.5 ? pr.idleOpen : pr.idleClosed
           const pick = list[(Math.random() * list.length) | 0]
           if (pick) act = { ...pick, t0: now, sgn: Math.random() < 0.5 ? -1 : 1 }
         }
@@ -317,17 +414,20 @@
     const kick = () => {
       if (!raf && inView) raf = requestAnimationFrame(tick)
     }
-    // miệng: tâm khung xanh qua nửa màn -> cười; lùi lên trên nửa màn -> khép
+    // miệng: độ cười theo cuộn — tâm khung xanh từ 95% màn (0, khép) lên 45% màn (1,
+    // cười hẳn); lò xo trong tick() làm mượt. Đổi hẳn phía (qua 0.5) thì bỏ cử động dở.
     const check = () => {
       if (!green) return
       const r = green.getBoundingClientRect()
-      const g = r.top + r.height / 2 < innerHeight * 0.5 ? 1 : 0
-      if (g !== goal) {
-        goal = g
+      const c = r.top + r.height / 2
+      const g = clamp01((innerHeight * 0.95 - c) / (innerHeight * 0.5))
+      if (Math.abs(g - goal) < 0.001) return
+      if (g >= 0.5 !== goal >= 0.5) {
         act = null
         nextAct = performance.now() + idleGap()
-        kick()
       }
+      goal = g
+      kick()
     }
     const io = new IntersectionObserver(([e]) => {
       inView = e.isIntersecting
@@ -350,7 +450,7 @@
       // thử ngay một cử động (bảng setting)
       poke() {
         const pr = preset()
-        const list = goal ? pr.idleOpen : pr.idleClosed
+        const list = goal >= 0.5 ? pr.idleOpen : pr.idleClosed
         const pick = list[(Math.random() * list.length) | 0]
         if (pick) act = { ...pick, t0: performance.now(), sgn: Math.random() < 0.5 ? -1 : 1 }
         kick()
