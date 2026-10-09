@@ -6,8 +6,10 @@
  *   • ẢNH (4 ô người, mảng mosaic, khối tối, dải viên thuốc, ảnh recap): lộ từ dưới
  *     lên bằng clip-path + phóng nhẹ 1.1 -> 1, lần lượt theo vị trí (trái -> phải,
  *     trên -> dưới).
- *   • CHỮ: tiêu đề tách từng dòng trồi lên trong mặt nạ; các cụm chữ nhỏ (logo, phụ
- *     đề, ©26, tên dưới ảnh, chữ giới thiệu, scroll more) trồi lên + lộ dần.
+ *   • CHỮ: tiêu đề trồi cả khối lên (giữ nguyên DOM); các cụm chữ nhỏ (logo, phụ
+ *     đề, ©26, chữ giới thiệu, scroll more) trồi lên + lộ dần.
+ *   • CỤM NEON (thanh tên dưới ảnh, nhãn video recap, thanh process, khối lime + nút
+ *     menu trên thanh đầu trang): khối màu quét ra từ trái, chữ trong trồi lên sau.
  * Xong thì gỡ hết style tạm (clearProps) để không vướng hero.js / mosaic / reveal.
  * Không có màn loading (vào bằng Barba, trang khác) thì không chạy.
  *
@@ -40,17 +42,8 @@
       .sort((a, b) => a.r.left + a.r.top * 0.6 - (b.r.left + b.r.top * 0.6))
       .map((o) => o.el)
 
-  // tiêu đề: tách theo <br> thành dòng, mỗi dòng một mặt nạ
+  // tiêu đề: KHÔNG tách DOM (tách dòng làm hỏng text-box trim / bố cục) — trồi cả khối
   const title = hero.querySelector('.hero__title')
-  let lines = []
-  if (title && !title.dataset.entSplit) {
-    const parts = title.innerHTML.split(/<br\s*\/?>/i)
-    title.innerHTML = parts
-      .map((p) => `<span class="ent-line" style="display:block; overflow:clip; overflow-clip-margin:.12em"><span style="display:block">${p}</span></span>`)
-      .join('')
-    title.dataset.entSplit = '1'
-    lines = $$('.ent-line > span', title)
-  }
 
   const imgs = byPos([
     ...$$('.hero__field, .hero__dark, .hero__pills', hero),
@@ -58,10 +51,15 @@
     ...$$('.hero__recap img', document),
   ])
   const texts = byPos([
-    ...$$('.hero__mark, .hero__sub, .hero__year, .hero-card__cap, .hero__scroll, .hero__progress', hero),
+    ...$$('.hero__mark, .hero__sub, .hero__year, .hero__scroll', hero),
     // cả khối chữ giới thiệu (chande-home.js nhân bản các <p> bên trong thành lớp sáng / tối)
-    ...$$('.hero__intro-text, .hero__recap figcaption', document),
+    ...$$('.hero__intro-text', document),
   ])
+  // cụm màu NEON: khối màu quét ra từ trái, chữ bên trong trồi lên theo sau
+  const neon = byPos([...$$('.hero-card__cap, .hero__progress', hero), ...$$('.hero__recap figcaption', document)])
+  const neonText = neon.flatMap((el) => [...el.children].filter((c) => c.tagName === 'SPAN' && !c.hasAttribute('data-hero-fill')))
+  // khối neon trên thanh đầu trang thuộc màn loading -> chỉ quét lại lúc loading xong
+  const barNeon = $$('.cl__fill, .cl__menu')
 
   const HIDE = 'inset(100% 0% 0% 0%)'
   const SHOW = 'inset(0% 0% 0% 0%)'
@@ -69,7 +67,9 @@
   const noScale = (el) => el.classList.contains('hero-card__media')
   gsap.set(imgs, { clipPath: HIDE, scale: (i, el) => (noScale(el) ? 1 : 1.1), transformOrigin: '50% 100%' })
   gsap.set(texts, { clipPath: 'inset(0% 0% 100% 0%)', yPercent: 60 })
-  gsap.set(lines, { yPercent: 110 })
+  if (title) gsap.set(title, { clipPath: 'inset(0% 0% 100% 0%)', yPercent: 35 })
+  gsap.set(neon, { clipPath: 'inset(0% 100% 0% 0%)' })
+  gsap.set(neonText, { yPercent: 110 })
 
   const play = () => {
     const tl = gsap.timeline({ delay: CONFIG.delay })
@@ -81,13 +81,14 @@
       stagger: CONFIG.imgStagger,
       clearProps: 'clipPath,scale,transform,transformOrigin',
     }, 0)
-    tl.to(lines, {
-      yPercent: 0,
-      duration: CONFIG.textDur + 0.2,
-      ease: 'expo.out',
-      stagger: 0.08,
-      clearProps: 'transform',
-    }, 0.15)
+    if (title)
+      tl.to(title, {
+        clipPath: 'inset(-10% 0% -10% 0%)',
+        yPercent: 0,
+        duration: CONFIG.textDur + 0.3,
+        ease: 'expo.out',
+        clearProps: 'clipPath,transform',
+      }, 0.15)
     tl.to(texts, {
       clipPath: 'inset(0% 0% 0% 0%)',
       yPercent: 0,
@@ -96,6 +97,28 @@
       stagger: CONFIG.textStagger,
       clearProps: 'clipPath,transform',
     }, 0.25)
+    tl.fromTo(barNeon, { clipPath: 'inset(0% 100% 0% 0%)' }, {
+      clipPath: 'inset(0% 0% 0% 0%)',
+      duration: 0.9,
+      ease: 'expo.inOut',
+      stagger: 0.12,
+      clearProps: 'clipPath',
+    }, 0)
+    tl.to(neon, {
+      clipPath: 'inset(0% 0% 0% 0%)',
+      duration: 0.9,
+      ease: 'expo.inOut',
+      stagger: 0.09,
+    }, 0.35)
+    tl.to(neonText, {
+      yPercent: 0,
+      duration: 0.7,
+      ease: 'expo.out',
+      stagger: 0.05,
+      clearProps: 'transform',
+    }, 0.85)
+    // giữ khung cắt của khối neon tới khi chữ trong đã trồi xong (không lòi chữ ra ngoài)
+    tl.set(neon, { clearProps: 'clipPath' })
   }
   document.addEventListener('chande-loading:done', play, { once: true })
 })()
