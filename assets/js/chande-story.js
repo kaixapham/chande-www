@@ -1,14 +1,13 @@
 /* =============================================================================
- * CHANDE — Story (06 years / Chande.): dính lại và ZOOM XUYÊN QUA 6 ẢNH LỒNG NHAU
+ * CHANDE — Story (06 years / Chande.): dính lại, ẢNH TRONG NỞ RA lấp khung, lặp 6 ảnh
  * -----------------------------------------------------------------------------
- * Như droste / khung trong khung: mỗi ảnh nằm giữa ảnh trước nó (ảnh nền -> ảnh nổi
- * giữa -> ảnh nhỏ -> 3 ảnh .hs-story__z). Khi khung ảnh chạm thanh menu thì khung +
- * cột chữ ĐỨNG YÊN (dịch xuống bù cuộn), cuộn tiếp = máy quay tiến vào trong: thang
- * phóng chạy đều theo log nên tốc độ zoom không đổi dù tỉ lệ các tầng chênh nhau;
- * tới ảnh cuối (vừa chiều cao khung) thì hết dính, trang cuộn tiếp.
- * Ảnh đặt lại left/top/width/height mỗi khung (không scale cả lớp) nên luôn nét.
- * Tầng nào đã phủ kín khung thì tầng sau nó ẩn đi; tầng bé hơn 1px cũng ẩn.
- * Màn ≤ 899px (xếp dọc) thì không chạy.
+ * Lúc đầu chỉ có 2 ảnh: ảnh nền phủ khung + một ảnh nhỏ ở giữa (chỗ .hs-story__small).
+ * Khi khung ảnh chạm thanh menu thì khung + cột chữ ĐỨNG YÊN (dịch xuống bù cuộn); cuộn
+ * tiếp thì ảnh nền đứng im, chỉ ảnh nhỏ nở ra (cỡ chạy đều theo log, tâm trôi về giữa
+ * khung) tới khi phủ kín -> nó thành ảnh nền, ảnh kế tiếp hiện nhỏ ở giữa, lặp lại.
+ * Thứ tự: ảnh nền -> ảnh nhỏ -> ảnh nổi giữa -> 3 ảnh .hs-story__z (6 ảnh, sửa trong CMS).
+ * Hết ảnh thì hết dính, trang cuộn tiếp. Ảnh đặt left/top/width/height mỗi khung nên
+ * luôn nét. Màn ≤ 899px (xếp dọc) thì không chạy.
  *
  * API: window.CHANDE_STORY = { config, mount(root), destroy() }
  * ========================================================================== */
@@ -16,9 +15,7 @@
   'use strict'
 
   const CONFIG = {
-    stepScroll: 0.6, // quãng cuộn cho mỗi lần qua một ảnh (× chiều cao khung)
-    ratio: 0.62, // ảnh thêm (.hs-story__z) cao bằng bao nhiêu ảnh chứa nó
-    aspect: 0.75, // tỉ lệ rộng / cao của ảnh thêm
+    stepScroll: 0.7, // quãng cuộn cho mỗi lần một ảnh nở kín khung (× chiều cao khung)
   }
   window.CHANDE_SETTINGS_APPLY?.('story', CONFIG)
   const api = { config: CONFIG, mount() {}, destroy() {} }
@@ -34,28 +31,26 @@
     if (!section) return
     const media = section.querySelector('.hs-story__media')
     const col = section.querySelector('.hs-story__col')
-    const levels = [
+    const small = section.querySelector('.hs-story__small')
+    const imgs = [
       section.querySelector('.hs-story__photo'),
+      small,
       section.querySelector('.hs-story__card'),
-      section.querySelector('.hs-story__small'),
       ...section.querySelectorAll('.hs-story__z'),
     ].filter(Boolean)
-    if (!media || levels.length < 2) return
+    if (!media || !small || imgs.length < 2) return
 
     let W = 0
     let H = 0
     let bar = 0
     let pin = 0
-    let C = [0, 0] // tâm zoom (tâm ảnh nổi giữa) trong khung
-    let rects = [] // [x, y, w, h] tương đối với tâm, ở thang 1
-    let logEnd = 0
+    let seed = [0, 0, 0, 0] // ô ảnh nhỏ lúc đầu: x, y, w, h (trong khung)
 
-    // Đo theo bố cục gốc trong CSS (ảnh nền phủ khung, ảnh giữa / nhỏ theo --k), rồi
-    // lồng các ảnh thêm vào giữa ảnh trước. Phải gỡ style tự đặt trước khi đo.
+    // Đo ô ảnh nhỏ theo CSS gốc (gỡ style tự đặt trước khi đo)
     const measure = () => {
       const on = wide.matches
       section.classList.toggle('is-zoom', on)
-      for (const el of levels) el.style.cssText = ''
+      for (const el of imgs) el.style.cssText = ''
       media.style.transform = ''
       if (col) col.style.transform = ''
       if (!on) return
@@ -63,30 +58,20 @@
       H = media.clientHeight
       bar = innerHeight - H
       const box = media.getBoundingClientRect()
-      const card = levels[1].getBoundingClientRect()
-      C = [card.left - box.left + card.width / 2, card.top - box.top + card.height / 2]
-      rects = levels.map((el, i) => {
-        if (i === 0) return [-C[0], -C[1], W, H]
-        if (el.classList.contains('hs-story__z')) return null
-        const r = el.getBoundingClientRect()
-        return [r.left - box.left - C[0], r.top - box.top - C[1], r.width, r.height]
-      })
-      for (let i = 0; i < rects.length; i++) {
-        if (rects[i]) continue
-        const h = rects[i - 1][3] * CONFIG.ratio
-        const w = h * CONFIG.aspect
-        rects[i] = [-w / 2, -h / 2, w, h]
-      }
-      for (const el of levels.slice(1)) {
-        el.style.left = '0px'
-        el.style.top = '0px'
-        el.style.transformOrigin = '0 0'
-      }
-      // ảnh cuối vừa chiều cao khung
-      logEnd = Math.log(H / rects[rects.length - 1][3])
-      pin = Math.round(H * CONFIG.stepScroll * (levels.length - 1))
+      const r = small.getBoundingClientRect()
+      seed = [r.left - box.left, r.top - box.top, r.width, r.height]
+      pin = Math.round(H * CONFIG.stepScroll * (imgs.length - 1))
       section.style.setProperty('--story-pin', `${pin}px`)
       paint()
+    }
+
+    const place = (el, x, y, w, h) => {
+      el.style.visibility = ''
+      el.style.zIndex = ''
+      el.style.left = `${x.toFixed(2)}px`
+      el.style.top = `${y.toFixed(2)}px`
+      el.style.width = `${w.toFixed(2)}px`
+      el.style.height = `${h.toFixed(2)}px`
     }
 
     let raf = 0
@@ -98,23 +83,23 @@
       const t = Math.min(pin, Math.max(0, bar - top))
       media.style.transform = `translate3d(0, ${t}px, 0)`
       if (col) col.style.transform = `translate3d(0, ${t}px, 0)`
-      const S = Math.exp(logEnd * (t / pin))
-      // tầng sâu nhất đã phủ kín khung -> ẩn mọi tầng ngoài nó
-      let cover = 0
-      const out = rects.map(([x, y, w, h], i) => {
-        const r = [C[0] + x * S, C[1] + y * S, w * S, h * S]
-        if (r[0] <= 0.5 && r[1] <= 0.5 && r[0] + r[2] >= W - 0.5 && r[1] + r[3] >= H - 0.5) cover = i
-        return r
-      })
-      levels.forEach((el, i) => {
-        const [x, y, w, h] = out[i]
-        const show = i >= cover && h >= 1
-        el.style.visibility = show ? '' : 'hidden'
-        if (!show) return
-        el.style.width = `${w.toFixed(2)}px`
-        el.style.height = `${h.toFixed(2)}px`
-        el.style.left = `${x.toFixed(2)}px`
-        el.style.top = `${y.toFixed(2)}px`
+      const n = imgs.length - 1
+      const x = (t / pin) * n
+      const k = Math.min(n - 1, Math.floor(x)) // ảnh nền hiện tại
+      const f = x - k // ảnh k + 1 nở ra được bao nhiêu
+      // nở đều theo log: rộng / cao đi từ ô nhỏ tới cỡ khung, tâm trôi theo cùng nhịp
+      const [sx, sy, sw, sh] = seed
+      const w = sw * (W / sw) ** f
+      const h = sh * (H / sh) ** f
+      const g = (h - sh) / Math.max(1e-3, H - sh)
+      const cx = sx + sw / 2 + (W / 2 - (sx + sw / 2)) * g
+      const cy = sy + sh / 2 + (H / 2 - (sy + sh / 2)) * g
+      imgs.forEach((el, i) => {
+        if (i === k) place(el, 0, 0, W, H)
+        else if (i === k + 1) {
+          place(el, cx - w / 2, cy - h / 2, w, h)
+          el.style.zIndex = '1'
+        } else el.style.visibility = 'hidden'
       })
     }
     const onScroll = () => {
@@ -124,7 +109,6 @@
     ro.observe(section)
     addEventListener('scroll', onScroll, { passive: true })
     wide.addEventListener('change', measure)
-    // ảnh tải xong mới có cỡ thật (ảnh giữa / nhỏ đo theo CSS nên không cần chờ)
     measure()
 
     live = {
@@ -136,7 +120,7 @@
         cancelAnimationFrame(raf)
         section.classList.remove('is-zoom')
         section.style.removeProperty('--story-pin')
-        for (const el of levels) el.style.cssText = ''
+        for (const el of imgs) el.style.cssText = ''
         media.style.transform = ''
         if (col) col.style.transform = ''
       },
