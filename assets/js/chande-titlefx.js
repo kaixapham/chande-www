@@ -130,6 +130,8 @@
       ln.right = Math.max(ln.right, r.right - base.left)
       w.line = ln
       w.x = r.left - base.left
+      w.w = r.width
+      w.key = '' // đo lại -> vẽ lại
     })
     lines.forEach((l) => (l.width = Math.max(1, l.right - l.left)))
     t.lines = lines
@@ -140,9 +142,26 @@
     const acc = CONFIG.accent
     const bas = rgba(CONFIG.base, CONFIG.baseAlpha)
     const dz = Math.max(1, Math.round(CONFIG.ditherSize))
+    // Chỉ GHI LẠI nền của từ khi cần: từ đã tô xong / chưa tới lượt là màu đặc, chỉ
+    // ghi một lần lúc đổi trạng thái; chỉ từ nằm dưới mép quét mới vẽ lại mỗi khung.
+    // (ghi lại background-clip:text của cả đoạn chữ to mỗi khung là thứ làm giật cuộn)
+    const solid = (w, key, c) => {
+      if (w.key === key) return
+      w.key = key
+      const s = w.el.style
+      s.backgroundImage = `linear-gradient(${c}, ${c})`
+      s.backgroundSize = s.backgroundPosition = s.backgroundRepeat = ''
+    }
     t.words.forEach((w) => {
       const l = w.line
       const s = w.el.style
+      {
+        const dzb = CONFIG.dither ? Math.max(1, Math.round((CONFIG.band * l.width) / dz)) * dz : Math.max(1, CONFIG.band * l.width)
+        const F = l.p * (l.width + 2 * dzb) - (w.x - l.left)
+        if (F - 2 * dzb >= w.w) return solid(w, 'fin', fin) // mép quét đã qua hết từ
+        if (F <= 0) return solid(w, 'base', bas) // mép quét chưa tới từ
+        w.key = 'mid'
+      }
       if (CONFIG.dither) {
         // band làm tròn theo ô để ảnh dốc khớp đúng đoạn chuyển
         const cols = Math.max(1, Math.round((CONFIG.band * l.width) / dz))
