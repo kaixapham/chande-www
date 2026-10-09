@@ -610,11 +610,6 @@ html.cl-loading{background:${S.bg}}
     [{ backgroundColor: TRANSPARENT, color: S.cream, borderColor: hairline() },
      { backgroundColor: S.cream, color: S.green, borderColor: 'rgba(255,255,255,0)' }],
     M.dockStart, dockD)
-    // 3b. nền gốc (thẻ html) đổi cùng nhịp ô trái: trình duyệt tô màu này vào góc bo của
-    // khung / phần tràn — luôn trùng màu với ô logo ở góc trên trái, không lộ mảng sáng
-    step(document.documentElement,
-    [{ backgroundColor: S.bg }, { backgroundColor: S.cream }],
-    M.dockStart, dockD)
     // 4. track: nền xám -> tối, fill xanh trượt khỏi khung
     step(el.track,
       [{ backgroundColor: TRANSPARENT, borderColor: hairline() },
@@ -869,11 +864,26 @@ html.cl-loading{background:${S.bg}}
     document.documentElement.style.overflow = on ? 'hidden' : ''
   }
 
+  // Nền gốc (thẻ html) = đúng màu đang thấy ở ô logo góc trên trái (nền ô pha lên nền
+  // tối của loading). Trình duyệt tô màu nền gốc vào phần bị bo / tràn ngoài nội dung
+  // (góc bo của khung trình duyệt) — lệch màu là lộ mảng sáng / tối ở góc. Ghi thẳng
+  // style inline mỗi khung: màu nền gốc đổi bằng Web Animations bị trễ ~1 s.
+  const rgbOf = (c) => (c.match(/[\d.]+/g) || []).map(Number)
+  const hexN = parseInt(String(S.bg).replace('#', ''), 16) || 0
+  const bgRgb = [(hexN >> 16) & 255, (hexN >> 8) & 255, hexN & 255]
+  function syncRootBg() {
+    if (!el.brand) return
+    const [r, g, b, a = 1] = rgbOf(getComputedStyle(el.brand).backgroundColor)
+    const mix = (x, y) => Math.round(x * a + y * (1 - a))
+    document.documentElement.style.backgroundColor = `rgb(${mix(r, bgRgb[0])},${mix(g, bgRgb[1])},${mix(b, bgRgb[2])})`
+  }
+
   function apply(T) {
     T = clamp(T, 0, DURATION)
     state.time = T
     for (const a of anims) a.currentTime = T
 
+    syncRootBg()
     const p = progressAt(T)
     state.progress = p
     el.fill.style.width = `${(p * 100).toFixed(2)}%`
