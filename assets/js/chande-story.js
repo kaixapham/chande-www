@@ -23,7 +23,8 @@
     zoom: 1.2, // phóng hình trong ô để có chỗ trượt (cả parallax trước / sau quãng dính)
     appear: 0.12, // ảnh nhỏ bật ra trong đoạn đầu này của quãng nở (0…1)
     bandsFrom: 0.62, // dải màu bắt đầu trồi ra khi ảnh cao tới bao nhiêu chiều cao khung (0…1)
-    bandLead: 0.0084, // mỗi dải đi trước dải trong nó bao nhiêu (theo quãng nở) = độ dày dải
+    bandPx: 0.006, // độ dày mỗi dải (× chiều cao khung) — CỐ ĐỊNH, không đổi theo cỡ ảnh
+    bandRamp: 0.05, // dải bung từ 0 lên đủ dày trong quãng này (theo tỉ lệ cao ảnh / khung)
   }
   window.CHANDE_SETTINGS_APPLY?.('story', CONFIG)
   const api = { config: CONFIG, mount() {}, destroy() {} }
@@ -137,17 +138,22 @@
       const w = gw * pop
       const h = gh * pop
       // dải màu: trồi dần từ mép ảnh (độ đi trước tăng từ 0), dải ngoài cùng đi trước nhất
-      const e = Math.min(1, Math.max(0, (gh / H - CONFIG.bandsFrom) / Math.max(0.01, 1 - CONFIG.bandsFrom)))
+      // dải màu: viền dày CỐ ĐỊNH quanh ảnh (bung nhanh lên đủ dày rồi giữ), dải ngoài cùng trước
+      const e = Math.min(1, Math.max(0, (gh / H - CONFIG.bandsFrom) / Math.max(0.01, CONFIG.bandRamp)))
       const lead = e * e * (3 - 2 * e)
+      const T = H * CONFIG.bandPx * lead
       let bandFull = -1
       bands.forEach((b, j) => {
-        const q = f + (bands.length - j) * CONFIG.bandLead * lead
-        if (lead <= 0.001 || k + 1 >= imgs.length) {
+        if (lead <= 0.001 || k + 1 >= imgs.length || f >= 1) {
           b.style.visibility = 'hidden'
           return
         }
-        const [bx, by, bw, bh] = grow(q)
-        if (q >= 1) bandFull = j
+        const d = (bands.length - j) * T
+        const bx = cx - gw / 2 - d
+        const by = cy - gh / 2 - d
+        const bw = gw + 2 * d
+        const bh = gh + 2 * d
+        if (bx <= 0.5 && by <= 0.5 && bx + bw >= W - 0.5 && by + bh >= H - 0.5) bandFull = j
         b.style.visibility = 'visible'
         b.style.left = `${bx.toFixed(2)}px`
         b.style.top = `${by.toFixed(2)}px`
