@@ -36,6 +36,9 @@
   style.textContent =
     '.chip__icon{position:absolute; left:calc(12 * var(--u)); top:calc(10 * var(--u)); width:calc(100% - 24 * var(--u)); height:calc(100% - 20 * var(--u)); z-index:1; overflow:visible; color:#0f1513; transition:color .6s ease}' +
     'html.hero-row-dark .chip__icon{color:#f4f3eb}' +
+    // 3 icon ở Intro (sóng · miệng · mắt) chỉ hiện khi đã vào nền tối, mờ dần ra
+    '.hs-intro .chip__icon, .hs-intro__eye .hs-eye{opacity:0; transition:opacity .6s ease}' +
+    'html.hero-row-dark .hs-intro .chip__icon, html.hero-row-dark .hs-intro__eye .hs-eye{opacity:1}' +
     // miệng: nét + chấm cùng màu lòng miệng (= lòng trắng mắt) trên nền tối; răng màu
     // con ngươi cho nổi trên lòng miệng
     'html.hero-row-dark .chip__icon--mouth{color:var(--mouth-fill)}' +
@@ -65,7 +68,7 @@
   // chuỗi cục bị đẩy sang phải đúng một nấc (44) rồi dừng một nhịp; cỡ cục theo VỊ TRÍ
   // (to ở 95 / 183, bóp nhỏ ở 139, xẹp hẳn ở 51 / 227) -> cục đi qua giữa bị bóp lại,
   // ra mép thì chìm vào đường kẻ, ở đầu kia cục mới phồng lên.
-  const WAVE = { x0: -8, x1: 286, line: 1, step: 44, first: 51, push: 0.55 }
+  const WAVE = { x0: -8, x1: 286, line: 0.5, step: 44, first: 51, push: 0.55 }
   // yAt(x): độ lệch dọc của dây chun tại x
   function wavePath(t, yAt = () => 0) {
     const period = Math.max(0.3, CONFIG.waveSpeed || 1.7)
@@ -120,7 +123,7 @@
   const PRESETS = {
     swoosh: {
       label: 'Vệt cười',
-      closed: shape({ lx: -64, ly: 9, rx: 62, ry: -11, up: 3, upX: -26, low: 3, lowX: -26 }),
+      closed: shape({ lx: -37.5, rx: 37.5 }), // đường thẳng giữa khung (Figma 762)
       open: shape({ lx: -64, ly: 5, rx: 64, ry: -16, up: 13, upX: -20, low: 13, lowX: -20 }),
       idleClosed: [{ dur: 900, fn: (k) => ({ up: 4 * bell(k), low: 4 * bell(k), ry: -4 * bell(k) }) }],
       idleOpen: [
@@ -130,7 +133,7 @@
     },
     gape: {
       label: 'Há miệng',
-      closed: shape({ lx: -64, ly: 9, rx: 62, ry: -11, up: 3, upX: -26, low: 3, lowX: -26 }),
+      closed: shape({ lx: -37.5, rx: 37.5 }), // đường thẳng giữa khung (Figma 762)
       open: shape({ lx: -56, ly: 6, rx: 60, ry: -16, up: -4, upX: 10, low: 22, lowX: -6, tongue: 1 }),
       idleClosed: [{ dur: 900, fn: (k) => ({ low: 4 * bell(k) }) }],
       idleOpen: [
@@ -141,7 +144,7 @@
     buck: {
       label: 'Răng thỏ',
       buck: true, // hai răng cửa thay cho cả hàng
-      closed: shape({ lx: -64, ly: 9, rx: 62, ry: -11, up: 3, upX: -26, low: 3, lowX: -26 }),
+      closed: shape({ lx: -37.5, rx: 37.5 }), // đường thẳng giữa khung (Figma 762)
       open: shape({ lx: -64, ly: 4, rx: 62, ry: -14, up: 1, low: 17, lowX: -10, teeth: 1 }),
       idleClosed: [{ dur: 900, fn: (k) => ({ low: 4 * bell(k) }) }],
       idleOpen: [
@@ -178,7 +181,7 @@
     },
     talk: {
       label: 'Nói chuyện',
-      closed: shape({ lx: -37.5, rx: 37.5 }), // như Figma 762: đường thẳng
+      closed: shape({ lx: -37.5, rx: 37.5 }), // đường thẳng giữa khung (Figma 762)
       open: shape({ lx: -46, rx: 46, low: 20 }), // môi trên luôn thẳng, chỉ môi dưới cong
       // khi đã mở: NÓI một lúc (nhịp âm tiết lúc to lúc nhỏ) -> NGẬM lại nghỉ -> nói tiếp
       talk: { on: [2.6, 4.2], off: [1.2, 2.2] },
@@ -190,7 +193,7 @@
     },
     laugh: {
       label: 'Cười haha',
-      closed: shape({ lx: -30, rx: 30, low: 8 }),
+      closed: shape({ lx: -37.5, rx: 37.5 }), // đường thẳng giữa khung (Figma 762)
       open: shape({ lx: -32, ly: -3, rx: 32, ry: -3, up: -1, low: 20, teeth: 1, tongue: 0.7 }),
       idleClosed: [
         // cười khẩy: nảy nhẹ 2 nhịp
@@ -204,7 +207,7 @@
     },
     whistle: {
       label: 'Chu môi',
-      closed: shape({ lx: -14, rx: 14, up: 1.5, low: 1.5 }),
+      closed: shape({ lx: -14, rx: 14 }), // đường thẳng ngắn giữa khung
       open: shape({ lx: -7, rx: 7, up: -7.5, low: 7.5, dots: 0.6 }),
       idleClosed: [
         { dur: 800, fn: (k) => ({ lx: 5 * bell(k), rx: -5 * bell(k), up: -3 * bell(k), low: 2 * bell(k) }) },
@@ -218,7 +221,7 @@
     },
     smirk: {
       label: 'Nhếch mép',
-      closed: shape({ lx: -26, ly: 1, rx: 26, ry: -1.5, up: 2, upX: 8, low: 2, lowX: 8 }),
+      closed: shape({ lx: -37.5, rx: 37.5 }), // đường thẳng giữa khung (Figma 762)
       open: shape({ lx: -24, ly: 2, rx: 30, ry: -10, low: 8, lowX: 12, teeth: 1 }),
       idleClosed: [
         { dur: 700, fn: (k, s) => ({ ry: -5 * bell(k) * (s > 0 ? 1 : 0), ly: -5 * bell(k) * (s < 0 ? 1 : 0) }) },
@@ -231,7 +234,7 @@
     },
     cheeky: {
       label: 'Lè lưỡi',
-      closed: shape({ lx: -30, rx: 30, low: 9 }),
+      closed: shape({ lx: -37.5, rx: 37.5 }), // đường thẳng giữa khung (Figma 762)
       open: shape({ lx: -30, ly: -2, rx: 30, ry: -2, low: 11, tongue: 1 }),
       idleClosed: [
         // thè lưỡi nhanh rồi thụt

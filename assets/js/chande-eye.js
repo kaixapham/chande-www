@@ -251,7 +251,9 @@
       const r = box.getBoundingClientRect()
       const was = inView
       inView = r.bottom > 0 && r.top < innerHeight
-      if (!opened && r.top < innerHeight * CONFIG.at && r.bottom > 0) open()
+      // chỉ mở khi đã vào nền tối (html.hero-row-dark) — trước đó mắt còn ẩn (chande-chips.js)
+      const dark = document.documentElement.classList.contains('hero-row-dark')
+      if (!opened && dark && r.top < innerHeight * CONFIG.at && r.bottom > 0) open()
       else if (following && inView && !was) {
         if (idling) idleLoop()
         else follow()
@@ -260,6 +262,9 @@
     }
     addEventListener('scroll', check, { passive: true })
     addEventListener('resize', check, { passive: true })
+    // nền tối bật / tắt theo cuộn ở chande-hero.js — kiểm lại ngay khi class đổi
+    const mo = new MutationObserver(check)
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
     check()
 
     me.stop = () => {
@@ -267,6 +272,7 @@
       cancelAnimationFrame(raf)
       removeEventListener('scroll', check)
       removeEventListener('resize', check)
+      mo.disconnect()
       clearTimeout(timer)
       clearTimeout(timer2)
       clearTimeout(idleTimer)
