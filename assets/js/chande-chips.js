@@ -172,7 +172,7 @@
     },
     talk: {
       label: 'Nói chuyện',
-      closed: shape({ lx: -54, rx: 54, up: 6, low: 6 }),
+      closed: shape({ lx: -37.5, rx: 37.5 }), // như Figma 762: đường thẳng
       open: shape({ lx: -46, rx: 46, up: -8, low: 16 }),
       idleClosed: [
         // lẩm bẩm: hé mở 2 nhịp nhỏ
