@@ -447,7 +447,7 @@ export function mount(container, config = {}) {
     alpha: false,
     preserveDrawingBuffer: true,
   })
-  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1))
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1, Math.sqrt(4.2e6 / Math.max(1, innerWidth * innerHeight)))) // ngân sách điểm ảnh cho màn rất lớn
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
@@ -1574,7 +1574,7 @@ export function mount(container, config = {}) {
   }
 
   function restoreRenderSize() {
-    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1))
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1, Math.sqrt(4.2e6 / Math.max(1, innerWidth * innerHeight)))) // ngân sách điểm ảnh cho màn rất lớn
     renderer.setSize(viewW, viewH, false)
     canvas.style.width = `${viewW}px`
     canvas.style.height = `${viewH}px`

@@ -209,7 +209,10 @@ function destroy() {
   live = null
 }
 
-mount(document)
+// Chồng poster (three.js + 8 ảnh) nằm giữa trang: dựng sau khi trang tải xong để không
+// chen vào lúc loading; vẫn kịp trước khi người xem cuộn tới.
+if (document.readyState === 'complete') mount(document)
+else addEventListener('load', () => mount(document), { once: true })
 
 if (window.barba?.hooks) {
   // Cùng nhịp với hero: dựng ở beforeEnter; `sync: true` nên afterLeave tới SAU

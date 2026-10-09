@@ -16,6 +16,42 @@
 (() => {
   'use strict'
 
+  // Nạp sẵn ảnh dùng sau (ảnh kế của slider, ảnh hover…) — CHỈ sau khi trang tải xong và
+  // trình duyệt rảnh, để không chen vào lúc loading (làm màn loading chờ lâu, giật).
+  const preloadQ = []
+  let preloadOn = false // đã qua mốc tải xong
+  let preloadBusy = false
+  const idle = window.requestIdleCallback || ((f) => setTimeout(f, 200))
+  const preloadStep = () => {
+    preloadQ.splice(0, 3).forEach((src) => (new Image().src = src))
+    if (preloadQ.length) idle(preloadStep)
+    else preloadBusy = false
+  }
+  const preloadRun = () => {
+    preloadOn = true
+    if (preloadBusy || !preloadQ.length) return
+    preloadBusy = true
+    idle(preloadStep)
+  }
+  if (document.readyState === 'complete') setTimeout(preloadRun, 1200)
+  else addEventListener('load', () => setTimeout(preloadRun, 1200), { once: true })
+  // Video (ô recap): chỉ tải + phát sau khi trang tải xong — trước đó hiện ảnh bìa
+  const startVideos = () =>
+    document.querySelectorAll('video[data-src]').forEach((v) => {
+      v.src = v.dataset.src
+      v.removeAttribute('data-src')
+      v.autoplay = true
+      v.play?.().catch(() => {})
+    })
+  if (document.readyState === 'complete') setTimeout(startVideos, 300)
+  else addEventListener('load', () => setTimeout(startVideos, 300), { once: true })
+  window.barba?.hooks?.afterEnter(() => setTimeout(startVideos, 300))
+
+  function preloadLater(list) {
+    preloadQ.push(...(list || []).filter(Boolean))
+    if (preloadOn) preloadRun()
+  }
+
   let io = null
   let onScroll = null
 
@@ -248,7 +284,7 @@
         } catch {}
         const img = box.querySelector('img')
         if (list[0] && img.getAttribute('src') !== list[0]) img.src = list[0]
-        list.slice(1).forEach((src) => (new Image().src = src))
+        preloadLater(list.slice(1))
         return { box, img, list }
       })
       let slideIdx = 0
@@ -375,7 +411,7 @@
           text: q.text.textContent,
           img: q.img.getAttribute('src'),
         }]
-      list.slice(1).forEach((it) => it.img && (new Image().src = it.img))
+      preloadLater(list.slice(1).map((it) => it.img))
 
       // Dòng tên / vai trò: chữ thật giữ ở dataset.t để hiệu ứng code đọc lại.
       const setLine = (el, t) => {
@@ -533,7 +569,7 @@
       cur.it = list[0]
       setImg(list[0].img)
       if (strip && list[0].bg) strip.src = list[0].bg
-      list.forEach((it) => it.bg && (new Image().src = it.bg))
+      preloadLater(list.map((it) => it.bg))
 
       // Hover cụm tên: cả hai dòng chạy hiệu ứng "giải mã" — ký tự code ngẫu nhiên
       // chốt dần từ trái sang phải về chữ thật.
@@ -737,7 +773,7 @@
       try {
         pool = JSON.parse(face.dataset.photos || '[]')
       } catch {}
-      pool.forEach((src) => (new Image().src = src)) // nạp trước, hover là có ngay
+      preloadLater(pool) // nạp trước (sau khi trang tải xong), hover là có ngay
       let n = 0
       const foot = face.closest('.hs-foot')
       foot.querySelectorAll('.names span').forEach((line) => {
@@ -843,7 +879,7 @@
       try {
         photos = JSON.parse(roles.dataset.photos || '[]')
       } catch {}
-      photos.forEach((src) => (new Image().src = src))
+      preloadLater(photos)
       const items = [...roles.querySelectorAll('li')]
       const photoOf = (i) => photos.length ? photos[i % photos.length] : roleImg.getAttribute('src')
       const cover = (src, w, h) =>

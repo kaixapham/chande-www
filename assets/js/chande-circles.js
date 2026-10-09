@@ -38,7 +38,10 @@
     // so le mép theo từng ô (cố định, không nhấp nháy)
     const jit = Array.from({ length: 997 }, () => Math.random() - 0.5)
     for (const o of circles) {
-      o.peek.loading = 'eager' // ảnh nguồn bị ẩn (display:none) — lazy thì không bao giờ tải
+      // ảnh nguồn bị ẩn (display:none) — lazy thì không bao giờ tải; cho tải sau khi trang tải xong
+      const eager = () => (o.peek.loading = 'eager')
+      if (document.readyState === 'complete') eager()
+      else addEventListener('load', eager, { once: true })
       o.cv = document.createElement('canvas')
       o.cv.className = 'peek-cv'
       o.cv.setAttribute('aria-hidden', 'true')

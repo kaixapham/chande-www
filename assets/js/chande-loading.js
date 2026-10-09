@@ -73,7 +73,7 @@
     // tối đa `gateMaxWait` ms. Chỉ áp dụng khi đang PLAY, tua tay thì bỏ qua.
     waitForLoad: true,
     gateAt: 0.92,
-    gateMaxWait: 6000,
+    gateMaxWait: 3500, // không bắt người xem chờ tải hết ảnh dưới trang
 
     // Đường cong tiến trình [t, p] — có các đoạn chững cho giống loading thật,
     // và đi qua đúng hai mốc 15% / 50% của Figma.

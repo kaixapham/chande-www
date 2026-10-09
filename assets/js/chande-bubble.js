@@ -480,7 +480,8 @@ void main () {
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]))
 
   function sync() {
-    const dpr = Math.min(devicePixelRatio || 1, Math.max(CONFIG.maxDpr, 0.5))
+    // ngân sách điểm ảnh: canvas phủ cả màn, màn 5K × retina thì hạ độ phân giải (giọt mờ mềm)
+    const dpr = Math.min(devicePixelRatio || 1, Math.max(CONFIG.maxDpr, 0.5), Math.sqrt(2.6e6 / Math.max(1, innerWidth * innerHeight)))
     const w = Math.max(1, Math.round(innerWidth * dpr))
     const h = Math.max(1, Math.round(innerHeight * dpr))
     if (output.width !== w || output.height !== h) {
