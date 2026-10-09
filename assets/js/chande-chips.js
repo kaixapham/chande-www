@@ -8,7 +8,7 @@
  *   Mỗi preset có dáng KHÉP và dáng CƯỜI; độ cười chạy LIÊN TỤC THEO CUỘN (khung từ
  *   đáy màn lên quá giữa màn: 0 -> 1), qua lò xo cho mượt (mở lố rồi dội), cộng các cử
  *   động nhỏ ngẫu nhiên mỗi idleMin–idleMax s. Mọi preset cùng một kiểu: NÉT + CHẤM —
- *   nét mảnh đầu tròn, chấm ở hai khoé, không tô lòng. Nét trong (răng, lưỡi) luôn kết
+ *   nét mảnh đầu tròn, chấm ở hai khoé, lòng miệng tô màu lòng trắng mắt. Nét trong (răng, lưỡi) luôn kết
  *   thúc ĐÚNG trên đường môi (hoặc bị cắt theo lòng miệng) -> không có đầu thừa chọc ra.
  *   Một cái miệng = 2 khoé (L, R) + môi trên / môi dưới là 2 đường cong quadratic giữa
  *   hai khoé (up / low = độ cong, âm = cong lên) + răng + lưỡi.
@@ -283,7 +283,7 @@
     const upper = `M${pt(L)}Q${pt(cu)} ${pt(R)}`
     // môi dưới luôn vẽ khi môi trên chưa vẽ hết (nó là nét chính lúc khép / cười)
     const lower = m.upline < 0.999 || Math.abs(m.low - m.up) > 0.1 || Math.abs(m.low) > 0.05 ? `M${pt(L)}Q${pt(cl)} ${pt(R)}` : ''
-    // lòng miệng — chỉ dùng làm vùng cắt cho răng (không tô)
+    // lòng miệng — tô màu lòng mắt + làm vùng cắt cho răng
     const inside = `M${pt(L)}Q${pt(cu)} ${pt(R)}Q${pt(cl)} ${pt(L)}Z`
     // Răng gắn dưới môi trên, cắt theo lòng miệng -> chỉ lộ đúng khe hở giữa hai môi.
     // Mọi vạch ngăn bắt đầu TRÊN môi trên và dừng ĐÚNG trên mép dưới răng (nối chữ T,
@@ -341,6 +341,8 @@
       const g = el('g', { fill: 'none', stroke: 'currentColor', 'stroke-width': 1.6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg)
       const cid = `mclip${Math.random().toString(36).slice(2, 7)}`
       mouth = {
+        // lòng miệng tô cùng màu lòng trắng con mắt (chande-eye.js · sclera), nằm dưới nét
+        inside: el('path', { fill: window.CHANDE_EYE?.config?.sclera || '#f8e7bf', stroke: 'none' }, g),
         upper: el('path', {}, g),
         lower: el('path', {}, g),
         teeth: el('path', { 'clip-path': `url(#${cid})` }, g),
@@ -361,6 +363,7 @@
       mouth.upper.setAttribute('stroke-dasharray', ul < 0.999 ? `${ul.toFixed(3)} 2` : 'none')
       mouth.lower.setAttribute('d', P.lower)
       mouth.clip.setAttribute('d', P.inside)
+      mouth.inside.setAttribute('d', P.inside)
       mouth.teeth.setAttribute('d', P.teeth)
       mouth.teeth.setAttribute('stroke-opacity', clamp01(m.teeth).toFixed(3))
       mouth.tongue.setAttribute('d', P.tongue)
