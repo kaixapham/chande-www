@@ -52,6 +52,7 @@ const chandeDevtools = () => {
   const CGA = window.CHANDE_GALLERY
   const CDK = window.CHANDE_DUCK
   const CGR = window.CHANDE_GRASS
+  const CST = window.CHANDE_STAMPS
   if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL && !CPX && !CTF && !CSG && !CGA) return
 
   const KEY = 'chande-devtools'
@@ -73,7 +74,7 @@ const chandeDevtools = () => {
     CPX && { id: 'parallax', label: 'Parallax ảnh', mod: 'parallax' },
     CTF && { id: 'titlefx', label: 'Title Effect', mod: 'titlefx' },
     CSG && { id: 'sign', label: 'Chữ ký viết tay (Cảm nhận)', mod: 'sign' },
-    CGA && { id: 'gallery', label: 'Gallery (lưới, vịt, cỏ)', mod: 'gallery' },
+    CGA && { id: 'gallery', label: 'Gallery (lưới, vịt, cỏ, dấu)', mod: 'gallery' },
     CT && { id: 'sweep', label: 'Rèm quét', mod: 'transition', variant: 'sweep' },
     CT && { id: 'split', label: 'Rèm chẻ', mod: 'transition', variant: 'split' },
     CT && { id: 'stack', label: 'Trượt thẻ', mod: 'transition', variant: 'stack' },
@@ -347,6 +348,24 @@ const chandeDevtools = () => {
         { path: 'maxTip', label: 'Nghiêng tối đa (rad)', type: 'range', min: 0.1, max: 1.2, step: 0.01 },
         { path: 'slide', label: 'Trượt ra xa khi bị đẩy', type: 'range', min: 0, max: 2, step: 0.05 },
         { path: 'panTilt', label: 'Kéo lưới làm vịt nghiêng (quán tính — cách chọc vịt trên điện thoại)', type: 'range', min: 0, max: 0.01, step: 0.0001 },
+      ] },
+    // ---- Hộp con dấu 3D (chande-stamps.js) ----
+    CST && { tab: 'gallery', mod: 'stamps', title: 'Con dấu — màu',
+      items: CST.config.stamps.flatMap((d, i) => [
+        { path: `stamps.${i}.handle`, label: `${d.name} · cán`, type: 'color' },
+        { path: `stamps.${i}.base`, label: `${d.name} · đế`, type: 'color' },
+        { path: `stamps.${i}.ink`, label: `${d.name} · mực`, type: 'color' },
+      ]) },
+    CST && { tab: 'gallery', mod: 'stamps', title: 'Con dấu — cầm & in',
+      items: [
+        { path: 'size', label: 'Bán kính dấu khi cầm (px)', type: 'range', min: 30, max: 120, step: 1 },
+        { path: 'lift', label: 'Lơ lửng khi cầm (× bán kính)', type: 'range', min: 0.2, max: 2, step: 0.05 },
+        { path: 'bleed', label: 'Độ nhoè mực', type: 'range', min: 0, max: 3, step: 0.05 },
+        { path: 'deboss', label: 'Độ hằn giấy', type: 'range', min: 0, max: 3, step: 0.05 },
+        { path: 'ink.0', label: 'Độ đậm mực — ít nhất', type: 'range', min: 0.2, max: 1, step: 0.01 },
+        { path: 'ink.1', label: 'Độ đậm mực — nhiều nhất', type: 'range', min: 0.2, max: 1, step: 0.01 },
+        { path: 'spin', label: 'Vết in xoay ngẫu nhiên ± (độ)', type: 'range', min: 0, max: 180, step: 1 },
+        { path: 'maxPrints', label: 'Số vết giữ lại tối đa', type: 'range', min: 4, max: 150, step: 1 },
       ] },
     // ---- Thảm cỏ 3D (chande-grass.js) — chỉ thấy khi sàn = Cỏ 3D ----
     CGR && { tab: 'gallery', mod: 'grass', title: 'Thảm cỏ 3D — lá',
@@ -640,7 +659,7 @@ const chandeDevtools = () => {
       ]) },
   ]
 
-  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL, parallax: CPX, titlefx: CTF, sign: CSG, gallery: CGA, duck: CDK, grass: CGR }
+  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL, parallax: CPX, titlefx: CTF, sign: CSG, gallery: CGA, duck: CDK, grass: CGR, stamps: CST }
   const get = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o)
   const set = (o, p, v) => {
     const k = p.split('.')

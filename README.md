@@ -475,25 +475,23 @@ window.CHANDE_POSTER = { config, mount(scope), destroy(), api }   // api = runti
 
 ---
 
-## 8. Con dấu 3D ở góc gallery (`chande-stamps.js`)
+## 8. Hộp con dấu 3D (`chande-stamps.js`)
 
-Hai con dấu cao su 3D (three.js, đế tròn có vành + cán tiện tròn, nhựa bóng)
-đứng ở góc dưới trái và góc trên phải của canvas gallery (chừa thanh header).
-Mỗi con in một mẫu SVG trong `assets/img/gallery/stamps/` — mặt núm cán in sẵn
-mẫu đó. Màu theo bảng Chande: dấu 1 cán lime `#68f12b` / đế xanh `#245535`,
-mực xanh; dấu 2 cán kem `#e8e2cb` / đế xanh đen `#1b2625`, mực xanh đen.
+Khay bo tròn ở góc dưới phải canvas gallery, như khay bút của app vẽ: đứng sẵn
+hai con dấu cao su 3D (three.js) và một nút màu. Mẫu in là các SVG trong
+`assets/img/gallery/stamps/` (vẽ màu gì cũng được — code chỉ lấy hình rồi tô lại).
 
-- Rê chuột vào: dấu nhấc nhẹ.
-- Bấm giữ + kéo: cầm dấu lên, thả ra là dập xuống đúng chỗ, để lại vết mực (đè
-  cả lên ảnh, `mix-blend-mode:multiply`), rồi dấu tự bay về góc.
-- Bấm một cái: dấu nhảy vào trong màn một đoạn, dập, quay về.
-
-Vết mực gắn toạ độ thế giới gallery nên trôi theo lưới; giữ tối đa
-`CONFIG.maxPrints` vết. Đổi mẫu / màu / góc ở `CONFIG.stamps` đầu file (SVG
-mới cứ tô một màu bất kỳ, code tự đổi sang màu `ink` / `label`).
+- Bấm một con dấu trong khay: cầm dấu ra, dấu lơ lửng theo chuột, vòng ngắm mờ
+  dưới sàn chỉ chỗ sẽ in. Bấm lại hoặc Esc: cất về khay.
+- Đang cầm: bấm (không kéo) vào canvas là dập — vết in nhoè mực, ăn mực không
+  đều, giấy hằn theo nét. Kéo thì vẫn kéo lưới. Điện thoại: chạm chỗ nào dấu
+  bay tới dập chỗ đó.
+- Nút màu: màu cán / đế / mực cho từng dấu (bảng màu Chande + màu tự chọn), nhớ
+  theo trình duyệt. Bảng H → tab Gallery cũng có mục *Con dấu* (màu, cỡ, độ nhoè,
+  độ hằn…), bấm Lưu để thành mặc định cho mọi người.
 
 ```js
-window.CHANDE_STAMPS = { config, defaults, mount(scope), destroy(), clear() }
+window.CHANDE_STAMPS = { config, defaults, mount(scope), destroy(), refresh(), setColor(i, part, hex), pick(i | null), clear() }
 ```
 
 ---

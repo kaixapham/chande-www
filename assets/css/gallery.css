@@ -109,22 +109,83 @@
   .gal-lb__img{max-width:90vw}
 }
 
-/* ---- Hai con dấu 3D ở góc (chande-stamps.js) ----
-   Canvas dấu phủ trên cùng, không ăn chuột (JS tự dò trúng dấu). Vết mực nằm
-   ngay trên lưới ảnh, trôi theo lưới; multiply để mực thấm vào ảnh / nền. */
-.gal__stamps{position:absolute; inset:0; pointer-events:none}
-.gal.is-stamp-hover{cursor:pointer}
-.gal.is-stamp-hold, .gal.is-stamp-hold *{cursor:grabbing}
+/* ---- Hộp con dấu 3D (chande-stamps.js) ----
+   Khay bo tròn ở góc dưới phải, như khay bút của app vẽ. Ô trong khay là nút
+   trong suốt — con dấu 3D vẽ ở canvas .gal__stamps (nằm TRÊN khay, không ăn
+   chuột). Bảng màu nằm trên cùng. Vết mực ngay trên lưới ảnh, trôi theo lưới:
+   lớp mực multiply để thấm vào ảnh / nền, lớp hằn giấy (bóng + gờ sáng) đè lên. */
+.gal__stamps{position:absolute; inset:0; z-index:2; pointer-events:none}
+.gal-tools{
+  --tray-bg:#fbfaf4; --tray-line:rgba(15,21,19,.08); --tray-ink:#0f1513; --tray-focus:#245535;
+  --slot-w:4.25rem; --slot-h:5.5rem;
+  position:absolute; right:1.5rem; bottom:calc(1.5rem + env(safe-area-inset-bottom, 0px)); z-index:1;
+  display:flex; align-items:center; gap:.375rem; padding:.375rem .625rem .375rem .5rem;
+  background:var(--tray-bg); border-radius:1.75rem;
+  box-shadow:0 0 0 1px var(--tray-line), 0 14px 30px rgba(15,21,19,.16), 0 3px 8px rgba(15,21,19,.08);
+}
+.gal-tools button{font:inherit; color:inherit; cursor:pointer}
+.gal-tools__slot{
+  position:relative; width:var(--slot-w); height:var(--slot-h); padding:0; border:0; border-radius:1.25rem;
+  background:transparent; transition:background-color .25s ease;
+}
+.gal-tools__slot:hover{background:rgba(15,21,19,.04)}
+/* Dấu đang được cầm ra: ô còn lại vòng đế mờ */
+.gal-tools__slot[aria-pressed="true"]::after{
+  content:""; position:absolute; left:50%; bottom:.9rem; width:70%; aspect-ratio:1 / .88; translate:-50% 0;
+  border:1.5px dashed rgba(15,21,19,.28); border-radius:50%;
+}
+.gal-tools__sep{width:1px; height:2.5rem; margin:0 .25rem; background:var(--tray-line)}
+.gal-tools__color{
+  display:grid; place-items:center; width:2.75rem; height:2.75rem; padding:0; border:0; border-radius:50%;
+  background:conic-gradient(#68f12b, #245535, #1b2625, #9aa587, #e8e2cb, #d6ceab, #68f12b);
+}
+.gal-tools__color span{width:1.875rem; height:1.875rem; border-radius:50%; background:var(--c, #245535); box-shadow:0 0 0 3px var(--tray-bg)}
+.gal-tools :focus-visible, .gal-tools__pop :focus-visible{outline:2px solid var(--tray-focus, #245535); outline-offset:2px}
+
+.gal-tools__pop{
+  --tray-bg:#fbfaf4; --tray-line:rgba(15,21,19,.1); --tray-ink:#0f1513; --tray-focus:#245535;
+  position:absolute; right:1.5rem; bottom:calc(8.25rem + env(safe-area-inset-bottom, 0px)); z-index:3;
+  width:min(26rem, calc(100vw - 1.5rem)); padding:.875rem; display:grid; gap:.75rem;
+  background:var(--tray-bg); color:var(--tray-ink); border-radius:1.25rem;
+  box-shadow:0 0 0 1px var(--tray-line), 0 18px 40px rgba(15,21,19,.2);
+  font-size:.875rem; font-weight:500; letter-spacing:-.01em; cursor:auto;
+}
+.gal-tools__pop[hidden]{display:none}
+.gal-tools__pop button{font:inherit; color:inherit; cursor:pointer}
+.gal-tools__tabs{display:grid; grid-template-columns:1fr 1fr; gap:.25rem; padding:.25rem; background:rgba(15,21,19,.06); border-radius:.75rem}
+.gal-tools__tabs button{padding:.45rem .5rem; border:0; border-radius:.55rem; background:transparent; text-transform:uppercase}
+.gal-tools__tabs button[aria-selected="true"]{background:var(--tray-bg); box-shadow:0 1px 3px rgba(15,21,19,.15)}
+.gal-tools__row{display:grid; grid-template-columns:2.5rem minmax(0, 1fr); align-items:center; gap:.5rem}
+.gal-tools__lbl{text-transform:uppercase; font-size:.75rem; letter-spacing:.02em; opacity:.7}
+.gal-tools__sw{display:flex; flex-wrap:wrap; gap:.3rem}
+.gal-tools__sw > button, .gal-tools__pick{
+  position:relative; width:1.5rem; height:1.5rem; padding:0; border:0; border-radius:50%;
+  background:var(--c); box-shadow:inset 0 0 0 1px rgba(15,21,19,.15);
+}
+.gal-tools__sw > button[aria-pressed="true"]{box-shadow:inset 0 0 0 1px rgba(15,21,19,.15), 0 0 0 2px var(--tray-bg), 0 0 0 3.5px var(--tray-ink)}
+.gal-tools__pick{display:block; cursor:pointer; background:conic-gradient(red, #ff0, lime, cyan, blue, #f0f, red)}
+.gal-tools__pick::after{content:""; position:absolute; inset:.3rem; border-radius:50%; background:var(--c); box-shadow:0 0 0 1.5px #fff}
+.gal-tools__pick input{position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0}
+.gal-tools__reset{justify-self:start; padding:.35rem .6rem; border:0; border-radius:.5rem; background:rgba(15,21,19,.06); font-size:.75rem; text-transform:uppercase}
+.gal-tools__reset:hover{background:rgba(15,21,19,.1)}
+
 .gal__prints{position:absolute; top:0; left:0; width:0; height:0; pointer-events:none; will-change:transform}
 .gal__print{
-  position:absolute; display:block; max-width:none; pointer-events:none;
-  mix-blend-mode:multiply; opacity:var(--ink, .9);
+  position:absolute; pointer-events:none;
   transform:rotate(var(--rot, 0deg));
-  animation:gal-print .28s cubic-bezier(.2,.8,.2,1) backwards;
+  animation:gal-print .32s cubic-bezier(.2,.8,.2,1) backwards;
   transition:opacity .6s ease;
 }
+.gal__print canvas{position:absolute; inset:0; width:100%; height:100%; display:block}
+.gal__print-ink{mix-blend-mode:multiply; opacity:var(--ink, .9)}
 .gal__print.is-gone{opacity:0}
 @keyframes gal-print{
-  from{opacity:0; transform:rotate(var(--rot, 0deg)) scale(1.06)}
-  to{opacity:var(--ink, .9); transform:rotate(var(--rot, 0deg)) scale(1)}
+  from{opacity:0; transform:rotate(var(--rot, 0deg)) scale(1.05)}
+  to{opacity:1; transform:rotate(var(--rot, 0deg)) scale(1)}
+}
+@media (max-width:767px){
+  .gal-tools{--slot-w:3.25rem; --slot-h:4.25rem; right:.75rem; bottom:calc(.75rem + env(safe-area-inset-bottom, 0px)); border-radius:1.4rem}
+  .gal-tools__color{width:2.25rem; height:2.25rem}
+  .gal-tools__color span{width:1.5rem; height:1.5rem}
+  .gal-tools__pop{right:.75rem; bottom:calc(6.25rem + env(safe-area-inset-bottom, 0px))}
 }
