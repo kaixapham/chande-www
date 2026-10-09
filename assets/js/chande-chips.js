@@ -172,8 +172,8 @@
     },
     talk: {
       label: 'Nói chuyện',
-      closed: shape({ lx: -22, rx: 22, up: 4, low: 4 }),
-      open: shape({ lx: -16, rx: 16, up: -6, low: 12 }),
+      closed: shape({ lx: -36, rx: 36, up: 5, low: 5 }),
+      open: shape({ lx: -28, rx: 28, up: -7, low: 14 }),
       idleClosed: [
         // lẩm bẩm: hé mở 2 nhịp nhỏ
         { dur: 900, fn: (k) => ({ up: -2.5 * Math.abs(wave(k, 2)), low: 3 * Math.abs(wave(k, 2)) }) },
