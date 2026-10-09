@@ -3,7 +3,9 @@
  * -----------------------------------------------------------------------------
  * Một bảng duy nhất ở góc phải trên, giao diện theo bảng Controls của
  * Toolcraft. ẨN SẴN — bấm phím H để bật / tắt; phím K mở CMS thay ảnh
- * (cms.html) ở tab riêng. Các mục (chọn ở ô "Mục"):
+ * (cms.html) ở tab riêng. CHỈ có khi chạy local hoặc đã mở site với ?admin=1 (nhớ trong
+ * trình duyệt; ?admin=0 để thôi) — khách xem chandebootcamp.com không bật được.
+ * Các mục (chọn ở ô "Mục"):
  *   • Loading    — play / pause / tua timeline + màu nền, dither, màu element
  *   • Hero home  — chiều cao ảnh (% viewport, chung 4 ô), nhịp vòng đổi ảnh,
  *                  kiểu đổi ảnh + thứ tự + độ lệch giữa 4 ô
@@ -53,6 +55,20 @@ const chandeDevtools = () => {
   const CDK = window.CHANDE_DUCK
   const CGR = window.CHANDE_GRASS
   const CCH = window.CHANDE_CHIPS
+  // CHỈ ADMIN mới có bảng setting (H) và phím mở CMS (K): chạy local, hoặc trình duyệt
+  // đã mở trang với ?admin=1 (nhớ ở localStorage; ?admin=0 để thôi). Khách xem site thật
+  // không có gì — không dựng bảng, không bắt phím, không áp chỉnh sửa tạm ở localStorage.
+  const ADMIN_KEY = 'chande-admin'
+  try {
+    const q = new URLSearchParams(location.search).get('admin')
+    if (q === '1') localStorage.setItem(ADMIN_KEY, '1')
+    else if (q === '0') localStorage.removeItem(ADMIN_KEY)
+  } catch (e) {}
+  const local = /^(localhost|127\.0\.0\.1|\[::1\]|.*\.localhost)$/.test(location.hostname)
+  let admin = local
+  try { admin = admin || localStorage.getItem(ADMIN_KEY) === '1' } catch (e) {}
+  if (!admin) return
+
   if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL && !CPX && !CTF && !CSG && !CGA && !CCH) return
 
   const KEY = 'chande-devtools'
