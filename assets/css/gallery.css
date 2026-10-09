@@ -108,3 +108,23 @@
   .gal__cap{font-size:10px; padding-bottom:.35rem}
   .gal-lb__img{max-width:90vw}
 }
+
+/* ---- Hai con dấu 3D ở góc (chande-stamps.js) ----
+   Canvas dấu phủ trên cùng, không ăn chuột (JS tự dò trúng dấu). Vết mực nằm
+   ngay trên lưới ảnh, trôi theo lưới; multiply để mực thấm vào ảnh / nền. */
+.gal__stamps{position:absolute; inset:0; pointer-events:none}
+.gal.is-stamp-hover{cursor:pointer}
+.gal.is-stamp-hold, .gal.is-stamp-hold *{cursor:grabbing}
+.gal__prints{position:absolute; top:0; left:0; width:0; height:0; pointer-events:none; will-change:transform}
+.gal__print{
+  position:absolute; display:block; max-width:none; pointer-events:none;
+  mix-blend-mode:multiply; opacity:var(--ink, .9);
+  transform:rotate(var(--rot, 0deg));
+  animation:gal-print .28s cubic-bezier(.2,.8,.2,1) backwards;
+  transition:opacity .6s ease;
+}
+.gal__print.is-gone{opacity:0}
+@keyframes gal-print{
+  from{opacity:0; transform:rotate(var(--rot, 0deg)) scale(1.06)}
+  to{opacity:var(--ink, .9); transform:rotate(var(--rot, 0deg)) scale(1)}
+}

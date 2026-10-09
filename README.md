@@ -475,6 +475,29 @@ window.CHANDE_POSTER = { config, mount(scope), destroy(), api }   // api = runti
 
 ---
 
+## 8. Con dấu 3D ở góc gallery (`chande-stamps.js`)
+
+Hai con dấu cao su 3D (three.js, đế tròn có vành + cán tiện tròn, nhựa bóng)
+đứng ở góc dưới trái và góc trên phải của canvas gallery (chừa thanh header).
+Mỗi con in một mẫu SVG trong `assets/img/gallery/stamps/` — mặt núm cán in sẵn
+mẫu đó. Màu theo bảng Chande: dấu 1 cán lime `#68f12b` / đế xanh `#245535`,
+mực xanh; dấu 2 cán kem `#e8e2cb` / đế xanh đen `#1b2625`, mực xanh đen.
+
+- Rê chuột vào: dấu nhấc nhẹ.
+- Bấm giữ + kéo: cầm dấu lên, thả ra là dập xuống đúng chỗ, để lại vết mực (đè
+  cả lên ảnh, `mix-blend-mode:multiply`), rồi dấu tự bay về góc.
+- Bấm một cái: dấu nhảy vào trong màn một đoạn, dập, quay về.
+
+Vết mực gắn toạ độ thế giới gallery nên trôi theo lưới; giữ tối đa
+`CONFIG.maxPrints` vết. Đổi mẫu / màu / góc ở `CONFIG.stamps` đầu file (SVG
+mới cứ tô một màu bất kỳ, code tự đổi sang màu `ink` / `label`).
+
+```js
+window.CHANDE_STAMPS = { config, defaults, mount(scope), destroy(), clear() }
+```
+
+---
+
 ## Responsive
 
 Lưới tham chiếu của bản thiết kế: **8 cột, Stretch, margin 24, gutter 0** ở khổ
