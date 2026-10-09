@@ -52,7 +52,8 @@ const chandeDevtools = () => {
   const CGA = window.CHANDE_GALLERY
   const CDK = window.CHANDE_DUCK
   const CGR = window.CHANDE_GRASS
-  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL && !CPX && !CTF && !CSG && !CGA) return
+  const CCH = window.CHANDE_CHIPS
+  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL && !CPX && !CTF && !CSG && !CGA && !CCH) return
 
   const KEY = 'chande-devtools'
   const KEY_SHOTS = 'chande-devtools-shots'
@@ -73,6 +74,7 @@ const chandeDevtools = () => {
     CPX && { id: 'parallax', label: 'Parallax ảnh', mod: 'parallax' },
     CTF && { id: 'titlefx', label: 'Title Effect', mod: 'titlefx' },
     CSG && { id: 'sign', label: 'Chữ ký viết tay (Cảm nhận)', mod: 'sign' },
+    CCH && { id: 'chips', label: 'Miệng + sóng (Intro)', mod: 'chips' },
     CGA && { id: 'gallery', label: 'Gallery (lưới, vịt, cỏ)', mod: 'gallery' },
     CT && { id: 'sweep', label: 'Rèm quét', mod: 'transition', variant: 'sweep' },
     CT && { id: 'split', label: 'Rèm chẻ', mod: 'transition', variant: 'split' },
@@ -398,6 +400,20 @@ const chandeDevtools = () => {
         { path: 'smooth', label: 'Độ bám (nhỏ = trôi mượt hơn)', type: 'range', min: 0.03, max: 1, step: 0.01 },
       ] },
 
+    // ---- Miệng + sóng ở Intro (chande-chips.js) ----
+    { tab: 'chips', mod: 'chips', title: 'Miệng (khung xanh)',
+      items: [
+        { path: 'preset', label: 'Kiểu miệng', type: 'select',
+          options: Object.entries(CCH?.PRESETS || {}).map(([k, p]) => [k, p.label]) },
+        { path: 'idleMin', label: 'Cử động nhỏ — nghỉ ít nhất (giây)', type: 'range', min: 0.5, max: 8, step: 0.1 },
+        { path: 'idleMax', label: 'Cử động nhỏ — nghỉ nhiều nhất (giây)', type: 'range', min: 0.5, max: 12, step: 0.1 },
+        { path: 'spring', label: 'Độ nảy khi khép ↔ cười (lớn = nhanh)', type: 'range', min: 40, max: 400, step: 5 },
+      ] },
+    { tab: 'chips', mod: 'chips', title: 'Sóng (khung vàng)',
+      items: [
+        { path: 'waveSpeed', label: 'Một vòng sóng (giây, nhỏ = nhanh)', type: 'range', min: 0.4, max: 5, step: 0.05 },
+      ] },
+
     // ---- Chữ ký viết tay (chande-sign.js) — áp từ lần viết sau ----
     { tab: 'sign', mod: 'sign', title: 'Nét bút',
       items: [
@@ -640,7 +656,7 @@ const chandeDevtools = () => {
       ]) },
   ]
 
-  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL, parallax: CPX, titlefx: CTF, sign: CSG, gallery: CGA, duck: CDK, grass: CGR }
+  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL, parallax: CPX, titlefx: CTF, sign: CSG, gallery: CGA, duck: CDK, grass: CGR, chips: CCH }
   const get = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o)
   const set = (o, p, v) => {
     const k = p.split('.')
