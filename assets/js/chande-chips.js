@@ -90,7 +90,7 @@
   //   · tx  lệch lưỡi ngang · dots  chấm ở hai khoé (0…1).
   // upline: phần môi trên được vẽ (0…1, vẽ dần trái -> phải); 0 = chỉ còn môi dưới làm nét
   // chính (một nét duy nhất cong dần như Figma 762 -> 763).
-  const BASE = { lx: -30, ly: 0, rx: 30, ry: 0, up: 0, low: 0, upX: 0, lowX: 0, fill: 0, teeth: 0, tongue: 0, tx: 0, dots: 1, upline: 1 }
+  const BASE = { lx: -30, ly: 0, rx: 30, ry: 0, up: 0, low: 0, upX: 0, lowX: 0, fill: 0, teeth: 0, tongue: 0, tx: 0, dots: 1, upline: 1, teethGap: 0 }
   const shape = (o) => ({ ...BASE, ...o })
   const wave = (k, n = 1) => Math.sin(Math.PI * k * n)
   const bell = (k) => Math.sin(Math.PI * k)
@@ -136,18 +136,21 @@
     // --- kiểu nét mảnh ---
     grin: {
       label: 'Toe (theo Figma)',
-      // 3 pha theo cuộn: 762 đường thẳng -> 763 chính nét đó cong xuống thành cười ->
-      // cười toe: môi trên vẽ dần trái -> phải nối hai chấm, rồi răng mọc lần lượt.
-      closed: shape({ lx: -37.5, rx: 37.5, upline: 0 }),
+      // Theo nguyên tắc animation nụ cười: (1) khoé dẫn trước, khoé phải đi trước, bất
+      // đối xứng; (2) lấy đà — mím nhẹ, khoé co vào rồi mới bung; (3) hai môi TÁCH nhau:
+      // môi trên nhấc, môi dưới hạ, hàng răng trên gắn dưới môi trên lộ đúng bằng khe hở
+      // (không mọc thêm vạch); (4) mở nhanh, khép chậm (lò xo); (5) lố nhẹ rồi dội.
+      // Pha: 762 thẳng -> 763 cong (hai môi trùng nhau = một nét) -> lấy đà -> cười toe.
+      closed: shape({ lx: -37.5, rx: 37.5 }),
       stages: [
-        shape({ lx: -37.5, rx: 37.5, upline: 0 }),
-        shape({ lx: -37.5, rx: 37.5, low: 14, upline: 0 }),
-        Object.assign(shape({ lx: -18.8, ly: 0.5, rx: 37, ry: -7.9, low: 18.5, teeth: 1, upline: 1 }), {
-          // trong chặng cuối: môi trên vẽ ở 0…60%, răng mọc ở 35…100%
-          delay: { upline: [0, 0.6], teeth: [0.35, 1] },
+        shape({ lx: -37.5, rx: 37.5 }),
+        shape({ lx: -37.5, rx: 37.5, up: 14, low: 14 }),
+        shape({ lx: -35.5, ly: 0.6, rx: 35.5, ry: 0.4, up: 12, low: 12 }),
+        Object.assign(shape({ lx: -18.8, ly: 0.5, rx: 37, ry: -7.9, up: 0, low: 18.5, teeth: 1, teethGap: 1 }), {
+          delay: { rx: [0, 0.6], ry: [0, 0.6], lx: [0.1, 0.75], ly: [0.1, 0.75], up: [0.22, 0.95], low: [0.12, 1], teeth: [0.2, 0.5] },
         }),
       ],
-      open: shape({ lx: -18.8, ly: 0.5, rx: 37, ry: -7.9, low: 18.5, teeth: 1, upline: 1 }),
+      open: shape({ lx: -18.8, ly: 0.5, rx: 37, ry: -7.9, low: 18.5, teeth: 1, teethGap: 1 }),
       idleClosed: [
         { dur: 900, fn: (k) => ({ low: 7 * bell(k) }) },
         { dur: 650, fn: (k, s) => ({ ry: -6 * s * bell(k), ly: 2 * s * bell(k) }) },
@@ -272,8 +275,19 @@
     const fill = `M${pt(L)}Q${pt(cu)} ${pt(R)}Q${pt(cl)} ${pt(L)}Z`
     let teeth = ''
     const tk = clamp01(m.teeth)
-    // răng mọc LẦN LƯỢT từ môi trên xuống chạm môi dưới, chiếc sau trễ chiếc trước
-    if (tk > 0.01)
+    // teethGap: HÀNG RĂNG TRÊN gắn dưới môi trên (vạch ngăn + mép dưới răng, cao TOOTH),
+    // cắt theo lòng miệng (clip) -> chỉ lộ đúng phần khe hở giữa hai môi.
+    if (tk > 0.01 && m.teethGap > 0.5) {
+      const TOOTH = 9
+      const cu2 = [cu[0], cu[1] + TOOTH]
+      const L2 = [L[0], L[1] + TOOTH]
+      const R2 = [R[0], R[1] + TOOTH]
+      teeth += `M${pt(L2)}Q${pt(cu2)} ${pt(R2)}`
+      for (const t of [0.3, 0.45, 0.6, 0.75]) {
+        const a = q(L, cu, R, t)
+        teeth += `M${pt(a)}L${pt([a[0], a[1] + TOOTH + 2])}`
+      }
+    } else if (tk > 0.01)
       [0.24, 0.43, 0.62, 0.8].forEach((t, i) => {
         const g = smooth(clamp01((tk - i * 0.16) / 0.52))
         if (g <= 0.01) return
@@ -336,6 +350,7 @@
         lower: el('path', {}, g),
         teeth: el('path', {}, g),
         tongue: el('path', {}, g),
+        teethClip: el('path', {}, el('clipPath', { id: `${cid}t` }, el('defs', {}, svg))),
         dl: el('circle', { r: 3, fill: 'currentColor', stroke: 'none' }, svg),
         dr: el('circle', { r: 3, fill: 'currentColor', stroke: 'none' }, svg),
       }
@@ -397,6 +412,10 @@
       mouth.fill.setAttribute('d', P.fill)
       mouth.fill.setAttribute('fill-opacity', clamp01(m.fill).toFixed(3))
       mouth.teeth.setAttribute('d', P.teeth)
+      mouth.teethClip.setAttribute('d', P.fill)
+      if (m.teethGap > 0.5) mouth.teeth.setAttribute('clip-path', `url(#${cid}t)`)
+      else mouth.teeth.removeAttribute('clip-path')
+      mouth.teeth.setAttribute('stroke-opacity', clamp01(m.teeth).toFixed(3))
       mouth.tongue.setAttribute('d', P.tongue)
       const r = (3 * clamp01(m.dots)).toFixed(2)
       for (const [c, Pt] of [[mouth.dl, P.L], [mouth.dr, P.R]]) {
@@ -429,8 +448,11 @@
       if (waveEl) waveEl.setAttribute('d', wavePath(now / 1000))
       if (mouth) {
         const pr = preset()
-        const k = Math.max(20, CONFIG.spring)
-        v += (k * (goal - s) - 2 * 0.58 * Math.sqrt(k) * v) * dt
+        // mở nhanh (cứng, hơi lố) — khép chậm (mềm, gần như không lố)
+        const opening = goal > s
+        const k = Math.max(20, CONFIG.spring) * (opening ? 1 : 0.55)
+        const z = opening ? 0.55 : 0.8
+        v += (k * (goal - s) - 2 * z * Math.sqrt(k) * v) * dt
         s += v * dt
         let m = pr.stages ? mixStages(pr.stages, s) : mix(pr.closed, pr.open, s)
         if (act) {
