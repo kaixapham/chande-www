@@ -2,14 +2,13 @@
  * CHANDE — Hộp con dấu 3D ở góc dưới phải gallery
  * -----------------------------------------------------------------------------
  * Như khay bút của app vẽ: một khay bo tròn ở góc dưới phải canvas, đứng sẵn
- * hai con dấu cao su 3D (three.js — đế tròn có vành, cán tiện tròn, nhựa bóng)
- * và một nút màu.
+ * hai con dấu cao su 3D (three.js — đế tròn có vành, cán tiện tròn, nhựa bóng).
  *   • Bấm một con dấu trong khay: cầm dấu ra — dấu to lên, lơ lửng theo chuột
  *     (vòng ngắm mờ dưới sàn chỉ chỗ sẽ in). Bấm lại / Esc: cất dấu về khay.
  *   • Đang cầm dấu: bấm (không kéo) vào canvas là dập xuống đúng chỗ đó. Kéo
  *     thì vẫn kéo lưới như thường. Điện thoại: chạm chỗ nào dấu bay tới dập.
- *   • Nút màu: chọn màu cán / đế / mực cho từng dấu (bảng màu Chande hoặc màu
- *     tự chọn) — nhớ theo trình duyệt. Bảng H (devtools) cũng chỉnh được.
+ *   • Màu cán / đế / mực của từng dấu: chỉnh ở bảng H (devtools) → tab Gallery
+ *     → mục "Con dấu". Mực mặc định đỏ như mẫu SVG gốc.
  * Vết in: tô màu mẫu SVG (assets/img/gallery/stamps/*.svg) bằng canvas — mực
  * nhoè loang nhẹ ra mép, ăn mực không đều (một phía đậm một phía nhạt, lốm đốm
  * chỗ thiếu mực), và giấy bị HẰN theo nét mẫu (bóng tối trong mép trên-trái,
@@ -31,38 +30,13 @@ const CONFIG = {
   bleed: 1, // độ nhoè mực (0 = nét sắc)
   deboss: 1, // độ hằn giấy (0 = phẳng)
   stamps: [
-    { name: 'Dấu 1', svg: 'assets/img/gallery/stamps/stamp-001.svg', handle: '#68f12b', base: '#245535', ink: '#245535' },
-    { name: 'Dấu 2', svg: 'assets/img/gallery/stamps/stamp-002.svg', handle: '#e8e2cb', base: '#1b2625', ink: '#1b2625' },
+    { name: 'Dấu 1', svg: 'assets/img/gallery/stamps/stamp-001.svg', handle: '#68f12b', base: '#245535', ink: '#d00000' },
+    { name: 'Dấu 2', svg: 'assets/img/gallery/stamps/stamp-002.svg', handle: '#e8e2cb', base: '#1b2625', ink: '#d00000' },
   ],
-  // Ô màu trong bảng chọn — bảng màu Chande.
-  swatches: ['#0f1513', '#1b2625', '#364b3c', '#245535', '#4b6f52', '#9aa587', '#d6ceab', '#e8e2cb', '#f4f3eb', '#68f12b'],
 }
 // Giá trị đã Lưu ở bảng setting (assets/js/chande-settings.js) đè lên mặc định trên.
 window.CHANDE_SETTINGS_APPLY?.('stamps', CONFIG)
 const DEFAULTS = structuredClone(CONFIG)
-
-const PARTS = [
-  ['handle', 'Cán'],
-  ['base', 'Đế'],
-  ['ink', 'Mực'],
-]
-const HEX = /^#[0-9a-f]{6}$/i
-
-/* ------------------------------------------------- màu riêng của người xem -- */
-const COLOR_KEY = 'chande-stamps-colors'
-function saveColors() {
-  try {
-    const o = {}
-    CONFIG.stamps.forEach((d, i) => (o[i] = { handle: d.handle, base: d.base, ink: d.ink }))
-    localStorage.setItem(COLOR_KEY, JSON.stringify(o))
-  } catch {}
-}
-try {
-  const saved = JSON.parse(localStorage.getItem(COLOR_KEY) || 'null') || {}
-  CONFIG.stamps.forEach((d, i) => {
-    for (const [k] of PARTS) if (HEX.test(saved[i]?.[k] || '')) d[k] = saved[i][k]
-  })
-} catch {}
 
 const lum = (hex) => {
   const n = parseInt(hex.slice(1), 16)
@@ -312,38 +286,13 @@ function buildUI() {
   tools.className = 'gal-tools'
   tools.setAttribute('role', 'toolbar')
   tools.setAttribute('aria-label', 'Con dấu')
-  tools.innerHTML =
-    CONFIG.stamps
-      .map(
-        (d, i) =>
-          `<button type="button" class="gal-tools__slot" data-slot="${i}" aria-pressed="false" aria-label="${d.name}" title="${d.name}"></button>`,
-      )
-      .join('') +
-    '<span class="gal-tools__sep" aria-hidden="true"></span>' +
-    '<button type="button" class="gal-tools__color" aria-expanded="false" aria-label="Màu con dấu" title="Màu con dấu"><span></span></button>'
-
-  const pop = document.createElement('div')
-  pop.className = 'gal-tools__pop'
-  pop.hidden = true
-  pop.setAttribute('role', 'dialog')
-  pop.setAttribute('aria-label', 'Màu con dấu')
-  pop.innerHTML =
-    '<div class="gal-tools__tabs" role="tablist">' +
-    CONFIG.stamps
-      .map((d, i) => `<button type="button" role="tab" data-tab="${i}" aria-selected="${i === 0}">${d.name}</button>`)
-      .join('') +
-    '</div>' +
-    PARTS.map(
-      ([k, label]) =>
-        `<div class="gal-tools__row" data-part="${k}"><span class="gal-tools__lbl">${label}</span><div class="gal-tools__sw">` +
-        CONFIG.swatches
-          .map((c) => `<button type="button" data-color="${c}" style="--c:${c}" aria-label="${label} ${c}"></button>`)
-          .join('') +
-        `<label class="gal-tools__pick" title="Màu khác"><input type="color" id="gal-stamp-${k}" aria-label="${label}: màu khác"></label>` +
-        '</div></div>',
-    ).join('') +
-    '<button type="button" class="gal-tools__reset">Về màu mặc định</button>'
-  return { tools, pop }
+  tools.innerHTML = CONFIG.stamps
+    .map(
+      (d, i) =>
+        `<button type="button" class="gal-tools__slot" data-slot="${i}" aria-pressed="false" aria-label="${d.name}" title="${d.name}"></button>`,
+    )
+    .join('')
+  return tools
 }
 
 /* --------------------------------------------------------------- sân khấu -- */
@@ -361,13 +310,12 @@ function mount(root = document) {
   if (world) world.after(prints)
   else stage.prepend(prints)
 
-  // Khay nằm DƯỚI canvas 3D (dấu đứng "trong" khay), bảng màu trên cùng.
-  const { tools, pop } = buildUI()
+  // Khay nằm DƯỚI canvas 3D (dấu đứng "trong" khay).
+  const tools = buildUI()
   stage.appendChild(tools)
   const cv = document.createElement('canvas')
   cv.className = 'gal__stamps'
   stage.appendChild(cv)
-  stage.appendChild(pop)
 
   const renderer = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: true })
   renderer.setPixelRatio(Math.min(2, devicePixelRatio))
@@ -430,7 +378,6 @@ function mount(root = document) {
     stage,
     prints,
     tools,
-    pop,
     canvas: cv,
     renderer,
     scene,
@@ -445,7 +392,6 @@ function mount(root = document) {
     ptr: null,
     down: null,
     held: null,
-    tab: 0,
     eatClick: 0,
     printList: [],
     raf: 0,
@@ -468,38 +414,22 @@ function mount(root = document) {
     el.addEventListener(ev, fn, opt)
     D.off.push(() => el.removeEventListener(ev, fn, opt))
   }
-  // Khay / bảng màu không kéo lưới, không mở lightbox.
-  for (const el of [tools, pop]) {
-    on(el, 'pointerdown', (e) => e.stopPropagation())
-    on(el, 'wheel', (e) => e.stopPropagation())
-    on(el, 'click', (e) => e.stopPropagation())
-  }
+  // Khay không kéo lưới, không mở lightbox.
+  on(tools, 'pointerdown', (e) => e.stopPropagation())
+  on(tools, 'wheel', (e) => e.stopPropagation())
+  on(tools, 'click', (e) => e.stopPropagation())
   stamps.forEach((s) => {
     on(s.slot, 'click', () => toggle(s))
     on(s.slot, 'pointerenter', () => (s.hovered = true))
     on(s.slot, 'pointerleave', () => (s.hovered = false))
   })
-  on(tools.querySelector('.gal-tools__color'), 'click', () => openPop(pop.hidden))
-  pop.querySelectorAll('[data-tab]').forEach((b) => on(b, 'click', () => setTab(+b.dataset.tab)))
-  pop.querySelectorAll('[data-part]').forEach((row) => {
-    const part = row.dataset.part
-    row.querySelectorAll('[data-color]').forEach((b) => on(b, 'click', () => setColor(D.tab, part, b.dataset.color)))
-    const inp = row.querySelector('input[type=color]')
-    on(inp, 'input', () => setColor(D.tab, part, inp.value))
-  })
-  on(pop.querySelector('.gal-tools__reset'), 'click', () => {
-    for (const [k] of PARTS) setColor(D.tab, k, DEFAULTS.stamps[D.tab][k])
-  })
-
   on(window, 'pointerdown', onDown, true)
   on(window, 'pointermove', onMove, { passive: true })
   on(window, 'pointerup', onUp, true)
   on(window, 'pointercancel', () => D && (D.down = null), true)
   on(window, 'click', onClickEat, true)
   on(window, 'keydown', (e) => {
-    if (e.key !== 'Escape' || !D) return
-    if (!D.pop.hidden) openPop(false)
-    else if (D.held) putBack()
+    if (e.key === 'Escape' && D?.held) putBack()
   })
   on(window, 'resize', () => resize())
   resize()
@@ -529,7 +459,6 @@ function destroy() {
   D.canvas.remove()
   D.prints.remove()
   D.tools.remove()
-  D.pop.remove()
   D.stage.classList.remove('is-stamping')
   D = null
 }
@@ -590,7 +519,7 @@ function updateLabel(s) {
   D.dirty = true
 }
 
-// Áp màu trong CONFIG lên khối 3D (sau khi đổi ở khay hoặc ở bảng H).
+// Áp màu trong CONFIG lên khối 3D (sau khi đổi ở bảng H).
 function applyColors() {
   D.stamps.forEach((s) => {
     paint(s.handleMat, s.def.handle)
@@ -602,35 +531,7 @@ function applyColors() {
   D.dirty = true
 }
 
-function setColor(i, part, hex) {
-  const s = D?.stamps[i]
-  if (!s || !HEX.test(hex)) return
-  s.def[part] = hex.toLowerCase()
-  applyColors()
-  saveColors()
-}
-
-function setTab(i) {
-  D.tab = i
-  syncUI()
-}
-
-function openPop(open) {
-  D.pop.hidden = !open
-  D.tools.querySelector('.gal-tools__color').setAttribute('aria-expanded', String(open))
-  if (open) syncUI()
-}
-
 function syncUI() {
-  const d = CONFIG.stamps[D.tab]
-  D.tools.querySelector('.gal-tools__color').style.setProperty('--c', d.ink)
-  D.pop.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(+b.dataset.tab === D.tab)))
-  D.pop.querySelectorAll('[data-part]').forEach((row) => {
-    const v = d[row.dataset.part].toLowerCase()
-    row.querySelectorAll('[data-color]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.color === v)))
-    row.querySelector('input[type=color]').value = v
-    row.querySelector('.gal-tools__pick').style.setProperty('--c', v)
-  })
   D.stamps.forEach((s) => s.slot.setAttribute('aria-pressed', String(D.held === s)))
 }
 
@@ -639,11 +540,11 @@ const localPt = (e) => {
   const r = D.stage.getBoundingClientRect()
   return { x: e.clientX - r.left, y: e.clientY - r.top }
 }
-// Chỗ in được: trong canvas gallery, không phải khay / bảng màu / lightbox.
+// Chỗ in được: trong canvas gallery, không phải khay / lightbox.
 const onCanvas = (e) =>
   e.target instanceof Element &&
   D.stage.contains(e.target) &&
-  !e.target.closest('.gal-tools, .gal-tools__pop') &&
+  !e.target.closest('.gal-tools') &&
   !document.querySelector('.gal-lb')
 
 function toggle(s) {
@@ -652,7 +553,6 @@ function toggle(s) {
   if (s.state !== 'tray' && s.state !== 'back') return
   D.held = s
   s.state = 'held'
-  D.tab = s.i
   D.stage.classList.add('is-stamping')
   syncUI()
 }
@@ -668,9 +568,7 @@ function putBack() {
 }
 
 function onDown(e) {
-  if (!D) return
-  if (!D.pop.hidden && !e.target.closest?.('.gal-tools__pop, .gal-tools__color')) openPop(false)
-  if (!D.held || e.button !== 0 || !onCanvas(e)) return
+  if (!D?.held || e.button !== 0 || !onCanvas(e)) return
   const p = localPt(e)
   D.down = { ...p, id: e.pointerId }
   D.ptr = p // chạm (điện thoại): dấu bay tới chỗ chạm
@@ -884,10 +782,8 @@ window.CHANDE_STAMPS = {
   refresh() {
     if (!D) return
     applyColors()
-    saveColors()
     resize()
   },
-  setColor: (i, part, hex) => setColor(i, part, hex),
   // Cầm dấu thứ i ra (null = cất về khay).
   pick(i) {
     if (!D) return
