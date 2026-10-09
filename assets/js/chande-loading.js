@@ -254,6 +254,9 @@
   src:url('${S.fontDir}Phudu-SemiBold-vietnamese.woff2') format('woff2');
   unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB}
 
+/* nền gốc (thẻ html) cũng tối lúc loading: trình duyệt tô màu này vào phần bị bo / tràn
+   ngoài nội dung (góc bo của khung trình duyệt, overscroll) — nền kem lộ thành mảng sáng */
+html.cl-loading{background:${S.bg}}
 .cl{
   position:fixed; inset:0; z-index:9998;
   font-size:calc(clamp(1440px, 100vw, 1920px) / 120);
@@ -606,6 +609,11 @@
     step(el.brand,
     [{ backgroundColor: TRANSPARENT, color: S.cream, borderColor: hairline() },
      { backgroundColor: S.cream, color: S.green, borderColor: 'rgba(255,255,255,0)' }],
+    M.dockStart, dockD)
+    // 3b. nền gốc (thẻ html) đổi cùng nhịp ô trái: trình duyệt tô màu này vào góc bo của
+    // khung / phần tràn — luôn trùng màu với ô logo ở góc trên trái, không lộ mảng sáng
+    step(document.documentElement,
+    [{ backgroundColor: S.bg }, { backgroundColor: S.cream }],
     M.dockStart, dockD)
     // 4. track: nền xám -> tối, fill xanh trượt khỏi khung
     step(el.track,
