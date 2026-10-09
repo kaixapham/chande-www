@@ -45,7 +45,7 @@
     // ảnh có chuyển động / clip-path riêng, và icon nhỏ (chấm, mũi tên, tem)
     exclude:
       '.hero *, .hs-land *:not(.hs-land__bg), .hs-poster *, .agenda__dates *, .cl *, [data-name-photo] *, ' +
-      '.cta *, .pill *, .hs-quote__nav *, .hs-quote__strip, .agenda__nav *, .agenda__stamp, .hs-story__media *, img[src$=".svg"]',
+      '.cta *, .pill *, .hs-quote__nav *, .hs-quote__strip, .agenda__nav *, .agenda__stamp, .hs-story__media *, .circle .peek, img[src$=".svg"]',
   }
   window.CHANDE_SETTINGS_APPLY?.('parallax', CONFIG)
   const DEFAULTS = structuredClone(CONFIG)

@@ -36,8 +36,9 @@
  * Chỉ bật với chuột thật và khi không reduced-motion.
  *
  * API: window.CHANDE_BUBBLE = { config, defaults, refresh(), state, lead(fn), lure(fn) }
- *   lure(fn): mỗi khung fn() trả { x, y, r, hide } -> giọt bị hút về (x, y), co còn bán
- *   kính r (px), hide = tan mất (bị nuốt); trả null -> về lại theo chuột như thường.
+ *   lure(fn, key = 'default'): mỗi khung fn() trả { x, y, r, hide } -> giọt bị hút về
+ *   (x, y), đổi bán kính thành r (px), hide = tan mất (bị nuốt); trả null -> về lại theo
+ *   chuột. Nhiều module hút cùng lúc được (mỗi module một key); fn(null) gỡ key đó.
  *   lead(fn): giọt bỏ chuột, bám theo điểm fn() trả về ({x, y} toạ độ màn,
  *   null = tan đi) mỗi khung — trang Gallery cho giọt đi theo vịt patin
  *   (chande-duck.js). lead(null) trả giọt về cho chuột.
@@ -508,7 +509,7 @@ void main () {
   let mulTarget = 1
   let overBtn = false // con trỏ đang trên nút / link (hoverSel)
   let leader = null // lead(fn): giọt đi theo fn() thay vì chuột
-  let lure = null // lure(fn): bị hút về một điểm (miệng ở Intro nuốt giọt)
+  const lures = new Map() // lure(fn, key): bị hút về một điểm (miệng Intro, vòng tròn About)
   let luring = false
   let ptrIn = false // chuột đang trong cửa sổ (kể cả khi giọt đang được dắt)
   let ptrVX = 0 // vận tốc con trỏ (px/s, tắt dần khi chuột đứng yên)
@@ -661,7 +662,8 @@ void main () {
       } else presenceTarget = 0
     }
     // Bị hút (lure): bay về điểm hút, co theo cỡ yêu cầu, có thể tan mất (bị nuốt)
-    const lu = !leader && lure ? lure() : null
+    let lu = null
+    if (!leader) for (const fn of lures.values()) if ((lu = fn())) break
     if (lu) {
       targetX = lu.x
       targetY = lu.y
@@ -896,8 +898,9 @@ void main () {
     start()
   }
 
-  api.lure = (fn) => {
-    lure = typeof fn === 'function' ? fn : null
+  api.lure = (fn, key = 'default') => {
+    if (typeof fn === 'function') lures.set(key, fn)
+    else lures.delete(key)
     start()
   }
 
