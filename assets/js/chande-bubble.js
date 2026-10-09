@@ -498,6 +498,9 @@ void main () {
   let targetX = headX
   let targetY = headY
   let presence = 0
+  // độ hiện (opacity) khi vào / ra vùng hideIn — mờ dần chứ không co biến mất
+  let fade = 1
+  let fadeTarget = 1
   let presenceTarget = 0
   let hasPointer = false
   let time = 0
@@ -741,6 +744,13 @@ void main () {
     trailX[0] = headX
     trailY[0] = headY
     presence += (presenceTarget - presence) * kScale
+    fade += (fadeTarget - fade) * (1 - Math.exp(-delta * 7))
+    if (Math.abs(fadeTarget - fade) < 0.002) fade = fadeTarget
+    const op = fade >= 1 ? '' : fade.toFixed(3)
+    if (output.style.opacity !== op) {
+      output.style.opacity = op
+      lens.style.opacity = op
+    }
     mul += (mulTarget - mul) * (1 - Math.exp(-delta * 6))
     if (Math.abs(mulTarget - mul) < 0.002) mul = mulTarget
     render()
@@ -755,7 +765,7 @@ void main () {
     }
     // Đứng yên: đầu đã tới chuột, đuôi đã gom vào đầu, giọt đã phồng đủ -> dừng.
     // pointermove kế tiếp gọi start() chạy lại.
-    let spread = Math.abs(targetX - headX) + Math.abs(targetY - headY) + Math.abs(presenceTarget - presence) * 100 + Math.abs(mulTarget - mul) * 100
+    let spread = Math.abs(targetX - headX) + Math.abs(targetY - headY) + Math.abs(presenceTarget - presence) * 100 + Math.abs(mulTarget - mul) * 100 + Math.abs(fadeTarget - fade) * 100
     const c = count()
     for (let i = 1; i < c && spread < 0.25; i++) spread += Math.abs(trailX[i] - headX) + Math.abs(trailY[i] - headY)
     state.moving = spread >= 0.25
@@ -820,10 +830,11 @@ void main () {
       ptrIn = true
       if (leader) return
       aim()
-      if (hiddenHere()) {
-        presenceTarget = 0
+      // vùng ẩn giọt (hideIn): mờ dần đi, giữ nguyên cỡ — ra khỏi thì hiện dần lại
+      const hide = hiddenHere() ? 0 : 1
+      if (hide !== fadeTarget) {
+        fadeTarget = hide
         start()
-        return
       }
       const title = !!(CONFIG.hoverOn && CONFIG.hoverTitleSel && e.target?.closest?.(CONFIG.hoverTitleSel))
       const eye = !title && !!(CONFIG.hoverOn && CONFIG.hoverEyeSel && e.target?.closest?.(CONFIG.hoverEyeSel))
@@ -901,8 +912,8 @@ void main () {
     () => {
       if (leader || !hasPointer) return
       const want = hiddenHere() ? 0 : 1
-      if (want !== presenceTarget) {
-        presenceTarget = want
+      if (want !== fadeTarget) {
+        fadeTarget = want
         start()
       }
     },
