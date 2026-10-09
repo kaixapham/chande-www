@@ -4,8 +4,8 @@
  * Bubble vẫn đi theo chuột như thường (KHÔNG hút, không bắt đứng yên). Lại gần
  * vòng tròn thì bubble phình to hơn lõi một chút. Ảnh .peek (giữ cho CMS) được vẽ
  * lên canvas phủ lõi: lòng bubble là ảnh LIỀN, chỉ dải sát MÉP bubble tách thành ô
- * (như các mảng gạch mosaic ở hero) — càng ra ngoài ô càng co nhỏ, mép so le theo
- * từng ô. Bubble đè lên lõi tới đâu thì lộ ảnh tới đó, chạm mép cũng thấy vài ô.
+ * (như các mảng gạch mosaic ở hero) — càng ra ngoài ô càng co nhỏ và ngả dần sang màu
+ * lõi, mép so le theo từng ô. Bubble đè lên lõi tới đâu thì lộ ảnh tới đó, chạm mép cũng thấy vài ô.
  *
  * API: window.CHANDE_CIRCLES = { config, mount(root), destroy() }
  * ========================================================================== */
@@ -42,6 +42,20 @@
       o.peek.after(o.cv)
       o.ctx = o.cv.getContext('2d')
       o.drawn = false
+      // màu lõi (đọc điểm giữa hình lõi) — ô ngoài cùng hoà dần vào màu này
+      o.tint = null
+      const readTint = () => {
+        try {
+          const t = document.createElement('canvas')
+          t.width = t.height = 8
+          const tc = t.getContext('2d')
+          tc.drawImage(o.core, 0, 0, 8, 8)
+          const d = tc.getImageData(4, 4, 1, 1).data
+          o.tint = `${d[0]},${d[1]},${d[2]}`
+        } catch {}
+      }
+      if (o.core.complete && o.core.naturalWidth) readTint()
+      else o.core.addEventListener('load', readTint, { once: true })
       // so le mép theo từng ô (cố định, không nhấp nháy)
       o.jit = Array.from({ length: CONFIG.cells * CONFIG.cells }, () => Math.random() - 0.5)
     }
@@ -88,6 +102,11 @@
           const dx = x - sz / 2
           const dy = y - sz / 2
           ctx.drawImage(img, (dx - ox) / sc, (dy - oy) / sc, sz / sc, sz / sc, dx, dy, sz, sz)
+          // càng ra ngoài càng phủ màu lõi
+          if (o.tint && k < 1) {
+            ctx.fillStyle = `rgba(${o.tint},${((1 - k) * 0.95).toFixed(3)})`
+            ctx.fillRect(dx, dy, sz, sz)
+          }
           o.drawn = true
         }
     }
