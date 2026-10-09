@@ -6,15 +6,21 @@
  * mốc `start` (phần màn từ trên xuống) thì bắt đầu, tới mốc `end` thì tô xong
  * -> dòng dưới tự trễ hơn dòng trên khi cuộn.
  *
- * Tô bằng gradient cắt theo chữ (background-clip: text), toạ độ tính theo cả dòng
- * nên các từ nối liền một vệt:  [màu chữ] —band— [màu chuyển] —band— [màu nền chữ]
- * Mép quét là một dải màu chuyển, phía trước là chữ mờ (màu nền chữ + độ đậm).
+ * Tô bằng LỚP MÀU HOÀ TRỘN (mix-blend-mode: lighten) đặt trên từng dòng chữ, chữ
+ * thật luôn đen và KHÔNG BAO GIỜ vẽ lại: lighten = max(nền, lớp) -> chỗ chữ đen hiện
+ * đúng màu lớp, chỗ nền kem giữ nguyên (mọi màu tô phải tối hơn nền — kem 244,243,235
+ * sáng hơn đen / lime #68f12b / xám 12%). Mỗi dòng: lớp màu chưa tô + khối màu đã tô +
+ * khối dải chuyển, cuộn chỉ TRƯỢT hai khối bằng transform (compositor) — trước đây
+ * ghi lại background-clip:text của từng từ mỗi khung, Safari vẽ lại chữ to nên giật.
+ *   [màu chữ] —band— [màu chuyển] —band— [màu nền chữ]
+ * Vùng các dòng chia theo điểm giữa hai dòng kề nhau (dòng đặt rất sát, line-height .8)
+ * nên phủ kín chữ, không chồng nhau.
  *
  * dither: hai đoạn chuyển không mịn mà thành ô pixel (ma trận Bayer 8×8, mỗi ô
  * `ditherSize` px): màu trước thưa dần trên nền màu sau. Mỗi đoạn là một ảnh
  * dốc (canvas → data URL, cache theo số cột + màu) phủ lên nền màu đặc, lặp dọc.
  *
- * Chỉ tính khi tiêu đề đang gần màn; mỗi khung chỉ ghi background của các từ.
+ * Chỉ tính khi tiêu đề đang gần màn; mỗi khung chỉ ghi transform của hai khối / dòng.
  * Giảm chuyển động / tắt -> chữ về màu gốc.
  *
  * API: window.CHANDE_TITLEFX = { config, defaults, refresh(), mount(root) }
@@ -44,16 +50,12 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
 
   const style = document.createElement('style')
-  // .hs-about__statement span{display:block} sẽ biến từng từ thành khối -> ép inline-block.
-  // background-clip:text chỉ tô trong hộp của từ, mà nét chữ Phudu tràn khỏi hộp
-  // (dòng đặt rất sát; đỉnh A, mép phải P) -> nới hộp bằng padding, margin âm bù
-  // lại nên chữ không xê dịch. Toạ độ gradient đo theo hộp đã nới nên vẫn khớp.
-  // Mỗi từ là inline-block + lớp riêng (will-change): đổi nền một từ chỉ vẽ lại từ đó,
-  // không phải cả đoạn chữ to — Safari vẽ lại cả đoạn background-clip:text mỗi khung là giật.
-  // Padding dọc .5em + margin âm bù lại nên dòng không cao thêm, chữ không xê dịch.
+  // .hs-about__statement span{display:block} sẽ biến từng từ thành khối -> ép inline.
   style.textContent =
-    '.tfx-w{display:inline-block !important; padding:.5em .15em; margin:-.5em -.15em; will-change:transform}' +
-    '.tfx-on .tfx-w{color:transparent; -webkit-background-clip:text; background-clip:text; background-repeat:no-repeat; image-rendering:pixelated}'
+    '.tfx-w{display:inline !important}' +
+    '.tfx-on{color:#000 !important}' +
+    '.tfx-ln{position:absolute; overflow:hidden; mix-blend-mode:lighten; pointer-events:none}' +
+    '.tfx-ln > i{position:absolute; left:0; top:0; height:100%; will-change:transform; image-rendering:pixelated}'
   document.head.appendChild(style)
 
   let titles = [] // { el, words: [{ el, line, x }], lines: [{ top, left, width, p }], on }
@@ -63,10 +65,22 @@
   let last = 0
 
   const clamp01 = (v) => Math.min(1, Math.max(0, v))
-  const rgba = (hex, a) => {
+
+
+  // màu nền thật phía sau tiêu đề (tổ tiên gần nhất có nền đặc)
+  const backdrop = (el) => {
+    for (let e = el; e; e = e.parentElement) {
+      const m = getComputedStyle(e).backgroundColor.match(/[\d.]+/g)
+      if (m && (m[3] === undefined || +m[3] > 0.5)) return m.slice(0, 3).map(Number)
+    }
+    return [255, 255, 255]
+  }
+  const solidOver = (hex, a, bg) => {
     const h = String(hex || '#000').replace('#', '')
     const n = parseInt(h.length === 3 ? h.replace(/./g, '$&$&') : h.slice(0, 6), 16) || 0
-    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${clamp01(+a)})`
+    const k = clamp01(+a)
+    const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v, i) => Math.round(v * k + bg[i] * (1 - k)))
+    return `rgb(${c.join(',')})`
   }
 
   // Ảnh dốc dither: `cols` cột × 8 hàng (1px = 1 ô), ô có màu `color` khi ngưỡng
@@ -117,7 +131,8 @@
     return [...el.querySelectorAll('.tfx-w')]
   }
 
-  // Gom từ theo dòng hiển thị: cùng top (sai số nửa dòng) là một dòng.
+  // Gom từ theo dòng hiển thị: cùng top (sai số nửa dòng) là một dòng. Rồi dựng lớp
+  // màu cho từng dòng (chỉ lúc đo — đổi cỡ màn / font / setting).
   function measure(t) {
     const base = t.el.getBoundingClientRect()
     const lines = []
@@ -131,62 +146,77 @@
       }
       ln.left = Math.min(ln.left, r.left - base.left)
       ln.right = Math.max(ln.right, r.right - base.left)
-      w.line = ln
-      w.x = r.left - base.left
-      w.w = r.width
-      w.key = '' // đo lại -> vẽ lại
     })
     lines.forEach((l) => (l.width = Math.max(1, l.right - l.left)))
     t.lines = lines
+    build(t)
+  }
+
+  function build(t) {
+    t.layers?.forEach((n) => n.remove())
+    t.layers = []
+    if (getComputedStyle(t.el).position === 'static') t.el.style.position = 'relative'
+    const fin = CONFIG.color
+    const acc = CONFIG.accent
+    // màu chưa tô phải ĐẶC (lighten với màu trong suốt không đổi gì): trộn sẵn với nền
+    const bas = solidOver(CONFIG.base, CONFIG.baseAlpha, backdrop(t.el))
+    const dz = Math.max(1, Math.round(CONFIG.ditherSize))
+    const pad = (parseFloat(getComputedStyle(t.el).fontSize) || 16) * 0.2 // nét chữ tràn khỏi hộp từ
+    const L = t.lines
+    const mid = (i) => L[i].top + L[i].h / 2
+    // mọi lớp rộng bằng CẢ khối chữ: nét chữ dòng dài thòi xuống vùng của dòng ngắn kề
+    // nó (chân Y, ngoặc) vẫn có lớp phủ
+    const x0 = Math.min(...L.map((l) => l.left)) - pad
+    const W = Math.max(...L.map((l) => l.right)) + pad - x0
+    L.forEach((l, i) => {
+      // vùng dọc: từ giữa dòng trên tới giữa dòng dưới (dòng đầu / cuối nới thêm)
+      const y0 = i ? (mid(i - 1) + mid(i)) / 2 : mid(i) - l.h * 0.65
+      const y1 = i < L.length - 1 ? (mid(i) + mid(i + 1)) / 2 : mid(i) + l.h * 0.65
+      const cols = Math.max(1, Math.round((CONFIG.band * l.width) / dz))
+      const b = CONFIG.dither ? cols * dz : Math.max(1, CONFIG.band * l.width)
+      const ln = document.createElement('i')
+      ln.className = 'tfx-ln'
+      ln.setAttribute('aria-hidden', 'true')
+      Object.assign(ln.style, {
+        left: `${x0}px`,
+        top: `${y0}px`,
+        width: `${W}px`,
+        height: `${y1 - y0}px`,
+        background: bas,
+      })
+      const done = document.createElement('i') // khối màu đã tô, mép phải nối vào dải chuyển
+      done.style.width = `${W + 2 * pad}px`
+      done.style.background = fin
+      const band = document.createElement('i') // dải chuyển: [màu chữ → màu chuyển][màu chuyển → chưa tô]
+      band.style.width = `${2 * b}px`
+      if (CONFIG.dither) {
+        band.style.backgroundImage = `${ramp(cols, fin)}, ${ramp(cols, acc)}, linear-gradient(90deg, ${acc} ${b}px, ${bas} ${b}px)`
+        band.style.backgroundSize = `${b}px ${8 * dz}px, ${b}px ${8 * dz}px, 100% 100%`
+        band.style.backgroundPosition = `0 0, ${b}px 0, 0 0`
+        band.style.backgroundRepeat = 'repeat-y, repeat-y, no-repeat'
+      } else band.style.background = `linear-gradient(90deg, ${fin}, ${acc} ${b}px, ${bas} ${2 * b}px)`
+      ln.append(done, band)
+      t.el.append(ln)
+      t.layers.push(ln)
+      // o: đầu dòng trong lớp, run: quãng mép quét chạy hết dòng (đi từ trước đầu dòng tới sau cuối dòng)
+      Object.assign(l, { W, dw: W + 2 * pad, b, o: l.left - pad - x0, run: l.width + 2 * pad + 2 * b, done, band, key: '' })
+    })
   }
 
   function paint(t) {
-    const fin = CONFIG.color
-    const acc = CONFIG.accent
-    const bas = rgba(CONFIG.base, CONFIG.baseAlpha)
-    const dz = Math.max(1, Math.round(CONFIG.ditherSize))
-    // Chỉ GHI LẠI nền của từ khi cần: từ đã tô xong / chưa tới lượt là màu đặc, chỉ
-    // ghi một lần lúc đổi trạng thái; chỉ từ nằm dưới mép quét mới vẽ lại mỗi khung.
-    // (ghi lại background-clip:text của cả đoạn chữ to mỗi khung là thứ làm giật cuộn)
-    const solid = (w, key, c) => {
-      if (w.key === key) return
-      w.key = key
-      const s = w.el.style
-      s.backgroundImage = `linear-gradient(${c}, ${c})`
-      s.backgroundSize = s.backgroundPosition = s.backgroundRepeat = ''
-    }
-    t.words.forEach((w) => {
-      const l = w.line
-      const s = w.el.style
-      {
-        const dzb = CONFIG.dither ? Math.max(1, Math.round((CONFIG.band * l.width) / dz)) * dz : Math.max(1, CONFIG.band * l.width)
-        const F = l.p * (l.width + 2 * dzb) - (w.x - l.left)
-        if (F - 2 * dzb >= w.w) return solid(w, 'fin', fin) // mép quét đã qua hết từ
-        if (F <= 0) return solid(w, 'base', bas) // mép quét chưa tới từ
-        w.key = 'mid'
-      }
-      if (CONFIG.dither) {
-        // band làm tròn theo ô để ảnh dốc khớp đúng đoạn chuyển
-        const cols = Math.max(1, Math.round((CONFIG.band * l.width) / dz))
-        const b = cols * dz
-        const F = l.p * (l.width + 2 * b) - (w.x - l.left)
-        const x1 = (F - 2 * b).toFixed(1)
-        const x2 = (F - b).toFixed(1)
-        // dưới cùng: ba khối màu đặc; trên: hai ảnh dốc (màu chữ thưa dần trên màu
-        // chuyển, màu chuyển thưa dần trên màu chưa tô)
-        s.backgroundImage = `${ramp(cols, fin)}, ${ramp(cols, acc)}, ` +
-          `linear-gradient(90deg, ${fin} ${x1}px, ${acc} ${x1}px ${x2}px, ${bas} ${x2}px)`
-        s.backgroundSize = `${b}px ${8 * dz}px, ${b}px ${8 * dz}px, 100% 100%`
-        s.backgroundPosition = `${x1}px 0, ${x2}px 0, 0 0`
-        s.backgroundRepeat = 'repeat-y, repeat-y, no-repeat'
-      } else {
-        const b = Math.max(1, CONFIG.band * l.width)
-        // mép quét F (toạ độ dòng) chạy từ 0 tới hết dòng + 2 band
-        const F = l.p * (l.width + 2 * b) - (w.x - l.left)
-        s.backgroundImage =
-          `linear-gradient(90deg, ${fin} ${(F - 2 * b).toFixed(1)}px, ${acc} ${(F - b).toFixed(1)}px, ${bas} ${F.toFixed(1)}px)`
-        s.backgroundSize = s.backgroundPosition = s.backgroundRepeat = ''
-      }
+    const dpr = devicePixelRatio || 1
+    t.lines.forEach((l) => {
+      if (!l.band) return
+      // mép trái dải chuyển: p = 0 -> dải nằm ngay trước đầu dòng, p = 1 -> ra sau cuối dòng;
+      // chưa bắt đầu / xong hẳn thì đẩy hẳn ra ngoài lớp (phủ cả phần nét tràn của dòng kề)
+      let x = l.o - 2 * l.b + l.p * l.run
+      if (l.p <= 0) x = -2 * l.b - 1
+      else if (l.p >= 1) x = l.W + 1
+      x = Math.round(x * dpr) / dpr
+      if (l.key === x) return
+      l.key = x
+      l.band.style.transform = `translate3d(${x}px,0,0)`
+      l.done.style.transform = `translate3d(${x - l.dw}px,0,0)`
     })
   }
 
@@ -242,7 +272,7 @@
     })
     if (!titles.length) return
     ro = new ResizeObserver(() => {
-      titles.forEach(measure)
+      titles.forEach((t) => (measure(t), paint(t)))
       kick()
     })
     titles.forEach((t) => ro.observe(t.el))
@@ -259,7 +289,7 @@
     titles.forEach((t) => io.observe(t.el))
     addEventListener('scroll', kick, { passive: true })
     document.fonts?.ready.then(() => {
-      titles.forEach(measure)
+      titles.forEach((t) => (measure(t), paint(t)))
       kick()
     })
   }
@@ -275,10 +305,7 @@
     last = 0
     titles.forEach((t) => {
       t.el.classList.remove('tfx-on')
-      t.words.forEach((w) => {
-        const s = w.el.style
-        s.backgroundImage = s.backgroundSize = s.backgroundPosition = s.backgroundRepeat = ''
-      })
+      t.layers?.forEach((n) => n.remove())
     })
     titles = []
   }
