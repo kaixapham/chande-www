@@ -4,7 +4,7 @@
  * Lúc màn loading còn chạy (html.cl-loading) thì đặt sẵn ảnh / chữ của hero ở trạng
  * thái ẩn (nằm sau màn loading nên không ai thấy). Khi 'chande-loading:done':
  *   • ẢNH (4 ô người, mảng mosaic, khối tối, dải viên thuốc, ảnh recap): lộ từ dưới
- *     lên bằng clip-path + phóng nhẹ 1.1 -> 1, lần lượt theo vị trí (trái -> phải,
+ *     lên bằng clip-path (không transform — các module khác đo khung), lần lượt theo vị trí (trái -> phải,
  *     trên -> dưới).
  *   • CHỮ: tiêu đề trồi cả khối lên (giữ nguyên DOM); các cụm chữ nhỏ (logo, phụ
  *     đề, ©26, chữ giới thiệu, scroll more) trồi lên + lộ dần.
@@ -63,10 +63,12 @@
 
   const HIDE = 'inset(100% 0% 0% 0%)'
   const SHOW = 'inset(0% 0% 0% 0%)'
-  // ô ảnh người: hero.js đo khung này -> chỉ clip, không phóng
-  const noScale = (el) => el.classList.contains('hero-card__media')
-  gsap.set(imgs, { clipPath: HIDE, scale: (i, el) => (noScale(el) ? 1 : 1.1), transformOrigin: '50% 100%' })
-  gsap.set(texts, { clipPath: 'inset(0% 0% 100% 0%)', yPercent: 60 })
+  // CHỈ clip-path, không transform: hero.js / field.js / mosaic đo các khung này bằng
+  // getBoundingClientRect — phóng / dịch lúc đang đo là gạch mosaic vẽ sai cỡ, lệch chỗ
+  gsap.set(imgs, { clipPath: HIDE })
+  // khối chữ giới thiệu được chande-home.js đo (chia lớp sáng / tối) -> chỉ clip, không dịch
+  const still = (el) => el.classList.contains('hero__intro-text')
+  gsap.set(texts, { clipPath: 'inset(0% 0% 100% 0%)', yPercent: (i, el) => (still(el) ? 0 : 60) })
   if (title) gsap.set(title, { clipPath: 'inset(0% 0% 100% 0%)', yPercent: 35 })
   gsap.set(neon, { clipPath: 'inset(0% 100% 0% 0%)' })
   gsap.set(neonText, { yPercent: 110 })
@@ -75,11 +77,10 @@
     const tl = gsap.timeline({ delay: CONFIG.delay })
     tl.to(imgs, {
       clipPath: SHOW,
-      scale: 1,
       duration: CONFIG.imgDur,
-      ease: 'expo.out',
+      ease: 'expo.inOut',
       stagger: CONFIG.imgStagger,
-      clearProps: 'clipPath,scale,transform,transformOrigin',
+      clearProps: 'clipPath',
     }, 0)
     if (title)
       tl.to(title, {
