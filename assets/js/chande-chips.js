@@ -88,7 +88,9 @@
   //   đường nối hai khoé đúng giá trị này; âm = cong lên) · upX / lowX  lệch đỉnh cong
   //   sang ngang · fill  lấp lòng miệng (0…1) · teeth  răng (0…1) · tongue  lưỡi (0…1)
   //   · tx  lệch lưỡi ngang · dots  chấm ở hai khoé (0…1).
-  const BASE = { lx: -30, ly: 0, rx: 30, ry: 0, up: 0, low: 0, upX: 0, lowX: 0, fill: 0, teeth: 0, tongue: 0, tx: 0, dots: 1 }
+  // upline: phần môi trên được vẽ (0…1, vẽ dần trái -> phải); 0 = chỉ còn môi dưới làm nét
+  // chính (một nét duy nhất cong dần như Figma 762 -> 763).
+  const BASE = { lx: -30, ly: 0, rx: 30, ry: 0, up: 0, low: 0, upX: 0, lowX: 0, fill: 0, teeth: 0, tongue: 0, tx: 0, dots: 1, upline: 1 }
   const shape = (o) => ({ ...BASE, ...o })
   const wave = (k, n = 1) => Math.sin(Math.PI * k * n)
   const bell = (k) => Math.sin(Math.PI * k)
@@ -134,8 +136,18 @@
     // --- kiểu nét mảnh ---
     grin: {
       label: 'Toe (theo Figma)',
-      closed: shape({ lx: -37.5, rx: 37.5 }),
-      open: shape({ lx: -18.8, ly: 0.5, rx: 37, ry: -7.9, low: 18.5, teeth: 1 }),
+      // 3 pha theo cuộn: 762 đường thẳng -> 763 chính nét đó cong xuống thành cười ->
+      // cười toe: môi trên vẽ dần trái -> phải nối hai chấm, rồi răng mọc lần lượt.
+      closed: shape({ lx: -37.5, rx: 37.5, upline: 0 }),
+      stages: [
+        shape({ lx: -37.5, rx: 37.5, upline: 0 }),
+        shape({ lx: -37.5, rx: 37.5, low: 14, upline: 0 }),
+        Object.assign(shape({ lx: -18.8, ly: 0.5, rx: 37, ry: -7.9, low: 18.5, teeth: 1, upline: 1 }), {
+          // trong chặng cuối: môi trên vẽ ở 0…60%, răng mọc ở 35…100%
+          delay: { upline: [0, 0.6], teeth: [0.35, 1] },
+        }),
+      ],
+      open: shape({ lx: -18.8, ly: 0.5, rx: 37, ry: -7.9, low: 18.5, teeth: 1, upline: 1 }),
       idleClosed: [
         { dur: 900, fn: (k) => ({ low: 7 * bell(k) }) },
         { dur: 650, fn: (k, s) => ({ ry: -6 * s * bell(k), ly: 2 * s * bell(k) }) },
@@ -222,6 +234,26 @@
     for (const k of KEYS) o[k] = a[k] + (b[k] - a[k]) * t
     return o
   }
+  const smooth = (t) => t * t * (3 - 2 * t)
+  // Nhiều pha: s 0…1 chia đều cho các chặng, mỗi chặng ease mượt; khoá nào có `delay`
+  // ở pha đích thì chỉ chạy trong khoảng [a, b] của chặng đó (vẽ nét trước, răng sau).
+  function mixStages(stages, s) {
+    const n = stages.length - 1
+    const x = Math.min(n, Math.max(0, s * n))
+    const i = Math.min(n - 1, Math.floor(x))
+    const A = stages[i]
+    const B = stages[i + 1]
+    const t = x - i
+    const o = {}
+    for (const k of KEYS) {
+      const [a, b] = B.delay?.[k] || [0, 1]
+      const tk = smooth(clamp01((t - a) / Math.max(0.01, b - a)))
+      // lò xo có thể lố ra ngoài 0…1: phần lố kéo dài tuyến tính cho có độ nảy
+      const extra = s > 1 && i === n - 1 ? (s - 1) * n : s < 0 && i === 0 ? s * n : 0
+      o[k] = A[k] + (B[k] - A[k]) * (tk + extra)
+    }
+    return o
+  }
   function mouthPaths(m) {
     const L = [m.lx, m.ly]
     const R = [m.rx, m.ry]
@@ -235,16 +267,20 @@
     const f = (v) => v.toFixed(2)
     const pt = (P) => `${f(P[0])},${f(P[1])}`
     const upper = `M${pt(L)}Q${pt(cu)} ${pt(R)}`
-    const lower = Math.abs(m.low - m.up) > 0.1 || Math.abs(m.low) > 0.05 ? `M${pt(L)}Q${pt(cl)} ${pt(R)}` : ''
+    // môi dưới luôn vẽ khi môi trên chưa vẽ hết (nó là nét chính lúc khép / cười)
+    const lower = m.upline < 0.999 || Math.abs(m.low - m.up) > 0.1 || Math.abs(m.low) > 0.05 ? `M${pt(L)}Q${pt(cl)} ${pt(R)}` : ''
     const fill = `M${pt(L)}Q${pt(cu)} ${pt(R)}Q${pt(cl)} ${pt(L)}Z`
     let teeth = ''
     const tk = clamp01(m.teeth)
+    // răng mọc LẦN LƯỢT từ môi trên xuống chạm môi dưới, chiếc sau trễ chiếc trước
     if (tk > 0.01)
-      for (const t of [0.24, 0.43, 0.62, 0.8]) {
+      [0.24, 0.43, 0.62, 0.8].forEach((t, i) => {
+        const g = smooth(clamp01((tk - i * 0.16) / 0.52))
+        if (g <= 0.01) return
         const a = q(L, cu, R, t)
         const b = q(L, cl, R, t)
-        teeth += `M${pt(a)}L${pt([a[0] + (b[0] - a[0]) * tk * 0.75, a[1] + (b[1] - a[1]) * tk * 0.75])}`
-      }
+        teeth += `M${pt(a)}L${pt([a[0] + (b[0] - a[0]) * g, a[1] + (b[1] - a[1]) * g])}`
+      })
     let tongue = ''
     const tg = clamp01(m.tongue)
     if (tg > 0.02) {
@@ -352,7 +388,11 @@
       for (const n of [mouth.fill, mouth.upper, mouth.lower, mouth.teeth, mouth.tongue, mouth.dl, mouth.dr]) n.style.display = isHs ? 'none' : ''
       if (isHs) return drawHs(m)
       const P = mouthPaths(m)
-      mouth.upper.setAttribute('d', P.upper)
+      // môi trên vẽ dần trái -> phải (pathLength 1 + dasharray)
+      const ul = clamp01(m.upline)
+      mouth.upper.setAttribute('d', ul > 0.005 ? P.upper : '')
+      mouth.upper.setAttribute('pathLength', '1')
+      mouth.upper.setAttribute('stroke-dasharray', ul < 0.999 ? `${ul.toFixed(3)} 2` : 'none')
       mouth.lower.setAttribute('d', P.lower)
       mouth.fill.setAttribute('d', P.fill)
       mouth.fill.setAttribute('fill-opacity', clamp01(m.fill).toFixed(3))
@@ -392,7 +432,7 @@
         const k = Math.max(20, CONFIG.spring)
         v += (k * (goal - s) - 2 * 0.58 * Math.sqrt(k) * v) * dt
         s += v * dt
-        let m = mix(pr.closed, pr.open, s)
+        let m = pr.stages ? mixStages(pr.stages, s) : mix(pr.closed, pr.open, s)
         if (act) {
           const t = clamp01((now - act.t0) / act.dur)
           const d = act.fn(t, act.sgn)
