@@ -295,6 +295,9 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
   font-weight:500; font-size:1rem; line-height:.98; letter-spacing:-.02em;
   text-box:trim-both cap alphabetic;
 }
+/* Màn ≤ 1920: tiêu đề hero to theo khổ màn còn khoảng trống dưới nó thấp đi -> dòng phụ
+   chồng lên tiêu đề / ảnh 4. Ẩn hẳn (chỉ hiện ở màn rộng hơn khổ thiết kế). */
+@media (max-width:1920px){ .hero__sub{display:none} }
 /* MacBook 16" (bề rộng mặc định 1728px) trở xuống: khung tiêu đề thấp, dòng phụ
    dính sát mép dưới -> ẩn. */
 @media (max-width:1728px){
