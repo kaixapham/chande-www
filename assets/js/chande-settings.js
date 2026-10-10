@@ -121,7 +121,7 @@ window.CHANDE_SETTINGS = {
   "titlefx.ditherSize": 1,
   "titlefx.start": 0.94,
   "transition.stack.bg": "#0f1513",
-  "transition.stack.color": "#236d3c",
+  "transition.stack.color": "#0a1f10",
 }
 
 window.CHANDE_SETTINGS_APPLY = (mod, config) => {
