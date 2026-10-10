@@ -430,13 +430,12 @@ html.menu-open .cl__menu .cl__x circle, html.menu-open .cl.is-done .cl__menu:hov
     '<svg viewBox="0 0 20 6" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
     '<circle cx="3" cy="3" r="3" fill="currentColor"/><circle cx="17" cy="3" r="3" fill="currentColor"/></svg>'
 
-  // Icon nút menu: 9 chấm. Thường = 4 chấm 2×2 (chấm khác nằm chồng lên góc); hover = 4 chấm toả ra
-  // góc; menu đang mở = chữ X bằng chấm (2 đường chéo 5 chấm). [x, y] lúc X, [dx, dy] lúc thường,
+  // Icon nút menu: 5 chấm. Thường = 4 chấm 2×2 (chấm giữa nằm chồng dưới chấm góc); hover = 4 chấm toả
+  // ra góc; menu đang mở = chữ X bằng 5 chấm (4 góc + giữa). [x, y] lúc X, [dx, dy] lúc thường,
   // [hx, hy] lúc hover (đơn vị viewBox 20 × 20 ≈ px thiết kế)
   const XDOTS = [
-    [1, 1, 2, 2, 0, 0], [19, 1, -2, 2, 0, 0], [1, 19, 2, -2, 0, 0], [19, 19, -2, -2, 0, 0],
-    [5.5, 5.5, -2.5, -2.5, -4.5, -4.5], [14.5, 5.5, 2.5, -2.5, 4.5, -4.5], [5.5, 14.5, -2.5, 2.5, -4.5, 4.5], [14.5, 14.5, 2.5, 2.5, 4.5, 4.5],
-    [10, 10, -7, -7, -9, -9],
+    [3, 3, 0, 0, -2, -2], [17, 3, 0, 0, 2, -2], [3, 17, 0, 0, -2, 2], [17, 17, 0, 0, 2, 2],
+    [10, 10, -7, -7, -9, -9], // chấm giữa: lúc thường / hover nằm chồng dưới chấm góc, menu mở thì hiện ra
   ]
   const MENU_ICON =
     '<svg class="cl__x" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +

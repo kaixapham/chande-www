@@ -1102,6 +1102,19 @@ void main () {
       output.style.opacity = op
       lens.style.opacity = op
     }
+    // mờ hẳn (chuột ra ngoài vùng sống — dải 3 vòng tròn) thì THÔI VẼ: ẩn hẳn canvas + lớp thấu kính
+    // (backdrop-filter vẫn tính dù opacity 0) và dừng vòng chạy; chuột vào lại vùng thì pointermove chạy lại
+    const vis = fade > 0.001 ? '' : 'hidden'
+    if (output.style.visibility !== vis) {
+      output.style.visibility = vis
+      lens.style.visibility = vis
+    }
+    if (fade <= 0.001 && fadeTarget === 0 && !leader && !lu) {
+      running = false
+      state.moving = false
+      state.presence = 0
+      return
+    }
     mul += (mulTarget - mul) * (1 - Math.exp(-delta * 6))
     if (Math.abs(mulTarget - mul) < 0.002) mul = mulTarget
     render()
@@ -1136,7 +1149,8 @@ void main () {
     state.size = CONFIG.enabled ? effSize() : 0
     state.swell = Math.max(0, pooledRadius() - effSize())
     state.count = count()
-    state.presence = CONFIG.enabled ? presence : 0
+    // độ hiện THẬT (gồm mờ theo vùng sống) — module khác (vòng tròn, sinh vật) không phản ứng với giọt đã mờ
+    state.presence = CONFIG.enabled ? presence * fade : 0
     const on = lensOK && CONFIG.enabled && CONFIG.refract && presence > 0.02
     lens.style.visibility = on ? 'visible' : 'hidden'
     if (!on) return

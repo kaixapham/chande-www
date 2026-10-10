@@ -236,12 +236,14 @@ function mount(root = document) {
     const canvas = document.createElement('canvas')
     canvas.className = 'cflyer'
     canvas.setAttribute('aria-hidden', 'true')
-    canvas.style.cssText = 'position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:9990'
+    // canvas NHỎ bao quanh con bướm (không phủ cả màn): mỗi khung chỉ vẽ ô S×S và dời ô theo bướm
+    // bằng transform — canvas cả màn ở DPR 2 vẽ lại mỗi khung (kèm clip-path đổi liên tục) rất nặng
+    canvas.style.cssText = 'position:fixed; left:0; top:0; pointer-events:none; z-index:9990; will-change:transform'
     document.body.appendChild(canvas)
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, premultipliedAlpha: true })
     renderer.setClearColor(0x000000, 0)
     renderer.outputColorSpace = THREE.SRGBColorSpace
-    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2))
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5)) // bướm nhỏ, 1.5 đủ nét mà nhẹ hơn hẳn DPR 2
     const scene = new THREE.Scene()
     // camera trực giao theo px màn (gốc ở góc trên trái, y lên = -y màn)
     const camera = new THREE.OrthographicCamera(0, 1, 0, -1, -1000, 1000)
@@ -266,17 +268,28 @@ function mount(root = document) {
     const bf = buildButterfly()
     bf.group.rotation.order = 'ZYX' // nghiêng (roll) quanh trục thân, rồi mới quay theo hướng bay
     scene.add(bf.group)
-    const resize = () => {
-      renderer.setSize(innerWidth, innerHeight, false)
-      camera.left = 0
-      camera.right = innerWidth
-      camera.top = 0
-      camera.bottom = -innerHeight
+    // S = cạnh ô vẽ (px CSS, làm tròn bậc 64 cho đỡ cấp phát lại); vx, vy = góc trên trái ô trên màn
+    const view = { S: 0, vx: 0, vy: 0 }
+    const place = (cx, cy, size) => {
+      const S = Math.max(128, Math.ceil((size * 2.6) / 64) * 64)
+      if (S !== view.S) {
+        view.S = S
+        renderer.setSize(S, S, false)
+        canvas.style.width = `${S}px`
+        canvas.style.height = `${S}px`
+      }
+      view.vx = Math.round(cx - S / 2)
+      view.vy = Math.round(cy - S / 2)
+      camera.left = view.vx
+      camera.right = view.vx + S
+      camera.top = -view.vy
+      camera.bottom = -(view.vy + S)
       camera.updateProjectionMatrix()
+      canvas.style.transform = `translate3d(${view.vx}px, ${view.vy}px, 0)`
     }
-    resize()
+    const resize = () => (view.S = 0)
     addEventListener('resize', resize)
-    gl = { canvas, renderer, scene, camera, shadow, bf, resize }
+    gl = { canvas, renderer, scene, camera, shadow, bf, resize, place, view }
   }
 
   // section đang ở giữa màn
@@ -355,23 +368,27 @@ function mount(root = document) {
   // (Agenda đã hiện) thì vẫn thấy.
   let clipNow = ''
   function clipBy(ring, box) {
+    // toạ độ màn -> toạ độ trong ô vẽ (canvas nhỏ theo bướm)
+    const { S, vx, vy } = gl.view
+    const f = (n) => n.toFixed(1)
+    const X = (x) => f(x - vx)
+    const Y = (y) => f(y - vy)
+    const full = `M0 0H${S}V${S}H0Z`
+    const rect = (l, t, r, b) => `M${X(l)} ${Y(t)}H${X(r)}V${Y(b)}H${X(l)}Z`
     let v = ''
     if (box && !ring) {
       // khối footer đè lên bướm: cắt bỏ phần bướm nằm trong khối
-      const f = (n) => n.toFixed(1)
-      v = `path(evenodd, "M0 0H${innerWidth}V${innerHeight}H0ZM${f(box.l)} ${f(box.t)}H${f(box.r)}V${f(box.b)}H${f(box.l)}Z")`
+      if (box.r > vx && box.l < vx + S && box.b > vy && box.t < vy + S) v = `path(evenodd, "${full}${rect(box.l, box.t, box.r, box.b)}")`
     }
     if (ring && ring.r > 0.5) {
-      const W = innerWidth
-      const H = innerHeight
       const p = ring.pin
       const far = Math.hypot(Math.max(ring.x - p.left, p.right - ring.x), Math.max(ring.y - p.top, p.bottom - ring.y))
-      const circ = (r) => `M${(ring.x - r).toFixed(1)} ${ring.y.toFixed(1)}a${r.toFixed(1)} ${r.toFixed(1)} 0 1 0 ${(2 * r).toFixed(1)} 0a${r.toFixed(1)} ${r.toFixed(1)} 0 1 0 ${(-2 * r).toFixed(1)} 0Z`
+      const circ = (r) => `M${X(ring.x - r)} ${Y(ring.y)}a${f(r)} ${f(r)} 0 1 0 ${f(2 * r)} 0a${f(r)} ${f(r)} 0 1 0 ${f(-2 * r)} 0Z`
       // vòng trong cùng đã phủ kín khung -> Agenda hiện hết, không che gì nữa
       if (ring.rIn < far) {
         // evenodd: ngoài vòng ngoài = thấy, trên vành = khuất, trong vòng trong cùng = thấy
-        const outer = ring.r >= far ? `M${p.left.toFixed(1)} ${p.top.toFixed(1)}H${p.right.toFixed(1)}V${p.bottom.toFixed(1)}H${p.left.toFixed(1)}Z` : circ(ring.r)
-        v = `path(evenodd, "M0 0H${W}V${H}H0Z${outer}${ring.rIn > 0.5 ? circ(ring.rIn) : ''}")`
+        const outer = ring.r >= far ? rect(p.left, p.top, p.right, p.bottom) : circ(ring.r)
+        v = `path(evenodd, "${full}${outer}${ring.rIn > 0.5 ? circ(ring.rIn) : ''}")`
       }
     }
     if (v !== clipNow) gl.canvas.style.clipPath = clipNow = v
@@ -585,6 +602,7 @@ function mount(root = document) {
         if (window.CHANDE_KOI) window.CHANDE_KOI.escaped = false
         gl.bf.group.visible = false
         gl.shadow.visible = false
+        gl.place(P.x, P.y, P.s)
         gl.renderer.render(gl.scene, gl.camera)
         return
       }
@@ -624,7 +642,13 @@ function mount(root = document) {
     const k = gl.bf.update(dt, rate, P.amp)
     // cụm vòng tròn màu (outro poster) đè lên bướm: cắt phần bướm nằm trong vòng; biến hình lúc khuất
     const ring = CONFIG.morph?.on && CONFIG.morph.under ? outerRing() : null
+    gl.place(P.x, P.y, P.s) // ô vẽ theo bướm (trước khi cắt — toạ độ cắt tính theo ô)
     clipBy(ring, hideBox)
+    // khuất hẳn (nằm trọn sau vành vòng tròn / trong khối footer) thì khỏi vẽ khung này
+    const dRing = ring ? Math.hypot(P.x - ring.x, P.y - ring.y) : 0
+    const behindRing = ring && dRing + P.s * 0.6 < ring.r && dRing - P.s * 0.6 > ring.rIn
+    const inBox = hideBox && P.x - P.s * 0.6 > hideBox.l && P.x + P.s * 0.6 < hideBox.r && P.y - P.s * 0.6 > hideBox.t && P.y + P.s * 0.6 < hideBox.b
+    const skipDraw = behindRing || inBox
     gl.bf.morph(morphStep(formWant(ring, key, tx, ty), onBand(ring), dt))
     const { group } = gl.bf
     // toạ độ màn -> cảnh (y lên)
@@ -638,7 +662,7 @@ function mount(root = document) {
     gl.shadow.rotation.z = -P.heading
     gl.shadow.scale.set(P.s * 0.6, P.s * 0.45, 1)
     gl.shadow.material.opacity = CONFIG.shadow * P.a
-    gl.renderer.render(gl.scene, gl.camera)
+    if (!skipDraw) gl.renderer.render(gl.scene, gl.camera)
     raf = requestAnimationFrame(tick)
   }
 

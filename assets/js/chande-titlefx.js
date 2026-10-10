@@ -30,7 +30,7 @@
 
   const CONFIG = {
     enabled: true,
-    selector: '.hs-about__statement, .hs-about__roles, .agenda__head', // tiêu đề áp hiệu ứng (nhiều cái: cách nhau dấu phẩy)
+    selector: '.hs-about__statement', // (Agenda, danh sách vai trò đã bỏ — quá nặng) tiêu đề áp hiệu ứng (nhiều cái: cách nhau dấu phẩy)
     color: '#000000', // màu chữ sau khi tô xong
     accent: '#68f12b', // màu chuyển (dải ở mép quét)
     base: '#000000', // màu chữ lúc chưa tô
@@ -80,6 +80,7 @@
   let last = 0
 
   const clamp01 = (v) => Math.min(1, Math.max(0, v))
+  const SAFARI = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent)
 
 
   // màu nền thật phía sau tiêu đề (tổ tiên gần nhất có nền đặc)
@@ -193,7 +194,9 @@
     t.dark = dark
     // khối nằm trong lớp xếp chồng TRONG SUỐT mà nền thật ở ngoài (data-tfx-bg — vd Agenda đè lên canvas
     // poster): hoà trộn không thấy nền -> tô thẳng vào chữ
-    t.clip = !!t.el.closest('[data-tfx-bg]')
+    // hoặc khối tự chọn (data-tfx-mode="clip"): kiểu cửa sổ không hoà trộn — nhẹ hơn khi nằm dưới lớp
+    // backdrop-filter (bubble ở dải vòng tròn About) vì hoà trộn bắt trình duyệt dựng lại nền mỗi khung
+    t.clip = !!t.el.closest('[data-tfx-bg]') || t.el.dataset.tfxMode === 'clip'
     t.el.classList.toggle('tfx-clip', t.clip)
     // màu chưa tô phải ĐẶC (hoà trộn với màu trong suốt không đổi gì): trộn sẵn với nền
     const bas = dark ? solidOver('#ffffff', CONFIG.baseAlpha, bg) : solidOver(CONFIG.base, CONFIG.baseAlpha, bg)
@@ -238,6 +241,7 @@
         if (!host) return
         const basA = dark ? `rgba(255,255,255,${CONFIG.baseAlpha})` : solidOver(CONFIG.base, CONFIG.baseAlpha, bg)
         host.style.setProperty('color', basA, 'important')
+        host._tfxC = basA
         // chữ của dòng (lấy trước khi gắn cửa sổ — hàng sau của cùng dòng dùng lại, không lẫn chữ bản sao)
         const html = host.querySelector('.tfx-win') ? host._tfxHtml : (host._tfxHtml = host.innerHTML.replace(/tfx-w\b/g, 'tfx-cw'))
         const firstWord = host.querySelector(':scope > .tfx-w')
@@ -258,7 +262,9 @@
           win.className = 'tfx-win'
           win.setAttribute('aria-hidden', 'true')
           const m = CONFIG.dither ? `linear-gradient(#000, #000), ${ramp(cols, '#000')}` : `linear-gradient(90deg, #000 calc(100% - ${b}px), transparent)`
-          Object.assign(win.style, {
+          // Safari: mask trên lớp đang trượt (transform mỗi khung) bị WebKit vẽ lại liên tục -> giật.
+          // Bỏ mask, mép cửa sổ cắt thẳng (vẫn đủ 3 màu: đã tô | dải lime | chưa tô)
+          if (!SAFARI) Object.assign(win.style, {
             maskImage: m, webkitMaskImage: m,
             maskSize: CONFIG.dither ? `calc(100% - ${b}px) 100%, ${b}px ${8 * dz}px` : '100% 100%',
             webkitMaskSize: CONFIG.dither ? `calc(100% - ${b}px) 100%, ${b}px ${8 * dz}px` : '100% 100%',
@@ -298,7 +304,7 @@
         const fin2 = mk(fin)
         // toạ độ trong hộp dòng: đầu chữ (trừ pad) là gốc của xb
         const x0s = l.left - host.offsetLeft - pad
-        Object.assign(l, { b, run: l.width + 2 * pad + 2 * b, key: '', clip: true, band: true, span: host, x0s, Ws: host.offsetWidth, acc2, fin2 })
+        Object.assign(l, { b, run: l.width + 2 * pad + 2 * b, key: '', clip: true, band: true, span: host, x0s, Ws: host.offsetWidth, acc2, fin2, finC: fin, basC: basA, state: -1 })
         return
       }
       const ln = document.createElement('i')
@@ -347,6 +353,25 @@
       // chưa bắt đầu / xong hẳn thì đẩy hẳn ra ngoài lớp (phủ cả phần nét tràn của dòng kề)
       if (l.clip) {
         if (!l.fin2) return
+        // CHỈ hàng đang được quét mới bật 2 cửa sổ (lớp đồ hoạ có mask). Hàng chưa tới lượt: tắt cửa
+        // sổ, chữ màu chưa tô; cả dòng đã tô xong: tắt cửa sổ, đổi thẳng màu chữ của dòng -> lúc nào
+        // cũng chỉ vài lớp hoạt động thay vì 2 lớp × mọi hàng (nguyên nhân giật)
+        l.sibs ||= t.lines.filter((o) => o.span === l.span)
+        const allDone = l.sibs.every((o) => o.p >= 1)
+        const want = allDone ? l.finC : l.basC
+        if (l.span._tfxC !== want) {
+          l.span._tfxC = want
+          l.span.style.setProperty('color', want, 'important')
+        }
+        const state = allDone ? 2 : l.p <= 0 ? 0 : 1
+        if (state !== l.state) {
+          l.state = state
+          const d = state === 1 ? '' : 'none'
+          l.fin2.win.style.display = d
+          l.acc2.win.style.display = d
+          l.key = ''
+        }
+        if (state !== 1) return
         // mép trái dải chuyển trong hệ dòng (0 = đầu chữ trừ pad)
         let xb = -2 * l.b + l.p * l.run
         if (l.p <= 0) xb = -2 * l.b - 1
@@ -392,6 +417,22 @@
     return t.lines.map((l) => clamp01((a - (top + l.top)) / span))
   }
 
+  const paused = (t) => {
+    if (t.inAgenda === undefined) t.inAgenda = !!t.el.closest('.hs-agenda')
+    if (!t.inAgenda) return false
+    const op = window.CHANDE_POSTER?.api?.outroProgress?.() ?? 1
+    return op > 0.001 && op < 0.999
+  }
+  const hideLine = (l) => {
+    l.state = 0
+    l.fin2 && (l.fin2.win.style.display = 'none')
+    l.acc2 && (l.acc2.win.style.display = 'none')
+    l.key = ''
+    if (l.span && l.span._tfxC !== l.basC) {
+      l.span._tfxC = l.basC
+      l.span.style.setProperty('color', l.basC, 'important')
+    }
+  }
   function frame(t0) {
     raf = 0
     const dt = last ? Math.min(0.1, (t0 - last) / 1000) : 1 / 60
@@ -400,6 +441,14 @@
     let moving = false
     for (const t of titles) {
       if (!t.on) continue
+      // Agenda: lúc cụm vòng tròn màu của Poster đang nở (Poster cắt khu Agenda theo vòng tròn đổi
+      // mỗi khung) thì tạm dừng — lớp chữ trượt nằm trong vùng bị cắt làm trình duyệt vẽ lại hết,
+      // vòng tròn cũng giật. Nở xong mới quét.
+      if (paused(t)) {
+        t.lines.forEach((l) => l.clip && l.state !== 0 && hideLine(l))
+        moving = true // còn chờ vòng tròn nở xong
+        continue
+      }
       const g = goals(t)
       t.lines.forEach((l, i) => {
         const goal = g[i]

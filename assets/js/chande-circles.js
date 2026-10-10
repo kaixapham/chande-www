@@ -175,6 +175,13 @@
       const B = window.CHANDE_BUBBLE?.state
       const R = B ? (B.size + B.swell) * B.presence * CONFIG.reveal : 0
       near = null
+      // bubble không hiện (chuột ngoài dải vòng tròn) + vạch đã đứng + không còn vết lộ ảnh: khỏi đo / vẽ
+      // gì (đo khung mỗi khung khi các module khác vừa ghi style = ép trình duyệt tính lại bố cục)
+      const idle = (!B || B.presence < 0.01) && circles.every((o) => !o.vel && !o.drawn)
+      if (idle) {
+        if (inView) raf = requestAnimationFrame(tick)
+        return
+      }
       for (const o of circles) {
         const k = o.core.getBoundingClientRect()
         const kr = k.width / 2
