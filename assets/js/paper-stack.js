@@ -107,6 +107,10 @@ const clamp = (v, a, b) => (v < a ? a : v > b ? b : v)
 const clamp01 = (v) => clamp(v, 0, 1)
 const lerp = (a, b, t) => a + (b - a) * t
 const RAD = Math.PI / 180
+// Màu mặt sau riêng của từng tờ (theo thứ tự trong chồng): tờ thứ 2 (thư mời xanh) có mặt sau xanh
+// đậm = màu viền mặt trước của nó. Tờ khác dùng params.paper.back. params.paper.backs đè được.
+const SHEET_BACKS = { 1: '#183723' }
+const backOf = (params, i) => params.paper.backs?.[i] || SHEET_BACKS[i] || params.paper.back
 
 const BASE = {
   linear: (t) => t,
@@ -212,8 +216,25 @@ function deform(sheet, pr, params, fields) {
   const L = 2 * tmax || 1
   const Lp = 2 * (Math.abs(tz) * w * 0.5 + Math.abs(tx) * h * 0.5) || 1
 
-  const bend = Math.max(0.6, params.curl.bend * (sheet.bendMul || 1)) * RAD
+  // GIÓ lúc bay: tờ giấy không giữ nguyên một dáng cong suốt đường bay — độ cong "thở", một
+  // sóng gợn chạy dọc tờ từ mép đáp ra mép tự do, mép tự do phất lên xuống / lệch hai bên.
+  // Pha sóng đi theo CẢ tiến độ bay (cuộn tay vẫn thấy giấy uốn) lẫn thời gian; gió mạnh khi tờ
+  // còn trên không, tắt dần lúc đáp (air = 0 khi pr = 1).
+  const AIR = params.air || {}
+  // chỉ những tờ trong AIR.sheets (mặc định: tờ thứ 2 — index 1)
+  const airOn = AIR.on !== false && (AIR.sheets || [1]).includes(sheet.index)
+  const air = airOn ? clamp01(1 - pr) ** 0.7 : 0
+  const T = performance.now() / 1000
+  const ph = (sheet.index || 0) * 1.91 + pr * (AIR.travel ?? 9)
+  const wob = 1 + air * (AIR.breathe ?? 0.28) * Math.sin(T * 1.7 + ph)
+  const bend = Math.max(0.6, params.curl.bend * (sheet.bendMul || 1)) * RAD * wob
   const k = bend / L
+  const rAmp = air * (AIR.ripple ?? 0.035) * L
+  const rWaves = AIR.waves ?? 1.6
+  const rSpeed = AIR.speed ?? 5.5
+  const fAmp = air * (AIR.flap ?? 0.05) * L
+  const fSide = Math.sin(T * 2.3 + ph * 0.7)
+  const fLift = Math.sin(T * 3.1 + ph * 1.3)
   const phiMax = 168 * RAD
   const dMax = phiMax / k
   const twist = params.curl.twist
@@ -258,6 +279,12 @@ function deform(sheet, pr, params, fields) {
       const rise = clamp01(d / (0.35 * L))
       const un = nn / Lp
       y += cross * rise * 4 * un * un
+      if (air > 0.001) {
+        // càng xa chỗ chạm (mép tự do) càng chịu gió
+        const free = clamp01(d / L)
+        y += rAmp * free * Math.sin((d / L) * rWaves * Math.PI * 2 - T * rSpeed - ph)
+        y += fAmp * free * free * (fLift + 1.6 * un * fSide)
+      }
     }
 
     if (nf) {
@@ -769,7 +796,7 @@ export function mount(container, config = {}) {
     const back = new THREE.Mesh(
       geom,
       new THREE.MeshStandardMaterial({
-        color: params.paper.back,
+        color: backOf(params, index),
         roughness: 0.95,
         metalness: 0,
         side: THREE.BackSide,
@@ -1602,7 +1629,7 @@ export function mount(container, config = {}) {
     fill.intensity = params.light.fill
     for (const s of sheets) {
       s.front.material.roughness = params.paper.roughness
-      s.back.material.color.set(params.paper.back)
+      s.back.material.color.set(backOf(params, s.index))
       const fadeOn = params.entry.fade > 0
       s.front.material.transparent = fadeOn
       s.back.material.transparent = fadeOn
