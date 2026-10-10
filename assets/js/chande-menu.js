@@ -92,8 +92,8 @@
   const items = root.querySelector('.cmenu__items')
   // Rê vào ô member: gắn .is-on (đoàn dải màu + ảnh trồi lên). Rời ô KHÔNG tắt ngay: giữ tới
   // khi animation chạy trọn (RUN) + đọng một chút (HOLD) rồi mới gỡ -> CSS cho mờ dần (vệt).
-  const RUN = 900
-  const HOLD = 350
+  const RUN = 1050 // ms — animation xuất hiện chạy trọn (ô sáng .15s + dải .9s)
+  const HOLD = 1000 // ms — ảnh đọng lại trước khi tua ngược biến mất (vệt ảnh dài, tắt lần lượt)
   items.addEventListener('pointerover', (e) => {
     const m = e.target.closest?.('.cmenu__member')
     if (!m || m.contains(e.relatedTarget)) return
@@ -107,6 +107,65 @@
     const left = Math.max(0, RUN - (performance.now() - (m._t0 || 0))) + HOLD
     m._off = setTimeout(() => m.classList.remove('is-on'), left)
   })
+
+  // Nền sáng theo chuột cho MỌI ô của lưới (kể cả ô trống / ô chữ): dò ô theo toạ độ trên lớp ô
+  // kẻ, ô cũ gỡ .is-lit -> CSS cho tối dần (vệt sáng)
+  const lineCells = root.querySelectorAll('.cmenu__lines i')
+  const linesBox = root.querySelector('.cmenu__lines')
+  let litCell = null
+  const lightAt = (x, y) => {
+    const r = linesBox.getBoundingClientRect()
+    const c = Math.floor(((x - r.left) / r.width) * COLS)
+    const w = Math.floor(((y - r.top) / r.height) * ROWS)
+    const cell = c >= 0 && c < COLS && w >= 0 && w < ROWS ? lineCells[w * COLS + c] : null
+    if (cell === litCell) return
+    litCell?.classList.remove('is-lit')
+    cell?.classList.add('is-lit')
+    litCell = cell
+  }
+  root.addEventListener('pointermove', (e) => e.pointerType !== 'touch' && lightAt(e.clientX, e.clientY))
+  root.addEventListener('pointerleave', () => lightAt(-1, -1))
+
+  // Chữ lớn (Become a partner / Register / Contact): rê vào thì tô màu quét từ trái như tiêu
+  // đề trang chủ (chande-titlefx.js) — [lime] —dither— [xanh đậm] —dither— [kem]. Cả dải vẽ một
+  // lần ra canvas (mỗi điểm ảnh = một ô dither), làm nền chữ (background-clip:text); rê vào /
+  // ra chỉ trượt background-position.
+  const SWEEP = { done: '#f4f3eb', accent: '#68f12b', base: '#f4f3eb', band: 0.3, cell: 4 }
+  const BAYER = [0, 32, 8, 40, 2, 34, 10, 42, 48, 16, 56, 24, 50, 18, 58, 26, 12, 44, 4, 36, 14, 46, 6, 38, 60, 28, 52, 20, 62, 30, 54, 22,
+    3, 35, 11, 43, 1, 33, 9, 41, 51, 19, 59, 27, 49, 17, 57, 25, 15, 47, 7, 39, 13, 45, 5, 37, 63, 31, 55, 23, 61, 29, 53, 21]
+  function sweepPaint(el) {
+    const r = document.createRange()
+    r.selectNodeContents(el)
+    const cs = getComputedStyle(el)
+    const W = Math.ceil(r.getBoundingClientRect().width + parseFloat(cs.paddingLeft) + 8)
+    if (!W || W === el._sw) return
+    el._sw = W
+    const n = Math.max(8, Math.round(W / SWEEP.cell)) // số cột ô trên một bề rộng chữ
+    const b = Math.max(4, Math.round(n * SWEEP.band))
+    const cols = 2 * n + 2 * b
+    const c = document.createElement('canvas')
+    c.width = cols
+    c.height = 8
+    const g = c.getContext('2d')
+    const fill = (x0, w, col) => ((g.fillStyle = col), g.fillRect(x0, 0, w, 8))
+    const band = (x0, a, z) => {
+      fill(x0, b, a)
+      g.fillStyle = z
+      for (let x = 0; x < b; x++)
+        for (let y = 0; y < 8; y++) if ((BAYER[y * 8 + (x % 8)] + 0.5) / 64 < (x + 0.5) / b) g.fillRect(x0 + x, y, 1, 1)
+    }
+    fill(0, n, SWEEP.done)
+    band(n, SWEEP.done, SWEEP.accent)
+    band(n + b, SWEEP.accent, SWEEP.base)
+    fill(n + 2 * b, n, SWEEP.base)
+    const px = cols * (W / n)
+    el.style.backgroundImage = `url(${c.toDataURL()})`
+    el.style.backgroundSize = `${px}px ${8 * (W / n)}px`
+    el.style.setProperty('--sw-off', `${-(px - W)}px`) // vị trí chỉ thấy phần kem
+  }
+  const sweepEls = () => root.querySelectorAll('.cmenu__big, .cmenu__huge')
+  const sweepAll = () => matchMedia('(min-width: 768px)').matches && sweepEls().forEach(sweepPaint)
+  addEventListener('resize', () => isOpen && sweepAll())
 
   let filled = false
   async function fill() {
@@ -135,6 +194,7 @@
     root.hidden = false
     root.getBoundingClientRect() // để transition chạy từ trạng thái đóng
     root.classList.add('is-open')
+    requestAnimationFrame(sweepAll)
     document.documentElement.classList.add('menu-open')
     btn()?.setAttribute('aria-expanded', 'true')
     window.CHANDE_TRANSITION?.lenis?.stop()
@@ -143,6 +203,7 @@
     if (!isOpen) return
     isOpen = false
     root.classList.remove('is-open')
+    lightAt(-1, -1)
     document.documentElement.classList.remove('menu-open')
     btn()?.setAttribute('aria-expanded', 'false')
     window.CHANDE_TRANSITION?.lenis?.start()
