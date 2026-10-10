@@ -89,7 +89,7 @@
     shrinkFrom: '.hs-intro', // section đầu tiên sau hero -> rời hero là co
     shrinkScale: 0.5,
     // Con trỏ nằm trong các section này thì giọt tan đi (ra khỏi thì hiện lại)
-    hideIn: '.hs-land, .hs-poster',
+    hideIn: '.hs-land, .hs-poster, .cmenu', // .cmenu: trang menu — bubble bẻ cong ảnh member thành hình tròn
     // Trỏ vào nút / link: giọt co còn hoverScale (so với cỡ gốc), rời ra thì về lại.
     hoverOn: true,
     hoverScale: 0.25,

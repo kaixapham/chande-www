@@ -41,7 +41,7 @@
     enabled: true,
 
     // Biến thể đang dùng — bảng devtools đổi giá trị này khi bạn chuyển tab.
-    variant: 'sweep', // 'sweep' | 'split'
+    variant: 'stack', // 'sweep' (rèm quét) | 'split' (rèm chẻ) | 'stack' (trượt thẻ)
 
     // ---- Dùng chung cho cả hai biến thể -------------------------------------
     // null = bám theo 4 ô của thanh loading. Đặt mảng % để tách rời.
@@ -111,8 +111,11 @@
       // không đổi gì so với trước; chỉnh để lấy màu khác hẳn lúc chuyển trang.
       bg: '#f4f3eb',
       radius: 1, // em — bo góc lúc ba lớp co lại
-      label: '', // chữ trên tấm giữa, để rỗng thì không có
-      labelAlign: 'center',
+      // chữ trên tấm giữa (góc trên trái) — luôn được thay bằng TÊN trang sắp tới; để rỗng
+      // thì không có chữ. Góc trên phải: số thứ tự trang (001 / 002 / 003).
+      label: 'PAGE',
+      labelAlign: 'top',
+      order: true,
       zIndex: 2, // z-index của [data-transition-wrap] ở biến thể này
 
       clipDuration: 0.8, // bo góc vào / ra
@@ -297,6 +300,36 @@
 
   const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;')
 
+  // Chữ trên rèm theo TRANG SẮP TỚI: ô nào trong setting ghi số (vd. "01") là ô số, ô
+  // ghi chữ (vd. "GALLERY") là ô tên. Mỗi lần chuyển trang điền số + tên của trang đích
+  // (lấy từ menu của thanh header — CHANDE_LOADING.config.nav; trang chủ = 00 HOME).
+  const slotOf = (t) => (/^\s*\d+\s*$/.test(String(t)) ? 'num' : 'name')
+  const normPath = (p) => (p || '/').replace(/\/index\.html$/, '/').replace(/\.html$/, '').replace(/^\/*/, '/')
+  // order: số thứ tự 3 chữ số — trang chủ 001, các trang trên menu tiếp theo (002, 003…)
+  function destOf(path) {
+    const here = normPath(new URL(path || '/', location.href).pathname)
+    const nav = window.CHANDE_LOADING?.config?.nav || []
+    const ord = (i) => String(i + 1).padStart(3, '0')
+    for (let i = 0; i < nav.length; i++) {
+      const n = nav[i]
+      if (n.href && normPath(new URL(n.href, location.href).pathname) === here)
+        return { num: n.num || '', name: n.after || n.during || '', order: ord(i + 1) }
+    }
+    const home = window.CHANDE_LOADING?.config?.home || 'index.html'
+    if (here === normPath(new URL(home, location.href).pathname) || here === '/') return { num: '00', name: 'HOME', order: ord(0) }
+    return null
+  }
+  function setDestLabels(path) {
+    if (!wrap) return
+    const d = destOf(path)
+    wrap.querySelectorAll('[data-transition-label][data-slot]').forEach((el) => {
+      if (!d) return
+      const t = d[el.dataset.slot] || ''
+      el.firstElementChild.textContent = t
+      el.style.visibility = t ? '' : 'hidden'
+    })
+  }
+
   function makeMiddle(v) {
     const el = document.createElement('div')
     el.setAttribute('data-transition-middle', '')
@@ -306,8 +339,12 @@
       el.style.backgroundImage = `url("${tile.url}")`
       el.style.backgroundSize = `${tile.size}px ${tile.size}px`
     }
+    let html = ''
     if (String(v.label).trim())
-      el.innerHTML = `<span data-transition-label><span>${esc(v.label)}</span></span>`
+      html += `<span data-transition-label data-slot="${slotOf(v.label)}"><span>${esc(v.label)}</span></span>`
+    // số thứ tự trang ở góc trên phải (điền theo trang sắp tới)
+    if (v.order) html += `<span data-transition-label data-slot="order" data-transition-order><span></span></span>`
+    el.innerHTML = html
     wrap.appendChild(el)
     gsap.set(el, { autoAlpha: 0 })
   }
@@ -331,7 +368,7 @@
         // Hai lớp: lớp ngoài giữ cỡ chữ gốc để `padding` tính theo thang thiết
         // kế; lớp trong mới đặt cỡ 106. Nếu nhét chung một lớp thì padding sẽ
         // bị tính theo 106px chứ không phải 16px.
-        c.innerHTML = `<span data-transition-label><span>${esc(text)}</span></span>`
+        c.innerHTML = `<span data-transition-label data-slot="${slotOf(text)}"><span>${esc(text)}</span></span>`
       }
       set.appendChild(c)
     })
@@ -392,6 +429,8 @@
 [data-transition-middle] [data-transition-label]{${posOf(
       stack ? v.labelAlign : 'center'
     )}}
+/* số thứ tự trang: góc trên phải tấm giữa */
+[data-transition-middle] [data-transition-order]{top:0; bottom:auto; transform:none; text-align:right}
 
 /* Thanh menu dịch bằng thuộc tính translate chứ KHÔNG phải transform:
    transform của thanh đang do Web Animations của chande-loading.js giữ với
@@ -686,7 +725,8 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
     )
   }
 
-  function runPageLeaveAnimation(current, next) {
+  function runPageLeaveAnimation(current, next, path) {
+    setDestLabels(path)
     if (S.variant === 'stack' && !reducedMotion) {
       document.dispatchEvent(new CustomEvent('chande-transition:cover'))
       return runStackLeave(current, next)
@@ -783,7 +823,7 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
             return runPageOnceAnimation(data.next.container)
           },
           async leave(data) {
-            return runPageLeaveAnimation(data.current.container, data.next.container)
+            return runPageLeaveAnimation(data.current.container, data.next.container, data.next.url?.path)
           },
           async enter(data) {
             return runPageEnterAnimation(data.next.container)
@@ -792,6 +832,27 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
       ],
     })
   }
+
+  /* ------------------------------------------- bấm link về chính trang -- */
+  // Barba bỏ qua link trỏ về CHÍNH trang đang mở (sameUrl) và để trình duyệt tải lại cả
+  // trang -> hiện lại màn loading tổng (vd. đang ở Gallery bấm tiếp "Gallery" trên menu).
+  // Chặn lại: chỉ cuộn mượt lên đầu trang. Link có #mục, mở tab mới, phím bổ trợ: để nguyên.
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+      const a = e.target.closest?.('a[href]')
+      if (!a || (a.target && a.target !== '_self') || a.hasAttribute('download')) return
+      const u = new URL(a.getAttribute('href'), location.href)
+      if (u.origin !== location.origin || u.hash) return
+      const norm = (p) => (p || '/').replace(/\/index\.html$/, '/').replace(/\.html$/, '')
+      if (norm(u.pathname) !== norm(location.pathname) || u.search !== location.search) return
+      e.preventDefault()
+      if (lenis) lenis.scrollTo(0)
+      else scrollTo({ top: 0, behavior: 'smooth' })
+    },
+    true,
+  )
 
   /* -------------------------------------------------------------- helper -- */
   // Header nằm NGOÀI container nên không được Barba thay; tự gắn aria-current

@@ -358,9 +358,10 @@ html.cl-loading{background:${S.bg}}
    thẳng (fill 'both') nên không đổi background được: phủ bóng đổ inset tối (vẽ
    trên nền, dưới chữ). Nhãn GALLERY / ABOUT có gạch chân chạy trái -> phải
    (rời chuột thì rút về phải). Cả ô bấm được, không chỉ dòng chữ. */
-.cl__cell--nav, .cl__menu{transition:box-shadow .25s}
+/* Nút menu: KHÔNG đậm nền khi hover — chỉ bốn chấm toả ra (xem .cl__menu circle bên dưới). */
+.cl__cell--nav{transition:box-shadow .25s}
 .cl.is-done .cl__cell--nav{cursor:pointer}
-.cl.is-done .cl__cell--nav:hover, .cl.is-done .cl__menu:hover{box-shadow:inset 0 0 0 100vmax rgba(0,0,0,.18)}
+.cl.is-done .cl__cell--nav:hover{box-shadow:inset 0 0 0 100vmax rgba(0,0,0,.18)}
 .cl__navlink{position:relative; width:fit-content}
 .cl__navlink::after{content:''; position:absolute; left:0; width:var(--ul-w, 100%); top:calc(100% + ${em(6)}); height:${em(0.5)};
   background:currentColor; transform:scaleX(0); transform-origin:right center;
@@ -382,10 +383,11 @@ html.cl-loading{background:${S.bg}}
 .cl__menu svg{display:block; width:${em(S.dotsW)}; height:${em(S.dotsH)}; overflow:visible}
 /* hover: 4 chấm toả nhẹ ra 4 góc chéo (đơn vị = viewBox 20×6 ≈ px thiết kế) */
 .cl__menu circle{transition:transform .35s cubic-bezier(.3,1.4,.5,1)}
-.cl.is-done .cl__menu:hover svg:first-child circle:first-child{transform:translate(-2px, -2px)}
-.cl.is-done .cl__menu:hover svg:first-child circle:last-child{transform:translate(2px, -2px)}
-.cl.is-done .cl__menu:hover svg:last-child circle:first-child{transform:translate(-2px, 2px)}
-.cl.is-done .cl__menu:hover svg:last-child circle:last-child{transform:translate(2px, 2px)}
+/* hover — và giữ nguyên lúc menu đang mở (chande-menu.js gắn html.menu-open) */
+.cl.is-done .cl__menu:hover svg:first-child circle:first-child, html.menu-open .cl__menu svg:first-child circle:first-child{transform:translate(-2px, -2px)}
+.cl.is-done .cl__menu:hover svg:first-child circle:last-child, html.menu-open .cl__menu svg:first-child circle:last-child{transform:translate(2px, -2px)}
+.cl.is-done .cl__menu:hover svg:last-child circle:first-child, html.menu-open .cl__menu svg:last-child circle:first-child{transform:translate(-2px, 2px)}
+.cl.is-done .cl__menu:hover svg:last-child circle:last-child, html.menu-open .cl__menu svg:last-child circle:last-child{transform:translate(2px, 2px)}
 
 /* xong: thanh ở lại làm header, phần còn lại không chặn chuột */
 .cl.is-done{pointer-events:none}
