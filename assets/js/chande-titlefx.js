@@ -378,8 +378,16 @@
   // tiến độ đích của từng dòng theo vị trí hiện tại
   function goals(t) {
     const vh = innerHeight
-    const a = CONFIG.start * vh
-    const span = Math.max(1, (CONFIG.start - CONFIG.end) * vh)
+    // mốc riêng của khối (data-tfx-start / data-tfx-end trên khối hoặc section cha) đè mốc chung
+    if (t.st === undefined) {
+      const host = t.el.closest('[data-tfx-start]')
+      t.st = host ? parseFloat(host.dataset.tfxStart) : NaN
+      t.en = host ? parseFloat(host.dataset.tfxEnd) : NaN
+    }
+    const st = Number.isFinite(t.st) ? t.st : CONFIG.start
+    const en = Number.isFinite(t.en) ? t.en : CONFIG.end
+    const a = st * vh
+    const span = Math.max(1, (st - en) * vh)
     const top = t.el.getBoundingClientRect().top
     return t.lines.map((l) => clamp01((a - (top + l.top)) / span))
   }
@@ -440,7 +448,7 @@
         })
         kick()
       },
-      { rootMargin: '20% 0px' },
+      { rootMargin: '50% 0px' }, // đủ xa cho khối có mốc bắt đầu dưới mép màn (data-tfx-start > 1)
     )
     titles.forEach((t) => io.observe(t.el))
     // nền phía sau đổi (màn loading xong, Agenda bật / tắt .is-dark, section poster phủ màu...):
