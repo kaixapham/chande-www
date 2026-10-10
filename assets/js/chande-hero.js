@@ -234,8 +234,20 @@
       anims: new Set(),
       fillAnim: null,
       paused: false,
+      off: false, // hero đang ngoài màn (IntersectionObserver) -> dừng vòng đổi ảnh
       alive: true,
     })
+    // ngoài màn thì dừng thanh process (và theo đó dừng đổi 4 ảnh + 4 reveal canvas mỗi vòng)
+    state.io = new IntersectionObserver(
+      ([e]) => {
+        if (H !== state) return
+        state.off = !e.isIntersecting
+        if (state.off) pauseFill()
+        else resumeFill()
+      },
+      { rootMargin: '10% 0px' },
+    )
+    state.io.observe(hero)
 
     applyHeights()
 
@@ -349,6 +361,7 @@
     if (H.onDone) document.removeEventListener('chande-loading:done', H.onDone)
     H.fillAnim?.cancel()
     H.anims.forEach((a) => a.cancel())
+    H.io?.disconnect()
     H = null
   }
 
@@ -369,7 +382,7 @@
       fill: 'forwards',
     })
     state.fillAnim = a
-    if (state.paused || document.hidden) a.pause()
+    if (state.paused || state.off || document.hidden) a.pause()
     // aria-valuenow chỉ cần cho trình đọc màn hình: cập nhật 4 lần/giây và chỉ
     // khi số đổi — ghi thuộc tính ở mọi khung hình là bắt trình duyệt tính lại
     // style liên tục.
@@ -386,7 +399,7 @@
     H?.fillAnim?.pause()
   }
   function resumeFill() {
-    if (H && !H.paused && !document.hidden) H.fillAnim?.play()
+    if (H && !H.paused && !H.off && !document.hidden) H.fillAnim?.play()
   }
 
   /* ------------------------------------------------- Đổi 4 ảnh ----------- */

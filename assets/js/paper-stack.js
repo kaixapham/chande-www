@@ -494,6 +494,7 @@ export function mount(container, config = {}) {
   let bgImg = null
   let floor = null
   function drawBackground() {
+    needDraw = true
     scene.background = new THREE.Color(params.frame.bg)
     canvas.style.backgroundColor = params.frame.bg
     const src = params.frame.bgImage || ''
@@ -677,6 +678,7 @@ export function mount(container, config = {}) {
    * vòng — hội tụ sau 3-4 vòng, và chỉ chạy khi đổi tham số.
    */
   function fitCamera() {
+    needDraw = true
     const tilt = clamp(params.camera.tilt, 0, 78) * RAD
     const yaw = params.camera.yaw * RAD
     const top = Math.max(0.02, (sheets.length + 1) * params.stack.thickness)
@@ -853,6 +855,7 @@ export function mount(container, config = {}) {
 
   /** Nạp lại toàn bộ danh sách tờ. Ảnh đã có sẵn `img` thì dùng luôn, khỏi decode lại. */
   async function setSheets(list) {
+    needDraw = true
     const imgs = await Promise.all(
       list.map((entry) => (entry.img ? Promise.resolve(entry.img) : loadImage(entry.src))),
     )
@@ -871,6 +874,7 @@ export function mount(container, config = {}) {
 
   /** Đổi vị trí / góc / cỡ của một tờ mà không dựng lại cả chồng. */
   function updateSheet(index, patch) {
+    needDraw = true
     const s = sheets[index]
     if (!s) return
     Object.assign(s.cfg, patch)
@@ -1115,10 +1119,12 @@ export function mount(container, config = {}) {
         if (!s.flat) {
           flatten(s)
           s.flat = true
+          needDraw = true
         }
       } else if (visible) {
         deform(s, pr, params, fields)
         s.flat = false
+        needDraw = true
       }
       s.prevPr = pr
     }
@@ -1574,6 +1580,7 @@ export function mount(container, config = {}) {
   let viewH = 0
 
   function resize() {
+    needDraw = true
     const cw = container.clientWidth || 640
     const ch = container.clientHeight || 800
     let w = cw
@@ -1595,6 +1602,7 @@ export function mount(container, config = {}) {
 
   /** Đổi sang độ phân giải xuất video (không đụng tới cỡ hiển thị). */
   function setRenderSize(w, h) {
+    needDraw = true
     renderer.setPixelRatio(1)
     renderer.setSize(w, h, false)
     canvas.style.width = `${viewW}px`
@@ -1603,6 +1611,7 @@ export function mount(container, config = {}) {
   }
 
   function restoreRenderSize() {
+    needDraw = true
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1, Math.sqrt(4.2e6 / Math.max(1, innerWidth * innerHeight)))) // ngân sách điểm ảnh cho màn rất lớn
     renderer.setSize(viewW, viewH, false)
     canvas.style.width = `${viewW}px`
@@ -1617,6 +1626,7 @@ export function mount(container, config = {}) {
     sheets.map((s) => s.cfg.scale).join(',')
 
   function applyParams(patch) {
+    needDraw = true
     const before = geomSig()
     if (patch) {
       const next = mergeParams(patch)
@@ -1652,6 +1662,11 @@ export function mount(container, config = {}) {
   let lastHead = -1
   let raf = 0
   let alive = true
+  // Chỉ vẽ WebGL khi có gì đổi: head dời, tờ đang uốn / vừa phẳng, cụm vòng tròn nở, cỡ / tham số đổi.
+  // Trước đây vẽ lại MỌI khung kể cả đứng yên (2–3 ms GPU / khung suốt lúc Poster + Agenda trên màn).
+  let needDraw = true
+  let drawnHead = NaN
+  let drawnOp = -1
 
   // Nhúng giữa một trang dài thì phần lớn thời gian khối nằm ngoài màn — khỏi vẽ WebGL
   // mỗi frame. Chỉ áp cho driver 'page': tool và driver wheel luôn đang được nhìn.
@@ -1679,7 +1694,13 @@ export function mount(container, config = {}) {
     update(dt / 2)
     update(dt / 2)
     updateOutro()
-    draw()
+    const op = outroProgress()
+    if (needDraw || Math.abs(state.head - drawnHead) > 1e-5 || op !== drawnOp) {
+      draw()
+      drawnHead = state.head
+      drawnOp = op
+      needDraw = false
+    }
     if (state.onHead && Math.abs(state.head - lastHead) > 1e-4) {
       lastHead = state.head
       state.onHead(state.head)

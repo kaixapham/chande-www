@@ -372,16 +372,12 @@ const chandeDevtools = () => {
       items: [
         { path: 'morph.on', label: 'Bật', type: 'bool' },
         { path: 'morph.under', label: 'Chui dưới vòng cung (bị đè lên)', type: 'bool' },
-        { path: 'morph.at', label: 'Hoá khi vòng tròn nở quá (lúc bướm khuất)', type: 'range', min: 0, max: 1, step: 0.01 },
         { path: 'morph.time', label: 'Thời gian tan hạt (s)', type: 'range', min: 0.1, max: 3, step: 0.05 },
         { path: 'morph.grain', label: 'Độ mịn hạt tan', type: 'range', min: 6, max: 160, step: 1 },
         { path: 'morph.edge', label: 'Màu mép tan', type: 'color' },
       ] },
-    { tab: 'flyer', mod: 'flyer', title: 'Đậu ở cuối trang (giữa logo footer)',
+    { tab: 'flyer', mod: 'flyer', title: 'Đậu trên hình bướm ở poster — chọc chuột thì bay',
       items: [
-        { path: 'perch.on', label: 'Bật', type: 'bool' },
-        { path: 'perch.x', label: 'Chỗ đậu ngang trong logo (0 = trái, 1 = phải)', type: 'range', min: 0, max: 1, step: 0.01 },
-        { path: 'perch.y', label: 'Chỗ đậu dọc (0 = trên, 1 = dưới)', type: 'range', min: 0, max: 1, step: 0.01 },
         { path: 'perch.poke', label: 'Khoảng chọc (× sải cánh)', type: 'range', min: 0.1, max: 2, step: 0.05 },
         { path: 'perch.away', label: 'Bay lượn bao lâu rồi đậu lại (s)', type: 'range', min: 0.5, max: 12, step: 0.1 },
         { path: 'perch.rest', label: 'Lúc đậu: nhịp đung đưa (lần / giây)', type: 'range', min: 0.05, max: 2, step: 0.05 },

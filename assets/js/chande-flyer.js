@@ -52,33 +52,17 @@ const CONFIG = {
     on: true,
     section: 'poster', // section có cụm vòng tròn
     under: true, // vòng tròn đè lên bướm (phần bướm trong vòng bị che)
-    at: 0.5, // vòng nở quá mức này thì (lúc bướm đang khuất) hoá bướm mới; thu dưới mức này thì hoá lại
     time: 0.6, // thời gian tan hạt (s)
     grain: 46, // độ mịn hạt tan (số hạt trên sải cánh)
     edge: '#5BE83B', // màu mép tan
   },
 
-  // ĐẬU Ở CUỐI TRANG: tới footer thì bướm đậu giữa logo lớn ở footer, khép mở cánh chậm; chuột chọc
-  // vào (tới gần) thì giật mình bay lên lượn một lúc rồi đậu lại
+  // ĐẬU (trên hình bướm ở poster — posterPerch): chọc chuột thì bay lên lượn rồi đậu lại
   perch: {
-    on: false, // (đã thay bằng bay vào sau khối footer — CONFIG.hide)
-    sel: '.hs-foot__logo', // chỗ đậu
-    section: 'foot', // tới section này thì về đậu
-    x: 0.5, // chỗ đậu trong khung (0 = trái, 1 = phải)
-    y: 0.125, // (0 = trên, 1 = dưới) — tâm khối tam giác đen ở giữa mép trên logo
     poke: 0.6, // chuột cách bướm chưa tới (× sải cánh) là bị chọc
     away: 3.5, // bay lượn bao lâu (s) rồi mới quay lại đậu
     rest: 0.35, // lúc đậu: nhịp đung đưa (khép mở nhẹ) giữa các lần vỗ (lần / giây)
     gap: 4, // lúc đậu: trung bình bao nhiêu giây thì vỗ cánh một lần (ngẫu nhiên 0.5–1.5 lần số này)
-  },
-  // CUỐI TRANG: tới footer thì bướm bay vào SAU khối nút + bảng link (Become a partner / Register /
-  // Social / Site index) rồi khuất hẳn; cuộn ngược lên thì bay ra lại từ sau khối đó
-  hide: {
-    on: true,
-    section: 'foot',
-    from: '.hs-foot__cta1', // góc trên trái khối (khối chạy tới mép phải màn, xuống đáy footer)
-    x: 0.45, // điểm bướm bay vào (phần khối: 0 = trái, 1 = phải)
-    y: 0.5, // (0 = trên, 1 = dưới)
   },
   // ĐẬU LÊN HÌNH BƯỚM Ở POSTER: ở section Poster (lúc các tờ poster đang bày, chưa nở vòng tròn),
   // bướm đáp đúng lên hình con bướm ghép ô màu in trên tờ poster 1 (tờ "Sơn Tùng"), giữ cỡ
@@ -474,7 +458,6 @@ function mount(root = document) {
     const p = CONFIG.pos[key] || { x: 0.8, y: 0.3 }
     // điểm đậu + chao lượn (lissajous chậm); đang về vòng 1 thì điểm = tâm lõi, không chao
     const kr = core.getBoundingClientRect()
-    // đậu ở cuối trang (CONFIG.perch): tới section đó và không đang bị chọc bay -> điểm = mép trên ô
     const PC = CONFIG.perch
     // khối footer bướm chui vào (CONFIG.hide)
     let hiding = false
@@ -485,16 +468,8 @@ function mount(root = document) {
       const f = document.querySelector('.hs-foot')?.getBoundingClientRect()
       if (a && f && a.width && f.bottom > 0 && a.top < innerHeight) hideBox = { l: a.left, t: a.top, r: innerWidth, b: f.bottom }
     }
-    // chỗ đậu: hình bướm trên poster 1 (section Poster) hoặc logo footer (section cuối)
-    let spot = null
-    if (!returning && t >= scaredUntil) {
-      spot = posterSpot(key)
-      if (!spot && PC?.on && key === PC.section) {
-        const pr = document.querySelector(PC.sel)?.getBoundingClientRect()
-        if (pr && pr.width && pr.bottom > 0 && pr.top < innerHeight)
-          spot = { x: pr.left + pr.width * PC.x, y: pr.top + pr.height * PC.y, s: CONFIG.size * u, heading: -Math.PI / 2, amp: 0.45 }
-      }
-    }
+    // chỗ đậu: hình bướm trên poster 1 (section Poster)
+    let spot = !returning && t >= scaredUntil ? posterSpot(key) : null
     // lọc êm chỗ đậu: tờ poster rung / nảy mỗi lần có tờ mới tiếp đất -> điểm chiếu giật theo;
     // làm mượt (~0.5 s) để bướm không rung theo cú nảy, chỉ trôi theo khi tờ thật sự dời chỗ
     if (spot) {

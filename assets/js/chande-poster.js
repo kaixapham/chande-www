@@ -192,9 +192,17 @@ function underRings(api, pin, el) {
     lastClip = v
     el.style.clipPath = v
   }
+  let lastKey = ''
   const tick = () => {
     raf = 0
     if (!on) return
+    // vòng tròn chưa đổi + chưa cuộn -> khỏi đo khung (getBoundingClientRect mỗi khung ép tính lại bố cục)
+    const key = `${api.outroProgress().toFixed(4)}|${scrollY}|${innerHeight}`
+    if (key === lastKey) {
+      raf = requestAnimationFrame(tick)
+      return
+    }
+    lastKey = key
     const ring = pin.isConnected ? innerRing(api, pin.getBoundingClientRect()) : null
     // tắt outro / outro đã phủ kín -> không cắt; outro chưa tới -> ẩn hẳn
     if (!api.params.outro.on || ring?.full || api.outroProgress() >= 1) set('')

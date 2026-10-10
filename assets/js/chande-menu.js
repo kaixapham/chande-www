@@ -37,8 +37,6 @@
   for (let r = 4; r <= 5; r++) for (let c = 6; c <= COLS; c++) memberSlots.push([r, c])
 
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
-  const DOTS =
-    '<svg class="cmenu__dots" viewBox="0 0 20 6" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="currentColor"/><circle cx="17" cy="3" r="3" fill="currentColor"/></svg>'
   // Icon ô mạng xã hội: 7 chấm. Lúc thường dồn thành 4 chấm 2×2 (vài chấm nằm chồng); rê vào thì
   // các chấm trượt ra thành mũi tên ↗ (hàng trên + cột phải + đường chéo) — vẫn kiểu chấm.
   // [x, y] lúc là mũi tên, [dx, dy] dời về chỗ 2×2 lúc thường

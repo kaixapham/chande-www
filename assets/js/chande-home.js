@@ -3,7 +3,6 @@
  * -----------------------------------------------------------------------------
  *   • [data-marquee]   dải chạy ngang (CSS animation) — ngoài màn hình thì gắn
  *                      .is-off để dừng, đỡ việc cho trình duyệt
- *   • [data-scroll-pct] vòng % ở section phong cảnh = tiến độ cuộn cả trang
  *   • tab AGENDA / BOOTCAMP — đổi aria-selected (nội dung mới có một bộ)
  *   • Agenda: ngày dính (sticky) đổi theo ngày đang đọc (data-day trên từng
  *     .agenda__head: "ngày|tháng|D-x|giờ"); nút ‹ › đổi cặp ảnh ngày 2
@@ -104,22 +103,6 @@
     // Việc chạy theo cuộn: gom chung MỘT listener + một rAF, mỗi việc chỉ ghi DOM
     // khi giá trị đổi.
     const jobs = []
-
-    // Vòng %: tiến độ cuộn cả trang, xoay vòng ngoài theo.
-    const pct = scope.querySelector('[data-scroll-pct]')
-    if (pct) {
-      const num = pct.querySelector('[data-pct]')
-      const ring = pct.querySelector('img')
-      let last = -1
-      jobs.push(() => {
-        const max = document.documentElement.scrollHeight - innerHeight
-        const p = max > 0 ? Math.round((scrollY / max) * 100) : 0
-        if (p === last) return
-        last = p
-        num.textContent = p
-        ring.style.transform = `rotate(${p * 3.6}deg)`
-      })
-    }
 
     // Cụm chữ trôi của hero: chữ có HAI lớp chồng khít — sáng (.it-light) và tối
     // (.it-dark) — cắt theo mép dưới hero (ranh giới nền tối / nền kem ở cột này):

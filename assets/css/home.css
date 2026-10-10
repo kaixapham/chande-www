@@ -96,9 +96,6 @@
 /* KHÔNG will-change trên ảnh: Chrome sẽ vẽ sẵn ảnh ở cỡ gốc rồi phóng lớp đó lên (scale 1.2 của zoom) -> ảnh mờ;
    để trình duyệt vẽ lại đúng cỡ đang hiện cho nét */
 .hs-story__small{left:calc(50% - 19 * var(--k)); top:calc(473 * var(--k)); width:calc(62 * var(--k)); height:calc(83 * var(--k)); object-fit:cover; object-position:33% 50%}
-.hs-story__dots{left:calc(50% - 10 * var(--k)); top:calc(993 * var(--k)); display:flex; gap:8px; align-items:center; height:11px; padding:0 8px;
-  border:1px solid rgba(244,243,235,.2); border-radius:999px}
-.hs-story__dots img{width:4px; height:4px}
 .hs-story__col{right:0; bottom:0; width:calc(492 * var(--u))}
 .hs-story__panel{position:relative; height:calc(var(--sh) / 2); padding:calc(40 * var(--u)) calc(32 * var(--u)); display:flex; flex-direction:column; justify-content:space-between}
 /* Như ô dưới: tiêu đề trên, cụm chữ bám đáy (đệm dưới 40) — trước để gap cố định
@@ -153,7 +150,6 @@
 .hs-land.is-staged .hs-land__pin{position:sticky; top:0; height:100svh; overflow:hidden}
 .hs-land__frame{position:absolute; inset:0}
 .hs-land.is-staged .hs-land__frame{inset:auto 0; top:50%; height:calc(1028 * var(--u)); transform:translateY(-50%)}
-.hs-land.is-staged .loader{top:auto; bottom:calc(33 * var(--u))}
 /* Dán sticker: rơi xuống từ to + nghiêng, nảy nhẹ về đúng chỗ */
 .hs-land.is-staged [data-land-step]{opacity:0; transform:translate3d(0, calc(-30 * var(--u)), 0) scale(1.22) rotate(-5deg);
   transition:opacity .22s ease, transform .6s cubic-bezier(.2, 1.45, .35, 1)}
@@ -168,10 +164,6 @@
 .hs-land__atom > img{width:calc(405.48 * var(--u)); height:calc(405.48 * var(--u)); transform:rotate(11.19deg)}
 .hs-land__stickers{left:calc(1277.74 * var(--u)); top:calc(554.46 * var(--u)); width:calc(572.58 * var(--u))}
 /* Vòng % — tiến độ cuộn trang (chande-home.js ghi số) */
-.loader{left:calc(32 * var(--u)); top:calc(895 * var(--u)); width:calc(100 * var(--u)); height:calc(100 * var(--u)); color:#f9e1c9}
-.loader img{position:absolute; left:calc(-11.76 * var(--u)); top:calc(-11.79 * var(--u)); width:calc(124.21 * var(--u)); height:calc(124.21 * var(--u)); max-width:none; transition:transform .2s linear}
-.loader b{position:absolute; inset:0; display:grid; place-items:center; font-weight:700; font-size:max(.75rem, calc(16 * var(--u))); letter-spacing:.02em}
-.loader b small{font-size:.8em}
 
 /* ---------------------------------------------------------------- 6. ABOUT */
 .hs-about{height:calc(3090 * var(--u)); color:#0e1813}
@@ -263,8 +255,6 @@
 .agenda__shot{position:relative; width:calc(685 * var(--u))}
 .agenda__shot > img:first-child{width:100%; height:calc(576 * var(--u)); object-fit:cover}
 .agenda__shot > .field{height:calc(136 * var(--u))}
-.agenda__sign{position:absolute; left:calc(34 * var(--u)); top:calc(246 * var(--u)); width:calc(319.62 * var(--u)); height:calc(251.62 * var(--u)); display:grid; place-items:center}
-.agenda__sign img{width:calc(300.46 * var(--u)); height:calc(225.34 * var(--u)); max-width:none; transform:rotate(5.19deg); object-fit:cover}
 .agenda__pair{position:relative; display:flex; width:calc(1255 * var(--u))}
 .agenda__house{position:relative; width:calc(570 * var(--u)); height:calc(712 * var(--u)); overflow:hidden}
 .agenda__house > img{width:100%; height:100%; object-fit:cover; object-position:35% 50%}

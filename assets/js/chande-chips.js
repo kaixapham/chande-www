@@ -609,14 +609,17 @@
       goal = g
       kick()
     }
-    const io = new IntersectionObserver(([e]) => {
-      inView = e.isIntersecting
+    // theo dõi ĐÚNG các khối (miệng, sóng) chứ không phải cả section cao: cuộn qua rồi thì dừng tick
+    const seen = new Map()
+    const io = new IntersectionObserver((es) => {
+      es.forEach((e) => seen.set(e.target, e.isIntersecting))
+      inView = [...seen.values()].some(Boolean)
       if (inView) {
         check()
         kick()
       }
     }, { rootMargin: '100px 0px' })
-    io.observe((yellow || green).closest('section') || yellow || green)
+    ;[yellow, green, waveEl?.ownerSVGElement].filter(Boolean).forEach((el) => io.observe(el))
     addEventListener('scroll', check, { passive: true })
     addEventListener('resize', check, { passive: true })
 

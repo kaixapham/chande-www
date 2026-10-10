@@ -122,7 +122,8 @@
         paint(ln)
       })
     }
-    if (visible && (moving || !CONFIG.enabled)) raf = requestAnimationFrame(frame)
+    // tắt (enabled=false): mục tiêu 0, dòng về thẳng rồi DỪNG — trước đây tắt lại chạy rAF mãi
+    if (visible && moving) raf = requestAnimationFrame(frame)
     else lastT = 0
   }
   const kick = () => {
