@@ -300,6 +300,7 @@ function mount(root = document) {
   let show = 0 // độ hiện (0..1)
   let active = null // vòng đang có bubble
   let ang = Math.random() * Math.PI * 2
+  let bfFor = 0 // bướm đã hiện đủ rõ trong vòng 1 bao lâu (s)
 
   const place = (o) => {
     // canvas phủ đúng lõi của vòng (toạ độ trong .circle)
@@ -339,6 +340,8 @@ function mount(root = document) {
       for (const o of circles) {
         const k = o.core.getBoundingClientRect()
         const kr = k.width / 2
+        // bướm đã bay ra khỏi vòng 1 (chande-flyer.js) -> vòng 1 không còn bướm
+        if (o.kind === 'butterfly' && api.escaped) continue
         if (Math.hypot(B.x - (k.left + kr), B.y - (k.top + kr)) < kr * CONFIG.spinIn) hit = o
       }
     if (hit && !three) {
@@ -404,6 +407,17 @@ function mount(root = document) {
         s = CONFIG.wingspan * Dw
         sh = [0.09, -0.12, 0.55, 0.45]
         cur.update(t)
+        // báo chande-flyer.js: bướm đang hiện bao lâu + vị trí / cỡ / hướng trên màn -> đủ lâu thì
+        // nó bay ra khỏi vòng đúng từ chỗ này (vòng 1 thôi vẽ bướm — api.escaped)
+        bfFor = show > 0.85 ? bfFor + dt : 0
+        if (bfFor > 0) {
+          const k = active.core.getBoundingClientRect()
+          const pxu = k.width / Dw
+          document.dispatchEvent(new CustomEvent('chande-butterfly:shown', { detail: {
+            for: bfFor, x: k.left + k.width / 2 + x * pxu, y: k.top + k.height / 2 - y * pxu, s: s * pxu, heading: -heading,
+          } }))
+          if (api.escaped) show = 0
+        }
       }
       cur.group.position.set(x, y, z)
       cur.group.rotation.set(0, 0, heading)

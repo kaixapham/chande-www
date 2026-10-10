@@ -1671,6 +1671,7 @@ export function mount(container, config = {}) {
   return {
     canvas,
     renderer,
+    camera, // để module ngoài chiếu một điểm trên tờ poster ra màn (bướm đậu lên hình bướm ở poster 1)
     params,
     ready,
     sheets,

@@ -46,6 +46,12 @@
     live = null
     const box = (root.querySelector ? root : document).querySelector('.hs-intro__eye')
     if (!box || !CONFIG.enabled) return
+    // mắt Intro: chỉ mở khi đã vào nền tối (html.hero-row-dark) — trước đó mắt còn ẩn (chande-chips.js)
+    live = run(box, () => document.documentElement.classList.contains('hero-row-dark'))
+  }
+
+  // Một con mắt trong khung `box`; ready() = điều kiện được mở mắt. Trả về { on, stop() }.
+  function run(box, ready) {
     let svg = box.querySelector('svg.hs-eye')
     if (!svg) {
       const id = `eyeclip${Math.random().toString(36).slice(2, 7)}`
@@ -65,10 +71,9 @@
     box.querySelector('img')?.style.setProperty('visibility', 'hidden')
     const lid = svg.querySelector('.hs-eye__lid')
     const pupil = svg.querySelector('.hs-eye__pupil')
-    const me = { stop() {} }
-    live = me
+    const me = { on: true, stop() {} }
 
-    if (reduced) return
+    if (reduced) return me
     lid.style.transform = 'scaleY(0.04)'
     lid.style.opacity = '0'
 
@@ -138,7 +143,7 @@
     const pupilAnims = () => anims.filter((a) => a.effect?.target === pupil)
     async function idleLoop() {
       const id = ++idleId
-      const on = () => idling && id === idleId && live === me && inView
+      const on = () => idling && id === idleId && me.on && inView
       while (on()) {
         await lookTo(-dx, -1.5)
         if (!on()) break
@@ -189,18 +194,18 @@
     let fluttering = false
     async function flutter() {
       fluttering = true
-      while (fluttering && live === me && inView) {
+      while (fluttering && me.on && inView) {
         await blink()
         await wait2(70 + Math.random() * 90)
       }
     }
     function follow() {
-      if (raf || !following || idling || !inView || live !== me) return
+      if (raf || !following || idling || !inView || !me.on) return
       raf = requestAnimationFrame(step)
     }
     function step() {
       raf = 0
-      if (!following || idling || !inView || live !== me) return
+      if (!following || idling || !inView || !me.on) return
       let gx = 0
       let gy = 0
       if (mx !== null) {
@@ -221,9 +226,9 @@
     let blinkId = 0
     async function blinks() {
       const id = ++blinkId
-      while (live === me && inView && id === blinkId) {
+      while (me.on && inView && id === blinkId) {
         await wait(2500 + Math.random() * 3000)
-        if (live !== me || !inView || id !== blinkId) break
+        if (!me.on || !inView || id !== blinkId) break
         await blink()
         // thỉnh thoảng chớp đúp
         if (Math.random() < 0.25) await blink()
@@ -250,9 +255,7 @@
       const r = box.getBoundingClientRect()
       const was = inView
       inView = r.bottom > 0 && r.top < innerHeight
-      // chỉ mở khi đã vào nền tối (html.hero-row-dark) — trước đó mắt còn ẩn (chande-chips.js)
-      const dark = document.documentElement.classList.contains('hero-row-dark')
-      if (!opened && dark && r.top < innerHeight * CONFIG.at && r.bottom > 0) open()
+      if (!opened && ready() && r.top < innerHeight * CONFIG.at && r.bottom > 0) open()
       else if (following && inView && !was) {
         if (idling) idleLoop()
         else follow()
@@ -278,10 +281,16 @@
       anims.forEach((a) => a.cancel())
       anims = []
       inView = false
+      me.on = false
     }
+    return me
   }
 
   api.mount = mount
   mount(document)
+  // Mắt trên thanh đầu trang (ô thứ 2, chande-loading.js dựng): chỉ hiện khi mở menu (CSS), mở mắt
+  // lần đầu mở menu (html.menu-open)
+  const barEye = document.querySelector('.cl__eye')
+  if (barEye && CONFIG.enabled) run(barEye, () => document.documentElement.classList.contains('menu-open'))
   if (window.barba?.hooks) window.barba.hooks.beforeEnter((data) => mount(data.next.container))
 })()

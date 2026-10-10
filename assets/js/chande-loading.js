@@ -307,10 +307,17 @@ html.cl-loading{background:${S.bg}}
   /* viền 1px của ô vẽ ĐÈ lên nền -> ép trong suốt (thắng cả animation dock) */
   border-color:transparent !important}
 
+/* con mắt (chande-eye.js vẽ + điều khiển) ở ô thứ 2, căn trái, giữa theo chiều cao — CHỈ hiện khi mở menu */
+.cl__eye{position:absolute; left:${em(S.cellPad)}; top:50%; width:${em(52.5)}; height:${em(31.5)}; margin-top:${em(-15.75)}; overflow:hidden; pointer-events:none;
+  opacity:0; visibility:hidden; transition:opacity .3s ease, visibility 0s .3s}
+html.menu-open .cl__eye{opacity:1; visibility:visible; transition:opacity .4s ease .25s}
+
 /* ô trái: logo + wordmark | flipper bên phải */
 .cl__row{display:flex; align-items:center; justify-content:space-between}
 .cl__brand{display:flex; align-items:center; gap:${em(S.logoGap)};
-  color:inherit; text-decoration:none}
+  color:inherit; text-decoration:none; transition:filter .25s ease}
+/* hover logo: màu đậm hơn (màu ô do animation dock ghi -> đậm bằng filter, không đổi color) */
+.cl.is-done .cl__brand:hover{filter:brightness(.6) saturate(1.15)}
 .cl__logo{width:${em(S.logoW)}; height:${em(S.logoH)}; flex:none; color:currentColor}
 .cl__logo svg{display:block; width:100%; height:100%}
 
@@ -356,17 +363,13 @@ html.cl-loading{background:${S.bg}}
 
 /* Hover (sau loading): ô nav + nút menu đậm hơn — nền ô do animation dock ghi
    thẳng (fill 'both') nên không đổi background được: phủ bóng đổ inset tối (vẽ
-   trên nền, dưới chữ). Nhãn GALLERY / ABOUT có gạch chân chạy trái -> phải
-   (rời chuột thì rút về phải). Cả ô bấm được, không chỉ dòng chữ. */
+   trên nền, dưới chữ). Nhãn GALLERY / ABOUT không gạch chân. Cả ô bấm được, không
+   chỉ dòng chữ. */
 /* Nút menu: KHÔNG đậm nền khi hover — chỉ bốn chấm toả ra (xem .cl__menu circle bên dưới). */
 .cl__cell--nav{transition:box-shadow .25s}
 .cl.is-done .cl__cell--nav{cursor:pointer}
 .cl.is-done .cl__cell--nav:hover{box-shadow:inset 0 0 0 100vmax rgba(0,0,0,.18)}
 .cl__navlink{position:relative; width:fit-content}
-.cl__navlink::after{content:''; position:absolute; left:0; width:var(--ul-w, 100%); top:calc(100% + ${em(6)}); height:${em(0.5)};
-  background:currentColor; transform:scaleX(0); transform-origin:right center;
-  transition:transform .45s cubic-bezier(.65,0,.35,1)}
-.cl.is-done .cl__cell--nav:hover .cl__navlink::after{transform:scaleX(1); transform-origin:left center}
 
 /* nút menu — chỉ hiện ở trạng thái xong. Con TRỰC TIẾP của thanh (không nằm
    trong ô nav 02): ô có viền 1px + overflow:hidden nên nút đặt bên trong bị lùi
@@ -381,13 +384,11 @@ html.cl-loading{background:${S.bg}}
   gap:${em(S.dotsGap)}; clip-path:inset(0 0 0 100%);
 }
 .cl__menu svg{display:block; width:${em(S.dotsW)}; height:${em(S.dotsH)}; overflow:visible}
-/* hover: 4 chấm toả nhẹ ra 4 góc chéo (đơn vị = viewBox 20×6 ≈ px thiết kế) */
-.cl__menu circle{transition:transform .35s cubic-bezier(.3,1.4,.5,1)}
-/* hover — và giữ nguyên lúc menu đang mở (chande-menu.js gắn html.menu-open) */
-.cl.is-done .cl__menu:hover svg:first-child circle:first-child, html.menu-open .cl__menu svg:first-child circle:first-child{transform:translate(-2px, -2px)}
-.cl.is-done .cl__menu:hover svg:first-child circle:last-child, html.menu-open .cl__menu svg:first-child circle:last-child{transform:translate(2px, -2px)}
-.cl.is-done .cl__menu:hover svg:last-child circle:first-child, html.menu-open .cl__menu svg:last-child circle:first-child{transform:translate(-2px, 2px)}
-.cl.is-done .cl__menu:hover svg:last-child circle:last-child, html.menu-open .cl__menu svg:last-child circle:last-child{transform:translate(2px, 2px)}
+/* icon 9 chấm (MENU_ICON): thường 2×2 -> hover toả ra 4 góc -> menu mở (html.menu-open) thành chữ X */
+.cl__menu svg.cl__x{width:${em(S.dotsW)}; height:${em(S.dotsW)}}
+.cl__menu .cl__x circle{transform:translate(var(--dx), var(--dy)); transition:transform .4s cubic-bezier(.3,1.3,.5,1)}
+.cl.is-done .cl__menu:hover .cl__x circle{transform:translate(var(--hx), var(--hy))}
+html.menu-open .cl__menu .cl__x circle, html.menu-open .cl.is-done .cl__menu:hover .cl__x circle{transform:none}
 
 /* xong: thanh ở lại làm header, phần còn lại không chặn chuột */
 .cl.is-done{pointer-events:none}
@@ -415,6 +416,7 @@ html.cl-loading{background:${S.bg}}
   .cl{font-size:${R.mobile.base}px}
   .cl__cell--brand{width:${R.mobile.brand}%}
   .cl__cell--track{width:${R.mobile.track}%}
+  .cl__eye{display:none}
 }
 `
   }
@@ -427,6 +429,19 @@ html.cl-loading{background:${S.bg}}
   const DOTS =
     '<svg viewBox="0 0 20 6" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
     '<circle cx="3" cy="3" r="3" fill="currentColor"/><circle cx="17" cy="3" r="3" fill="currentColor"/></svg>'
+
+  // Icon nút menu: 9 chấm. Thường = 4 chấm 2×2 (chấm khác nằm chồng lên góc); hover = 4 chấm toả ra
+  // góc; menu đang mở = chữ X bằng chấm (2 đường chéo 5 chấm). [x, y] lúc X, [dx, dy] lúc thường,
+  // [hx, hy] lúc hover (đơn vị viewBox 20 × 20 ≈ px thiết kế)
+  const XDOTS = [
+    [1, 1, 2, 2, 0, 0], [19, 1, -2, 2, 0, 0], [1, 19, 2, -2, 0, 0], [19, 19, -2, -2, 0, 0],
+    [5.5, 5.5, -2.5, -2.5, -4.5, -4.5], [14.5, 5.5, 2.5, -2.5, 4.5, -4.5], [5.5, 14.5, -2.5, 2.5, -4.5, 4.5], [14.5, 14.5, 2.5, 2.5, 4.5, 4.5],
+    [10, 10, -7, -7, -9, -9],
+  ]
+  const MENU_ICON =
+    '<svg class="cl__x" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+    XDOTS.map(([x, y, dx, dy, hx, hy]) => `<circle cx="${x}" cy="${y}" r="3" fill="currentColor" style="--dx:${dx}px;--dy:${dy}px;--hx:${hx}px;--hy:${hy}px"/>`).join('') +
+    '</svg>'
 
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
   const line = (s) => `<span>${esc(s)}</span>`
@@ -462,9 +477,9 @@ html.cl-loading{background:${S.bg}}
         </span></span>
       </div>
     </div>
-    <div class="cl__cell cl__cell--track"><div class="cl__fill"></div></div>
+    <div class="cl__cell cl__cell--track"><div class="cl__fill"></div><span class="cl__eye" aria-hidden="true"></span></div>
     ${navCells}
-    <button class="cl__menu" type="button" aria-label="Menu">${DOTS}${DOTS}</button>
+    <button class="cl__menu" type="button" aria-label="Menu">${MENU_ICON}</button>
   </div>`
   }
 

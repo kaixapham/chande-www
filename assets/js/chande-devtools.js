@@ -55,6 +55,7 @@ const chandeDevtools = () => {
   const CDK = window.CHANDE_DUCK
   const CGR = window.CHANDE_GRASS
   const CCH = window.CHANDE_CHIPS
+  const CFY = window.CHANDE_FLYER
   // CHỈ ADMIN mới có bảng setting (H) và phím mở CMS (K): chạy local, hoặc trình duyệt
   // đã mở trang với ?admin=1 (nhớ ở localStorage; ?admin=0 để thôi). Khách xem site thật
   // không có gì — không dựng bảng, không bắt phím, không áp chỉnh sửa tạm ở localStorage.
@@ -69,7 +70,7 @@ const chandeDevtools = () => {
   try { admin = admin || localStorage.getItem(ADMIN_KEY) === '1' } catch (e) {}
   if (!admin) return
 
-  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL && !CPX && !CTF && !CSG && !CGA && !CCH) return
+  if (!CL && !CT && !CH && !CM && !CR && !CF && !CB && !CC && !CTL && !CPX && !CTF && !CSG && !CGA && !CCH && !CFY) return
 
   const KEY = 'chande-devtools'
   const KEY_SHOTS = 'chande-devtools-shots'
@@ -92,6 +93,7 @@ const chandeDevtools = () => {
     CSG && { id: 'sign', label: 'Chữ ký viết tay (Cảm nhận)', mod: 'sign' },
     CCH && { id: 'chips', label: 'Miệng + sóng (Intro)', mod: 'chips' },
     CGA && { id: 'gallery', label: 'Gallery (lưới, vịt, cỏ)', mod: 'gallery' },
+    CFY && { id: 'flyer', label: 'Bướm bay', mod: 'flyer' },
     CT && { id: 'sweep', label: 'Rèm quét', mod: 'transition', variant: 'sweep' },
     CT && { id: 'split', label: 'Rèm chẻ', mod: 'transition', variant: 'split' },
     CT && { id: 'stack', label: 'Trượt thẻ', mod: 'transition', variant: 'stack' },
@@ -247,6 +249,7 @@ const chandeDevtools = () => {
         { path: 'logoTurn', label: 'Xoay quanh trục dọc (độ)', type: 'range', min: -180, max: 180, step: 1 },
         { path: 'logoSpinOn', label: 'Tự quay quanh trục dọc', type: 'bool' },
         { path: 'logoSpin', label: 'Tốc độ tự quay (độ / giây, âm = quay ngược)', type: 'range', min: -180, max: 180, step: 1 },
+        { path: 'logoLight', label: 'Tốc độ đổi ánh sáng trên logo (0 = đứng yên, 1 = như bubble)', type: 'range', min: 0, max: 1, step: 0.01 },
         { path: 'logoDepth', label: 'Độ dày (nửa bề dày × bề ngang)', type: 'range', min: 0.02, max: 0.3, step: 0.005 },
         { path: 'logoRound', label: 'Độ phồng mép (bo × bề ngang, ≤ độ dày)', type: 'range', min: 0.03, max: 0.115, step: 0.005 },
         { path: 'logoDispersion', label: 'Tách màu R/G/B ở mép như bubble home (nặng hơn)', type: 'bool' },
@@ -300,6 +303,8 @@ const chandeDevtools = () => {
       items: [
         { path: 'shrinkOn', label: 'Thu nhỏ từ section Poster tới hết trang', type: 'bool' },
         { path: 'shrinkScale', label: 'Còn bao nhiêu (1 = không thu)', type: 'range', min: 0.2, max: 1, step: 0.05 },
+        { path: 'zoneOn', label: 'Chỉ sống trong dải 3 vòng tròn', type: 'bool' },
+        { path: 'zonePad', label: 'Nới dải (px ở khổ 1920)', type: 'range', min: 0, max: 120, step: 1 },
         { path: 'hoverOn', label: 'Thu nhỏ khi trỏ vào nút / link', type: 'bool' },
         { path: 'hoverScale', label: 'Khi trỏ vào nút còn (so với cỡ gốc)', type: 'range', min: 0.1, max: 1, step: 0.05 },
         { path: 'hoverTitleScale', label: 'Khi trỏ vào tiêu đề (vai trò About) còn', type: 'range', min: 0.05, max: 1, step: 0.05 },
@@ -351,6 +356,42 @@ const chandeDevtools = () => {
         { path: 'floor', label: 'Preset mặc định (nút góc trang đè lên theo trình duyệt)', type: 'select',
           options: [['grass-3d', 'Cỏ 3D'], ['grass-pixel', 'Cỏ pixel'], ['', 'Nền kem địa hình (Figma)']] },
       ] },
+    // ---- Bướm bay theo cuộn (chande-flyer.js) ----
+    { tab: 'flyer', mod: 'flyer', title: 'Bướm bay ra từ vòng 1, theo cuộn tới cuối trang chủ',
+      items: [
+        { path: 'enabled', label: 'Bật', type: 'bool' },
+        { path: 'size', label: 'Sải cánh (px ở khổ 1920)', type: 'range', min: 40, max: 320, step: 2 },
+        { path: 'speed', label: 'Tốc độ bay tối đa (px/s)', type: 'range', min: 100, max: 1600, step: 10 },
+        { path: 'steer', label: 'Độ bám điểm đậu', type: 'range', min: 0.5, max: 8, step: 0.1 },
+        { path: 'wander', label: 'Chao lượn quanh điểm (px)', type: 'range', min: 0, max: 300, step: 2 },
+        { path: 'flap', label: 'Nhịp vỗ cánh (lần / giây)', type: 'range', min: 0.5, max: 8, step: 0.1 },
+        { path: 'holdIn', label: 'Hiện trong vòng 1 bao lâu thì bay ra (s)', type: 'range', min: 0, max: 6, step: 0.1 },
+        { path: 'shadow', label: 'Độ đậm bóng', type: 'range', min: 0, max: 0.6, step: 0.01 },
+      ] },
+    { tab: 'flyer', mod: 'flyer', title: 'Biến hình thành bướm cánh lime (lúc cụm vòng tròn màu cuối Poster 3D nở)',
+      items: [
+        { path: 'morph.on', label: 'Bật', type: 'bool' },
+        { path: 'morph.under', label: 'Chui dưới vòng cung (bị đè lên)', type: 'bool' },
+        { path: 'morph.at', label: 'Hoá khi vòng tròn nở quá (lúc bướm khuất)', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'morph.time', label: 'Thời gian tan hạt (s)', type: 'range', min: 0.1, max: 3, step: 0.05 },
+        { path: 'morph.grain', label: 'Độ mịn hạt tan', type: 'range', min: 6, max: 160, step: 1 },
+        { path: 'morph.edge', label: 'Màu mép tan', type: 'color' },
+      ] },
+    { tab: 'flyer', mod: 'flyer', title: 'Đậu ở cuối trang (giữa logo footer)',
+      items: [
+        { path: 'perch.on', label: 'Bật', type: 'bool' },
+        { path: 'perch.x', label: 'Chỗ đậu ngang trong logo (0 = trái, 1 = phải)', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'perch.y', label: 'Chỗ đậu dọc (0 = trên, 1 = dưới)', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: 'perch.poke', label: 'Khoảng chọc (× sải cánh)', type: 'range', min: 0.1, max: 2, step: 0.05 },
+        { path: 'perch.away', label: 'Bay lượn bao lâu rồi đậu lại (s)', type: 'range', min: 0.5, max: 12, step: 0.1 },
+        { path: 'perch.rest', label: 'Lúc đậu: nhịp đung đưa (lần / giây)', type: 'range', min: 0.05, max: 2, step: 0.05 },
+        { path: 'perch.gap', label: 'Lúc đậu: bao lâu vỗ cánh một lần (s)', type: 'range', min: 0.5, max: 15, step: 0.5 },
+      ] },
+    ...(CFY ? CFY.sections.map(([k, name]) => ({ tab: 'flyer', mod: 'flyer', title: `Điểm đậu — ${name} (phần màn: 0 = trái / trên, 1 = phải / dưới)`,
+      items: [
+        { path: `pos.${k}.x`, label: 'Ngang (x)', type: 'range', min: 0, max: 1, step: 0.01 },
+        { path: `pos.${k}.y`, label: 'Dọc (y)', type: 'range', min: 0, max: 1, step: 0.01 },
+      ] })) : []),
     // ---- Vịt patin 3D (chande-duck.js) ----
     { tab: 'gallery', mod: 'duck', title: 'Vịt patin',
       items: [
@@ -689,7 +730,7 @@ const chandeDevtools = () => {
       ]) },
   ]
 
-  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL, parallax: CPX, titlefx: CTF, sign: CSG, gallery: CGA, duck: CDK, grass: CGR, chips: CCH }
+  const MODS = { loading: CL, transition: CT, hero: CH, mosaic: CM, reveal: CR, field: CF, bubble: CB, cursor: CC, tilt: CTL, parallax: CPX, titlefx: CTF, sign: CSG, gallery: CGA, duck: CDK, grass: CGR, chips: CCH, flyer: CFY }
   const get = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o)
   const set = (o, p, v) => {
     const k = p.split('.')

@@ -22,6 +22,8 @@
     slide: 10, // độ trượt hình trong ô (% chiều cao ô, tổng quãng)
     zoom: 1.2, // phóng hình trong ô để có chỗ trượt (cả parallax trước / sau quãng dính)
     appear: 0.12, // ảnh nhỏ bật ra trong đoạn đầu này của quãng nở (0…1)
+    blLag: 0.12, // kiểu góc dưới trái: các khối màu cách nhau bao nhiêu (theo quãng nở)
+    from: 'bl', // ảnh sau trồi ra từ đâu: 'bl' = góc dưới trái khung; '' = từ ô nhỏ giữa khung (cũ)
     bandsFrom: 0.62, // dải màu bắt đầu trồi ra khi ảnh cao tới bao nhiêu chiều cao khung (0…1)
     bandPx: 0.006, // độ dày mỗi dải (× chiều cao khung) — CỐ ĐỊNH, không đổi theo cỡ ảnh
     bandRamp: 0.05, // dải bung từ 0 lên đủ dày trong quãng này (theo tỉ lệ cao ảnh / khung)
@@ -35,7 +37,8 @@
   let live = null
 
   function mount(root = document) {
-    destroy()
+    // mount mới (trang vào qua Barba): bản cũ thuộc trang đang rời -> giữ nguyên hình
+    destroy(!!live && !(root.contains?.(live.section)))
     const section = (root.querySelector ? root : document).querySelector('.hs-story[data-story-zoom]')
     if (!section) return
     const media = section.querySelector('.hs-story__media')
@@ -57,7 +60,9 @@
     })
     // dải màu: lấy bảng màu của shape reveal (hero), dải đầu = ngoài cùng, chạy trước
     // chỉ 3 màu cuối của bảng (xanh rêu · lime nhạt · mực)
-    const colors = (window.CHANDE_REVEAL?.config?.colors || ['#68f12b', '#f4f3eb', '#236c3c', '#c4ff6b', '#182220']).slice(-3)
+    const palette = window.CHANDE_REVEAL?.config?.colors || ['#68f12b', '#f4f3eb', '#236c3c', '#c4ff6b', '#182220']
+    // từ góc dưới trái: đủ 5 màu như đổi ảnh ở hero (đoàn khối màu đi trước, ảnh là toa cuối)
+    const colors = CONFIG.from === 'bl' ? palette.slice() : palette.slice(-3)
     const bands = colors.map((c) => {
       const b = document.createElement('span')
       b.className = 'hs-story__band-c'
@@ -125,6 +130,8 @@
         q = Math.min(1, Math.max(0, q))
         const w = sw * (W / sw) ** q
         const h = sh * (H / sh) ** q
+        // từ góc dưới trái: ảnh bám góc dưới trái khung, nở lên trên / sang phải
+        if (CONFIG.from === 'bl') return [0, H - h, w, h]
         const g = (h - sh) / Math.max(1e-3, H - sh)
         return [sx + sw / 2 + (W / 2 - (sx + sw / 2)) * g - w / 2, sy + sh / 2 + (H / 2 - (sy + sh / 2)) * g - h / 2, w, h]
       }
@@ -137,6 +144,54 @@
       const pop = t <= 0 ? 0 : 1 - (1 - a) ** 3
       const w = gw * pop
       const h = gh * pop
+      if (CONFIG.from === 'bl') {
+        // KIỂU HERO, từ góc dưới trái: đoàn khối màu (bảng màu shape reveal) nở từ góc dưới trái,
+        // khối đầu đi trước nhất, các khối sau nối đuôi đều nhau, ẢNH là toa cuối; khối nào đã phủ
+        // kín khung thì mọi thứ dưới nó (ảnh nền, khối trước) ẩn đi
+        const ease = (q) => {
+          q = Math.min(1, Math.max(0, q))
+          return 1 - (1 - q) ** 3
+        }
+        const nb = bands.length
+        const lag = CONFIG.blLag
+        // f chạy 0..1 trong chặng; dồn lại để khối đầu bắt đầu ngay, ảnh xong đúng lúc hết chặng
+        const span = 1 + nb * lag
+        let full = -1
+        bands.forEach((b, j) => {
+          const q = ease((f * span - j * lag) / 1)
+          if (t <= 0 || q <= 0.001 || k + 1 >= imgs.length || f >= 1) {
+            b.style.visibility = 'hidden'
+            return
+          }
+          if (q >= 0.999) full = j
+          b.style.visibility = 'visible'
+          b.style.left = '0px'
+          b.style.top = `${(H - H * q).toFixed(2)}px`
+          b.style.width = `${(W * q).toFixed(2)}px`
+          b.style.height = `${(H * q).toFixed(2)}px`
+        })
+        bands.forEach((b, j) => j < full && (b.style.visibility = 'hidden'))
+        const qi = t <= 0 ? 0 : ease(f * span - nb * lag)
+        cells.forEach((el, i) => {
+          if (i === k) {
+            place(el, 0, 0, W, H)
+            if (full >= 0) el.style.visibility = 'hidden'
+          } else if (i === k + 1) {
+            if (qi <= 0.001) {
+              el.style.visibility = 'hidden'
+              return
+            }
+            place(el, 0, H - H * qi, W * qi, H * qi)
+            el.style.zIndex = '2'
+          } else {
+            el.style.visibility = 'hidden'
+            return
+          }
+          const u = Math.min(1.3, Math.max(-0.3, (xr - (i - 1)) / 2))
+          imgs[i].style.transform = `translate3d(0, ${((0.5 - u) * CONFIG.slide).toFixed(2)}%, 0) scale(${CONFIG.zoom})`
+        })
+        return
+      }
       // dải màu: trồi dần từ mép ảnh (độ đi trước tăng từ 0), dải ngoài cùng đi trước nhất
       // dải màu: viền dày CỐ ĐỊNH quanh ảnh (bung nhanh lên đủ dày rồi giữ), dải ngoài cùng trước
       const e = Math.min(1, Math.max(0, (gh / H - CONFIG.bandsFrom) / Math.max(0.01, CONFIG.bandRamp)))
@@ -172,7 +227,8 @@
             el.style.visibility = 'hidden'
             return
           }
-          place(el, cx - w / 2, cy - h / 2, w, h)
+          if (CONFIG.from === 'bl') place(el, 0, H - h, w, h) // trồi ra từ góc dưới trái
+          else place(el, cx - w / 2, cy - h / 2, w, h)
           el.style.zIndex = '2' // trên các dải màu
         } else {
           el.style.visibility = 'hidden'
@@ -194,11 +250,15 @@
 
     live = {
       section,
-      stop() {
+      // keep = trang đang rời đi (Barba): chỉ gỡ theo dõi, GIỮ NGUYÊN hình đang hiện — trả DOM về
+      // bản gốc lúc này làm ảnh nền + ảnh nhỏ (+ ảnh nổi mobile) nhảy về bố cục chưa zoom ngay dưới
+      // màn chuyển trang (lộ "ảnh cũ")
+      stop(keep) {
         ro.disconnect()
         removeEventListener('scroll', onScroll)
         wide.removeEventListener('change', measure)
         cancelAnimationFrame(raf)
+        if (keep) return
         section.classList.remove('is-zoom')
         section.style.removeProperty('--story-pin')
         for (const el of [...imgs, ...cells]) el.style.cssText = ''
@@ -211,18 +271,18 @@
     }
   }
 
-  function destroy() {
-    live?.stop()
+  function destroy(keep = false) {
+    live?.stop(keep)
     live = null
   }
 
   api.mount = mount
-  api.destroy = destroy
+  api.destroy = () => destroy()
   mount(document)
   if (window.barba?.hooks) {
     window.barba.hooks.beforeEnter((data) => mount(data.next.container))
     window.barba.hooks.afterLeave((data) => {
-      if (live && data.current.container?.contains(live.section)) destroy()
+      if (live && data.current.container?.contains(live.section)) destroy(true)
     })
   }
 })()

@@ -480,6 +480,7 @@ function destroy() {
     if (o.material) o.material.dispose()
   })
   D.renderer.dispose()
+  D.renderer.forceContextLoss() // trả ngữ cảnh WebGL ngay — mỗi lần vào Gallery dựng cái mới, dồn lại trình duyệt sẽ tước ngữ cảnh cũ nhất (có thể là bubble)
   D.canvas.remove()
   D.trail?.remove()
   D = null

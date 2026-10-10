@@ -85,10 +85,16 @@
 .hs-story.is-zoom .hs-story__col{top:calc(280 * var(--u)); bottom:auto}
 .hs-story__media, .hs-story__col{will-change:transform}
 .hs-story.is-cells .hs-story__card{display:none} /* bản zoom chỉ dùng ảnh nền + ảnh nhỏ */
+/* Ảnh nổi giữa chỉ dành cho mobile: màn rộng thì ẩn LUÔN, không chờ JS gắn .is-cells — trước đây
+   lúc JS chưa chạy / lúc rời trang (destroy() gỡ .is-cells khi trang cũ còn hiện dưới màn chuyển
+   trang) ảnh này lòi ra giữa khung */
+@media (min-width:900px){ .hs-story__card{display:none} }
 .hs-story__cell{display:contents}
 .hs-story__band-c{position:absolute; visibility:hidden; z-index:1; pointer-events:none}
 .hs-story.is-cells .hs-story__cell{display:block; position:absolute; overflow:hidden}
-.hs-story.is-cells .hs-story__cell > img{left:0; top:0; width:100%; height:100%; object-fit:cover; object-position:50% 50%; will-change:transform}
+.hs-story.is-cells .hs-story__cell > img{left:0; top:0; width:100%; height:100%; object-fit:cover; object-position:50% 50%}
+/* KHÔNG will-change trên ảnh: Chrome sẽ vẽ sẵn ảnh ở cỡ gốc rồi phóng lớp đó lên (scale 1.2 của zoom) -> ảnh mờ;
+   để trình duyệt vẽ lại đúng cỡ đang hiện cho nét */
 .hs-story__small{left:calc(50% - 19 * var(--k)); top:calc(473 * var(--k)); width:calc(62 * var(--k)); height:calc(83 * var(--k)); object-fit:cover; object-position:33% 50%}
 .hs-story__dots{left:calc(50% - 10 * var(--k)); top:calc(993 * var(--k)); display:flex; gap:8px; align-items:center; height:11px; padding:0 8px;
   border:1px solid rgba(244,243,235,.2); border-radius:999px}
@@ -204,7 +210,7 @@
 /* +1px chui dưới ảnh đá (ảnh vẽ sau, nằm trên): hai mép trùng ở toạ độ lẻ thì
    điểm ảnh mép phủ không đủ, lộ nền kem thành vạch sáng 1px. */
 .hs-about__scheme{left:0; top:calc(2310 * var(--u)); width:calc(492 * var(--u) + 1px)}
-.hs-about__rock{left:calc(492 * var(--u)); top:calc(2310 * var(--u)); width:calc(468 * var(--u)); height:calc(540 * var(--u)); object-fit:cover; object-position:40% 55%}
+.hs-about__rock{left:calc(492 * var(--u)); top:calc(2310 * var(--u)); width:calc(468 * var(--u)); height:calc(540 * var(--u)); object-fit:cover; object-position:50% 50%}
 .hs-about__field{right:0; top:calc(2310 * var(--u)); width:calc(960 * var(--u)); height:calc(540 * var(--u))}
 .hs-about__band{left:0; right:0; top:calc(2850 * var(--u)); height:calc(240 * var(--u)); background:#112020; display:flex; align-items:center; gap:calc(32 * var(--u))}
 .hs-about__band .dotrun{position:relative; width:calc(960 * var(--u)); height:100%; background:var(--lime)}
@@ -436,14 +442,11 @@
 .cta:hover i svg:last-child circle:last-child{transform:translate(2px, 2px)}
 .cta span{display:flex; flex-direction:column; gap:4px; padding-left:calc(24 * var(--u)); white-space:nowrap}
 .cta span small{font-size:1em; font-feature-settings:"numr" 1}
-/* Hover như menu top: nền nút tối đi (bóng inset phủ trên nền, dưới chữ; ô chấm
-   neon nằm trên nên giữ màu), nhãn có gạch chân 0.5px chạy trái -> phải, dài đúng chữ nhãn. */
+/* Hover: nền nút tối đi (bóng inset phủ trên nền, dưới chữ; ô chấm neon nằm trên nên giữ màu).
+   Không gạch chân nhãn. */
 .cta{transition:box-shadow .25s}
 .cta:hover{box-shadow:inset 0 0 0 100vmax rgba(0,0,0,.18)} /* ô chấm neon giữ nguyên màu */
-.cta__t{font-style:normal; width:fit-content; padding-bottom:calc(6 * var(--u)); margin-bottom:calc(-6 * var(--u));
-  background:linear-gradient(currentColor, currentColor) right 100% / 0% max(.5px, calc(.5 * var(--u))) no-repeat;
-  transition:background-size .45s cubic-bezier(.65,0,.35,1)}
-.cta:hover .cta__t{background-size:100% max(.5px, calc(.5 * var(--u))); background-position:left 100%}
+.cta__t{font-style:normal}
 .hs-foot__cta1{left:calc(726 * var(--u)); top:calc(660 * var(--u)); width:calc(597 * var(--u)); background:#236c3c}
 .hs-foot__cta2{left:calc(1323 * var(--u)); top:calc(660 * var(--u)); width:calc(597 * var(--u)); background:#2c3a38}
 .links{display:flex; justify-content:space-between; width:calc(533 * var(--u)); font-size:.875rem}

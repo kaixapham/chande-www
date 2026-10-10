@@ -52,6 +52,31 @@
       v.play?.().catch(() => {})
     })
   afterLoad(() => setTimeout(startVideos, 300), 2500)
+  // Canh video: để trang lâu (tab nền, máy ngủ, trình duyệt thu hồi bộ giải mã / mạng đứt giữa
+  // chừng) video có thể đứng / lỗi / mất khung -> ô recap trống. Quay lại tab, cứ vài giây, hoặc khi
+  // video báo lỗi / nghẽn: nếu không chạy được thì nạp lại nguồn và phát tiếp đúng chỗ.
+  const reviveVideos = () => {
+    if (document.hidden) return
+    document.querySelectorAll('video[autoplay][src]').forEach((v) => {
+      if (!v.isConnected) return
+      const broken = v.error || v.networkState === 3 /* NO_SOURCE */ || (v.readyState < 2 && !v.seeking && v._kick > 1)
+      if (broken) {
+        const t = v.currentTime || 0
+        v._kick = 0
+        v.load()
+        v.addEventListener('loadedmetadata', () => { try { v.currentTime = t } catch {} }, { once: true })
+      }
+      if (v.readyState < 2) v._kick = (v._kick || 0) + 1
+      else v._kick = 0
+      if (v.paused) v.play?.().catch(() => {})
+    })
+  }
+  document.addEventListener('visibilitychange', reviveVideos)
+  addEventListener('focus', reviveVideos)
+  addEventListener('pageshow', reviveVideos)
+  setInterval(reviveVideos, 4000)
+  document.addEventListener('error', (e) => e.target.tagName === 'VIDEO' && setTimeout(reviveVideos, 500), true)
+  document.addEventListener('stalled', (e) => e.target.tagName === 'VIDEO' && setTimeout(reviveVideos, 3000), true)
   window.barba?.hooks?.afterEnter(() => setTimeout(startVideos, 300))
 
   function preloadLater(list) {

@@ -90,6 +90,9 @@
     shrinkScale: 0.5,
     // Con trỏ nằm trong các section này thì giọt tan đi (ra khỏi thì hiện lại)
     hideIn: '.hs-land, .hs-poster, .cmenu', // .cmenu: trang menu — bubble bẻ cong ảnh member thành hình tròn
+    zoneOn: true, // giọt theo chuột CHỈ sống trong vùng zoneSel: chuột ra ngoài thì mờ hẳn, giọt không ra khỏi vùng
+    zoneSel: '.hs-about .circles', // dải 3 vòng tròn (giữa hai đường gạch, section About trang chủ)
+    zonePad: 24, // nới vùng ra mỗi phía (px ở khổ 1920) — tới đúng hai đường gạch
     // Trỏ vào nút / link: giọt co còn hoverScale (so với cỡ gốc), rời ra thì về lại.
     hoverOn: true,
     hoverScale: 0.25,
@@ -132,6 +135,7 @@
     logoSpin: 40, // tốc độ tự quay (độ / giây, âm = quay ngược)
     logoX: 0, // lệch logo khỏi tâm hero: sang phải (px ở khổ 1920, co theo bề ngang màn)
     logoY: 0, // lệch xuống dưới (px ở khổ 1920)
+    logoLight: 0.06, // tốc độ đổi ánh sáng trên logo (× speed; 0 = đứng yên, 1 = như bubble thường)
     // Tách màu R/G/B ở mép như bubble trang chủ — bộ lọc 3 lượt trên cả khung logo, nền
     // gạch neon chạy liên tục nên chạy lại mỗi khung: logo to thì tụt khung hình rõ
     logoDispersion: false,
@@ -833,6 +837,12 @@ void main () {
   const aim = () => {
     targetX = ptrX + CONFIG.offsetX * mulTarget
     targetY = ptrY + CONFIG.offsetY * mulTarget
+    // giữ tâm giọt trong vùng sống (dải 3 vòng tròn)
+    const z = zoneRect()
+    if (z && z.r > z.l) {
+      targetX = Math.min(Math.max(targetX, z.l), z.r)
+      targetY = Math.min(Math.max(targetY, z.t), z.b)
+    }
   }
   const effSize = (m = mul) => Math.max(CONFIG.size, 4) * m
   const effBlend = (m = mul) => Math.max(CONFIG.blend, 0.5) / m
@@ -980,7 +990,9 @@ void main () {
   function frame(now) {
     const delta = Math.min((now - last) / 1000, 1 / 30)
     last = now
-    time += delta * Math.max(CONFIG.speed, 0)
+    // logo: mặt phẳng lớn -> ánh óng ánh (nhiễu theo thời gian) đổi là cả mảng sáng / tối cùng lúc,
+    // nhìn như logo lúc hiện lúc mất -> chỉ trôi rất chậm (logoLight × tốc độ thường)
+    time += delta * Math.max(CONFIG.speed, 0) * (shape === 'logo' ? Math.max(+CONFIG.logoLight || 0, 0) : 1)
     if (shape === 'logo' && CONFIG.logoSpinOn && CONFIG.logoSpin) spinDeg = (spinDeg + CONFIG.logoSpin * delta) % 360
     else if (spinDeg) {
       // tắt tự quay: quay nốt về góc gốc theo đường ngắn nhất rồi đứng yên
@@ -991,6 +1003,7 @@ void main () {
     const kHead = follow >= 1 ? 1 : 1 - Math.exp(-delta * (3 + follow * 30))
     const kScale = 1 - Math.exp(-delta * 10)
     if (leader) {
+      fadeTarget = 1 // giọt được dắt (logo / vịt): không theo vùng ẩn của chuột
       const p = leader()
       if (p) {
         if (presence < 0.004) {
@@ -1189,6 +1202,7 @@ void main () {
         checkShrink()
       }
       if (!hasPointer) {
+        fade = fadeTarget // lần đầu thấy chuột: đặt luôn độ hiện (xa vòng tròn thì không chớp hiện rồi mờ)
         headX = targetX
         headY = targetY
         trailX.fill(targetX)
@@ -1231,7 +1245,18 @@ void main () {
   addEventListener('blur', leave)
   // Thu nhỏ theo vị trí cuộn (section shrinkFrom) và khi trỏ vào nút (hoverSel) —
   // lấy mức nhỏ hơn. Giọt đang ẩn thì đặt luôn.
+  // vùng sống của giọt (zoneSel nới zonePad) — null nếu tắt / không có trên trang
+  function zoneRect() {
+    if (!CONFIG.zoneOn) return null
+    const el = document.querySelector(CONFIG.zoneSel || '.hs-about .circles')
+    const r = el?.getBoundingClientRect()
+    if (!r?.width) return { l: 0, t: 0, r: -1, b: -1 } // trang không có vùng -> không bao giờ hiện
+    const p = ((+CONFIG.zonePad || 0) * innerWidth) / 1920
+    return { l: r.left - p, t: r.top - p, r: r.right + p, b: r.bottom + p }
+  }
   function hiddenHere() {
+    const z = zoneRect()
+    if (z && !(ptrX >= z.l && ptrX <= z.r && ptrY >= z.t && ptrY <= z.b)) return true
     if (!CONFIG.hideIn) return false
     // phần tử nằm TRÊN CÙNG dưới con trỏ (section sau trượt lên phủ thì không tính nữa)
     return !!document.elementFromPoint(ptrX, ptrY)?.closest?.(CONFIG.hideIn)
@@ -1256,11 +1281,10 @@ void main () {
     'scroll',
     () => {
       if (leader || !hasPointer) return
+      if (!luring) aim() // vùng sống trôi theo cuộn -> kẹp lại tâm giọt
       const want = hiddenHere() ? 0 : 1
-      if (want !== fadeTarget) {
-        fadeTarget = want
-        start()
-      }
+      if (want !== fadeTarget) fadeTarget = want
+      start()
     },
     { passive: true },
   )
@@ -1277,6 +1301,7 @@ void main () {
   // Ra khỏi màn quá xa thì tan (khỏi vẽ), cuộn lại thì hiện ra đúng chỗ.
   const logoLead = () => {
     if (!logoEl?.isConnected) return null
+    if (document.documentElement.classList.contains('menu-open')) return null // menu phủ kín: tan
     const r = logoEl.getBoundingClientRect()
     const y = r.top + r.height / 2
     if (y < -innerHeight * 0.5 || y > innerHeight * 1.5) return null
@@ -1296,6 +1321,8 @@ void main () {
     else if (leader === logoLead) api.lead(null)
   }
   window.barba?.hooks?.afterEnter(() => syncShape())
+  // mở / đóng menu (html.menu-open) -> chạy lại vòng vẽ để logo tan / hiện lại
+  new MutationObserver(() => start()).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
 
   api.lead = (fn) => {
     leader = typeof fn === 'function' ? fn : null
