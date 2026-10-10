@@ -80,15 +80,12 @@
 .hs-story__band::before{content:''; position:absolute; left:0; top:0; bottom:0; width:calc(936 * var(--u)); background:#182220}
 .hs-story__media{left:calc(492 * var(--u)); top:calc(280 * var(--u)); width:calc(936 * var(--u)); height:var(--sh); background:#0f1513; overflow:hidden}
 .hs-story__photo{left:0; top:0; width:100%; height:100%; object-fit:cover} /* phủ kín khung 936 — 933 như Figma để hở 3u lộ nền tối thành vạch đen cạnh cột chữ */
-.hs-story__card{left:calc(50% - 267 * var(--k)); top:calc(143 * var(--k)); width:calc(558 * var(--k)); height:calc(743 * var(--k)); object-fit:cover; object-position:0 74%}
 .hs-story.is-zoom{height:calc(280 * var(--u) + var(--sh) + var(--story-pin, 0px))}
 .hs-story.is-zoom .hs-story__col{top:calc(280 * var(--u)); bottom:auto}
 .hs-story__media, .hs-story__col{will-change:transform}
-.hs-story.is-cells .hs-story__card{display:none} /* bản zoom chỉ dùng ảnh nền + ảnh nhỏ */
 /* Ảnh nổi giữa chỉ dành cho mobile: màn rộng thì ẩn LUÔN, không chờ JS gắn .is-cells — trước đây
    lúc JS chưa chạy / lúc rời trang (destroy() gỡ .is-cells khi trang cũ còn hiện dưới màn chuyển
    trang) ảnh này lòi ra giữa khung */
-@media (min-width:900px){ .hs-story__card{display:none} }
 .hs-story__cell{display:contents}
 .hs-story__band-c{position:absolute; visibility:hidden; z-index:1; pointer-events:none}
 .hs-story.is-cells .hs-story__cell{display:block; position:absolute; overflow:hidden}
