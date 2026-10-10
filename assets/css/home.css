@@ -486,11 +486,11 @@
    khung co theo màn (Intro, Story, About, Quote, Footer) thì ở đây XẾP DỌC THEO
    LUỒNG: con trực tiếp .abs về relative, bỏ toạ độ, chữ display to theo bề ngang. */
 @media (max-width:899px){
-  .hs-intro, .hs-story, .hs-about, .hs-quote, .hs-foot{height:auto; min-height:0}
-  .hs-intro > .abs, .hs-story > .abs, .hs-about > .abs, .hs-quote > .abs, .hs-foot > .abs, .hs-foot__col > *{
+  .hs-intro, .hs-about, .hs-quote, .hs-foot{height:auto; min-height:0}
+  .hs-intro > .abs, .hs-about > .abs, .hs-quote > .abs, .hs-foot > .abs, .hs-foot__col > *{
     position:relative; left:auto; right:auto; top:auto; bottom:auto}
   .hs-intro .d106, .hs-about .d106{font-size:clamp(2.1rem, 9.4vw, 4.4rem); line-height:.82}
-  .hs-story .d48, .hs-about .d48{font-size:clamp(1.6rem, 6.6vw, 2.8rem)}
+  .hs-about .d48{font-size:clamp(1.6rem, 6.6vw, 2.8rem)}
 
   /* 3. Dải màu kem → đen: tràn hết ngang (desktop chừa cột trái 492) */
   .hs-scheme .scheme{left:0}
@@ -504,12 +504,6 @@
 
   /* 2. Story: ảnh lớn full ngang, hai panel chữ bên dưới. --sh = cao khung ảnh
      (thẻ ảnh nổi bên trong đo theo --k = --sh / 1028 như desktop). */
-  .hs-story{--sh:calc(100cqw * 1.2); background:#121212}
-  .hs-story__band{display:none}
-  .hs-story__media{width:100%; height:var(--sh)}
-  .hs-story__col{width:100%}
-  .hs-story__panel{height:auto; gap:2.5rem; padding:2.5rem 1.25rem}
-  .hs-story__text{width:auto; min-width:0; min-height:0}
 
   /* 6. About */
   .hs-about{display:flex; flex-direction:column; gap:1.75rem; padding:2.5rem 1.25rem 0}

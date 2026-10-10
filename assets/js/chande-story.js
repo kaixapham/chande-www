@@ -32,7 +32,7 @@
   const api = { config: CONFIG, mount() {}, destroy() {} }
   window.CHANDE_STORY = api
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  const wide = matchMedia('(min-width: 900px)')
+  // chạy ở MỌI cỡ màn (chưa có thiết kế mobile — Story hiện đúng bố cục desktop co theo bề ngang)
 
   let live = null
 
@@ -78,7 +78,7 @@
 
     // Đo ô ảnh nhỏ theo CSS gốc (gỡ style tự đặt trước khi đo)
     const measure = () => {
-      const on = wide.matches
+      const on = true
       section.classList.toggle('is-zoom', on)
       for (const el of [...imgs, ...cells]) el.style.cssText = ''
       for (const b of bands) b.style.visibility = 'hidden'
@@ -111,7 +111,7 @@
     let raf = 0
     const paint = () => {
       raf = 0
-      if (!wide.matches || !pin) return
+      if (!pin) return
       // mép trên khung khi chưa dịch (offsetTop không tính transform)
       const top = section.getBoundingClientRect().top + media.offsetTop
       const t = Math.min(pin, Math.max(0, bar - top))
@@ -245,7 +245,6 @@
     const ro = new ResizeObserver(() => measure())
     ro.observe(section)
     addEventListener('scroll', onScroll, { passive: true })
-    wide.addEventListener('change', measure)
     measure()
 
     live = {
@@ -256,7 +255,6 @@
       stop(keep) {
         ro.disconnect()
         removeEventListener('scroll', onScroll)
-        wide.removeEventListener('change', measure)
         cancelAnimationFrame(raf)
         if (keep) return
         section.classList.remove('is-zoom')

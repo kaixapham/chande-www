@@ -158,7 +158,9 @@ function buildButterfly() {
     return { pivot, sd }
   }
   const wings = [half(1), half(-1)]
-  const bodyMat = new THREE.MeshStandardMaterial({ color: '#4c4a2a', roughness: 0.7 })
+  // transparent: thân / đầu mờ CÙNG cánh lúc chui vào vòng 1 (không bật thì opacity bị bỏ qua -> cánh
+  // tan trước, còn trơ mỗi thân)
+  const bodyMat = new THREE.MeshStandardMaterial({ color: '#4c4a2a', roughness: 0.7, transparent: true })
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.014, 0.22, 6, 12), bodyMat)
   body.rotation.z = Math.PI / 2
   body.position.set(-0.07, 0, 0.012)
