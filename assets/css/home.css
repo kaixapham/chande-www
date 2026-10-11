@@ -39,6 +39,7 @@
 .pillrun--sm .pillrun__track > i{width:calc(85.5 * var(--u)); height:calc(33.25 * var(--u))}
 @keyframes hs-pills{from{transform:translateX(calc(-292 * var(--u)))} to{transform:none}}
 .pillrun--sm .pillrun__track{animation-name:hs-pills-sm}
+@keyframes hs-pills-m{from{transform:translateX(calc(-219 * 100vw / 375))} to{transform:none}} /* mobile: 2 viên × (108 + 1.5) */
 @keyframes hs-pills-sm{from{transform:translateX(calc(-173.38 * var(--u)))} to{transform:none}}
 
 /* Dải tròn đen/trắng chạy ngang — chu kỳ 2 hình tròn = 332 */
@@ -499,8 +500,6 @@
   .hs-intro .d106, .hs-about .d106{font-size:clamp(2.1rem, 9.4vw, 4.4rem); line-height:.82}
   .hs-about .d48{font-size:clamp(1.6rem, 6.6vw, 2.8rem)}
 
-  /* 3. Dải màu kem → đen: tràn hết ngang (desktop chừa cột trái 492) */
-  .hs-scheme .scheme{left:0}
 
   /* 1. Intro */
   .hs-intro{display:flex; flex-direction:column; gap:1.25rem; padding:3.5rem 1.25rem 3rem}
@@ -509,8 +508,41 @@
   .hs-intro__b{align-self:flex-end; text-align:right; white-space:normal}
   .hs-intro .chip, .hs-intro__eye{display:none}
 
-  /* 2. Story: ảnh lớn full ngang, hai panel chữ bên dưới. --sh = cao khung ảnh
-     (thẻ ảnh nổi bên trong đo theo --k = --sh / 1028 như desktop). */
+  /* 2. Story — Figma Section 3 mobile (620:13441, khổ 375): ảnh 413 tràn ngang (ảnh 2 vẫn nở từ
+     góc dưới trái khi cuộn — chande-story.js dính ảnh ngay dưới header), dưới là 2 khung chữ 335
+     xếp dọc (tiêu đề 40, chữ mono 14), rồi dải màu 9 × 60 (section Scheme, đen trên → kem dưới). */
+  .hs-story, .hs-story.is-zoom{--q:calc(100vw / 375); --sh:calc(413 * var(--q)); height:auto; padding-bottom:var(--story-pin, 0px)}
+  .hs-story > .abs{position:relative; left:auto; right:auto; top:auto; bottom:auto}
+  .hs-story__band{display:none}
+  .hs-story__media{width:100%; height:calc(413 * var(--q))}
+  .hs-story.is-zoom .hs-story__col, .hs-story__col{top:auto; width:100%}
+  .hs-story__panel{height:auto; min-height:calc(335 * var(--q)); padding:calc(20 * var(--q)) 12px 20px}
+  .hs-story .hs-story__panel h3{font-size:calc(40 * var(--q)); line-height:.78; letter-spacing:-.02em; text-box:trim-both cap alphabetic}
+  .hs-story__text{width:auto; min-width:0; min-height:0; gap:24px; margin-top:calc(98 * var(--q))}
+  .hs-story__text div{gap:24px}
+  .hs-story__text p{font-size:14px; line-height:.96; letter-spacing:-.02em; text-box:trim-both cap alphabetic}
+  .hs-scheme{height:auto}
+  .hs-scheme .scheme{position:relative; left:0; flex-direction:column}
+  .hs-scheme .scheme > i{height:calc(60 * 100vw / 375)}
+
+  /* 4–5. Strip + Land — Figma mobile (628:46260, khổ 375). Strip: mảng gạch neon 94 trên, hàng viên
+     thuốc 108 × 42 (nền tối, cao 72) dưới. Land: khung 748 ngay dưới header (cao = màn − header), 3 món
+     dán theo số đo Figma; --s = 1px khổ 375 nhưng không quá khung cao 748 (màn thấp thì cả cụm thu lại,
+     canh giữa ngang). Hiệu ứng dán từng món khi cuộn giữ nguyên (chande-home.js). */
+  .hs-strip{--q:calc(100vw / 375); height:calc(166 * var(--q))}
+  .strip{flex-direction:column; height:auto}
+  .strip__field{width:100%; height:calc(94 * var(--q))}
+  .strip__run{width:100%; height:calc(72 * var(--q))}
+  .strip__run .pillrun{left:0; right:0; width:auto; top:calc(15 * var(--q)); height:calc(42 * var(--q))}
+  .strip__run .pillrun__track{gap:calc(1.5 * var(--q)); animation-name:hs-pills-m}
+  .strip__run .pillrun__track > i{width:calc(108 * var(--q)); height:calc(42 * var(--q))}
+  .hs-land.is-staged .hs-land__frame{--s:min(calc(100vw / 375), calc((var(--vp) - var(--bar)) / 748)); inset:var(--bar) 0 0; top:var(--bar); height:auto;
+    transform:none; overflow:hidden}
+  .hs-land__receipt{left:calc(50% + (-57 - 187.5) * var(--s)); top:calc(-134 * var(--s)); width:calc(483.17 * var(--s)); height:calc(578.18 * var(--s))}
+  .hs-land__receipt > img{width:calc(428.33 * var(--s)); height:calc(535.41 * var(--s))}
+  .hs-land__atom{left:calc(50% + (31 - 187.5) * var(--s)); top:calc(160 * var(--s)); width:calc(405.6 * var(--s)); height:calc(405.6 * var(--s))}
+  .hs-land__atom > img{width:calc(345.19 * var(--s)); height:calc(345.19 * var(--s))}
+  .hs-land__stickers{left:calc(50% + (22 - 187.5) * var(--s)); top:calc(401 * var(--s)); width:calc(395.55 * var(--s))}
 
   /* 6. About — Figma Section-Poster mobile (628:610, khổ 375; --q = 1px khổ 375, co theo bề ngang).
      Một cột giữa, xếp lại thứ tự bằng `order` (các khối vẫn là con trực tiếp; .circles / nav pills
@@ -587,21 +619,43 @@
   .hs-quote > .hs-quote__nav--next{grid-area:n}
   .hs-quote__nav img{width:24px; height:24px}
 
-  /* 12. Footer */
-  .hs-foot{display:flex; flex-direction:column; gap:1.5rem; padding:2.5rem 1.25rem 1.5rem}
-  .hs-foot__logo{order:-1; width:min(62%, 20rem); height:auto; max-width:none}
-  .hs-foot__col{display:flex; flex-direction:column; gap:1rem}
-  .names{width:auto; gap:.35rem; font-size:.875rem; white-space:normal}
-  .hs-foot__n2 .pair{width:auto; gap:1rem; justify-content:flex-start}
-  .hs-foot__face, .hs-foot__panel, .hs-foot__hr, .hs-foot__vr{display:none}
-  .hs-foot__field{width:auto; height:28vw; margin-inline:-1.25rem}
-  .cta{width:100% !important; height:3.5rem; font-size:.875rem}
-  .cta i{width:3.5rem}
-  .cta span{padding-left:1rem}
-  .links{width:auto; justify-content:flex-start; gap:3rem}
-  .links ul{margin-top:1rem}
-  .hs-foot__legal{width:auto; flex-direction:column; gap:.5rem}
-  .hs-foot__ai{flex-wrap:wrap; gap:12px; padding:.25rem 0}
+  /* 12. Footer — Figma mobile (628:46617): HAI MÀN, mỗi màn = chiều cao thấy được dưới header (--V).
+     Lưới 1 cột (các khối vẫn là con trực tiếp, .hs-foot__col display: contents):
+       màn 1 — logo 351 · cụm tên 1 · cụm tên 2 · (giãn) · ảnh mặt 117 × 135 · cụm tên 3 (cách đáy 12)
+       màn 2 — nút Become a partner 64 · khung tối: (giãn) Social / Site index / bản quyền, kẻ ngang
+               giữa các khối · nút Register 64 · mảng gạch neon 80 */
+  .hs-foot{--q:calc(100vw / 375); --V:calc(var(--vp) - var(--bar)); display:grid; grid-template-columns:100%; gap:0; padding:0;
+    min-height:calc(2 * var(--V));
+    grid-template-rows:auto auto auto minmax(0, 1fr) auto auto 64px max(24px, calc(var(--V) - 626px)) auto auto auto 64px 80px}
+  .hs-foot__col{display:contents}
+  .hs-foot > *, .hs-foot__col > *{margin:0; grid-column:1} /* cột 1 cho mọi khối — khung tối chiếm hàng 8–11 nên không ghi rõ thì chữ bị xếp sang cột ngầm thứ 2 */
+  .hs-foot__logo{grid-row:1; width:calc(100% - 24px); max-width:none; height:auto; margin:12px 12px 0}
+  .names{width:auto; gap:4px; font-size:14px; line-height:.9; letter-spacing:-.02em; white-space:nowrap; color:#838b89}
+  .hs-foot__n1{grid-row:2; margin:16px 12px 0}
+  .hs-foot__n2, .hs-foot__col > .hs-foot__n2{grid-row:3; margin:32px 12px 0; gap:16px}
+  .hs-foot__n2 .pair{width:237.6px; justify-content:space-between}
+  .hs-foot__n2 > div{gap:4px}
+  .hs-foot__col > .hs-foot__face{grid-row:5; justify-self:start; width:117px; height:135px; max-height:none; aspect-ratio:auto; flex:none;
+    margin:0 12px !important; clip-path:none} /* !important: thẻ có style="margin:0" */
+  .hs-foot__n3{grid-row:6; margin:12px 12px 0; padding-bottom:12px}
+  .cta{width:100% !important; height:64px; font-size:14px}
+  .cta i{width:64px; gap:6px}
+  .cta span{padding-left:20px; gap:3px}
+  .cta span small{font-size:11px}
+  .hs-foot__cta1{grid-row:7}
+  .hs-foot__panel{grid-row:8 / 12; width:100%; height:auto; background:#1b2524}
+  .hs-foot__hr, .hs-foot__vr{display:none}
+  .links{width:auto; justify-content:space-between; gap:1rem}
+  .links ul{margin-top:24px; gap:8px}
+  .links a{font-size:14px}
+  .links .mono{font-size:14px}
+  .hs-foot__social, .hs-foot__index, .hs-foot__legal{position:relative; z-index:1; margin:0 12px}
+  .hs-foot__social{grid-row:9; padding-bottom:22px; border-bottom:1px solid rgba(255,255,255,.08)}
+  .hs-foot__index{grid-row:10; padding:22px 0; border-bottom:1px solid rgba(255,255,255,.08)}
+  .hs-foot__legal{grid-row:11; width:auto; flex-direction:column; gap:8px; padding:22px 0; font-size:14px}
+  .hs-foot__ai{flex-wrap:wrap; gap:12px}
+  .hs-foot__cta2{grid-row:12}
+  .hs-foot__field{grid-row:13; width:100%; height:80px}
 }
 @media (prefers-reduced-motion:reduce){
   .pillrun__track, .dotrun__track, .hs-quote__bar span{animation:none}

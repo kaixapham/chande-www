@@ -88,7 +88,9 @@
       if (!on) return
       W = media.clientWidth
       H = media.clientHeight
-      bar = innerHeight - H
+      // desktop: khung ảnh cao bằng màn dưới header -> dính khi đáy khung chạm đáy màn. Mobile (Figma
+      // Section 3, ảnh 413 + 2 khung chữ xếp dưới): dính khi mép trên ảnh chạm đáy header (--bar)
+      bar = matchMedia('(max-width: 899px)').matches ? parseFloat(getComputedStyle(section).getPropertyValue('--bar')) || 64 : innerHeight - H
       const box = media.getBoundingClientRect()
       section.classList.remove('is-cells') // đo ô ảnh nhỏ theo CSS gốc
       const r = small.getBoundingClientRect()

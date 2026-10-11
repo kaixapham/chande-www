@@ -216,6 +216,8 @@ function mount(root = document) {
   const P = { x: 0, y: 0, vx: 0, vy: 0, heading: -Math.PI / 2, roll: 0, s: 0, a: 0, m: 0, amp: 1, flapEnd: 0, nextFlap: 0 }
 
   const unit = () => innerWidth / 1920
+  // sải cánh (px): màn hẹp (≤ 899) to gấp đôi — co theo khổ 1920 thì trên điện thoại bướm quá bé
+  const wing = () => CONFIG.size * unit() * (innerWidth <= 899 ? 2 : 1)
   api.state = P
 
   function setup() {
@@ -446,7 +448,7 @@ function mount(root = document) {
     if (c.z > 1 || c.x < 0 || c.x > innerWidth || c.y < 0 || c.y > innerHeight) return null
     const up = pt(PP.u, PP.v - 0.06)
     // giữ nguyên cỡ bướm (không co / phóng theo hình in trên poster)
-    return { x: c.x, y: c.y, s: CONFIG.size * unit(), heading: Math.atan2(up.y - c.y, up.x - c.x), amp: PP.flat }
+    return { x: c.x, y: c.y, s: wing(), heading: Math.atan2(up.y - c.y, up.x - c.x), amp: PP.flat }
   }
 
   function tick(now) {
@@ -567,7 +569,7 @@ function mount(root = document) {
     if (returning) {
       const inS = kr.width * 0.42
       const near = Math.min(1, d / (kr.width * 1.2))
-      P.s += (inS + (CONFIG.size * u - inS) * near - P.s) * (1 - Math.exp(-dt * 4))
+      P.s += (inS + (wing() - inS) * near - P.s) * (1 - Math.exp(-dt * 4))
       if (d < kr.width * 0.12) P.in = true // đã tới tâm: chốt, lượn quá đà ra chút cũng không hiện lại
       const gone = P.in ? 0 : 1
       P.a += (gone - P.a) * (1 - Math.exp(-dt * (gone ? 4 : 5)))
@@ -586,7 +588,7 @@ function mount(root = document) {
     } else {
       // tới gần chỗ đậu thì đổi dần về cỡ của chỗ đậu (hình bướm trên poster to / nhỏ theo tờ giấy)
       const near = perchHere ? Math.min(1, Math.hypot(spot.x - P.x, spot.y - P.y) / (260 * u)) : 1
-      const sT = perchHere ? spot.s + (CONFIG.size * u - spot.s) * near : CONFIG.size * u
+      const sT = perchHere ? spot.s + (wing() - spot.s) * near : wing()
       P.s += (sT - P.s) * (1 - Math.exp(-dt * (perched ? 8 : 2)))
       P.a += (1 - P.a) * (1 - Math.exp(-dt * 4))
     }
