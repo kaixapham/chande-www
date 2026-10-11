@@ -43,7 +43,8 @@ const CONFIG = {
   frog: 0.24, // chiều dài ếch ngồi (× đường kính lõi)
   hop: 0.3, // phạm vi nhảy: bán kính quanh tâm (× đường kính lõi)
   // chim ruồi (trang About)
-  bird: 0.25, // (bé đi 40% so với 0.42) chiều dài chim ruồi 3D, mỏ tới đuôi (× đường kính lõi)
+  bird: 0.25, // chiều dài chim ruồi 3D, mỏ tới đuôi (× đường kính lõi)
+  birdFlap: 11, // nhịp vỗ cánh (lần / giây)
   birdRange: 0.24, // phạm vi bay: bán kính quanh tâm (× đường kính lõi)
   flower: 0.7, // cỡ từng bông hoa ở vòng 2 trang About (1 = cỡ gốc; bé đi 30%)
 }
@@ -59,184 +60,152 @@ const fine = matchMedia('(pointer: fine)')
 // thân bầu dục xanh lam óng, họng tím, đầu tròn, mỏ dài mảnh, đuôi xoè, 2 cánh dài vỗ rất nhanh
 // quanh vai (cánh gần sáng, cánh xa tối hơn). Đầu hướng −X. Lơ lửng nhấp nhô, thỉnh thoảng lao
 // vụt sang chỗ khác (lật hướng theo đường bay, chúi đầu nhẹ).
-// Texture vẽ bằng canvas (không tải ảnh): lông vảy cho thân / đầu / họng, lông cánh dài có gân,
-// lông đuôi sọc. Nhân màu bằng material.color; vật liệu Physical bật iridescence -> lông óng
-// đổi sắc khi chim nghiêng như chim ruồi thật.
-const birdTex = {}
-function featherScales() {
-  if (birdTex.scales) return birdTex.scales
+// Model chim ruồi 3D: "Swallow-tailed Hummingbird" — gelmi.com.br (Sketchfab), CC-BY-4.0 (ghi
+// công ở trang About). Đã xử lý sẵn (gltf-transform): bỏ nén Draco, vật liệu metal/rough, texture
+// webp 512, quantize -> ~500KB, nạp lúc cần. Model không có xương / animation: khối cánh liền được
+// tách đôi theo dấu X (trái / phải), mỗi nửa xoay quanh vai của nó.
+const BIRD_GLB = new URL('../img/about/hummingbird.glb', import.meta.url).href
+let birdModel = null
+const loadBird = () =>
+  (birdModel ||= import('../vendor/three/GLTFLoader.min.js').then(({ GLTFLoader }) => new GLTFLoader().loadAsync(BIRD_GLB)))
+
+// hình của mesh -> Float32, đã nhân ma trận của chính mesh (dời + phóng của bước quantize)
+function bake(mesh) {
+  mesh.updateMatrix()
+  const src = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry
+  const out = new THREE.BufferGeometry()
+  for (const [name, attr] of Object.entries(src.attributes)) {
+    const n = attr.itemSize
+    const arr = new Float32Array(attr.count * n)
+    for (let i = 0; i < attr.count; i++) for (let c = 0; c < n; c++) arr[i * n + c] = attr.getComponent(i, c)
+    out.setAttribute(name, new THREE.BufferAttribute(arr, n))
+  }
+  out.applyMatrix4(mesh.matrix)
+  return out
+}
+
+// texture quầng sáng tròn mờ dần (tạo 1 lần)
+let glowTexCache = null
+function glowTex() {
+  if (glowTexCache) return glowTexCache
   const c = document.createElement('canvas')
-  c.width = c.height = 256
-  const g = c.getContext('2d')
-  g.fillStyle = '#d0d0d0'
-  g.fillRect(0, 0, 256, 256)
-  // vảy lông xếp lớp: hàng so le, mỗi vảy sáng ở ngọn, tối ở chân
-  for (let row = 0; row < 18; row++) {
-    for (let col = 0; col < 18; col++) {
-      const x = col * 15 + (row % 2) * 7.5
-      const y = row * 15
-      const gr = g.createRadialGradient(x, y - 3, 1, x, y, 11)
-      gr.addColorStop(0, 'rgba(255,255,255,1)')
-      gr.addColorStop(0.6, 'rgba(232,232,232,0.85)')
-      gr.addColorStop(1, 'rgba(150,150,150,0.8)')
-      g.fillStyle = gr
-      g.beginPath()
-      g.ellipse(x, y, 8.5, 9.5, 0, 0, Math.PI * 2)
-      g.fill()
+  c.width = c.height = 64
+  const x = c.getContext('2d')
+  const g = x.createRadialGradient(32, 32, 0, 32, 32, 32)
+  g.addColorStop(0, 'rgba(255,255,255,1)')
+  g.addColorStop(0.35, 'rgba(255,255,255,.45)')
+  g.addColorStop(1, 'rgba(255,255,255,0)')
+  x.fillStyle = g
+  x.fillRect(0, 0, 64, 64)
+  return (glowTexCache = new THREE.CanvasTexture(c))
+}
+
+// khối "WINGS" của model gồm cả lông cánh (trên, y > 20) lẫn lông đuôi (dưới) -> tách 3 hình:
+// [cánh trái, cánh phải, đuôi] theo tâm tam giác
+function splitWings(geo) {
+  const g = geo.index ? geo.toNonIndexed() : geo
+  const pos = g.attributes.position
+  const parts = [[], [], []]
+  for (let t = 0; t < pos.count; t += 3) {
+    const cx = (pos.getX(t) + pos.getX(t + 1) + pos.getX(t + 2)) / 3
+    const cy = (pos.getY(t) + pos.getY(t + 1) + pos.getY(t + 2)) / 3
+    parts[cy < 20 ? 2 : cx < 0 ? 0 : 1].push(t)
+  }
+  return parts.map((tris) => {
+    const out = new THREE.BufferGeometry()
+    for (const [name, attr] of Object.entries(g.attributes)) {
+      const n = attr.itemSize
+      const arr = new Float32Array(tris.length * 3 * n)
+      tris.forEach((t, k) => {
+        for (let v = 0; v < 3; v++) for (let c = 0; c < n; c++) arr[(k * 3 + v) * n + c] = attr.getComponent(t + v, c)
+      })
+      out.setAttribute(name, new THREE.BufferAttribute(arr, n))
     }
-  }
-  const t = new THREE.CanvasTexture(c)
-  t.colorSpace = THREE.SRGBColorSpace
-  t.wrapS = t.wrapT = THREE.RepeatWrapping
-  t.repeat.set(5, 3) // vảy nhỏ, mịn như lông chim ruồi
-  t.anisotropy = 4
-  return (birdTex.scales = t)
-}
-// lông cánh: toạ độ canvas = toạ độ hình cánh (0..0.72) × 355 px; các lông dài toả từ vai
-function featherWing() {
-  if (birdTex.wing) return birdTex.wing
-  const c = document.createElement('canvas')
-  c.width = c.height = 256
-  const g = c.getContext('2d')
-  const S = 256 / 0.72
-  const P = (x, y) => [x * S, 256 - y * S]
-  for (let k = 0; k < 9; k++) {
-    const a = 0.62 + k * 0.085 // góc lông (rad, từ trục X)
-    const len = 0.88 - k * 0.055
-    const [x0, y0] = P(0.02, 0.0)
-    const [x1, y1] = P(Math.cos(a) * len * 0.72 + 0.02, Math.sin(a) * len * 0.72)
-    const nx = -(y1 - y0)
-    const ny = x1 - x0
-    const nl = Math.hypot(nx, ny)
-    const w = 9
-    const gr = g.createLinearGradient(x0, y0, x1, y1)
-    gr.addColorStop(0, '#2c86c4')
-    gr.addColorStop(0.35, '#6f8fa8')
-    gr.addColorStop(1, '#d7dee6')
-    g.fillStyle = gr
-    g.beginPath()
-    g.moveTo(x0, y0)
-    g.quadraticCurveTo((x0 + x1) / 2 + (nx / nl) * w, (y0 + y1) / 2 + (ny / nl) * w, x1, y1)
-    g.quadraticCurveTo((x0 + x1) / 2 - (nx / nl) * w * 0.6, (y0 + y1) / 2 - (ny / nl) * w * 0.6, x0, y0)
-    g.fill()
-    g.strokeStyle = 'rgba(40,52,64,0.55)' // mép lông tối
-    g.lineWidth = 1.2
-    g.stroke()
-    g.strokeStyle = 'rgba(255,255,255,0.55)' // gân sáng giữa lông
-    g.lineWidth = 0.9
-    g.beginPath()
-    g.moveTo(x0, y0)
-    g.lineTo(x1, y1)
-    g.stroke()
-  }
-  const t = new THREE.CanvasTexture(c)
-  t.colorSpace = THREE.SRGBColorSpace
-  return (birdTex.wing = t)
-}
-function featherTail() {
-  if (birdTex.tail) return birdTex.tail
-  const c = document.createElement('canvas')
-  c.width = c.height = 128
-  const g = c.getContext('2d')
-  const gr = g.createLinearGradient(0, 0, 128, 0)
-  gr.addColorStop(0, '#1b8fa8')
-  gr.addColorStop(1, '#16485e')
-  g.fillStyle = gr
-  g.fillRect(0, 0, 128, 128)
-  g.strokeStyle = 'rgba(255,255,255,0.18)'
-  for (let k = 0; k < 9; k++) {
-    g.beginPath()
-    g.moveTo(0, 64)
-    g.lineTo(128, k * 16)
-    g.stroke()
-  }
-  const t = new THREE.CanvasTexture(c)
-  t.colorSpace = THREE.SRGBColorSpace
-  return (birdTex.tail = t)
+    return out
+  })
 }
 
 function buildBird() {
   const group = new THREE.Group()
-  const model = new THREE.Group() // dài ~1.3 (mũi mỏ −0.95 … ngọn đuôi +0.62)
+  // model: hệ toạ độ riêng — Z = hướng mỏ, Y = lên, X = sải cánh. Xoay Y −90° -> mỏ quay −X (trái
+  // màn), nhìn từ bên hông; thêm −0.45 -> góc 3/4 lộ ngực + thấy cả cánh xa.
+  const model = new THREE.Group()
+  model.rotation.y = -Math.PI / 2 - 0.45
   group.add(model)
-  const scales = featherScales()
-  // lông óng: Physical + iridescence (màng mỏng -> đổi sắc theo góc nhìn / đèn)
-  const plume = (color, o = {}) =>
-    new THREE.MeshPhysicalMaterial({
-      color, map: scales, roughness: 0.38, metalness: 0.05, clearcoat: 0.5, clearcoatRoughness: 0.3, sheen: 0.6, sheenColor: new THREE.Color('#bff6ff'),
-      iridescence: 1, iridescenceIOR: 1.7, iridescenceThicknessRange: [240, 620], ...o,
+  const wings = []
+  let tail = null
+  loadBird().then((gltf) => {
+    let body = null
+    let wingMesh = null
+    gltf.scene.traverse((o) => {
+      if (!o.isMesh) return
+      if (/WING/i.test(o.name) || /WING/i.test(o.material?.name || '')) wingMesh = o
+      else body = o
     })
-  const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.35, ...o })
-  const sphere = new THREE.SphereGeometry(1, 24, 16)
-  const ell = (rx, ry, rz, m, x, y, z = 0) => {
-    const me = new THREE.Mesh(sphere, m)
-    me.scale.set(rx, ry, rz)
-    me.position.set(x, y, z)
-    model.add(me)
-    return me
-  }
-  const body = ell(0.36, 0.17, 0.16, plume('#2bb6c4'), 0.02, -0.02) // lưng xanh ngọc
-  body.rotation.z = -0.35
-  ell(0.21, 0.12, 0.135, plume('#7a3ff0', { iridescenceIOR: 2.0 }), -0.21, -0.04, 0.03) // họng tím óng
-  ell(0.24, 0.085, 0.13, plume('#a9e2ec', { iridescence: 0.4 }), 0.06, -0.12) // bụng sáng
-  ell(0.06, 0.05, 0.06, mat('#f4f6f2', { roughness: 0.9, metalness: 0 }), 0.2, -0.17, 0.06) // chỏm lông trắng ở chân
-  ell(0.15, 0.14, 0.14, plume('#2a62d6'), -0.34, 0.1) // đầu xanh lam
-  ell(0.032, 0.032, 0.032, mat('#05080b', { metalness: 0.6, roughness: 0.12 }), -0.42, 0.13, 0.12) // mắt
-  ell(0.011, 0.011, 0.011, mat('#ffffff', { metalness: 0, roughness: 0.2, emissive: '#ffffff', emissiveIntensity: 0.6 }), -0.43, 0.142, 0.15) // ánh mắt
-  ell(0.045, 0.02, 0.02, mat('#ffffff', { metalness: 0, roughness: 0.6 }), -0.37, 0.115, 0.135) // vệt trắng sau mắt
-  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.52, 8), mat('#101418', { metalness: 0.3, roughness: 0.3 }))
-  beak.rotation.z = Math.PI / 2 + 0.06
-  beak.position.set(-0.72, 0.11, 0)
-  model.add(beak)
-  // đuôi: chẻ đôi, chĩa xuống sau, lông sọc
-  const tailShape = new THREE.Shape()
-  tailShape.moveTo(0, 0)
-  tailShape.lineTo(0.46, -0.18)
-  tailShape.lineTo(0.36, -0.22)
-  tailShape.lineTo(0.42, -0.34)
-  tailShape.lineTo(0.3, -0.3)
-  tailShape.lineTo(0.04, -0.08)
-  tailShape.closePath()
-  const tailGeo = new THREE.ShapeGeometry(tailShape)
-  {
-    const pos = tailGeo.attributes.position
-    const uv = tailGeo.attributes.uv
-    for (let k = 0; k < pos.count; k++) uv.setXY(k, pos.getX(k) / 0.46, 0.5 + pos.getY(k) / 0.7)
-  }
-  const tail = new THREE.Mesh(tailGeo, mat('#ffffff', { map: featherTail(), side: THREE.DoubleSide, metalness: 0.2, roughness: 0.5 }))
-  tail.position.set(0.22, -0.1, -0.01)
-  model.add(tail)
-  // cánh: lưỡi dài thon, gốc ở vai, ngọn ở +X+Y; dán texture lông dài (uv = toạ độ hình / 0.72)
-  const wingShape = new THREE.Shape()
-  wingShape.moveTo(0, 0)
-  wingShape.bezierCurveTo(0.12, 0.2, 0.34, 0.52, 0.64, 0.64)
-  const tip = [0.64, 0.64]
-  const n = 7
-  for (let k = 1; k <= n; k++) {
-    const q = k / n
-    const x = tip[0] - 0.56 * q
-    const y = tip[1] - 0.66 * q
-    wingShape.lineTo(x + 0.035, y + 0.06)
-    wingShape.lineTo(x, y)
-  }
-  wingShape.closePath()
-  const wingGeo = new THREE.ShapeGeometry(wingShape, 16)
-  {
-    const pos = wingGeo.attributes.position
-    const uv = wingGeo.attributes.uv
-    for (let k = 0; k < pos.count; k++) uv.setXY(k, pos.getX(k) / 0.72, pos.getY(k) / 0.72)
-  }
-  const wingTex = featherWing()
-  const mkWing = (shade, z, op) => {
-    const pivot = new THREE.Group()
-    pivot.position.set(-0.08, 0.1, z)
-    const w = new THREE.Mesh(wingGeo, mat(shade, { map: wingTex, side: THREE.DoubleSide, transparent: true, opacity: op, depthWrite: false, metalness: 0.15, roughness: 0.55 }))
-    pivot.add(w)
-    model.add(pivot)
-    return pivot
-  }
-  const far = mkWing('#8a99a8', -0.06, 0.82) // cánh xa tối hơn (nhân màu)
-  const near = mkWing('#ffffff', 0.09, 0.95)
+    if (!body) return
+    const bodyGeo = bake(body)
+    bodyGeo.computeBoundingBox()
+    const bb = bodyGeo.boundingBox
+    const len = bb.max.z - bb.min.z || 1
+    const k = 1 / len // chiều dài thân (mỏ -> đuôi) = 1 đơn vị
+    const cz = (bb.max.z + bb.min.z) / 2
+    const cy = (bb.max.y + bb.min.y) / 2
+    const inner = new THREE.Group()
+    inner.scale.setScalar(k)
+    inner.position.set(0, -cy * k, -cz * k)
+    model.add(inner)
+    // glow nhẹ: thân tự phát sáng theo chính texture lông (ánh kim xanh) + quầng sáng cộng màu phía
+    // sau — rẻ hơn hẳn một pass bloom hậu kỳ
+    const bm = body.material
+    bm.emissive = new THREE.Color('#5fd2ff')
+    bm.emissiveMap = bm.map
+    bm.emissiveIntensity = 0.7
+    inner.add(new THREE.Mesh(bodyGeo, bm))
+    const halo = new THREE.Sprite(
+      new THREE.SpriteMaterial({ map: glowTex(), color: '#8fe3ff', transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false })
+    )
+    halo.scale.setScalar(0.75)
+    halo.position.set(0, 0, 0.02)
+    halo.renderOrder = -1
+    model.add(halo)
+    if (wingMesh) {
+      const mat = wingMesh.material
+      mat.depthWrite = false
+      const [wl, wr, tailGeo] = splitWings(bake(wingMesh))
+      // đuôi: gắn vào thân, chỉ đung đưa nhẹ quanh gốc đuôi
+      tail = new THREE.Group()
+      tail.position.set(0, 0, 30)
+      tailGeo.translate(0, 0, -30)
+      tail.add(new THREE.Mesh(tailGeo, mat))
+      inner.add(tail)
+      ;[wl, wr].forEach((geo, i) => {
+        const side = i === 0 ? -1 : 1
+        // vai: trung bình các đỉnh sát thân (|x| nhỏ nhất)
+        const pos = geo.attributes.position
+        let minAbs = Infinity
+        for (let v = 0; v < pos.count; v++) minAbs = Math.min(minAbs, Math.abs(pos.getX(v)))
+        let sx = 0
+        let sy = 0
+        let sz = 0
+        let n = 0
+        for (let v = 0; v < pos.count; v++)
+          if (Math.abs(pos.getX(v)) < minAbs + 6) {
+            sx += pos.getX(v)
+            sy += pos.getY(v)
+            sz += pos.getZ(v)
+            n++
+          }
+        const root = new THREE.Vector3(sx / n, sy / n, sz / n)
+        geo.translate(-root.x, -root.y, -root.z)
+        const pivot = new THREE.Group()
+        pivot.position.copy(root)
+        pivot.add(new THREE.Mesh(geo, mat))
+        inner.add(pivot)
+        wings.push({ pivot, side, axis: new THREE.Vector3(0, 0, 1) })
+      })
+    }
+  })
+
   const st = { x: 0, y: 0, phase: 'hover', time: 0, wait: 1.1, from: null, to: null, face: 1, tilt: 0 }
   const shadow = { x: 0, y: 0, k: 1, a: 1 }
   const pick = (A) => {
@@ -276,11 +245,10 @@ function buildBird() {
       }
     }
     st.tilt += (want - st.tilt) * Math.min(1, dt * 10)
-    // cánh vỗ rất nhanh: quét từ trên cao xuống ngang thân; cánh xa lệch pha một chút
-    const f = Math.sin(t * Math.PI * 2 * 14)
-    near.rotation.z = 0.25 + f * 0.95
-    far.rotation.z = 0.25 + Math.sin(t * Math.PI * 2 * 14 - 0.5) * 0.95
-    near.rotation.x = far.rotation.x = f * 0.25
+    // cánh vỗ rất nhanh: mỗi cánh xoay quanh trục dọc thân tại vai (lên / xuống), hai cánh đối xứng
+    const f = Math.sin(t * Math.PI * 2 * CONFIG.birdFlap)
+    for (const w of wings) w.pivot.quaternion.setFromAxisAngle(w.axis, (0.15 + f * 0.85) * w.side)
+    if (tail) tail.rotation.x = Math.sin(t * 3.1) * 0.06 + st.tilt * 0.4
     // lơ lửng: nhấp nhô chậm theo nhịp + rung theo cánh
     const bob = Math.sin(t * 4.2) * 0.04 + f * 0.008
     group.position.set(st.x, st.y + bob * size, 0.35)
