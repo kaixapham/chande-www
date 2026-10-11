@@ -398,6 +398,20 @@
     // Cảm nhận: mục 0 đọc từ HTML, các mục sau từ <script data-quotes>.
     const quote = scope.querySelector('.hs-quote')
     if (quote) {
+      // Màn hẹp (Figma Testimonial mobile): cỡ lời cảm nhận = 36 ở khổ 375, co theo bề ngang; màn
+      // thấp thì nhỏ lại cho vừa phần còn lại của một màn (100svh − header, đọc từ min-height của
+      // section). Chiều cao khối chữ ~ k · cỡ² / bề ngang (k ≈ 105 đo ở khổ 375: lời dài nhất 362px @36; dùng 120 cho dư — dòng ngắt không đều)
+      // -> cỡ tối đa = √(chỗ trống · bề ngang / k). CSS không có căn của độ dài nên tính ở đây.
+      const fitQuote = () => {
+        if (!quote.isConnected) return removeEventListener('resize', fitQuote)
+        if (!matchMedia('(max-width: 899px)').matches) return quote.style.removeProperty('--qfs')
+        const W = quote.clientWidth
+        const room = parseFloat(getComputedStyle(quote).minHeight) - (174 / 375) * W - 56 - 75 - 16 - 24
+        const fs = Math.max(24, Math.min((36 / 375) * W, Math.sqrt(Math.max(0, room) * W / 120)))
+        quote.style.setProperty('--qfs', `${fs.toFixed(2)}px`)
+      }
+      fitQuote()
+      addEventListener('resize', fitQuote)
       const q = {
         text: quote.querySelector('.hs-quote__text'),
         by: quote.querySelectorAll('.hs-quote__by p'),

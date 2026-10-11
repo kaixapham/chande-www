@@ -527,19 +527,31 @@
   .hs-about__band .dotrun{width:100%; height:calc(240 * var(--u))}
   .hs-about__band h2{width:auto; padding:0 1.25rem}
 
-  /* 10. Quote: dải ảnh trên, thẻ ảnh gối lên, lời cảm nhận, tên; thanh tiến độ +
-     nút ‹ › ở đáy. */
-  .hs-quote{display:flex; flex-direction:column; padding-bottom:3rem}
-  .hs-quote__strip{width:100%; height:44vw}
-  .hs-quote__card{width:42%; margin:-22vw 0 0 1.25rem; z-index:1}
-  .hs-quote__card img{height:auto; aspect-ratio:377 / 437}
-  .hs-quote__text{width:auto; padding:2rem 1.25rem 0; font-size:clamp(1.5rem, 6.4vw, 2.6rem)}
-  .hs-quote__sign{--sign-size:2.6rem; margin:2rem 1.25rem 0}
-  .hs-quote__by{margin:1rem 1.25rem 0; gap:1rem}
-  .hs-quote > .hs-quote__bar{position:absolute; left:0; bottom:0; width:calc(100% - 6rem); height:3rem}
-  .hs-quote > .hs-quote__nav{position:absolute; bottom:0; width:3rem; height:3rem}
-  .hs-quote > .hs-quote__nav--prev{left:auto; right:3rem}
-  .hs-quote > .hs-quote__nav--next{left:auto; right:0}
+  /* 10. Quote — Figma Testimonial mobile (623:14309, khổ 375; cỡ co theo bề ngang): một màn dưới
+     header. Lưới: lời cảm nhận trên cùng, cụm tên dồn xuống đáy phần chữ, hàng ảnh (thẻ 150 | ảnh
+     nền 225, cao 174), đáy là thanh chạy + nút ‹ ›. Khối chữ cũ / mới lúc đổi người nằm CÙNG ô lưới
+     nên chồng khít nhau (như abs ở desktop). */
+  .hs-quote{--q:calc(100vw / 375); height:auto; min-height:calc(100svh - var(--bar)); display:grid; /* lời dài + màn thấp: cao thêm, không chồng chữ */
+    grid-template-columns:40% 1fr 57px 56px; grid-template-rows:auto 1fr auto calc(174 * var(--q)) 56px;
+    grid-template-areas:"t t t t" ". . . ." "b b b b" "c s s s" "bar bar p n"}
+  .hs-quote > .abs{position:relative}
+  /* cỡ chữ: 36 ở khổ 375 theo bề ngang; màn thấp thì chande-home.js ghi --qfs nhỏ lại cho vừa một màn */
+  .hs-quote__text{grid-area:t; width:auto; padding:16px 12px 0; font-size:var(--qfs, calc(36 * var(--q)))}
+  .hs-quote__by{grid-area:b; margin:0; padding:24px 12px 16px; gap:12px; align-self:end}
+  .hs-quote__by::before{height:29px; min-height:0}
+  .hs-quote__by::after{left:12px; top:calc(50% + 4px); height:29px} /* tâm phần chữ: padding trên 24 / dưới 16 */
+  .hs-quote__by div{gap:8px}
+  .hs-quote__by p{font-size:14px; line-height:.96; letter-spacing:-.02em}
+  .hs-quote__sign{display:none}
+  .hs-quote__card{grid-area:c; width:auto; height:100%; margin:0; top:auto; left:auto}
+  .hs-quote__card img{height:100%; aspect-ratio:auto}
+  .hs-quote__card::after{display:none}
+  .hs-quote__strip{grid-area:s; width:100%; height:100%}
+  .hs-quote > .hs-quote__bar{grid-area:bar; position:relative; left:auto; bottom:auto; width:auto; height:56px}
+  .hs-quote > .hs-quote__nav{position:relative; left:auto; right:auto; bottom:auto; width:56px; height:56px}
+  .hs-quote > .hs-quote__nav--prev{grid-area:p}
+  .hs-quote > .hs-quote__nav--next{grid-area:n}
+  .hs-quote__nav img{width:24px; height:24px}
 
   /* 12. Footer */
   .hs-foot{display:flex; flex-direction:column; gap:1.5rem; padding:2.5rem 1.25rem 1.5rem}

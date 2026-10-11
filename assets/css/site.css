@@ -354,17 +354,20 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
   .hero__field--a, .hero__field--b, .hero__dark, .hero__col--scroll, .hero__pills, .hero__col--progress{display:none}
   .hero__col{position:relative; top:auto; bottom:auto; left:auto; width:auto; height:auto; order:1}
   .hero__col > *{position:static}
-  /* Section 1 = đúng một màn: header + 2 hàng ảnh (ảnh + thanh tên 48) + khối tiêu đề 220 */
-  .hero-card__media{aspect-ratio:auto; height:max(140px, calc((100svh - var(--bar) - 220px) / 2 - 48px))}
+  /* Section 1 = đúng một màn: header + 2 hàng ảnh (ảnh + thanh tên 48) + khối tiêu đề. Màn = 100svh
+     (vùng nhìn thấy KHI thanh địa chỉ / thanh công cụ trình duyệt mobile đang hiện). Khối tiêu đề
+     co theo bề ngang như Figma khổ 375 (220 cao, chữ 56) -> máy rộng hơn chữ to theo, ảnh lấy phần còn lại */
+  .hero{--hp:min(calc(220 / 375 * 100vw), 300px)}
+  .hero-card__media{aspect-ratio:auto; height:max(120px, calc((100svh - var(--bar) - var(--hp)) / 2 - 48px))}
   .hero-card__cap{height:48px; padding:0 16px; gap:16px; font-size:14px}
   .hero-card__cap > span:first-child{width:20px; flex:none}
-  .hero__panel{grid-column:1 / -1; order:2; height:220px; background:var(--cream); gap:0; padding:16px 12px}
+  .hero__panel{grid-column:1 / -1; order:2; height:var(--hp); background:var(--cream); gap:0; padding:16px 12px}
   .hero__mark{width:46.4px}
   .hero__headline{position:static; height:auto; display:flex; align-items:flex-end; justify-content:space-between; gap:8px}
   .hero__headline > div{display:block}
   .hero__sub{display:none}
   .hero__year{position:static}
-  .hero__title, .hero__year{font-size:min(56px, 14.9vw)}
+  .hero__title, .hero__year{font-size:min(calc(56 / 375 * 100vw), 80px)}
   .hero__field--c{grid-column:1 / -1; order:3; height:168px}
   /* Section 2 = đúng một màn: dải neon 168 + phần còn lại; dòng "Special event…" sát dưới dải,
      chữ giới thiệu + video recap dồn đáy màn */
