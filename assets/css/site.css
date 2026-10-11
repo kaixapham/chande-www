@@ -23,6 +23,8 @@ body{
   text-transform:uppercase; -webkit-font-smoothing:antialiased;
 }
 a{color:inherit}
+/* chỉ cho trình đọc màn hình + máy tìm kiếm (tiêu đề / mô tả trang không hiện trên giao diện) */
+.sr-only{position:absolute !important; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0}
 /* CMS "Xoá ảnh" gắn thuộc tính hidden — thắng mọi display:block riêng của ảnh */
 [hidden]{display:none !important}
 

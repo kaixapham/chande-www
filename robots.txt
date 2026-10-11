@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /cms.html
+Disallow: /poster-edit.html
+Disallow: /tools/
+Disallow: /api/
+
+Sitemap: https://www.chandebootcamp.com/sitemap.xml
