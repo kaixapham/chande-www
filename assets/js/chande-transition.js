@@ -317,6 +317,10 @@
     }
     const home = window.CHANDE_LOADING?.config?.home || 'index.html'
     if (here === normPath(new URL(home, location.href).pathname) || here === '/') return { num: '00', name: 'HOME', order: ord(0) }
+    // trang form (không nằm trên thanh nav): số theo mục trong menu
+    const extra = { 'partner.html': ['03', 'PARTNER'], 'register.html': ['04', 'REGISTER'] }
+    for (const [f, [num, name]] of Object.entries(extra))
+      if (here === normPath(new URL(f, location.href).pathname)) return { num, name, order: ord(nav.length + (num === '03' ? 1 : 2)) }
     return null
   }
   function setDestLabels(path) {

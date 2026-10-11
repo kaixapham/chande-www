@@ -17,8 +17,8 @@
   'use strict'
 
   const LINKS = {
-    partner: '#',
-    register: '#',
+    partner: 'partner.html',
+    register: 'register.html',
     contact: '#',
     social: [
       ['Facebook', 'https://www.facebook.com/profile.php?id=61574988325950'],

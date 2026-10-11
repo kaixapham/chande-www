@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Become a partner — Chande Bootcamp</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/vendor/lenis.css">
+<link rel="stylesheet" href="assets/css/site.css?v=202610110446">
+<link rel="stylesheet" href="assets/css/home.css?v=202610110446">
+<link rel="stylesheet" href="assets/css/gallery.css?v=202610110446">
+<link rel="stylesheet" href="assets/css/form.css?v=202610110446">
+<!-- Khung hình đầu: màn loading do JS dựng ở cuối trang, nên trước đó tô nền tối + ẩn
+     nội dung (không chớp nền kem). chande-loading.js gỡ cl-boot ngay khi đã gắn màn loading. -->
+<style>html.cl-boot,html.cl-boot body{background:#182220}html.cl-boot body>:not(.cl){visibility:hidden}</style>
+<script>document.documentElement.classList.add('cl-boot');setTimeout(function(){document.documentElement.classList.remove('cl-boot')},5000)</script>
+<!-- Thống kê lượt xem (Vercel Web Analytics): không cookie, ~1 KB, đếm cả lượt chuyển trang của Barba
+     (theo dõi history.pushState). Chỉ nạp trên domain thật / bản Vercel — local và GitHub Pages bỏ qua. -->
+<script>
+  if (/(^|\.)chandebootcamp\.com$|\.vercel\.app$/.test(location.hostname)) {
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments) }
+    var s = document.createElement('script'); s.defer = true; s.src = '/_vercel/insights/script.js'
+    document.head.appendChild(s)
+  }
+</script>
+</head>
+<body data-barba="wrapper">
+
+<!-- Rèm chuyển trang mount vào đây: nằm trong wrapper, NGOÀI container. -->
+<div data-transition-wrap></div>
+
+<main data-barba="container" data-barba-namespace="partner">
+  <div class="page">
+    <!-- FORM ĐỐI TÁC / TÀI TRỢ / ĐẦU TƯ. Điều khiển: chande-form.js · gửi: api/submit.js -->
+    <section class="fm" aria-labelledby="fm-title">
+      <aside class="fm__aside">
+        <p class="fm__num">(03) Partnership</p>
+        <h1 class="fm__title" id="fm-title">Become a<br><em>partner</em></h1>
+        <p class="fm__lead">Chande gathers Vietnam's design community — UI/UX, product, brand, motion and 3D designers, studio founders and award winners — for three days in nature.</p>
+        <p class="fm__lead">We work with brands and investors who want to support that community: sponsorship, products and venues, media, workshops or long-term partnership. Tell us about you and our team will reply within 3 working days.</p>
+      </aside>
+
+      <form class="fm__form" data-form="partner" novalidate>
+      <div class="fm__trap" aria-hidden="true"><label>Leave this empty <input type="text" name="company_site" tabindex="-1" autocomplete="off"></label></div>
+        <div class="fm__group" data-req>
+          <label class="fm__head" for="fm-org"><b>01</b><span>Company / Organisation</span></label>
+          <input id="fm-org" type="text" name="org" autocomplete="organization" maxlength="160" placeholder="Company name">
+          <p class="fm__err">Please enter your organisation</p>
+        </div>
+        <div class="fm__row">
+          <div class="fm__group" data-req>
+            <label class="fm__head" for="fm-contact"><b>02</b><span>Contact person</span></label>
+            <input id="fm-contact" type="text" name="contact" autocomplete="name" maxlength="120" placeholder="Full name">
+            <p class="fm__err">Who should we talk to?</p>
+          </div>
+          <div class="fm__group">
+            <label class="fm__head" for="fm-role"><b>03</b><span>Position</span><small>Optional</small></label>
+            <input id="fm-role" type="text" name="role" autocomplete="organization-title" maxlength="120" placeholder="Marketing Manager">
+          </div>
+        </div>
+        <div class="fm__row">
+          <div class="fm__group" data-req>
+            <label class="fm__head" for="fm-email"><b>04</b><span>Email</span></label>
+            <input id="fm-email" type="email" name="email" autocomplete="email" maxlength="160" placeholder="name@company.com">
+            <p class="fm__err">Enter a valid email</p>
+          </div>
+          <div class="fm__group">
+            <label class="fm__head" for="fm-phone"><b>05</b><span>Phone</span><small>Optional</small></label>
+            <input id="fm-phone" type="tel" name="phone" autocomplete="tel" maxlength="40" placeholder="+84 …">
+          </div>
+        </div>
+        <div class="fm__row">
+          <div class="fm__group">
+            <label class="fm__head" for="fm-site"><b>06</b><span>Website</span><small>Optional</small></label>
+            <input id="fm-site" type="url" name="website" autocomplete="url" maxlength="200" placeholder="company.com">
+          </div>
+          <div class="fm__group" data-req>
+            <label class="fm__head" for="fm-country"><b>07</b><span>Country</span></label>
+            <input id="fm-country" type="text" name="country" list="fm-countries" autocomplete="country-name" maxlength="80" placeholder="Vietnam">
+            <p class="fm__err">Where is your organisation based?</p>
+          </div>
+        </div>
+        <fieldset class="fm__group" data-req data-other>
+          <legend class="fm__head"><b>08</b><span>How would you like to partner?</span><small>Choose any</small></legend>
+          <div class="fm__opts">
+            <label class="fm__opt"><input type="checkbox" name="type" value="sponsor"><span>Financial sponsorship</span></label>
+            <label class="fm__opt"><input type="checkbox" name="type" value="inkind"><span>In-kind — products, venue, F&amp;B</span></label>
+            <label class="fm__opt"><input type="checkbox" name="type" value="media"><span>Media partner</span></label>
+            <label class="fm__opt"><input type="checkbox" name="type" value="workshop"><span>Host a talk / workshop</span></label>
+            <label class="fm__opt"><input type="checkbox" name="type" value="invest"><span>Long-term investment</span></label>
+            <label class="fm__opt"><input type="checkbox" name="type" value="other"><span>Other</span></label>
+          </div>
+          <div class="fm__more" hidden><input type="text" name="type_other" maxlength="160" placeholder="Tell us more"></div>
+          <p class="fm__err">Choose at least one</p>
+        </fieldset>
+        <fieldset class="fm__group" data-other>
+          <legend class="fm__head"><b>09</b><span>What do you want to achieve?</span><small>Optional</small></legend>
+          <div class="fm__opts">
+            <label class="fm__opt"><input type="checkbox" name="goal" value="awareness"><span>Brand awareness with designers</span></label>
+            <label class="fm__opt"><input type="checkbox" name="goal" value="hiring"><span>Hiring &amp; employer branding</span></label>
+            <label class="fm__opt"><input type="checkbox" name="goal" value="product"><span>Product launch &amp; feedback</span></label>
+            <label class="fm__opt"><input type="checkbox" name="goal" value="community"><span>Community &amp; social impact</span></label>
+            <label class="fm__opt"><input type="checkbox" name="goal" value="other"><span>Other</span></label>
+          </div>
+          <div class="fm__more" hidden><input type="text" name="goal_other" maxlength="160" placeholder="Your goal"></div>
+        </fieldset>
+        <div class="fm__group">
+          <label class="fm__head" for="fm-budget"><b>10</b><span>Estimated budget</span><small>Optional</small></label>
+          <select id="fm-budget" name="budget">
+            <option value="" selected>Prefer to discuss</option>
+            <option>Under 20M VND</option><option>20M – 50M VND</option><option>50M – 100M VND</option>
+            <option>100M – 200M VND</option><option>Over 200M VND</option><option>In-kind only</option>
+          </select>
+        </div>
+        <div class="fm__group" data-req>
+          <label class="fm__head" for="fm-msg"><b>11</b><span>Tell us about your proposal</span></label>
+          <textarea id="fm-msg" name="message" maxlength="3000" placeholder="Who you are, what you have in mind, timeline…"></textarea>
+          <p class="fm__err">A few lines help us reply faster</p>
+        </div>
+        <div class="fm__group">
+          <label class="fm__head" for="fm-source"><b>12</b><span>How did you hear about Chande?</span><small>Optional</small></label>
+          <input id="fm-source" type="text" name="source" maxlength="160" placeholder="Friend, Facebook, Behance…">
+        </div>
+        <div class="fm__foot">
+          <button class="cta fm__send" type="submit"><i aria-hidden="true"><svg class="dots" viewBox="0 0 20 6" width="20" height="6"><circle cx="3" cy="3" r="3" fill="#0F1513"/><circle cx="17" cy="3" r="3" fill="#0F1513"/></svg><svg class="dots" viewBox="0 0 20 6" width="20" height="6"><circle cx="3" cy="3" r="3" fill="#0F1513"/><circle cx="17" cy="3" r="3" fill="#0F1513"/></svg></i><span><small>13</small><em class="cta__t">Send proposal</em></span></button>
+          <p class="fm__note">Your details stay with the Chande organising team only.</p>
+          <p class="fm__status" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+
+      <div class="fm__done" hidden>
+        <h2>Thank you<br>for reaching out</h2>
+        <p>Our team will review your proposal and reply within 3 working days.</p>
+        <p><a href="index.html">Back to home</a></p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- Vendor: bản offline của đúng mấy thẻ CDN trong README (barba 2.10.3,
+     lenis 1.3.17, gsap 3.15). -->
+<script src="assets/vendor/barba.umd.min.js"></script>
+<script src="assets/vendor/lenis.min.js"></script>
+<script src="assets/vendor/gsap.min.js"></script>
+<script src="assets/vendor/CustomEase.min.js"></script>
+
+<script src="assets/js/chande-settings.js?v=202610110446"></script>
+<script src="assets/js/chande-loading.js?v=202610110446"></script>
+<script src="assets/js/chande-menu.js?v=202610110446"></script>
+<script src="assets/js/chande-transition.js?v=202610110446"></script>
+<script src="assets/js/chande-reveal.js?v=202610110446"></script>
+<script src="assets/js/chande-hero.js?v=202610110446"></script>
+<script src="assets/js/chande-field.js?v=202610110446"></script>
+<script src="assets/js/chande-home.js?v=202610110446"></script>
+<script src="assets/js/chande-cursor.js?v=202610110446"></script>
+<script src="assets/js/chande-bubble.js?v=202610110446"></script>
+<script src="assets/js/chande-tilt.js?v=202610110446"></script>
+<script src="assets/js/chande-imgtiles.js?v=202610110446"></script>
+<script src="assets/js/chande-parallax.js?v=202610110446"></script>
+<script src="assets/js/chande-titlefx.js?v=202610110446"></script>
+<script src="assets/js/chande-eye.js?v=202610110446"></script>
+<script src="assets/js/chande-chips.js?v=202610110446"></script>
+<script src="assets/js/chande-scramble.js?v=202610110446"></script>
+<script src="assets/js/chande-sign.js?v=202610110446"></script>
+<script src="assets/js/chande-gallery.js?v=202610110446"></script>
+<script src="assets/js/chande-form.js?v=202610110446"></script>
+<!-- Module: tự nạp paper-stack.js + three (assets/vendor/three/). -->
+<script type="module" src="assets/js/chande-poster.js?v=202610110446"></script>
+<!-- Module: vịt patin 3D trên lưới gallery (three ở assets/vendor/three/). -->
+<script type="module" src="assets/js/chande-duck.js?v=202610110446"></script>
+<!-- Module: thảm cỏ 3D dưới lưới gallery (preset data-floor="grass-3d"). -->
+<script type="module" src="assets/js/chande-grass.js?v=202610110446"></script>
+<!-- Module: cá koi 3D bơi trong lõi vòng tròn About khi bubble ở tâm (three nạp động). -->
+<script type="module" src="assets/js/chande-koi.js?v=202610110446"></script>
+<!-- Module: bướm bay ra khỏi vòng 1, bay theo cuộn tới cuối trang chủ (three nạp động). -->
+<script type="module" src="assets/js/chande-flyer.js?v=202610110446"></script>
+<!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
+<script src="assets/js/chande-devtools.js?v=202610110446"></script>
+</body>
+</html>

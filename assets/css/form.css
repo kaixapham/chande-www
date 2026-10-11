@@ -1,0 +1,85 @@
+/* =============================================================================
+ * CHANDE — Trang form (register.html: đăng ký mùa sau · partner.html: đối tác / tài trợ)
+ * -----------------------------------------------------------------------------
+ * Hai cột ở màn rộng: trái = số trang + tiêu đề lớn + giới thiệu (dính khi cuộn),
+ * phải = các ô hỏi đánh số 01, 02… Ô nhập không viền khung, chỉ gạch chân mảnh; ô
+ * chọn nhiều / một dạng viên thuốc (chọn = nền lime). Nút gửi dùng lại .cta của
+ * footer. Gửi xong: form ẩn, hiện khối cảm ơn. Màn hẹp: một cột.
+ * ========================================================================== */
+.fm{--u:calc(100vw / 1920); --ink:#0f1513; --line:rgba(15,21,19,.18);
+  min-height:100vh; padding:calc(var(--bar) + 96 * var(--u)) calc(24 * var(--u)) calc(160 * var(--u));
+  background:#f4f3eb; color:var(--ink);
+  display:grid; grid-template-columns:repeat(12, 1fr); column-gap:calc(24 * var(--u))}
+
+/* ---- cột trái ---- */
+.fm__aside{grid-column:1 / span 5; align-self:start; position:sticky; top:calc(var(--bar) + 48 * var(--u))}
+.fm__num{margin:0 0 calc(40 * var(--u)); font:500 .875rem/1 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase}
+.fm__title{margin:0; font-weight:700; font-size:max(2.6rem, calc(106 * var(--u))); line-height:.78; letter-spacing:-.04em;
+  text-transform:uppercase; text-box:trim-both cap alphabetic}
+.fm__title em{font-style:normal; color:#236c3c}
+.fm__lead{max-width:30em; margin:calc(48 * var(--u)) 0 0; font:500 .875rem/1.45 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase; color:rgba(15,21,19,.72)}
+.fm__lead + .fm__lead{margin-top:1em}
+
+/* ---- cột phải: các ô hỏi ---- */
+.fm__form{grid-column:7 / span 6; display:flex; flex-direction:column; border-top:1px solid var(--line)}
+.fm__group{margin:0; padding:calc(40 * var(--u)) 0; border:0; border-bottom:1px solid var(--line); min-width:0}
+.fm__group[hidden]{display:none}
+.fm__head{display:flex; gap:calc(16 * var(--u)); align-items:baseline; margin:0 0 calc(22 * var(--u)); padding:0}
+.fm__head b{font:500 .8125rem/1 'Geist Mono',ui-monospace,monospace; color:rgba(15,21,19,.5)}
+.fm__head span{font-weight:600; font-size:max(1rem, calc(20 * var(--u))); line-height:1; text-transform:uppercase; letter-spacing:-.01em}
+.fm__head small{margin-left:auto; font:500 .75rem/1 'Geist Mono',ui-monospace,monospace; color:rgba(15,21,19,.45); text-transform:uppercase}
+
+.fm input[type=text], .fm input[type=email], .fm input[type=tel], .fm input[type=url], .fm input[type=number], .fm select, .fm textarea{
+  display:block; width:100%; margin:0; padding:.35em 0; border:0; border-bottom:1px solid rgba(15,21,19,.35); border-radius:0;
+  background:transparent; color:var(--ink); font:600 max(1.25rem, calc(32 * var(--u)))/1.2 'Phudu',ui-sans-serif,system-ui,sans-serif;
+  letter-spacing:-.02em; outline:none; caret-color:#236c3c; transition:border-color .2s; -webkit-appearance:none; appearance:none}
+.fm textarea{min-height:5.2em; resize:vertical; font-size:max(1.05rem, calc(24 * var(--u))); line-height:1.35}
+.fm select{cursor:pointer; padding-right:1.4em;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230f1513' stroke-width='1.6'/%3E%3C/svg%3E") right .2em center / .55em no-repeat}
+.fm input::placeholder, .fm textarea::placeholder{color:rgba(15,21,19,.28)}
+.fm input:focus, .fm select:focus, .fm textarea:focus{border-bottom-color:var(--ink)}
+.fm .is-bad input, .fm .is-bad select, .fm .is-bad textarea{border-bottom-color:#c4372b}
+.fm__err{display:none; margin:.7em 0 0; font:500 .75rem/1 'Geist Mono',ui-monospace,monospace; color:#c4372b; text-transform:uppercase}
+.fm .is-bad .fm__err{display:block}
+.fm__row{display:grid; grid-template-columns:1fr 1fr; gap:calc(32 * var(--u))}
+.fm__more{margin-top:calc(20 * var(--u))}
+.fm__more[hidden]{display:none}
+
+/* lựa chọn dạng viên thuốc */
+.fm__opts{display:flex; flex-wrap:wrap; gap:10px}
+.fm__opt{position:relative; cursor:pointer}
+.fm__opt input{position:absolute; opacity:0; pointer-events:none}
+.fm__opt span{display:block; padding:.85em 1.25em; border:1px solid rgba(15,21,19,.3); border-radius:999px;
+  font-weight:600; font-size:max(.9rem, calc(18 * var(--u))); line-height:1; text-transform:uppercase; letter-spacing:-.01em;
+  transition:background-color .2s, border-color .2s, color .2s}
+.fm__opt:hover span{border-color:var(--ink)}
+.fm__opt input:checked + span{background:#68f12b; border-color:#68f12b}
+.fm__opt input:focus-visible + span{outline:2px solid var(--ink); outline-offset:2px}
+
+/* bẫy máy spam: ô người thật không thấy */
+.fm__trap{position:absolute !important; left:-9999px; width:1px; height:1px; overflow:hidden}
+
+/* nút gửi + trạng thái */
+.fm__foot{display:flex; flex-wrap:wrap; align-items:center; gap:calc(32 * var(--u)); padding-top:calc(48 * var(--u))}
+.fm__send{position:relative; width:calc(520 * var(--u)); min-width:16rem; max-width:100%; border:0; padding:0; cursor:pointer;
+  background:#236c3c; font-family:inherit; text-align:left}
+.fm__send:disabled{cursor:progress; opacity:.7}
+.fm__note{margin:0; font:500 .75rem/1.45 'Geist Mono',ui-monospace,monospace; text-transform:uppercase; color:rgba(15,21,19,.55); max-width:26em}
+.fm__status{width:100%; margin:0; font:500 .8125rem/1.4 'Geist Mono',ui-monospace,monospace; text-transform:uppercase}
+.fm__status.is-error{color:#c4372b}
+
+/* gửi xong */
+.fm__done{grid-column:7 / span 6; align-self:start; padding-top:calc(40 * var(--u)); border-top:1px solid var(--line)}
+.fm__done[hidden]{display:none}
+.fm__done h2{margin:0; font-weight:700; font-size:max(2.2rem, calc(80 * var(--u))); line-height:.8; letter-spacing:-.04em; text-transform:uppercase; text-box:trim-both cap alphabetic}
+.fm__done p{margin:calc(32 * var(--u)) 0 0; max-width:30em; font:500 .875rem/1.45 'Geist Mono',ui-monospace,monospace; text-transform:uppercase}
+.fm__done a{color:inherit}
+
+@media (max-width:899px){
+  .fm{grid-template-columns:1fr; padding:calc(var(--bar) + 2.5rem) 1.25rem 4rem}
+  .fm__aside{grid-column:1; position:static; margin-bottom:2.5rem}
+  .fm__form, .fm__done{grid-column:1}
+  .fm__group{padding:1.75rem 0}
+  .fm__row{grid-template-columns:1fr; gap:1.75rem}
+  .fm__send{width:100%}
+}

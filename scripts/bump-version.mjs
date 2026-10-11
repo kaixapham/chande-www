@@ -3,7 +3,7 @@
 // Chạy trước khi commit:  node scripts/bump-version.mjs
 import { readFileSync, writeFileSync } from 'node:fs'
 
-const PAGES = ['index.html', 'about.html', 'gallery.html', 'cms.html', 'poster-edit.html']
+const PAGES = ['index.html', 'about.html', 'gallery.html', 'register.html', 'partner.html', 'cms.html', 'poster-edit.html']
 const v = new Date().toISOString().replace(/\D/g, '').slice(0, 12) // yyyymmddhhmm
 
 for (const file of PAGES) {
