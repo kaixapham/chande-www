@@ -28,10 +28,10 @@
 <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/vendor/lenis.css">
-<link rel="stylesheet" href="assets/css/site.css?v=202610110952">
-<link rel="stylesheet" href="assets/css/home.css?v=202610110952">
-<link rel="stylesheet" href="assets/css/gallery.css?v=202610110952">
-<link rel="stylesheet" href="assets/css/form.css?v=202610110952">
+<link rel="stylesheet" href="assets/css/site.css?v=202610111306">
+<link rel="stylesheet" href="assets/css/home.css?v=202610111306">
+<link rel="stylesheet" href="assets/css/gallery.css?v=202610111306">
+<link rel="stylesheet" href="assets/css/form.css?v=202610111306">
 <!-- Khung hình đầu: màn loading do JS dựng ở cuối trang, nên trước đó tô nền tối + ẩn
      nội dung (không chớp nền kem). chande-loading.js gỡ cl-boot ngay khi đã gắn màn loading. -->
 <style>html.cl-boot,html.cl-boot body{background:#182220}html.cl-boot body>:not(.cl){visibility:hidden}</style>
@@ -141,8 +141,6 @@
         {"num":"10","name":"Kaixa","img":"assets/img/cms/index/hero-people-10-mv3l5u4j.webp"},
         {"num":"11","name":"Blacknuts","img":"assets/img/cms/index/hero-people-11-mv3mryqy.webp"},
         {"num":"12","name":"Trong Motion","img":"assets/img/cms/index/hero-people-12-mv3lg235.webp"},
-        {"num":"13","name":"Tuyen Nguyen","img":"assets/img/cms/index/hero-people-13-mv3n5dj5.webp"},
-        {"num":"14","name":"Nhat Minh","img":"assets/img/cms/index/hero-people-14-mv3n5a06.webp"},
         {"num":"15","name":"Khac Mingg","img":"assets/img/cms/index/hero-people-15-mv3lnv90.webp"},
         {"num":"16","name":"Huong Pham","img":"assets/img/cms/index/hero-people-16-mv3lnpjk.webp"},
         {"num":"17","name":"Hanlion","img":"assets/img/cms/index/hero-people-17-mv3l6kvl.webp"},
@@ -162,9 +160,9 @@
         {"num":"31","name":"Kao Thi","img":"assets/img/cms/index/hero-people-31-mv3lo4ex.webp"},
         {"num":"32","name":"Tunz","img":"assets/img/cms/index/hero-people-32-mv3mlmon.webp"},
         {"num":"33","name":"Nash Tran","img":"assets/img/cms/index/hero-people-33-mv3n8rm0.webp"},
-        {"num":"34","name":"Hoangz-36","img":"assets/img/cms/index/hero-people-34-mv3l6voy.webp"},
-        {"num":"35","name":"Nghia Heo","img":"assets/img/cms/index/hero-people-35-mv3lttbk.webp"},
-        {"num":"36","name":"Van Hung","img":"assets/img/cms/index/hero-people-36-mv3mo4uy.webp"},
+        {"num":"34","name":"Nghia Heo","img":"assets/img/cms/index/hero-people-35-mv3lttbk.webp"},
+        {"num":"35","name":"Van Hung","img":"assets/img/cms/index/hero-people-36-mv3mo4uy.webp"},
+        {"num":"36","name":"Hoangz","img":"assets/img/cms/index/hero-people-34-mv3l6voy.webp"},
         {"num":"37","name":"Zung Can","img":"assets/img/cms/index/hero-people-37-mv3mkpny.webp"},
         {"num":"38","name":"Phuong Thuy","img":"assets/img/cms/index/hero-people-38-mv3ml50k.webp"},
         {"num":"39","name":"Dang Tri","img":"assets/img/cms/index/hero-people-39-mv3n2s3o.webp"},
@@ -254,14 +252,15 @@
 
     <!-- ===================== 6. ABOUT ======================================= -->
     <section class="hs hs-about" data-cms-section="About — Tinh thần sự kiện" aria-label="Tinh thần sự kiện">
+      <!-- br.m: xuống dòng chỉ ở mobile (ngắt câu như Figma Section-Poster mobile) -->
       <p class="abs d106 hs-about__statement">
-        <span>Amid the relentless (rise of AI).</span>
-        <span>we long for a space rooted in nature, a place of deep (stillness).</span>
+        <span>Amid the relentless<br class="m"> (rise of AI).</span>
+        <span>we long for a space rooted in nature,<br class="m"><br class="m"> a place of deep<br class="m"> (stillness).</span>
         <span>Here we slow down together,</span>
         <span class="gap" aria-hidden="true"></span>
-        <span>share &amp; listen to the stories of</span>
-        <span>the past year. Design is not merely</span>
-        <span>a profession. It is a (way of life).</span>
+        <span>share &amp; listen<br class="m"> to the stories of</span>
+        <span>the past year.<br class="m"> Design is not merely</span>
+        <span>a profession.<br class="m"> It is a (way of life).</span>
         <span>Cherished.</span>
       </p>
       <img data-cms="about-grass" data-cms-label="Ảnh dưới đoạn chữ About (khung bướm)" data-cms-w="359" class="abs hs-about__grass" src="assets/img/home/about-butterfly-frame.webp" alt="Tay cầm khung bướm ép giữa vườn" loading="lazy">
@@ -482,40 +481,40 @@
 <script src="assets/vendor/gsap.min.js"></script>
 <script src="assets/vendor/CustomEase.min.js"></script>
 
-<script src="assets/js/chande-settings.js?v=202610110952"></script>
-<script src="assets/js/chande-loading.js?v=202610110952"></script>
-<script src="assets/js/chande-menu.js?v=202610110952"></script>
-<script src="assets/js/chande-transition.js?v=202610110952"></script>
-<script src="assets/js/chande-reveal.js?v=202610110952"></script>
-<script src="assets/js/chande-hero.js?v=202610110952"></script>
-<script src="assets/js/chande-entrance.js?v=202610110952"></script>
-<script src="assets/js/chande-field.js?v=202610110952"></script>
-<script src="assets/js/chande-home.js?v=202610110952"></script>
-<script src="assets/js/chande-cursor.js?v=202610110952"></script>
-<script src="assets/js/chande-bubble.js?v=202610110952"></script>
-<script src="assets/js/chande-tilt.js?v=202610110952"></script>
-<script src="assets/js/chande-imgtiles.js?v=202610110952"></script>
-<script src="assets/js/chande-parallax.js?v=202610110952"></script>
-<script src="assets/js/chande-titlefx.js?v=202610110952"></script>
-<script src="assets/js/chande-eye.js?v=202610110952"></script>
-<script src="assets/js/chande-chips.js?v=202610110952"></script>
-<script src="assets/js/chande-story.js?v=202610110952"></script>
-<script src="assets/js/chande-circles.js?v=202610110952"></script>
-<script src="assets/js/chande-scramble.js?v=202610110952"></script>
-<script src="assets/js/chande-sign.js?v=202610110952"></script>
-<script src="assets/js/chande-gallery.js?v=202610110952"></script>
-<script src="assets/js/chande-form.js?v=202610110952"></script>
+<script src="assets/js/chande-settings.js?v=202610111306"></script>
+<script src="assets/js/chande-loading.js?v=202610111306"></script>
+<script src="assets/js/chande-menu.js?v=202610111306"></script>
+<script src="assets/js/chande-transition.js?v=202610111306"></script>
+<script src="assets/js/chande-reveal.js?v=202610111306"></script>
+<script src="assets/js/chande-hero.js?v=202610111306"></script>
+<script src="assets/js/chande-entrance.js?v=202610111306"></script>
+<script src="assets/js/chande-field.js?v=202610111306"></script>
+<script src="assets/js/chande-home.js?v=202610111306"></script>
+<script src="assets/js/chande-cursor.js?v=202610111306"></script>
+<script src="assets/js/chande-bubble.js?v=202610111306"></script>
+<script src="assets/js/chande-tilt.js?v=202610111306"></script>
+<script src="assets/js/chande-imgtiles.js?v=202610111306"></script>
+<script src="assets/js/chande-parallax.js?v=202610111306"></script>
+<script src="assets/js/chande-titlefx.js?v=202610111306"></script>
+<script src="assets/js/chande-eye.js?v=202610111306"></script>
+<script src="assets/js/chande-chips.js?v=202610111306"></script>
+<script src="assets/js/chande-story.js?v=202610111306"></script>
+<script src="assets/js/chande-circles.js?v=202610111306"></script>
+<script src="assets/js/chande-scramble.js?v=202610111306"></script>
+<script src="assets/js/chande-sign.js?v=202610111306"></script>
+<script src="assets/js/chande-gallery.js?v=202610111306"></script>
+<script src="assets/js/chande-form.js?v=202610111306"></script>
 <!-- Module: tự nạp paper-stack.js + three (assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-poster.js?v=202610110952"></script>
+<script type="module" src="assets/js/chande-poster.js?v=202610111306"></script>
 <!-- Module: vịt patin 3D trên lưới gallery (three ở assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-duck.js?v=202610110952"></script>
+<script type="module" src="assets/js/chande-duck.js?v=202610111306"></script>
 <!-- Module: thảm cỏ 3D dưới lưới gallery (preset data-floor="grass-3d"). -->
-<script type="module" src="assets/js/chande-grass.js?v=202610110952"></script>
+<script type="module" src="assets/js/chande-grass.js?v=202610111306"></script>
 <!-- Module: cá koi 3D bơi trong lõi vòng tròn About khi bubble ở tâm (three nạp động). -->
-<script type="module" src="assets/js/chande-koi.js?v=202610110952"></script>
+<script type="module" src="assets/js/chande-koi.js?v=202610111306"></script>
 <!-- Module: bướm bay ra khỏi vòng 1, bay theo cuộn tới cuối trang chủ (three nạp động). -->
-<script type="module" src="assets/js/chande-flyer.js?v=202610110952"></script>
+<script type="module" src="assets/js/chande-flyer.js?v=202610111306"></script>
 <!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
-<script src="assets/js/chande-devtools.js?v=202610110952"></script>
+<script src="assets/js/chande-devtools.js?v=202610111306"></script>
 </body>
 </html>
