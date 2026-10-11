@@ -43,6 +43,15 @@
     const box = (root.querySelector ? root : document).querySelector('[data-steps]')
     const media = box?.querySelector('[data-steps-media]')
     if (!media) return
+    const stick = box.querySelector('[data-steps-stick]') || media // khối ghim (có thể kèm dòng chú thích)
+    const yearEl = box.querySelector('[data-steps-year]')
+    const nameEl = box.querySelector('[data-steps-name]')
+    // dòng chú thích [ năm ] [ tên sự kiện ] đổi ngay khi sang nấc (ảnh thì chạy hiệu ứng)
+    const caption = (i) => {
+      const im = imgs[i]
+      if (yearEl && im?.dataset.stepYear) yearEl.textContent = `[ ${im.dataset.stepYear} ]`
+      if (nameEl && im?.alt) nameEl.textContent = `[ ${im.alt} ]`
+    }
     const imgs = [...media.querySelectorAll('img')]
     if (imgs.length < 2) return
     let cur = Math.max(0, imgs.findIndex((im) => im.classList.contains('is-on')))
@@ -88,13 +97,14 @@
 
     const check = () => {
       raf = 0
-      const travel = box.getBoundingClientRect().height - media.offsetHeight
+      const travel = box.getBoundingClientRect().height - stick.offsetHeight
       let i = 0
       if (travel > 1) {
         // không ghim (màn hẹp) -> ảnh đầu
-        const y = media.getBoundingClientRect().top - box.getBoundingClientRect().top
+        const y = stick.getBoundingClientRect().top - box.getBoundingClientRect().top
         i = Math.floor(Math.min(0.9999, Math.max(0, y / travel)) * imgs.length)
       }
+      if (i !== want) caption(i)
       want = i
       go()
     }

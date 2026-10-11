@@ -42,7 +42,10 @@
     // miệng: nét + chấm cùng màu lòng miệng (= lòng trắng mắt) trên nền tối; răng màu
     // con ngươi cho nổi trên lòng miệng
     'html.hero-row-dark .chip__icon--mouth{color:var(--mouth-fill)}' +
-    '.chip__teeth{stroke:var(--mouth-ink)}'
+    '.chip__teeth{stroke:var(--mouth-ink)}' +
+    // About: lòng viên màu đen -> icon màu kem, miệng tô màu lòng trắng mắt như nền tối trang chủ
+    '.ab-pill .chip__icon{color:#f4f3eb; left:calc(10 * var(--u)); top:calc(10 * var(--u)); width:calc(100% - 20 * var(--u)); height:calc(100% - 20 * var(--u))}' +
+    '.ab-pill .chip__icon--mouth{color:var(--mouth-fill)}'
   document.head.appendChild(style)
 
   const svgIn = (chip, vb) => {
@@ -330,8 +333,9 @@
     live?.stop()
     live = null
     const scope = root.querySelector ? root : document
-    const yellow = scope.querySelector('.hs-intro .chip--yellow')
-    const green = scope.querySelector('.hs-intro .chip--green')
+    // trang chủ: 2 khung ở Intro; trang About: viên vàng (sóng) + viên xanh (miệng) ở câu chuyện
+    const yellow = scope.querySelector('.hs-intro .chip--yellow, .ab-pill--1')
+    const green = scope.querySelector('.hs-intro .chip--green, .ab-pill--2')
     if (!yellow && !green) return
     scope.querySelectorAll('.chip__icon').forEach((n) => n.remove())
 

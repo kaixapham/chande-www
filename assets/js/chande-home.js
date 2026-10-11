@@ -802,9 +802,8 @@
       try {
         pool = JSON.parse(face.dataset.photos || '[]')
       } catch {}
-      preloadLater(pool) // nạp trước (sau khi trang tải xong), hover là có ngay
-      let n = 0
       const foot = face.closest('.hs-foot')
+      const nms = []
       foot.querySelectorAll('.names span').forEach((line) => {
         if (line.children.length || !line.textContent.trim()) return
         const parts = line.textContent.split(/(\s\/\s?)/)
@@ -814,10 +813,70 @@
           const nm = document.createElement('span')
           nm.className = 'nm'
           nm.textContent = part
-          nm.dataset.photo = nm.dataset.photo || pool[n++ % Math.max(1, pool.length)] || ''
           line.append(nm)
+          nms.push(nm)
         })
       })
+      // Ảnh lấy theo danh sách người ở hero trang chủ ([data-hero-people], CMS "Người tham gia ở
+      // hero"): tên footer trùng tên người nào (bỏ dấu / hoa thường / ngoặc) thì đúng ảnh người đó,
+      // không trùng ai thì lấy lần lượt ảnh trong danh sách. Trang khác không có danh sách -> đọc từ
+      // index.html (một lần). Không đọc được thì dùng data-photos như cũ.
+      // tên -> chữ thường không dấu, các từ cách nhau một khoảng trắng
+      const norm = (t) => ' ' + t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' '
+      const flat = (k) => k.replace(/ /g, '').replace(/(.)\1+/g, '$1') // bỏ chữ gõ lặp: Buixxii = BuiXii
+      // Biệt danh ở footer -> tên trong danh sách hero (viết thường, không dấu)
+      const ALIAS = {
+        'dinh tren duong tau': 'huong pham',
+      }
+      const assign = (people) => {
+        const list = people.filter((p) => p && p.img && !/\.svg$/i.test(p.img))
+        const photos = list.length ? list.map((p) => p.img) : pool
+        const keys = list.map((p) => [norm(p.name || ''), p.img]).filter(([k]) => k.trim())
+        const miss = []
+        nms.forEach((nm) => {
+          if (nm.dataset.photo) return
+          let k = norm(nm.textContent)
+          if (ALIAS[k.trim()]) k = norm(ALIAS[k.trim()])
+          // trùng hẳn (kể cả viết liền: "minhsharing" = "Minh Sharing") > tên hero là cụm từ nguyên vẹn
+          // trong tên footer ("Huy Ta (remote)" ∋ "Huy Ta"), ưu tiên cụm dài nhất
+          const hit =
+            keys.find(([h]) => flat(h) === flat(k)) ||
+            keys.filter(([h]) => k.includes(h)).sort((a, b) => b[0].length - a[0].length)[0]
+          if (hit) nm.dataset.photo = hit[1]
+          else miss.push(nm)
+        })
+        // cặp tên cùng một người (.pair: "Dylan (5K_HA-KIBO)" … "(Adobe)"): phần sau dùng ảnh phần đầu
+        const pairs = [...foot.querySelectorAll('.pair')].map((pair) => [...pair.querySelectorAll('.nm')])
+        pairs.forEach(([, ...rest]) => rest.forEach((nm) => miss.includes(nm) && miss.splice(miss.indexOf(nm), 1)))
+        // tên không khớp ai: lấy lần lượt ảnh của người CHƯA có tên ở footer (khỏi trùng mặt người khác)
+        const used = new Set(nms.map((nm) => nm.dataset.photo))
+        const rest = photos.filter((src) => !used.has(src))
+        const from = rest.length ? rest : photos
+        miss.forEach((nm, i) => (nm.dataset.photo = from[i % Math.max(1, from.length)] || ''))
+        pairs.forEach(([first, ...rest]) => rest.forEach((nm) => (nm.dataset.photo = first?.dataset.photo || '')))
+        preloadLater([...new Set(nms.map((nm) => nm.dataset.photo).filter(Boolean))]) // nạp trước, hover là có ngay
+      }
+      const readPeople = (doc) => {
+        try {
+          return JSON.parse(doc.querySelector('[data-hero-people]')?.textContent || 'null')
+        } catch {
+          return null
+        }
+      }
+      const here = readPeople(document)
+      if (here) assign(here)
+      else {
+        assign([]) // tạm theo data-photos, có danh sách thì thay
+        ;(window.__chandePeople ||= fetch('index.html')
+          .then((r) => r.text())
+          .then((html) => readPeople(new DOMParser().parseFromString(html, 'text/html')))
+          .catch(() => null)
+        ).then((people) => {
+          if (!people) return
+          nms.forEach((nm) => delete nm.dataset.photo)
+          assign(people)
+        })
+      }
       // Khung đang mở mà trỏ sang tên khác: đổi ảnh bằng đoàn shape của 4 ảnh hero
       // (CHANDE_REVEAL.play, như ảnh thẻ Cảm nhận). Một lượt đang chạy thì KHÔNG cắt
       // ngang (cắt là giật về ảnh cũ) — ghi lại tên mới nhất, chạy xong thì sang

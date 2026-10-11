@@ -216,8 +216,73 @@
     })
   }
 
+  // Ảnh có dither ([data-dither="số mức"], vd. ảnh lớn cả nhóm trang About — Figma: Bayer 16×16,
+  // 4 mức, pixel 1): tải ảnh thường, vẽ kiểu cover vào canvas gấp `scale` lần cỡ khung, dither đúng
+  // phép tính shader Figma, rồi thay src bằng ảnh đã dither (CMS đọc HTML gốc nên không ảnh hưởng).
+  // Việc nặng (đọc / ghi từng điểm ảnh) chia nhỏ theo dải hàng chạy lúc rảnh, làm một lần cho mỗi bề
+  // ngang khung — không giật lúc cuộn. Ảnh gốc giữ ở data-dither-src.
+  const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 400 }) : setTimeout(() => fn({ timeRemaining: () => 8 }), 16))
+  function ditherImg(img) {
+    const src = img.dataset.ditherSrc || img.getAttribute('src')
+    img.dataset.ditherSrc = src
+    const levels = +img.dataset.dither || 4
+    const w = Math.round(img.clientWidth * CONFIG.scale)
+    const h = Math.round(img.clientHeight * CONFIG.scale)
+    if (!w || !h || img.dataset.ditherW === `${w}`) return
+    img.dataset.ditherW = `${w}`
+    loadImage(src).then((im) => {
+      const c = document.createElement('canvas')
+      c.width = w
+      c.height = h
+      const ctx = c.getContext('2d', { willReadFrequently: true })
+      const k = Math.max(w / im.naturalWidth, h / im.naturalHeight)
+      ctx.drawImage(im, (w - im.naturalWidth * k) / 2, (h - im.naturalHeight * k) / 2, im.naturalWidth * k, im.naturalHeight * k)
+      const data = ctx.getImageData(0, 0, w, h)
+      const d = data.data
+      const N = CONFIG.bayer
+      const L = levels - 1
+      let y = 0
+      const step = (dl) => {
+        if (img.dataset.ditherW !== `${w}`) return // khung đã đổi cỡ, lượt mới lo
+        do {
+          for (let x = 0, i = y * w * 4; x < w; x++, i += 4) {
+            const off = (BAYER[(y % N) * N + (x % N)] - 0.5) / L
+            for (let ch = 0; ch < 3; ch++) {
+              const v = Math.round((d[i + ch] / 255 + off) * L) / L
+              d[i + ch] = v <= 0 ? 0 : v >= 1 ? 255 : Math.round(v * 255)
+            }
+          }
+          y++
+        } while (y < h && (y % 64 || dl.timeRemaining() > 2))
+        if (y < h) return idle(step)
+        ctx.putImageData(data, 0, 0)
+        c.toBlob((b) => {
+          if (!b || img.dataset.ditherW !== `${w}`) return
+          const old = img.dataset.ditherUrl
+          img.dataset.ditherUrl = img.src = URL.createObjectURL(b)
+          if (old) setTimeout(() => URL.revokeObjectURL(old), 1000)
+        }, 'image/png')
+      }
+      idle(step)
+    }).catch(() => {})
+  }
+  let ditherW = innerWidth
+  addEventListener('resize', () => {
+    if (innerWidth === ditherW) return
+    ditherW = innerWidth
+    clearTimeout(ditherImg.t)
+    ditherImg.t = setTimeout(() => document.querySelectorAll('img[data-dither]').forEach(ditherImg), 300)
+  })
+  function ditherImages(root) {
+    root.querySelectorAll?.('img[data-dither]').forEach((img) => {
+      if (img.complete && img.naturalWidth) idle(() => ditherImg(img))
+      else img.addEventListener('load', () => idle(() => ditherImg(img)), { once: true })
+    })
+  }
+
   function mount(root) {
     ditherOutside(root)
+    ditherImages(root)
     const hero = root.querySelector?.('[data-hero]') || (root.matches?.('[data-hero]') ? root : null)
     if (!hero || H?.hero === hero) return
     destroy()

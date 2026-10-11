@@ -15,10 +15,10 @@
 .hs .abs{position:absolute}
 
 /* Chữ dùng chung */
-.d106{font-weight:700; font-size:calc(106 * var(--u)); line-height:.78; letter-spacing:-.04em; text-transform:uppercase; text-box:trim-both cap alphabetic}
-.d48{font-weight:700; font-size:calc(48 * var(--u)); line-height:.78; letter-spacing:-.02em; text-transform:uppercase; text-box:trim-both cap alphabetic}
+.d106{font-weight:700; font-size:calc(106 * var(--u)); line-height:.78; letter-spacing:-.04em; text-transform:uppercase; text-box:trim-both cap alphabetic; --tb:1}
+.d48{font-weight:700; font-size:calc(48 * var(--u)); line-height:.78; letter-spacing:-.02em; text-transform:uppercase; text-box:trim-both cap alphabetic; --tb:1}
 .b16{font-weight:500; font-size:1rem; line-height:.98; letter-spacing:-.02em; text-transform:uppercase}
-.mono{font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; line-height:.96; letter-spacing:-.02em; text-transform:uppercase; text-box:trim-both cap alphabetic}
+.mono{font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; line-height:.96; letter-spacing:-.02em; text-transform:uppercase; text-box:trim-both cap alphabetic; --tb:1}
 .dash{height:1px; background:repeating-linear-gradient(90deg, var(--dash, rgba(0,0,0,.15)) 0 4px, transparent 4px 8px)}
 
 /* Viên thuốc (nút / tab) */
@@ -280,7 +280,7 @@
 .dc{display:block; position:relative; transform-style:preserve-3d; transform:translateZ(calc(var(--dh, 0px) / -2))}
 /* Chỉ chữ, không nền: chiều sâu đến từ phối cảnh gần + mặt quay đi mờ dần / mặt
    quay ra rõ dần (chande-home.js) để hai lớp chữ không đè nhau lúc lật. */
-.dc__f, .dc__b{display:block; backface-visibility:hidden; text-box:trim-both cap alphabetic}
+.dc__f, .dc__b{display:block; backface-visibility:hidden; text-box:trim-both cap alphabetic; --tb:1}
 .dc__f{transform:translateZ(calc(var(--dh, 0px) / 2))}
 .dc__b{position:absolute; inset:0}
 .dc__b.is-down{transform:rotateX(-90deg) translateZ(calc(var(--dh, 0px) / 2))}
@@ -305,7 +305,7 @@
 .hs-quote{height:calc(100svh - var(--bar)); min-height:calc(640 * var(--u)); background:#000; color:#fffef8}
 .hs-quote__strip{left:0; top:0; width:calc(492 * var(--u)); height:100%; object-fit:cover; transform:scaleX(-1)}
 .hs-quote__text{left:calc(540 * var(--u)); top:calc(120 * var(--u)); width:calc(1340 * var(--u)); margin:0;
-  font-weight:700; font-size:calc(80 * var(--u)); line-height:.78; letter-spacing:-.02em; text-transform:uppercase; text-box:trim-both cap alphabetic}
+  font-weight:700; font-size:calc(80 * var(--u)); line-height:.78; letter-spacing:-.02em; text-transform:uppercase; text-box:trim-both cap alphabetic; --tb:1}
 .hs-quote__card{left:calc(57 * var(--u)); top:calc(50% - 218.58 * var(--u)); width:calc(377.48 * var(--u))}
 .hs-quote__card img{width:100%; height:calc(437.16 * var(--u)); object-fit:cover}
 /* viền trắng 2px quanh ảnh thẻ — lớp phủ trên cùng nên shape đổi ảnh / parallax vẫn nằm dưới viền */
@@ -395,7 +395,7 @@
 .hs-foot{height:calc(1080 * var(--u)); background:#000; color:#838b89}
 .names{display:flex; flex-direction:column; gap:calc(4.788 * var(--u)); width:calc(441.7 * var(--u)); margin:0;
   font-weight:600; font-size:calc(19.153 * var(--u)); line-height:.9; letter-spacing:-.02em; text-transform:uppercase; white-space:nowrap}
-.names span{display:block; text-box:trim-both cap alphabetic}
+.names span{display:block; text-box:trim-both cap alphabetic; --tb:1}
 .hs-foot__n1{left:calc(32 * var(--u)); top:calc(32 * var(--u))}
 .hs-foot__n2{left:calc(30 * var(--u)); top:calc(157 * var(--u)); gap:calc(20.11 * var(--u))}
 .hs-foot__n2 .pair{display:flex; justify-content:space-between; width:calc(303.8 * var(--u))}
@@ -519,10 +519,10 @@
   .hs-story__media{width:100%; height:calc(413 * var(--v))}
   .hs-story.is-zoom .hs-story__col, .hs-story__col{top:auto; width:100%}
   .hs-story__panel{height:auto; min-height:calc(335 * var(--v)); padding:calc(20 * var(--s)) 12px calc(20 * var(--s))}
-  .hs-story .hs-story__panel h3{font-size:calc(40 * var(--s)); line-height:.78; letter-spacing:-.02em; text-box:trim-both cap alphabetic}
+  .hs-story .hs-story__panel h3{font-size:calc(40 * var(--s)); line-height:.78; letter-spacing:-.02em; text-box:trim-both cap alphabetic; --tb:1}
   .hs-story__text{width:auto; min-width:0; min-height:0; gap:calc(24 * var(--s)); margin-top:calc(98 * var(--s))}
   .hs-story__text div{gap:calc(24 * var(--s))}
-  .hs-story__text p{font-size:max(10px, calc(14 * var(--s))); line-height:.96; letter-spacing:-.02em; text-box:trim-both cap alphabetic}
+  .hs-story__text p{font-size:max(10px, calc(14 * var(--s))); line-height:.96; letter-spacing:-.02em; text-box:trim-both cap alphabetic; --tb:1}
   .hs-scheme{height:auto}
   .hs-scheme .scheme{position:relative; left:0; flex-direction:column}
   .hs-scheme .scheme > i{height:calc(60 * 100vw / 375)}
@@ -570,13 +570,13 @@
   .hs-about .dash:nth-of-type(1){display:none}
   .hs-about .dash:nth-of-type(2){order:5; margin-top:calc(175.5 * var(--q) - 21px + 96 * var(--q))}
   .hs-about__roots{order:6; width:calc(294 * var(--q)); margin:40px 0; font-size:14px; line-height:.96; letter-spacing:-.02em;
-    text-align:center; text-transform:uppercase; color:#000; opacity:1; text-box:trim-both cap alphabetic}
+    text-align:center; text-transform:uppercase; color:#000; opacity:1; text-box:trim-both cap alphabetic; --tb:1}
   .hs-about .dash:nth-of-type(3){order:7}
   .hs-about__friends{order:8; width:calc(211 * var(--q)); height:auto; aspect-ratio:2909 / 3878; margin-top:calc(88 * var(--q))}
   .hs-about__who{order:9; margin-top:12px; font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:14px; line-height:.96;
     letter-spacing:-.02em; text-align:center; white-space:nowrap}
   .hs-about__roles{order:10; width:auto; align-items:center; gap:4px; margin-top:calc(92 * var(--q))}
-  .hs-about__roles li{font-size:calc(40 * var(--q)); line-height:.78; letter-spacing:-.02em; text-align:center; white-space:nowrap; text-box:trim-both cap alphabetic}
+  .hs-about__roles li{font-size:calc(40 * var(--q)); line-height:.78; letter-spacing:-.02em; text-align:center; white-space:nowrap; text-box:trim-both cap alphabetic; --tb:1}
   .hs-about__pills .pill--lime{order:11; width:144px; height:52px; margin-top:12px}
   .hs-about__pills .pill{font-size:14px; letter-spacing:-.02em; min-height:0}
   .hs-about__pills .pill--green::before{content:'Explore\00a0'} /* Figma: "Explore gallery" */
@@ -699,7 +699,7 @@
   white-space:nowrap;
 }
 /* cắt sát đỉnh cap / chân chữ: đáy khối = chân dòng cuối -> thẳng hàng chân chữ "Scroll more" */
-.ab-hero__intro p{margin:0; text-box:trim-both cap alphabetic}
+.ab-hero__intro p{margin:0; text-box:trim-both cap alphabetic; --tb:1}
 /* Scroll more (kiểu .hero__scroll trang chủ), không nền: cách lề phải 24, chân chữ
    thẳng chân dòng cuối chữ giới thiệu (cùng cách đáy hàng 40, cả hai cắt sát chân chữ) */
 .ab-hero__scroll{
@@ -711,7 +711,7 @@
 .ab-hero__title, .ab-hero__year{
   position:absolute; bottom:calc(24 * var(--u)); margin:0;
   color:#000; font-weight:700; font-size:6.6687rem; line-height:.72; letter-spacing:-.04em;
-  text-box:trim-both cap alphabetic;
+  text-box:trim-both cap alphabetic; --tb:1;
 }
 .ab-hero__title{left:calc(24 * var(--u)); width:calc(708 * var(--u)); white-space:nowrap} /* đúng 3 dòng như Figma (<br>) */
 .ab-hero__year{right:calc(24 * var(--u)); white-space:nowrap}
@@ -749,7 +749,7 @@
 .ab-story{height:calc(4063 * var(--u)); background:#000; color:#fff}
 .ab-story > .dotrun{position:absolute; left:0; right:0; top:0; height:calc(240 * var(--u)); background:#40ce00}
 .ab-story > .dotrun .dotrun__track{position:absolute; left:calc(48 * var(--u)); top:calc(38 * var(--u)); height:calc(164 * var(--u))}
-.ab-say{margin:0; font-weight:700; font-size:calc(106 * var(--u)); line-height:.78; letter-spacing:-.04em; text-box:trim-both cap alphabetic}
+.ab-say{margin:0; font-weight:700; font-size:calc(106 * var(--u)); line-height:.78; letter-spacing:-.04em; text-box:trim-both cap alphabetic; --tb:1}
 .ab-say span{display:block}
 .ab-say__in{padding-left:calc(323 * var(--u))}
 .ab-say__gap{height:.78em}
@@ -761,7 +761,8 @@
 .ab-pill--1{left:calc(118 * var(--u)); top:calc(355 * var(--u)); width:calc(208 * var(--u)); background:#fab700}
 .ab-pill--2{left:calc(1162 * var(--u)); top:calc(690 * var(--u)); width:calc(208 * var(--u)); background:var(--lime)}
 .ab-pill--3{left:calc(1370 * var(--u)); top:calc(1105 * var(--u)); width:calc(128 * var(--u)); background:#f65500}
-.ab-pill img{position:relative; z-index:1; width:calc(70 * var(--u)); height:calc(42 * var(--u)); object-fit:cover}
+.ab-eye{position:relative; z-index:1; width:calc(70 * var(--u)); height:calc(42 * var(--u)); overflow:hidden} /* khung con mắt (chande-eye.js) */
+.ab-pill img{display:block; width:100%; height:100%; object-fit:cover}
 .ab-founder{left:calc(24 * var(--u)); top:calc(855 * var(--u)); width:calc(234 * var(--u)); height:calc(324 * var(--u)); object-fit:cover}
 .ab-circles{left:calc(726 * var(--u)); top:calc(1211 * var(--u)); display:flex}
 .ab-cols{left:calc(24 * var(--u)); top:calc(1999 * var(--u)); width:calc(1872 * var(--u)); display:flex}
@@ -778,30 +779,34 @@
 .ab-panel{position:relative; height:calc(400 * var(--u))}
 .ab-panel--a{background:#182220}
 .ab-panel--b{background:#181818}
-.ab-panel__t{position:absolute; left:calc(32 * var(--u)); top:calc(32 * var(--u)); margin:0; color:#5c6161; font-weight:700; font-size:calc(48 * var(--u)); line-height:.78; letter-spacing:-.02em; white-space:nowrap; text-box:trim-both cap alphabetic}
+.ab-panel__t{position:absolute; left:calc(32 * var(--u)); top:calc(32 * var(--u)); margin:0; color:#5c6161; font-weight:700; font-size:calc(48 * var(--u)); line-height:.78; letter-spacing:-.02em; white-space:nowrap; text-box:trim-both cap alphabetic; --tb:1}
 .ab-panel__text{position:absolute; left:calc(32 * var(--u)); top:calc(223 * var(--u)); width:calc(360 * var(--u)); min-width:15rem; display:flex; flex-direction:column; gap:calc(32 * var(--u))}
-.ab-panel__text p{margin:0; font-size:max(11px, calc(16 * var(--u))); line-height:.96; letter-spacing:-.02em; color:rgba(255,255,255,.3); text-box:trim-both cap alphabetic}
+.ab-panel__text p{margin:0; font-size:max(11px, calc(16 * var(--u))); line-height:.96; letter-spacing:-.02em; color:rgba(255,255,255,.3); text-box:trim-both cap alphabetic; --tb:1}
 .ab-group{left:calc(24 * var(--u)); top:calc(2599 * var(--u)); width:calc(1872 * var(--u)); height:calc(900 * var(--u)); object-fit:cover}
 .ab-scheme{left:calc(24 * var(--u)); top:calc(3499 * var(--u)); width:calc(1872 * var(--u))}
 
 .ab-events{height:calc(1080 * var(--u)); background:#fffef8; color:#0e1813}
 .ab-events__dark{left:0; top:0; width:calc(960 * var(--u)); height:calc(540 * var(--u)); background:#112020}
 .ab-events__logo{position:absolute; left:calc(24 * var(--u)); top:calc(24 * var(--u)); width:calc(104 * var(--u)); height:auto; filter:invert(1)}
-.ab-events__t{position:absolute; left:calc(24 * var(--u)); top:calc(359 * var(--u)); margin:0; color:#fff; font-weight:700; font-size:calc(106 * var(--u)); line-height:.78; letter-spacing:-.04em; white-space:nowrap; text-box:trim-both cap alphabetic}
+.ab-events__t{position:absolute; left:calc(24 * var(--u)); top:calc(359 * var(--u)); margin:0; color:#fff; font-weight:700; font-size:calc(106 * var(--u)); line-height:.78; letter-spacing:-.04em; white-space:nowrap; text-box:trim-both cap alphabetic; --tb:1}
 .ab-events__t span{display:block}
 .ab-events__t em{font-style:normal; margin-left:.55em}
 .ab-events__field{right:0; top:0; width:calc(960 * var(--u)); height:calc(540 * var(--u))}
 /* chữ mono: căn trái (lề 24), sticky top cách thanh menu 24px — đi cùng cột trái tới đáy con tem */
 /* khung ghim chữ kết thúc cách đỉnh vị trí cuối của ảnh 24px (ảnh dừng ở 794 + 286 + 1478 − 468 =
-   2090): ảnh dừng là chữ cũng dừng, cùng trôi lên -> ảnh "đẩy" chữ, luôn hở 24px, không đè */
-.ab-events__notepin{left:calc(24 * var(--u)); top:calc(540 * var(--u) + 24px); width:calc(234 * var(--u)); min-width:12rem; height:calc(1550 * var(--u) - 48px)}
-.ab-events__note{position:sticky; top:calc(var(--bar) + 24px); margin:0; font-size:max(11px, calc(16 * var(--u))); line-height:.96; letter-spacing:-.02em; color:#000; opacity:.3; text-box:trim-both cap alphabetic}
+   1531 — đỉnh khối chú thích + ảnh, Figma 639:47353): ảnh dừng là chữ cũng dừng, cùng trôi lên -> ảnh "đẩy" chữ, luôn hở 24px, không đè */
+.ab-events__notepin{left:calc(24 * var(--u)); top:calc(540 * var(--u) + 24px); width:calc(234 * var(--u)); min-width:12rem; height:calc(1003 * var(--u) - .71 * max(11px, 16 * var(--u)) - 48px)} /* = đáy khung ảnh 2027 − khối ghim (484 + cao chữ hoa dòng chú thích) − 24px − đỉnh khung này */
+.ab-events__note{position:sticky; top:calc(var(--bar) + 24px); margin:0; font-size:max(11px, calc(16 * var(--u))); line-height:.96; letter-spacing:-.02em; color:#000; opacity:.3; text-box:trim-both cap alphabetic; --tb:1}
 /* ảnh cạnh danh sách: sticky đáy — đứng đúng chỗ Figma, cuộn xuống thì ghim cách đáy màn 24px, đi
    hết danh sách + dải ảnh + 2 đoạn chữ, dừng ngang đáy con tem (khung ghim tràn sang section sau:
    section này bỏ clip + nằm trên) */
 .ab-events{overflow:visible; z-index:2}
-.ab-events__pin{left:calc(24 * var(--u)); top:calc(794 * var(--u)); width:calc(468 * var(--u)); height:calc((286 + 1478) * var(--u)); display:flex; flex-direction:column; justify-content:flex-end} /* ảnh nằm cuối khung -> sticky bottom kéo nó lên đáy màn, chặn ở đỉnh khung */
-.ab-events__img{position:sticky; bottom:24px; flex:none; display:block; width:100%; height:calc(468 * var(--u)); overflow:hidden} /* vuông, giữ bề ngang 468 */
+.ab-events__pin{left:calc(24 * var(--u)); top:calc(794 * var(--u)); width:calc(468 * var(--u)); height:calc((286 + 947) * var(--u)); display:flex; flex-direction:column; justify-content:flex-end} /* ảnh nằm cuối khung -> sticky bottom kéo nó lên đáy màn, chặn ở đỉnh khung */
+/* khối ghim = dòng chú thích [ năm ] [ tên sự kiện ] + ảnh vuông 468; dừng ngang đáy 2 đoạn chữ */
+.ab-events__stick{position:sticky; bottom:24px; flex:none; display:flex; flex-direction:column; gap:calc(16 * var(--u))}
+.ab-events__cap{display:flex; justify-content:space-between; gap:1rem; margin:0; font-size:max(11px, calc(16 * var(--u))); color:#000; opacity:.3}
+.ab-events__cap span{text-box:trim-both cap alphabetic; --tb:1} /* flex: cắt ở từng mục, dòng cao đúng chữ hoa như Figma */
+.ab-events__img{position:relative; display:block; width:100%; height:calc(468 * var(--u)); overflow:hidden} /* vuông */
 /* đổi ảnh: đoàn shape màu từ góc dưới trái (chande-steps.js + chande-reveal.js); dự phòng khi
    không có đoàn shape: ảnh mới loang ra từ góc dưới trái (vòng tròn clip-path phình) đè lên ảnh cũ (is-prev,
    giữ nguyên bên dưới); ảnh khác ẩn ngay, không chạy hiệu ứng */
@@ -811,23 +816,26 @@
 .ab-events__img.no-anim img{transition:none} /* đoàn shape (chande-steps.js) đã lo phần chuyển */
 .ab-events__list{left:calc(960 * var(--u)); top:calc(794 * var(--u)); width:calc(936 * var(--u)); margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:calc(4 * var(--u));
   font-weight:700; font-size:calc(48 * var(--u)); line-height:.78; letter-spacing:-.02em}
-.ab-events__list li{position:relative; text-box:trim-both cap alphabetic} /* khối thường (flex không cắt sát chữ) -> dòng sát như Figma */
+.ab-events__list li{position:relative; text-box:trim-both cap alphabetic; --tb:1} /* khối thường (flex không cắt sát chữ) -> dòng sát như Figma */
 .ab-events__list li span{position:absolute; right:0; top:0}
+.ab-events__ach{left:calc(960 * var(--u)); top:calc(564 * var(--u)); margin:0; color:#0e1813}
 
 /* Ghi chú phải dưới 2 vòng tròn (Figma 639:470…: phải 24, đỉnh 1632 trong section câu chuyện) */
 .ab-note{right:calc(24 * var(--u)); top:calc(1632 * var(--u)); margin:0; text-align:right; font-weight:500; font-size:max(11px, calc(16 * var(--u))); line-height:.98; letter-spacing:-.02em; text-transform:uppercase; color:#fff}
 
 /* KHÉP LẠI (kem, 1502 — tới đỉnh khối "Always a community"): dải ảnh 936 ở x 960 · chữ 702 · tem */
 .ab-more{height:calc(1502 * var(--u)); background:#fffef8; color:#0e1813}
-.ab-strip{left:calc(960 * var(--u)); top:0; width:calc(936 * var(--u)); display:flex; flex-direction:column}
+.ab-strip{left:calc(960 * var(--u)); top:calc(24 * var(--u)); width:calc(936 * var(--u)); display:flex; flex-direction:column}
 .ab-stripes--thin i{height:calc(8 * var(--u))}
 .ab-stripes--rev{flex-direction:column-reverse}
 .ab-strip__row{display:flex}
 .ab-strip__row img{width:25%; height:calc(175 * var(--u)); object-fit:cover; display:block}
-.ab-more__text{left:calc(960 * var(--u)); top:calc(632 * var(--u)); width:calc(690 * var(--u)); /* Figma 702 nhưng dòng 1 vừa khít 701 -> Figma xuống dòng; hẹp chút cho ngắt giống */ margin:0; text-transform:uppercase}
+.ab-more__text{left:calc(960 * var(--u)); top:calc(542 * var(--u)); width:calc(936 * var(--u)); margin:0; text-transform:uppercase}
 .ab-more__text p{margin:0}
 .ab-more__text p + p{margin-top:.78em}
-.ab-stamp{left:calc(960 * var(--u)); top:calc(1224 * var(--u)); width:calc(218 * var(--u)); height:auto}
+/* khối chữ lớn cuối (Figma 639:47375): 106.7, dòng .8, rộng 1629 */
+.ab-amid{left:calc(24 * var(--u)); top:calc(1140 * var(--u)); width:calc(1629 * var(--u)); margin:0; color:#000; font-weight:700; font-size:calc(106.7 * var(--u)); line-height:.8; letter-spacing:-.04em; text-transform:uppercase; text-box:trim-both cap alphabetic; --tb:1}
+.ab-amid p{margin:0}
 
 /* ALWAYS A COMMUNITY (780): dải màu 492 | ảnh 468 | gạch neon 960 — cao 540; dải chấm + tiêu đề 240 */
 .ab-comm{height:calc(780 * var(--u)); background:#112020}
@@ -888,7 +896,9 @@
   .ab-more .ab-strip{margin:0 -12px}
   .ab-strip__row img{height:auto; aspect-ratio:234 / 175}
   .ab-more .ab-more__text{font-size:calc(24 * var(--q)); line-height:.86}
-  .ab-more .ab-stamp{width:calc(140 * var(--q))}
+  .ab-more .ab-amid{font-size:calc(36 * var(--q))}
+  .ab-events .ab-events__ach{font-size:calc(28 * var(--q))}
+  .ab-events .ab-events__stick{position:static}
   .ab-comm{--q:calc(100vw / 375); height:auto; display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr)}
   .ab-comm > .abs{position:relative; left:auto; right:auto; top:auto; width:auto}
   .ab-comm .ab-comm__scheme > i{height:calc(30 * var(--q))}

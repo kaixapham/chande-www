@@ -15,7 +15,7 @@
 .fm__aside{grid-column:1 / span 5; align-self:start; position:sticky; top:calc(var(--bar) + 48 * var(--u))}
 .fm__num{margin:0 0 calc(40 * var(--u)); font:500 .875rem/1 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase}
 .fm__title{margin:0; font-weight:700; font-size:max(2.6rem, calc(106 * var(--u))); line-height:.78; letter-spacing:-.04em;
-  text-transform:uppercase; text-box:trim-both cap alphabetic}
+  text-transform:uppercase; text-box:trim-both cap alphabetic; --tb:1}
 .fm__title em{font-style:normal; color:#236c3c}
 .fm__lead{max-width:30em; margin:calc(48 * var(--u)) 0 0; font:500 .875rem/1.45 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase; color:rgba(15,21,19,.72)}
 .fm__lead + .fm__lead{margin-top:1em}
@@ -71,7 +71,7 @@
 /* gửi xong */
 .fm__done{grid-column:7 / span 6; align-self:start; padding-top:calc(40 * var(--u)); border-top:1px solid var(--line)}
 .fm__done[hidden]{display:none}
-.fm__done h2{margin:0; font-weight:700; font-size:max(2.2rem, calc(80 * var(--u))); line-height:.8; letter-spacing:-.04em; text-transform:uppercase; text-box:trim-both cap alphabetic}
+.fm__done h2{margin:0; font-weight:700; font-size:max(2.2rem, calc(80 * var(--u))); line-height:.8; letter-spacing:-.04em; text-transform:uppercase; text-box:trim-both cap alphabetic; --tb:1}
 .fm__done p{margin:calc(32 * var(--u)) 0 0; max-width:30em; font:500 .875rem/1.45 'Geist Mono',ui-monospace,monospace; text-transform:uppercase}
 .fm__done a{color:inherit}
 

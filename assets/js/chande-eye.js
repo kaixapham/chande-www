@@ -44,10 +44,13 @@
   function mount(root = document) {
     live?.stop()
     live = null
-    const box = (root.querySelector ? root : document).querySelector('.hs-intro__eye')
+    const scope = root.querySelector ? root : document
+    const box = scope.querySelector('.hs-intro__eye') || scope.querySelector('.ab-eye')
     if (!box || !CONFIG.enabled) return
-    // mắt Intro: chỉ mở khi đã vào nền tối (html.hero-row-dark) — trước đó mắt còn ẩn (chande-chips.js)
-    live = run(box, () => document.documentElement.classList.contains('hero-row-dark'))
+    // mắt Intro: chỉ mở khi đã vào nền tối (html.hero-row-dark) — trước đó mắt còn ẩn (chande-chips.js);
+    // mắt trong viên cam trang About: nền luôn tối -> mở được ngay
+    const intro = box.classList.contains('hs-intro__eye')
+    live = run(box, () => !intro || document.documentElement.classList.contains('hero-row-dark'))
   }
 
   // Một con mắt trong khung `box`; ready() = điều kiện được mở mắt. Trả về { on, stop() }.
