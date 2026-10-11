@@ -531,7 +531,7 @@
      header. Lưới: lời cảm nhận trên cùng, cụm tên dồn xuống đáy phần chữ, hàng ảnh (thẻ 150 | ảnh
      nền 225, cao 174), đáy là thanh chạy + nút ‹ ›. Khối chữ cũ / mới lúc đổi người nằm CÙNG ô lưới
      nên chồng khít nhau (như abs ở desktop). */
-  .hs-quote{--q:calc(100vw / 375); height:auto; min-height:calc(100svh - var(--bar)); display:grid; /* lời dài + màn thấp: cao thêm, không chồng chữ */
+  .hs-quote{--q:calc(100vw / 375); height:auto; min-height:calc(var(--vp) - var(--bar)); display:grid; /* lời dài + màn thấp: cao thêm, không chồng chữ */
     grid-template-columns:40% 1fr 57px 56px; grid-template-rows:auto 1fr auto calc(174 * var(--q)) 56px;
     grid-template-areas:"t t t t" ". . . ." "b b b b" "c s s s" "bar bar p n"}
   .hs-quote > .abs{position:relative}

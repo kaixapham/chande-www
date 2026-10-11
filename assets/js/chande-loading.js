@@ -37,7 +37,22 @@
  *   }
  * Sự kiện trên document: 'chande-loading:done'
  * ========================================================================== */
-(() => {
+// Chiều cao thấy được của màn lúc mở trang (đã trừ thanh trình duyệt mobile) -> --ih, cho CSS
+// --vp = min(100svh, --ih). Chỉ cập nhật khi đổi BỀ NGANG (xoay máy): Safari thu / hiện thanh
+// khi cuộn cũng bắn resize, đo lại lúc đó là các section nhảy cỡ.
+;(() => {
+  const root = document.documentElement
+  let w = 0
+  const set = () => {
+    if (innerWidth === w) return
+    w = innerWidth
+    root.style.setProperty('--ih', `${innerHeight}px`)
+  }
+  set()
+  addEventListener('resize', set)
+})()
+
+;(() => {
   'use strict'
 
   const CONFIG = {

@@ -342,7 +342,12 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
 
 /* ---- Responsive cơ bản, cùng mốc với hiệu ứng: 900 / 600 ---- */
 @media (max-width:899px){
-  :root{font-size:11px; --bar:64px} /* thanh header mobile cao 64 (chande-loading.js) */
+  :root{font-size:11px; --bar:64px; /* thanh header mobile cao 64 (chande-loading.js) */
+    /* --vp = chiều cao THẤY ĐƯỢC của màn: trừ thanh địa chỉ / thanh công cụ trình duyệt mobile.
+       100svh là vùng nhỏ nhất theo trình duyệt; --ih = innerHeight lúc trang mở (chande-loading.js
+       ghi, chỉ đổi khi xoay máy) — Safari iOS thanh nổi có lúc svh vẫn tính cả phần dưới thanh,
+       lấy cái nhỏ hơn. Mọi section mobile "một màn" = --vp − header. */
+    --vp:min(100svh, var(--ih, 100svh))}
   .shot__ph{font-size:2rem}
 
   /* Hero mobile — Figma node 620:12593 (khổ 375). Section 1: lưới 2×2 ảnh (216 + thanh tên 48)
@@ -362,7 +367,7 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
      (vùng nhìn thấy KHI thanh địa chỉ / thanh công cụ trình duyệt mobile đang hiện). Khối tiêu đề
      co theo bề ngang như Figma khổ 375 (220 cao, chữ 56) -> máy rộng hơn chữ to theo, ảnh lấy phần còn lại */
   .hero{--hp:min(calc(220 / 375 * 100vw), 300px)}
-  .hero-card__media{aspect-ratio:auto; height:max(120px, calc((100svh - var(--bar) - var(--hp)) / 2 - 48px))}
+  .hero-card__media{aspect-ratio:auto; height:max(120px, calc((var(--vp) - var(--bar) - var(--hp)) / 2 - 48px))}
   .hero-card__cap{height:48px; padding:0 16px; gap:16px; font-size:14px}
   .hero-card__cap > span:first-child{width:20px; flex:none}
   .hero__panel{grid-column:1 / -1; order:2; height:var(--hp); background:var(--cream); gap:0; padding:16px 12px}
@@ -372,10 +377,10 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
   .hero__sub{display:none}
   .hero__year{position:static}
   .hero__title, .hero__year{font-size:min(calc(56 / 375 * 100vw), 80px)}
-  .hero__field--c{grid-column:1 / -1; order:3; height:clamp(80px, calc(100svh - var(--bar) - 440px), 168px)} /* màn thấp: dải neon thấp lại cho section 2 vẫn vừa một màn */
+  .hero__field--c{grid-column:1 / -1; order:3; height:clamp(80px, calc(var(--vp) - var(--bar) - 440px), 168px)} /* màn thấp: dải neon thấp lại cho section 2 vẫn vừa một màn */
   /* Section 2 = đúng một màn DƯỚI thanh header dính (header che 64 trên cùng): dải neon 168 + phần còn lại; dòng "Special event…" sát dưới dải,
      chữ giới thiệu + video recap dồn đáy màn */
-  .travel__col{position:static; width:auto; min-height:calc(100svh - var(--bar) - clamp(80px, calc(100svh - var(--bar) - 440px), 168px)); padding:16px 12px 12px; background:#182220}
+  .travel__col{position:static; width:auto; min-height:calc(var(--vp) - var(--bar) - clamp(80px, calc(var(--vp) - var(--bar) - 440px), 168px)); padding:16px 12px 12px; background:#182220}
   .travel__intro{position:static; flex:1; gap:24px}
   .hero__org{display:block; margin:0 0 auto; padding-bottom:24px; color:#d9cfd0; font-weight:500; font-size:16px; line-height:.98; letter-spacing:-.02em;
     text-transform:uppercase; text-box:trim-both cap alphabetic}
