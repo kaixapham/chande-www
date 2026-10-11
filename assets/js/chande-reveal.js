@@ -24,8 +24,9 @@
  *   window.CHANDE_REVEAL = {
  *     config, defaults, refresh(),
  *     timing() -> { anim, coverAt }          // ms
- *     play(box, { from, to, levels, delay }) -> { finished, cancel() }
- *     renderAt(canvas, t, { from, to, levels })  // vẽ đúng frame tại t ms
+ *     play(box, { from, to, levels, delay, fromLeft }) -> { finished, cancel() }
+ *       fromLeft: đoàn bay từ góc dưới-TRÁI lên trên-phải (lật ngang hướng mặc định)
+ *     renderAt(canvas, t, { from, to, levels, fromLeft })  // vẽ đúng frame tại t ms
  *   }
  *   `from` / `to`: canvas hoặc ảnh đã nạp, cùng tỉ lệ với `box`. Lớp phủ là một
  *   canvas đặt absolute trong `box`, cỡ bằng `to`; xong thì tự gỡ.
@@ -223,9 +224,10 @@
     return { w: iw * s, h: ih * s, x: (W - iw * s) / 2, y: (H - ih * s) / 2 }
   }
 
-  function drawFrame(ctx, W, H, T, local, from, to, fills) {
+  function drawFrame(ctx, W, H, T, local, from, to, fills, fromLeft = false) {
     const head = headAt(T, local)
     const dir = direction(W, H)
+    if (fromLeft) dir.x = -dir.x
     ctx.clearRect(0, 0, W, H)
     ctx.imageSmoothingEnabled = true
     if (from) {
@@ -266,7 +268,7 @@
   }
 
   /* ------------------------------------------------------------- Play ---- */
-  function play(box, { from = null, to, levels = 4, delay = 0 } = {}) {
+  function play(box, { from = null, to, levels = 4, delay = 0, fromLeft = false } = {}) {
     const T = timing()
     const [W, H] = to ? sizeOf(to) : [box.clientWidth, box.clientHeight]
     const canvas = document.createElement('canvas')
@@ -297,7 +299,7 @@
       elapsed += Math.min(100, now - last)
       last = now
       if (elapsed >= 0 && !canvas.isConnected) box.append(canvas)
-      if (elapsed >= 0) drawFrame(ctx, W, H, T, Math.min(elapsed, T.anim), from, to, fills)
+      if (elapsed >= 0) drawFrame(ctx, W, H, T, Math.min(elapsed, T.anim), from, to, fills, fromLeft)
       if (elapsed >= T.anim) {
         done = true
         resolve()
@@ -325,13 +327,13 @@
 
   // Vẽ đúng khung hình tại mốc `t` (ms) lên một canvas có sẵn — để tua / kiểm
   // khe hở theo từng frame mà không phụ thuộc nhịp rAF.
-  function renderAt(canvas, t, { from = null, to, levels = 4 } = {}) {
+  function renderAt(canvas, t, { from = null, to, levels = 4, fromLeft = false } = {}) {
     const ctx = canvas.getContext('2d')
     const fills = CONFIG.colors.map((hex) =>
       CONFIG.dither && levels >= 2 ? ctx.createPattern(tile(hex, levels), 'repeat') : hex,
     )
     const T = timing()
-    drawFrame(ctx, canvas.width, canvas.height, T, Math.max(0, Math.min(t, T.anim)), from, to, fills)
+    drawFrame(ctx, canvas.width, canvas.height, T, Math.max(0, Math.min(t, T.anim)), from, to, fills, fromLeft)
     return canvas
   }
 
