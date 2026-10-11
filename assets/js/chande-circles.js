@@ -38,7 +38,7 @@
   function mount(root = document) {
     destroy()
     const scope = root.querySelector ? root : document
-    const circles = [...scope.querySelectorAll('.hs-about .circle')]
+    const circles = [...scope.querySelectorAll('.hs-about .circle, .ab-circles .circle')] // trang chủ (3 vòng) / trang About (2 vòng)
       // data-peek-fill="#màu": lòng bubble là màu trơn thay cho ảnh (vòng 1 — nền trắng cho bướm 3D)
       .map((c) => ({ c, core: c.querySelector('.core') || c, peek: c.querySelector('.peek'), fill: c.dataset.peekFill, tex: c.querySelector('.tex'), rot: 0, vel: 0 }))
       .filter((o) => o.peek || o.fill)

@@ -42,6 +42,10 @@ const CONFIG = {
   // ếch
   frog: 0.24, // chiều dài ếch ngồi (× đường kính lõi)
   hop: 0.3, // phạm vi nhảy: bán kính quanh tâm (× đường kính lõi)
+  // chim ruồi (trang About)
+  bird: 0.25, // (bé đi 40% so với 0.42) chiều dài chim ruồi 3D, mỏ tới đuôi (× đường kính lõi)
+  birdRange: 0.24, // phạm vi bay: bán kính quanh tâm (× đường kính lõi)
+  flower: 0.7, // cỡ từng bông hoa ở vòng 2 trang About (1 = cỡ gốc; bé đi 30%)
 }
 window.CHANDE_SETTINGS_APPLY?.('koi', CONFIG)
 const api = { config: CONFIG, mount() {}, destroy() {} }
@@ -49,6 +53,362 @@ window.CHANDE_KOI = api
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
 const fine = matchMedia('(pointer: fine)')
+
+/* -------------------------------------------------------- Chim ruồi --- */
+// Chim ruồi 3D dựng bằng hình học (vòng 1 trang About), nhìn NGANG — camera nhìn thẳng mặt XY:
+// thân bầu dục xanh lam óng, họng tím, đầu tròn, mỏ dài mảnh, đuôi xoè, 2 cánh dài vỗ rất nhanh
+// quanh vai (cánh gần sáng, cánh xa tối hơn). Đầu hướng −X. Lơ lửng nhấp nhô, thỉnh thoảng lao
+// vụt sang chỗ khác (lật hướng theo đường bay, chúi đầu nhẹ).
+// Texture vẽ bằng canvas (không tải ảnh): lông vảy cho thân / đầu / họng, lông cánh dài có gân,
+// lông đuôi sọc. Nhân màu bằng material.color; vật liệu Physical bật iridescence -> lông óng
+// đổi sắc khi chim nghiêng như chim ruồi thật.
+const birdTex = {}
+function featherScales() {
+  if (birdTex.scales) return birdTex.scales
+  const c = document.createElement('canvas')
+  c.width = c.height = 256
+  const g = c.getContext('2d')
+  g.fillStyle = '#d0d0d0'
+  g.fillRect(0, 0, 256, 256)
+  // vảy lông xếp lớp: hàng so le, mỗi vảy sáng ở ngọn, tối ở chân
+  for (let row = 0; row < 18; row++) {
+    for (let col = 0; col < 18; col++) {
+      const x = col * 15 + (row % 2) * 7.5
+      const y = row * 15
+      const gr = g.createRadialGradient(x, y - 3, 1, x, y, 11)
+      gr.addColorStop(0, 'rgba(255,255,255,1)')
+      gr.addColorStop(0.6, 'rgba(232,232,232,0.85)')
+      gr.addColorStop(1, 'rgba(150,150,150,0.8)')
+      g.fillStyle = gr
+      g.beginPath()
+      g.ellipse(x, y, 8.5, 9.5, 0, 0, Math.PI * 2)
+      g.fill()
+    }
+  }
+  const t = new THREE.CanvasTexture(c)
+  t.colorSpace = THREE.SRGBColorSpace
+  t.wrapS = t.wrapT = THREE.RepeatWrapping
+  t.repeat.set(5, 3) // vảy nhỏ, mịn như lông chim ruồi
+  t.anisotropy = 4
+  return (birdTex.scales = t)
+}
+// lông cánh: toạ độ canvas = toạ độ hình cánh (0..0.72) × 355 px; các lông dài toả từ vai
+function featherWing() {
+  if (birdTex.wing) return birdTex.wing
+  const c = document.createElement('canvas')
+  c.width = c.height = 256
+  const g = c.getContext('2d')
+  const S = 256 / 0.72
+  const P = (x, y) => [x * S, 256 - y * S]
+  for (let k = 0; k < 9; k++) {
+    const a = 0.62 + k * 0.085 // góc lông (rad, từ trục X)
+    const len = 0.88 - k * 0.055
+    const [x0, y0] = P(0.02, 0.0)
+    const [x1, y1] = P(Math.cos(a) * len * 0.72 + 0.02, Math.sin(a) * len * 0.72)
+    const nx = -(y1 - y0)
+    const ny = x1 - x0
+    const nl = Math.hypot(nx, ny)
+    const w = 9
+    const gr = g.createLinearGradient(x0, y0, x1, y1)
+    gr.addColorStop(0, '#2c86c4')
+    gr.addColorStop(0.35, '#6f8fa8')
+    gr.addColorStop(1, '#d7dee6')
+    g.fillStyle = gr
+    g.beginPath()
+    g.moveTo(x0, y0)
+    g.quadraticCurveTo((x0 + x1) / 2 + (nx / nl) * w, (y0 + y1) / 2 + (ny / nl) * w, x1, y1)
+    g.quadraticCurveTo((x0 + x1) / 2 - (nx / nl) * w * 0.6, (y0 + y1) / 2 - (ny / nl) * w * 0.6, x0, y0)
+    g.fill()
+    g.strokeStyle = 'rgba(40,52,64,0.55)' // mép lông tối
+    g.lineWidth = 1.2
+    g.stroke()
+    g.strokeStyle = 'rgba(255,255,255,0.55)' // gân sáng giữa lông
+    g.lineWidth = 0.9
+    g.beginPath()
+    g.moveTo(x0, y0)
+    g.lineTo(x1, y1)
+    g.stroke()
+  }
+  const t = new THREE.CanvasTexture(c)
+  t.colorSpace = THREE.SRGBColorSpace
+  return (birdTex.wing = t)
+}
+function featherTail() {
+  if (birdTex.tail) return birdTex.tail
+  const c = document.createElement('canvas')
+  c.width = c.height = 128
+  const g = c.getContext('2d')
+  const gr = g.createLinearGradient(0, 0, 128, 0)
+  gr.addColorStop(0, '#1b8fa8')
+  gr.addColorStop(1, '#16485e')
+  g.fillStyle = gr
+  g.fillRect(0, 0, 128, 128)
+  g.strokeStyle = 'rgba(255,255,255,0.18)'
+  for (let k = 0; k < 9; k++) {
+    g.beginPath()
+    g.moveTo(0, 64)
+    g.lineTo(128, k * 16)
+    g.stroke()
+  }
+  const t = new THREE.CanvasTexture(c)
+  t.colorSpace = THREE.SRGBColorSpace
+  return (birdTex.tail = t)
+}
+
+function buildBird() {
+  const group = new THREE.Group()
+  const model = new THREE.Group() // dài ~1.3 (mũi mỏ −0.95 … ngọn đuôi +0.62)
+  group.add(model)
+  const scales = featherScales()
+  // lông óng: Physical + iridescence (màng mỏng -> đổi sắc theo góc nhìn / đèn)
+  const plume = (color, o = {}) =>
+    new THREE.MeshPhysicalMaterial({
+      color, map: scales, roughness: 0.38, metalness: 0.05, clearcoat: 0.5, clearcoatRoughness: 0.3, sheen: 0.6, sheenColor: new THREE.Color('#bff6ff'),
+      iridescence: 1, iridescenceIOR: 1.7, iridescenceThicknessRange: [240, 620], ...o,
+    })
+  const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.35, ...o })
+  const sphere = new THREE.SphereGeometry(1, 24, 16)
+  const ell = (rx, ry, rz, m, x, y, z = 0) => {
+    const me = new THREE.Mesh(sphere, m)
+    me.scale.set(rx, ry, rz)
+    me.position.set(x, y, z)
+    model.add(me)
+    return me
+  }
+  const body = ell(0.36, 0.17, 0.16, plume('#2bb6c4'), 0.02, -0.02) // lưng xanh ngọc
+  body.rotation.z = -0.35
+  ell(0.21, 0.12, 0.135, plume('#7a3ff0', { iridescenceIOR: 2.0 }), -0.21, -0.04, 0.03) // họng tím óng
+  ell(0.24, 0.085, 0.13, plume('#a9e2ec', { iridescence: 0.4 }), 0.06, -0.12) // bụng sáng
+  ell(0.06, 0.05, 0.06, mat('#f4f6f2', { roughness: 0.9, metalness: 0 }), 0.2, -0.17, 0.06) // chỏm lông trắng ở chân
+  ell(0.15, 0.14, 0.14, plume('#2a62d6'), -0.34, 0.1) // đầu xanh lam
+  ell(0.032, 0.032, 0.032, mat('#05080b', { metalness: 0.6, roughness: 0.12 }), -0.42, 0.13, 0.12) // mắt
+  ell(0.011, 0.011, 0.011, mat('#ffffff', { metalness: 0, roughness: 0.2, emissive: '#ffffff', emissiveIntensity: 0.6 }), -0.43, 0.142, 0.15) // ánh mắt
+  ell(0.045, 0.02, 0.02, mat('#ffffff', { metalness: 0, roughness: 0.6 }), -0.37, 0.115, 0.135) // vệt trắng sau mắt
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.52, 8), mat('#101418', { metalness: 0.3, roughness: 0.3 }))
+  beak.rotation.z = Math.PI / 2 + 0.06
+  beak.position.set(-0.72, 0.11, 0)
+  model.add(beak)
+  // đuôi: chẻ đôi, chĩa xuống sau, lông sọc
+  const tailShape = new THREE.Shape()
+  tailShape.moveTo(0, 0)
+  tailShape.lineTo(0.46, -0.18)
+  tailShape.lineTo(0.36, -0.22)
+  tailShape.lineTo(0.42, -0.34)
+  tailShape.lineTo(0.3, -0.3)
+  tailShape.lineTo(0.04, -0.08)
+  tailShape.closePath()
+  const tailGeo = new THREE.ShapeGeometry(tailShape)
+  {
+    const pos = tailGeo.attributes.position
+    const uv = tailGeo.attributes.uv
+    for (let k = 0; k < pos.count; k++) uv.setXY(k, pos.getX(k) / 0.46, 0.5 + pos.getY(k) / 0.7)
+  }
+  const tail = new THREE.Mesh(tailGeo, mat('#ffffff', { map: featherTail(), side: THREE.DoubleSide, metalness: 0.2, roughness: 0.5 }))
+  tail.position.set(0.22, -0.1, -0.01)
+  model.add(tail)
+  // cánh: lưỡi dài thon, gốc ở vai, ngọn ở +X+Y; dán texture lông dài (uv = toạ độ hình / 0.72)
+  const wingShape = new THREE.Shape()
+  wingShape.moveTo(0, 0)
+  wingShape.bezierCurveTo(0.12, 0.2, 0.34, 0.52, 0.64, 0.64)
+  const tip = [0.64, 0.64]
+  const n = 7
+  for (let k = 1; k <= n; k++) {
+    const q = k / n
+    const x = tip[0] - 0.56 * q
+    const y = tip[1] - 0.66 * q
+    wingShape.lineTo(x + 0.035, y + 0.06)
+    wingShape.lineTo(x, y)
+  }
+  wingShape.closePath()
+  const wingGeo = new THREE.ShapeGeometry(wingShape, 16)
+  {
+    const pos = wingGeo.attributes.position
+    const uv = wingGeo.attributes.uv
+    for (let k = 0; k < pos.count; k++) uv.setXY(k, pos.getX(k) / 0.72, pos.getY(k) / 0.72)
+  }
+  const wingTex = featherWing()
+  const mkWing = (shade, z, op) => {
+    const pivot = new THREE.Group()
+    pivot.position.set(-0.08, 0.1, z)
+    const w = new THREE.Mesh(wingGeo, mat(shade, { map: wingTex, side: THREE.DoubleSide, transparent: true, opacity: op, depthWrite: false, metalness: 0.15, roughness: 0.55 }))
+    pivot.add(w)
+    model.add(pivot)
+    return pivot
+  }
+  const far = mkWing('#8a99a8', -0.06, 0.82) // cánh xa tối hơn (nhân màu)
+  const near = mkWing('#ffffff', 0.09, 0.95)
+  const st = { x: 0, y: 0, phase: 'hover', time: 0, wait: 1.1, from: null, to: null, face: 1, tilt: 0 }
+  const shadow = { x: 0, y: 0, k: 1, a: 1 }
+  const pick = (A) => {
+    for (let i = 0; i < 12; i++) {
+      const ang = Math.random() * Math.PI * 2
+      const d = A * (0.35 + Math.random() * 0.5)
+      const x = st.x + Math.cos(ang) * d
+      const y = st.y + Math.sin(ang) * d * 0.7
+      if (Math.hypot(x, y) < A) return { x, y }
+    }
+    return { x: -st.x * 0.6, y: -st.y * 0.6 }
+  }
+  // A: phạm vi bay (bán kính, đơn vị cảnh); size: chiều dài chim (đơn vị cảnh)
+  function update(t, dt, show, A, size) {
+    if (show < 0.01) Object.assign(st, { x: 0, y: 0, phase: 'hover', time: 0, wait: 0.8, tilt: 0 })
+    st.time += dt
+    let want = 0
+    if (st.phase === 'hover') {
+      if (st.time > st.wait) {
+        st.from = { x: st.x, y: st.y }
+        st.to = pick(A)
+        if (Math.abs(st.to.x - st.x) > 0.01) st.face = st.to.x > st.x ? -1 : 1 // mô hình đầu hướng −X
+        st.phase = 'dart'
+        st.time = 0
+      }
+    } else {
+      const T = 0.38
+      const p = Math.min(1, st.time / T)
+      const e = 1 - (1 - p) ** 3
+      st.x = st.from.x + (st.to.x - st.from.x) * e
+      st.y = st.from.y + (st.to.y - st.from.y) * e
+      want = Math.atan2(st.to.y - st.from.y, Math.abs(st.to.x - st.from.x) + 1e-3) * 0.35 * (1 - p)
+      if (p >= 1) {
+        st.phase = 'hover'
+        st.time = 0
+        st.wait = 0.9 + Math.random() * 1.4
+      }
+    }
+    st.tilt += (want - st.tilt) * Math.min(1, dt * 10)
+    // cánh vỗ rất nhanh: quét từ trên cao xuống ngang thân; cánh xa lệch pha một chút
+    const f = Math.sin(t * Math.PI * 2 * 14)
+    near.rotation.z = 0.25 + f * 0.95
+    far.rotation.z = 0.25 + Math.sin(t * Math.PI * 2 * 14 - 0.5) * 0.95
+    near.rotation.x = far.rotation.x = f * 0.25
+    // lơ lửng: nhấp nhô chậm theo nhịp + rung theo cánh
+    const bob = Math.sin(t * 4.2) * 0.04 + f * 0.008
+    group.position.set(st.x, st.y + bob * size, 0.35)
+    group.rotation.set(0, 0, st.tilt * -st.face)
+    group.scale.set(size * st.face, size, size)
+    shadow.x = st.x + 0.06
+    shadow.y = st.y - size * 0.5
+    shadow.k = 0.9
+    shadow.a = 0.6
+  }
+  return { group, update, shadow, state: st }
+}
+
+/* ------------------------------------------------------------ Hoa nở --- */
+// Vòng 2 trang About: những bông hoa trắng (kiểu hoa trên đá rêu — cánh trắng thuôn, nhuỵ vàng,
+// lá xanh) NỞ ra khi bubble vào lõi: từng bông trồi lên lần lượt, cánh từ khép (dựng đứng) xoè
+// dần ra; nở xong thì đung đưa nhẹ. Camera nhìn từ trên xuống -> thấy mặt hoa.
+function buildFlowers() {
+  // Gộp lần vẽ bằng InstancedMesh: mọi cánh hoa = 1 lần vẽ, mọi lá = 1, mọi nhuỵ = 1 (trước: 91
+  // mesh riêng). Khung xương Object3D (không vẽ) giữ phép xoay / co của từng bông, mỗi khung đọc
+  // ma trận ra gán cho từng bản sao.
+  const group = new THREE.Group()
+  const rig = new THREE.Object3D() // khung xương, không vẽ
+  group.add(rig)
+  const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.05, side: THREE.DoubleSide, ...o })
+  const petalShape = new THREE.Shape()
+  petalShape.moveTo(0, 0)
+  petalShape.bezierCurveTo(0.09, 0.08, 0.1, 0.3, 0, 0.42)
+  petalShape.bezierCurveTo(-0.1, 0.3, -0.09, 0.08, 0, 0)
+  const petalGeo = new THREE.ShapeGeometry(petalShape, 8)
+  {
+    const pos = petalGeo.attributes.position
+    const col = new Float32Array(pos.count * 3)
+    const a = new THREE.Color('#e9efc9')
+    const b = new THREE.Color('#ffffff')
+    const c = new THREE.Color()
+    for (let i = 0; i < pos.count; i++) {
+      c.copy(a).lerp(b, Math.min(1, pos.getY(i) / 0.25))
+      col.set([c.r, c.g, c.b], i * 3)
+    }
+    petalGeo.setAttribute('color', new THREE.BufferAttribute(col, 3))
+  }
+  const leafShape = new THREE.Shape()
+  leafShape.moveTo(0, 0)
+  leafShape.bezierCurveTo(0.12, 0.1, 0.12, 0.4, 0, 0.56)
+  leafShape.bezierCurveTo(-0.12, 0.4, -0.12, 0.1, 0, 0)
+  const leafGeo = new THREE.ShapeGeometry(leafShape, 6)
+  const centerGeo = new THREE.SphereGeometry(0.075, 12, 8)
+  const SPOTS = [
+    [-0.04, 0.04, 0.95], [-0.52, 0.3, 0.72], [0.5, 0.38, 0.78], [-0.38, -0.46, 0.7],
+    [0.42, -0.4, 0.74], [0.04, 0.68, 0.58], [0.0, -0.74, 0.56],
+  ]
+  const N = 9 // cánh / bông
+  const L = 3 // lá / bông
+  const petalsIM = new THREE.InstancedMesh(petalGeo, mat('#ffffff', { vertexColors: true, emissive: '#ffffff', emissiveIntensity: 0.32 }), SPOTS.length * N)
+  const leavesIM = new THREE.InstancedMesh(leafGeo, mat('#ffffff'), SPOTS.length * L)
+  const centersIM = new THREE.InstancedMesh(centerGeo, mat('#e2c23a', { roughness: 0.8 }), SPOTS.length)
+  const leafA = new THREE.Color('#5f9a2c')
+  const leafB = new THREE.Color('#86b83a')
+  for (let k = 0; k < SPOTS.length * L; k++) leavesIM.setColorAt(k, k % 2 ? leafB : leafA)
+  for (const im of [petalsIM, leavesIM, centersIM]) {
+    im.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+    im.frustumCulled = false
+    group.add(im)
+  }
+  const flowers = SPOTS.map(([x, y, k], i) => {
+    const f = new THREE.Object3D()
+    f.position.set(x, y, 0)
+    const leaves = new THREE.Object3D()
+    const leafNodes = []
+    for (let j = 0; j < L; j++) {
+      const l = new THREE.Object3D()
+      l.rotation.z = (j / L) * Math.PI * 2 + i
+      l.position.z = -0.02
+      leaves.add(l)
+      leafNodes.push(l)
+    }
+    f.add(leaves)
+    const head = new THREE.Object3D()
+    head.position.z = 0.06
+    const petals = []
+    for (let j = 0; j < N; j++) {
+      const arm = new THREE.Object3D()
+      arm.rotation.z = (j / N) * Math.PI * 2 + i * 0.4
+      const p = new THREE.Object3D()
+      arm.add(p)
+      head.add(arm)
+      petals.push(p)
+    }
+    const ctr = new THREE.Object3D()
+    ctr.scale.z = 0.6
+    ctr.position.z = 0.03
+    head.add(ctr)
+    f.add(head)
+    rig.add(f)
+    return { f, head, leaves, leafNodes, petals, ctr, k, order: i, sway: Math.random() * 6 }
+  })
+  let shownFor = 0
+  function update(t, dt, show) {
+    shownFor = show < 0.02 ? 0 : shownFor + dt
+    for (const o of flowers) {
+      // nở lần lượt: mỗi bông trễ 0.14s; trồi lên (to dần, hơi nảy) rồi cánh xoè trong 0.9s
+      const p = Math.min(1, Math.max(0, (shownFor - o.order * 0.14) / 0.9))
+      const grow = p <= 0 ? 0 : 1 + 2.2 * (p - 1) ** 3 + 1.2 * (p - 1) ** 2 // easeOutBack
+      const open = Math.min(1, Math.max(0, (p - 0.15) / 0.85))
+      o.f.scale.setScalar(Math.max(0.0001, grow * o.k * CONFIG.flower)) // CONFIG.flower: cỡ từng bông (vị trí giữ nguyên)
+      // cánh: khép = dựng đứng (xoay quanh X gần 90°), nở = ngả ra gần nằm (còn chếch 18°)
+      const tilt = (1 - open) * 1.35 + 0.32
+      for (const pt of o.petals) pt.rotation.x = tilt
+      o.leaves.scale.setScalar(0.4 + 0.6 * Math.min(1, p * 1.6))
+      o.head.rotation.z = Math.sin(t * 0.8 + o.sway) * 0.06
+      o.f.rotation.x = Math.sin(t * 1.1 + o.sway) * 0.05
+    }
+    // khung xương -> ma trận từng bản sao (toạ độ của group)
+    rig.updateMatrixWorld(true)
+    const inv = new THREE.Matrix4().copy(group.matrixWorld).invert()
+    const m = new THREE.Matrix4()
+    let pi = 0
+    let li = 0
+    flowers.forEach((o, i) => {
+      for (const pt of o.petals) petalsIM.setMatrixAt(pi++, m.multiplyMatrices(inv, pt.matrixWorld))
+      for (const l of o.leafNodes) leavesIM.setMatrixAt(li++, m.multiplyMatrices(inv, l.matrixWorld))
+      centersIM.setMatrixAt(i, m.multiplyMatrices(inv, o.ctr.matrixWorld))
+    })
+    petalsIM.instanceMatrix.needsUpdate = leavesIM.instanceMatrix.needsUpdate = centersIM.instanceMatrix.needsUpdate = true
+  }
+  return { group, update }
+}
 
 /* ------------------------------------------------------------- Con cá --- */
 // Ảnh koi bướm thật nhìn từ trên (tạo theo ảnh mẫu, tách nền): đầu ở mép TRÊN ảnh, trục
@@ -255,8 +615,8 @@ function mount(root = document) {
   if (!CONFIG.enabled || reduced) return
   const scope = root.querySelector ? root : document
   // vòng có data-creature: "butterfly" (vòng 1), "koi" (vòng 2), "frog" (vòng 3)
-  const BUILD = { koi: buildKoi, butterfly: buildButterfly, frog: buildFrog }
-  const circles = [...scope.querySelectorAll('.hs-about .circle[data-creature]')]
+  const BUILD = { koi: buildKoi, butterfly: buildButterfly, frog: buildFrog, bird: buildBird, flower: buildFlowers }
+  const circles = [...scope.querySelectorAll('.hs-about .circle[data-creature], .ab-circles .circle[data-creature]')]
     .map((c) => ({ c, core: c.querySelector('.core'), kind: c.dataset.creature }))
     .filter((o) => o.core && BUILD[o.kind])
   if (!circles.length) return
@@ -368,6 +728,30 @@ function mount(root = document) {
       const Dw = 2 * 4.2 * Math.tan((13 * Math.PI) / 180)
       const { cur, shadow } = three
       let x, y, z, heading, s, sh
+      if (active.kind === 'flower') {
+        // cụm hoa nở giữa lõi (không bóng riêng)
+        cur.update(t, dt, show)
+        cur.group.position.set(0, 0, 0.05)
+        cur.group.rotation.set(0, 0, 0)
+        cur.group.scale.setScalar(Dw / 2)
+        shadow.material.opacity = 0
+        three.renderer.render(three.scene, three.camera)
+        if (inView) raf = requestAnimationFrame(tick)
+        return
+      }
+      if (active.kind === 'bird') {
+        // chim ruồi tự lo vị trí / hướng / cỡ (lơ lửng + lao); bóng mờ phía dưới
+        const size = CONFIG.bird * Dw
+        cur.update(t, dt, show, CONFIG.birdRange * Dw, size)
+        const fs = cur.shadow
+        shadow.position.set(fs.x, fs.y, -0.3)
+        shadow.rotation.z = 0
+        shadow.scale.set(size * 0.7, size * 0.18 / 0.34, 1)
+        shadow.material.opacity = CONFIG.shadow * fs.a
+        three.renderer.render(three.scene, three.camera)
+        if (inView) raf = requestAnimationFrame(tick)
+        return
+      }
       if (active.kind === 'frog') {
         // ếch tự lo vị trí / hướng / cỡ (nhảy theo trạng thái riêng); chỉ đặt bóng
         const size = CONFIG.frog * Dw

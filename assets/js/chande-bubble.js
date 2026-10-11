@@ -91,7 +91,7 @@
     // Con trỏ nằm trong các section này thì giọt tan đi (ra khỏi thì hiện lại)
     hideIn: '.hs-land, .hs-poster, .cmenu', // .cmenu: trang menu — bubble bẻ cong ảnh member thành hình tròn
     zoneOn: true, // giọt theo chuột CHỈ sống trong vùng zoneSel: chuột ra ngoài thì mờ hẳn, giọt không ra khỏi vùng
-    zoneSel: '.hs-about .circles', // dải 3 vòng tròn (giữa hai đường gạch, section About trang chủ)
+    zoneSel: '.hs-about .circles, .ab-circles', // dải 3 vòng tròn About trang chủ / 2 vòng tròn trang About
     zonePad: 24, // nới vùng ra mỗi phía (px ở khổ 1920) — tới đúng hai đường gạch
     // Trỏ vào nút / link: giọt co còn hoverScale (so với cỡ gốc), rời ra thì về lại.
     hoverOn: true,
@@ -1324,19 +1324,40 @@ void main () {
     const k = innerWidth / 1920
     return { x: r.left + r.width / 2 + (+CONFIG.logoX || 0) * k, y: y + (+CONFIG.logoY || 0) * k }
   }
+  // Trang có logo (About): hero còn gần màn -> giọt là logo đứng ở hero; cuộn xa khỏi hero thì trả giọt
+  // về cho chuột (dạng tròn, sống trong vùng zoneSel — 2 vòng tròn About), cuộn lại thì về logo.
   function syncShape() {
     const el = document.querySelector('[data-bubble-logo]')
-    const want = el ? 'logo' : 'circle'
     logoEl = el
+    let near = false
+    if (el) {
+      const r = el.getBoundingClientRect()
+      const y = r.top + r.height / 2
+      near = y > -innerHeight * 0.5 && y < innerHeight * 1.5
+    }
+    const want = near ? 'logo' : 'circle'
     if (want !== shape) {
       shape = want
       lensKey = ''
       presence = 0 // đổi dạng: hiện lại từ đầu, không biến hình giữa chừng
     }
-    if (el) api.lead(logoLead)
-    else if (leader === logoLead) api.lead(null)
+    if (near) {
+      if (leader !== logoLead) api.lead(logoLead)
+    } else if (leader === logoLead) api.lead(null)
   }
   window.barba?.hooks?.afterEnter(() => syncShape())
+  let shapeRaf = 0
+  addEventListener(
+    'scroll',
+    () => {
+      if (!logoEl || shapeRaf) return
+      shapeRaf = requestAnimationFrame(() => {
+        shapeRaf = 0
+        syncShape()
+      })
+    },
+    { passive: true },
+  )
   // mở / đóng menu (html.menu-open) -> chạy lại vòng vẽ để logo tan / hiện lại
   new MutationObserver(() => start()).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
 

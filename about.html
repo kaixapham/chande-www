@@ -22,10 +22,10 @@
 <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/vendor/lenis.css">
-<link rel="stylesheet" href="assets/css/site.css?v=202610111438">
-<link rel="stylesheet" href="assets/css/home.css?v=202610111438">
-<link rel="stylesheet" href="assets/css/gallery.css?v=202610111438">
-<link rel="stylesheet" href="assets/css/form.css?v=202610111438">
+<link rel="stylesheet" href="assets/css/site.css?v=202610111737">
+<link rel="stylesheet" href="assets/css/home.css?v=202610111737">
+<link rel="stylesheet" href="assets/css/gallery.css?v=202610111737">
+<link rel="stylesheet" href="assets/css/form.css?v=202610111737">
 <!-- Khung hình đầu: màn loading do JS dựng ở cuối trang, nên trước đó tô nền tối + ẩn
      nội dung (không chớp nền kem). chande-loading.js gỡ cl-boot ngay khi đã gắn màn loading. -->
 <style>html.cl-boot,html.cl-boot body{background:#182220}html.cl-boot body>:not(.cl){visibility:hidden}</style>
@@ -82,6 +82,64 @@
         <div class="ab-hero__field field" data-field></div>
       </div>
     </section>
+
+    <!-- CÂU CHUYỆN — Figma About 581:41898 (khổ 1920, toạ độ tính từ đỉnh section, --u = 1px thiết kế):
+         dải chấm tròn · 2 đoạn chữ lớn xen viên thuốc trang trí · ảnh người sáng lập · 2 vòng tròn ·
+         2 khung Visual focus / Sharing & learning (sọc màu, dải viên thuốc, gạch neon) · ảnh lớn · dải màu -->
+    <section class="hs ab-story" data-cms-section="About — Câu chuyện" aria-label="Câu chuyện Mingg Patreon">
+      <div class="dotrun" data-marquee aria-hidden="true"><div class="dotrun__track"></div></div>
+      <p class="abs ab-say ab-say--1"><span>Mingg Patreon was founded</span><span class="ab-say__in">by Khac Minh Nguyen (Mingg).</span><span class="ab-say__gap" aria-hidden="true"></span><span>as a place to share what he knows about UI/UX design with anyone eager to learn.</span></p>
+      <p class="abs ab-say ab-say--2"><span>Over time,</span><span class="ab-say__gap" aria-hidden="true"></span><span>the group grew into a close-knit community, one that now reaches well beyond design.</span></p>
+      <i class="abs ab-pill ab-pill--1" aria-hidden="true"></i>
+      <i class="abs ab-pill ab-pill--2" aria-hidden="true"></i>
+      <i class="abs ab-pill ab-pill--3" aria-hidden="true"><img src="assets/img/about/eye.webp" alt="" loading="lazy"></i>
+      <img data-parallax data-cms="about-founder" data-cms-label="Ảnh người sáng lập" data-cms-w="234" class="abs ab-founder" src="assets/img/about/founder.webp" alt="Khắc Minh Nguyễn (Mingg), người sáng lập Mingg Patreon" loading="lazy">
+      <div class="abs ab-circles" aria-hidden="true">
+        <div class="circle" data-creature="bird"><img class="ring" src="assets/img/about/circle-a-ring.svg" loading="lazy" alt=""><img class="tex" src="assets/img/about/circle-a-tex.webp" loading="lazy" alt=""><img class="core" src="assets/img/about/circle-a-core.svg" loading="lazy" alt=""><img class="peek" data-cms="about-circle-a-peek" data-cms-label="Vòng trái — ảnh lộ qua bubble" data-cms-w="900" src="assets/img/home/circle-2-marble.webp" alt="" loading="lazy"></div>
+        <div class="circle" data-creature="flower" data-peek-fill="#2f4a2c"><img class="ring" src="assets/img/about/circle-b-ring.svg" loading="lazy" alt=""><img class="core" src="assets/img/about/circle-b-core.svg" loading="lazy" alt=""><img class="tex tex--dim" src="assets/img/about/circle-b-tex.webp" loading="lazy" alt=""></div>
+      </div>
+      <div class="abs ab-cols">
+        <div class="ab-col">
+          <div class="ab-stripes" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <article class="ab-panel ab-panel--a">
+            <h3 class="ab-panel__t">Visual focus</h3>
+            <div class="ab-panel__text mono">
+              <p>[ Xây dựng cho ]</p>
+              <p>Founded by Khac Mingg Nguyen, a Patreon and Discord group dedicated to UI/UX designers, we embody a spirit of sharing and mutual learning. Operating for 6 years, we have hosted many special events.</p>
+            </div>
+          </article>
+          <div class="ab-field field" data-field></div>
+        </div>
+        <div class="ab-col">
+          <div class="ab-run" aria-hidden="true"><div class="pillrun pillrun--sm" data-marquee><div class="pillrun__track"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
+          <div class="ab-field field" data-field data-field-shift="0.3"></div>
+          <article class="ab-panel ab-panel--b">
+            <h3 class="ab-panel__t">Sharing &amp; learning</h3>
+            <div class="ab-panel__text mono">
+              <p>[ Xây dựng cho ]</p>
+              <p>Founded by Khac Mingg Nguyen, a Patreon and Discord group dedicated to UI/UX designers, we embody a spirit of sharing and mutual learning. Operating for 6 years, we have hosted many special events.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+      <img data-parallax data-cms="about-group" data-cms-label="Ảnh lớn cả nhóm" data-cms-w="1872" class="abs ab-group" src="assets/img/about/group-walk.webp" alt="Các thành viên Chande đi bộ trên con đường làng" loading="lazy">
+      <div class="abs ab-scheme"><div class="scheme" data-flip3d aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+    </section>
+
+    <!-- SỰ KIỆN — khung tối "Memorable events (05)" + gạch neon, chữ mono, ảnh, danh sách sự kiện + năm -->
+    <section class="hs ab-events" data-cms-section="About — Sự kiện" aria-label="Các sự kiện">
+      <div class="abs ab-events__dark">
+        <img class="ab-events__logo" src="assets/img/home/logo-mark.svg" alt="" width="104" height="71.7241">
+        <h2 class="ab-events__t"><span>Memorable</span><span>Events <em>(05)</em></span></h2>
+      </div>
+      <div class="abs ab-events__field field" data-field></div>
+      <p class="abs mono ab-events__note">We do not only stop at roles around UI/UX design; we believe design has a common root.</p>
+      <img data-parallax data-cms="about-events" data-cms-label="Ảnh cạnh danh sách sự kiện" data-cms-w="468" class="abs ab-events__img" src="assets/img/about/events.webp" alt="Các bạn trẻ cười đùa tại sự kiện Chande" loading="lazy">
+      <ul class="abs ab-events__list">
+        <li>Awards winner</li><li>Product designer</li><li>Planter</li><li>UI.UX designer</li>
+        <li>Amazing race <span>2022</span></li><li>Chande SS1: Design battle <span>2025</span></li><li>Chande SS2: Bootcamp <span>2026</span></li>
+      </ul>
+    </section>
   </div>
 </main>
 
@@ -92,39 +150,39 @@
 <script src="assets/vendor/gsap.min.js"></script>
 <script src="assets/vendor/CustomEase.min.js"></script>
 
-<script src="assets/js/chande-settings.js?v=202610111438"></script>
-<script src="assets/js/chande-loading.js?v=202610111438"></script>
-<script src="assets/js/chande-menu.js?v=202610111438"></script>
-<script src="assets/js/chande-transition.js?v=202610111438"></script>
-<script src="assets/js/chande-reveal.js?v=202610111438"></script>
-<script src="assets/js/chande-hero.js?v=202610111438"></script>
-<script src="assets/js/chande-field.js?v=202610111438"></script>
-<script src="assets/js/chande-home.js?v=202610111438"></script>
-<script src="assets/js/chande-cursor.js?v=202610111438"></script>
-<script src="assets/js/chande-bubble.js?v=202610111438"></script>
-<script src="assets/js/chande-tilt.js?v=202610111438"></script>
-<script src="assets/js/chande-imgtiles.js?v=202610111438"></script>
-<script src="assets/js/chande-parallax.js?v=202610111438"></script>
-<script src="assets/js/chande-titlefx.js?v=202610111438"></script>
-<script src="assets/js/chande-eye.js?v=202610111438"></script>
-<script src="assets/js/chande-chips.js?v=202610111438"></script>
-<script src="assets/js/chande-story.js?v=202610111438"></script>
-<script src="assets/js/chande-circles.js?v=202610111438"></script>
-<script src="assets/js/chande-scramble.js?v=202610111438"></script>
-<script src="assets/js/chande-sign.js?v=202610111438"></script>
-<script src="assets/js/chande-gallery.js?v=202610111438"></script>
-<script src="assets/js/chande-form.js?v=202610111438"></script>
+<script src="assets/js/chande-settings.js?v=202610111737"></script>
+<script src="assets/js/chande-loading.js?v=202610111737"></script>
+<script src="assets/js/chande-menu.js?v=202610111737"></script>
+<script src="assets/js/chande-transition.js?v=202610111737"></script>
+<script src="assets/js/chande-reveal.js?v=202610111737"></script>
+<script src="assets/js/chande-hero.js?v=202610111737"></script>
+<script src="assets/js/chande-field.js?v=202610111737"></script>
+<script src="assets/js/chande-home.js?v=202610111737"></script>
+<script src="assets/js/chande-cursor.js?v=202610111737"></script>
+<script src="assets/js/chande-bubble.js?v=202610111737"></script>
+<script src="assets/js/chande-tilt.js?v=202610111737"></script>
+<script src="assets/js/chande-imgtiles.js?v=202610111737"></script>
+<script src="assets/js/chande-parallax.js?v=202610111737"></script>
+<script src="assets/js/chande-titlefx.js?v=202610111737"></script>
+<script src="assets/js/chande-eye.js?v=202610111737"></script>
+<script src="assets/js/chande-chips.js?v=202610111737"></script>
+<script src="assets/js/chande-story.js?v=202610111737"></script>
+<script src="assets/js/chande-circles.js?v=202610111737"></script>
+<script src="assets/js/chande-scramble.js?v=202610111737"></script>
+<script src="assets/js/chande-sign.js?v=202610111737"></script>
+<script src="assets/js/chande-gallery.js?v=202610111737"></script>
+<script src="assets/js/chande-form.js?v=202610111737"></script>
 <!-- Module: tự nạp paper-stack.js + three (assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-poster.js?v=202610111438"></script>
+<script type="module" src="assets/js/chande-poster.js?v=202610111737"></script>
 <!-- Module: vịt patin 3D trên lưới gallery (three ở assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-duck.js?v=202610111438"></script>
+<script type="module" src="assets/js/chande-duck.js?v=202610111737"></script>
 <!-- Module: thảm cỏ 3D dưới lưới gallery (preset data-floor="grass-3d"). -->
-<script type="module" src="assets/js/chande-grass.js?v=202610111438"></script>
+<script type="module" src="assets/js/chande-grass.js?v=202610111737"></script>
 <!-- Module: cá koi 3D bơi trong lõi vòng tròn About khi bubble ở tâm (three nạp động). -->
-<script type="module" src="assets/js/chande-koi.js?v=202610111438"></script>
+<script type="module" src="assets/js/chande-koi.js?v=202610111737"></script>
 <!-- Module: bướm bay ra khỏi vòng 1, bay theo cuộn tới cuối trang chủ (three nạp động). -->
-<script type="module" src="assets/js/chande-flyer.js?v=202610111438"></script>
+<script type="module" src="assets/js/chande-flyer.js?v=202610111737"></script>
 <!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
-<script src="assets/js/chande-devtools.js?v=202610111438"></script>
+<script src="assets/js/chande-devtools.js?v=202610111737"></script>
 </body>
 </html>
