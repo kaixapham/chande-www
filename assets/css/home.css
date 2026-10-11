@@ -511,14 +511,16 @@
   /* 2. Story — Figma Section 3 mobile (620:13441, khổ 375): ảnh 413 tràn ngang (ảnh 2 vẫn nở từ
      góc dưới trái khi cuộn — chande-story.js dính ảnh ngay dưới header), dưới là 2 khung chữ 335
      xếp dọc (tiêu đề 40, chữ mono 14), rồi dải màu 9 × 60 (section Scheme, đen trên → kem dưới). */
-  .hs-story, .hs-story.is-zoom{--q:calc(100vw / 375); --sh:calc(413 * var(--q)); height:auto; padding-bottom:var(--story-pin, 0px)}
+  /* --v = 1px chiều cao Figma (748 = màn thấy được dưới header, đã trừ thanh trình duyệt): ảnh 413 +
+     khung chữ 1 (335) = đúng một màn */
+  .hs-story, .hs-story.is-zoom{--q:calc(100vw / 375); --v:calc((var(--vp) - var(--bar)) / 748); --sh:calc(413 * var(--v)); height:auto; padding-bottom:var(--story-pin, 0px)}
   .hs-story > .abs{position:relative; left:auto; right:auto; top:auto; bottom:auto}
   .hs-story__band{display:none}
-  .hs-story__media{width:100%; height:calc(413 * var(--q))}
+  .hs-story__media{width:100%; height:calc(413 * var(--v))}
   .hs-story.is-zoom .hs-story__col, .hs-story__col{top:auto; width:100%}
-  .hs-story__panel{height:auto; min-height:calc(335 * var(--q)); padding:calc(20 * var(--q)) 12px 20px}
+  .hs-story__panel{height:auto; min-height:calc(335 * var(--v)); padding:calc(20 * var(--v)) 12px 20px}
   .hs-story .hs-story__panel h3{font-size:calc(40 * var(--q)); line-height:.78; letter-spacing:-.02em; text-box:trim-both cap alphabetic}
-  .hs-story__text{width:auto; min-width:0; min-height:0; gap:24px; margin-top:calc(98 * var(--q))}
+  .hs-story__text{width:auto; min-width:0; min-height:0; gap:24px; margin-top:calc(98 * var(--v))}
   .hs-story__text div{gap:24px}
   .hs-story__text p{font-size:14px; line-height:.96; letter-spacing:-.02em; text-box:trim-both cap alphabetic}
   .hs-scheme{height:auto}
@@ -584,13 +586,15 @@
   /* phần dưới tràn hết bề ngang */
   .hs-about__scheme{order:13; width:100vw; margin-top:calc(16 * var(--q))}
   .hs-about__scheme .scheme > i, .hs-about__scheme > i{height:calc(60 * var(--q))}
-  .hs-about__rock{order:14; width:100vw; height:calc(440 * var(--q)); aspect-ratio:auto}
+  /* ảnh gốm 440 + gạch neon 212 + dải chấm 96 = 748 = đúng một màn thấy được dưới header (--v) */
+  .hs-about{--v:calc((var(--vp) - var(--bar)) / 748)}
+  .hs-about__rock{order:14; width:100vw; height:calc(440 * var(--v)); aspect-ratio:auto}
   .hs-about__pills .pill--green{order:15; display:flex; align-items:center; position:relative; z-index:2; align-self:flex-start; width:auto; height:52px; padding:0 32px;
     margin:calc(-52px - 12 * var(--q)) 0 calc(12 * var(--q))}
-  .hs-about__field{order:16; width:100vw; height:calc(212 * var(--q))}
+  .hs-about__field{order:16; width:100vw; height:calc(212 * var(--v))}
   .hs-about__band{order:17; width:100vw; height:auto; flex-direction:column; align-items:stretch; gap:0; padding:0}
-  .hs-about__band .dotrun{--u:calc(66 * var(--q) / 164); width:100%; height:calc(96 * var(--q))}
-  .hs-about__band .dotrun__track{left:0; top:calc(15 * var(--q))}
+  .hs-about__band .dotrun{--u:calc(66 * var(--v) / 164); width:100%; height:calc(96 * var(--v))}
+  .hs-about__band .dotrun__track{left:0; top:calc(15 * var(--v))}
   .hs-about .hs-about__band h2{width:auto; padding:16px 12px; font-size:calc(40 * var(--q)); line-height:.78; letter-spacing:-.04em}
 
   /* 10. Quote — Figma Testimonial mobile (623:14309, khổ 375; cỡ co theo bề ngang): một màn dưới

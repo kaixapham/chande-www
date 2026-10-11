@@ -40,16 +40,70 @@
 // Chiều cao thấy được của màn lúc mở trang (đã trừ thanh trình duyệt mobile) -> --ih, cho CSS
 // --vp = min(100svh, --ih). Chỉ cập nhật khi đổi BỀ NGANG (xoay máy): Safari thu / hiện thanh
 // khi cuộn cũng bắn resize, đo lại lúc đó là các section nhảy cỡ.
+//   • Chrome Android / Chrome iOS / Safari iOS ≤ 18: thanh địa chỉ + thanh công cụ là vùng riêng,
+//     innerHeight lúc mở trang (thanh đang hiện) đã là vùng thấy được.
+//   • Safari iOS 26+ (thanh nổi "Liquid Glass"): trang vẽ cả xuống DƯỚI thanh địa chỉ nổi ở đáy ->
+//     innerHeight tính luôn phần bị thanh che. Trừ thêm phần thanh che khi đang cuộn (thanh thu
+//     gọn, ~IOS_BAR px) để mỗi khối "một màn" của design hiện đủ, không bị thanh đè.
 ;(() => {
   const root = document.documentElement
+  const IOS_BAR = 56
+  const ua = navigator.userAgent
+  const iosSafari26 =
+    /iPhone|iPad|iPod/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua) && +(ua.match(/Version\/(\d+)/)?.[1] || 0) >= 26
   let w = 0
   const set = () => {
     if (innerWidth === w) return
     w = innerWidth
-    root.style.setProperty('--ih', `${innerHeight}px`)
+    root.style.setProperty('--ih', `${innerHeight - (iosSafari26 ? IOS_BAR : 0)}px`)
   }
   set()
   addEventListener('resize', set)
+
+  // ?vpdebug: bảng đo trên điện thoại thật (Safari / Chrome) — vạch ĐỎ = đáy vùng "một màn" (--vp)
+  // mà trang đang dùng, vạch XANH = đáy cửa sổ; so với mép trên thanh trình duyệt để chỉnh IOS_BAR.
+  if (/[?&]vpdebug/.test(location.search)) {
+    const probe = (h) => {
+      const d = document.createElement('div')
+      d.style.cssText = `position:fixed;left:0;top:0;width:1px;height:${h};visibility:hidden;pointer-events:none`
+      document.documentElement.append(d)
+      const v = Math.round(d.getBoundingClientRect().height)
+      d.remove()
+      return v
+    }
+    const box = document.createElement('div')
+    box.style.cssText = 'position:fixed;left:8px;top:80px;z-index:2147483647;max-width:calc(100vw - 16px);padding:8px 10px;background:rgba(0,0,0,.82);color:#68f12b;font:12px/1.35 ui-monospace,monospace;white-space:pre-wrap;pointer-events:none;text-transform:none'
+    const red = document.createElement('div')
+    red.style.cssText = 'position:fixed;left:0;right:0;height:2px;background:#ff2d2d;z-index:2147483647;pointer-events:none;top:calc(var(--vp, 100svh) - 2px)'
+    const blue = document.createElement('div')
+    blue.style.cssText = 'position:fixed;left:0;right:0;bottom:0;height:2px;background:#2d8bff;z-index:2147483647;pointer-events:none'
+    const draw = () => {
+      const cs = getComputedStyle(document.documentElement)
+      const sa = (k) => {
+        const d = document.createElement('div')
+        d.style.cssText = `position:fixed;padding-top:env(safe-area-inset-${k});visibility:hidden`
+        document.documentElement.append(d)
+        const v = getComputedStyle(d).paddingTop
+        d.remove()
+        return v
+      }
+      box.textContent =
+        `${navigator.userAgent.replace(/^Mozilla\/5.0 /, '').slice(0, 140)}\n` +
+        `iosSafari26: ${iosSafari26}  dpr: ${devicePixelRatio}\n` +
+        `inner: ${innerWidth}×${innerHeight}  vv: ${Math.round(visualViewport?.height || 0)}\n` +
+        `svh ${probe('100svh')} · dvh ${probe('100dvh')} · lvh ${probe('100lvh')} · vh ${probe('100vh')}\n` +
+        `--ih ${cs.getPropertyValue('--ih')} · --vp ${probe('var(--vp)')} · --bar ${cs.getPropertyValue('--bar')}\n` +
+        `safe top ${sa('top')} bottom ${sa('bottom')}\n` +
+        `screen ${screen.width}×${screen.height}`
+    }
+    const show = () => {
+      document.body.append(box, red, blue)
+      draw()
+    }
+    document.body ? show() : addEventListener('DOMContentLoaded', show)
+    addEventListener('resize', draw)
+    visualViewport?.addEventListener('resize', draw)
+  }
 })()
 
 ;(() => {
