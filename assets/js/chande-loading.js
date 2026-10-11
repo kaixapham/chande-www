@@ -155,8 +155,8 @@
     // Từ 1440px trở lên: 1em = 1px-thiết-kế (100vw / 120). Dưới đó cỡ gốc chốt
     // cứng theo mốc, và thanh gộp còn 2 ô + nút menu neo ở mép phải.
     responsive: {
-      tablet: { max: 899, base: 11, brand: 58, track: 42 },
-      mobile: { max: 599, base: 10, brand: 64, track: 36 },
+      tablet: { max: 899, base: 12, brand: 58, track: 42 },
+      mobile: { max: 599, base: 12, brand: 64, track: 36 }, // 12: logo 34.8×24, chữ 15px như Figma Home-Mobile
     },
 
     // ---- Effect Dither (ordered dithering) ---------------------------------
@@ -417,6 +417,15 @@ html.menu-open .cl__menu .cl__x circle, html.menu-open .cl.is-done .cl__menu:hov
   .cl__cell--brand{width:${R.mobile.brand}%}
   .cl__cell--track{width:${R.mobile.track}%}
   .cl__eye{display:none}
+}
+/* Sau loading, màn hẹp (Figma Home-Mobile 620:12593): thanh cao 64 = ô kem (thương hiệu + giờ,
+   lề 24) + nút menu lime 64×64; bỏ ô tối (thanh tiến độ cuộn). Lúc loading giữ nguyên. */
+@media (max-width:${R.tablet.max}px){
+  .cl.is-done .cl__bar{height:64px}
+  .cl.is-done .cl__cell--track{display:none}
+  .cl.is-done .cl__cell--brand{width:calc(100% - 64px); padding:0 24px; display:flex; flex-direction:column; justify-content:center}
+  .cl.is-done .cl__flip--right{font-size:${(14 / 15).toFixed(4)}em} /* giờ Hà Nội 14px, wordmark 15px */
+  .cl.is-done .cl__menu, .cl.is-done .cl__cell--nav2{width:64px}
 }
 `
   }

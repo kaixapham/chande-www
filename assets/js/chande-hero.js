@@ -431,8 +431,18 @@
       }),
     )
 
-    const rank = slotOrder(state.slots)
-    const swaps = state.slots.map((slot, i) => swapSlot(slot, i, (state.offset + i) % n, rank[i]))
+    // Màn hẹp (lưới 2×2, Figma Home-Mobile): 4 ô đổi CÙNG MỘT LÚC — không lệch theo thứ tự, và
+    // chờ cả 4 ảnh mới vẽ xong mới cùng chạy (barrier). Màn rộng: lần lượt theo vị trí.
+    const together = matchMedia('(max-width: 899px)').matches
+    const rank = together ? state.slots.map(() => 0) : slotOrder(state.slots)
+    let go = null
+    if (together) {
+      let left = state.slots.length
+      let open
+      const gate = new Promise((r) => (open = r))
+      go = () => (--left <= 0 && open(), gate)
+    }
+    const swaps = state.slots.map((slot, i) => swapSlot(slot, i, (state.offset + i) % n, rank[i], go))
     await Promise.all([back.finished.catch(() => {}), ...swaps])
     document.dispatchEvent(new CustomEvent('chande-hero:swap-end'))
     state.swapping = false
@@ -462,7 +472,7 @@
     return rank
   }
 
-  async function swapSlot(slot, i, idx, rank = i) {
+  async function swapSlot(slot, i, idx, rank = i, go = null) {
     const state = H
     const person = state.people[idx]
     const box = slot.querySelector('.hero-card__media')
@@ -471,8 +481,10 @@
     try {
       await renderPortrait(c, box, person, +slot.dataset.levels || 4)
     } catch {
+      go?.() // ô lỗi vẫn mở cổng cho các ô khác
       return
     }
+    if (go) await go()
     if (H !== state) return
     slot.dataset.idx = idx
     slot.setAttribute('aria-label', `${person.num} ${person.name}`)
@@ -494,7 +506,7 @@
       return
     }
 
-    const delay = reduced.matches ? 0 : i * CONFIG.swapStagger
+    const delay = reduced.matches || go ? 0 : i * CONFIG.swapStagger
     const dur = reduced.matches ? 0 : CONFIG.swapDuration
     box.append(c)
     const wipe = track(

@@ -29,7 +29,8 @@
  * 'chande-hero:swap-end' nhả ra, vòng mới bắt đầu từ 0.
  *
  * Tham số theo từng vùng (ghi đè CONFIG): data-field-cols, data-field-tiles,
- * data-field-flip ("y" = lật dọc), data-field-shift (0..1, lệch pha).
+ * data-field-flip ("y" = lật dọc), data-field-flip-narrow ("y" = chỉ lật ở màn ≤ 899px),
+ * data-field-shift (0..1, lệch pha).
  *
  * Rê chuột có 5 preset (HOVER_PRESETS): Thấu kính · Tản ô · Nam châm · Dạt ô · Gợn sóng.
  *
@@ -599,7 +600,7 @@ void main() {
       if (mouse && CONFIG.hoverGapAuto) o.hoverGapRGB = bgBehind(g, rg)
       // Dạt ô: nới khung vẽ thêm 1 ô mỗi phía (ô dạt tối đa 0.9 ô) cho tràn ra
       const pad = mouse && o.hoverMode === 'scatter' ? Math.ceil(w / Math.max(1, o.tiles)) + 2 : 0
-      g.r.draw(x, y, w, h, phase, o, dpr, rg.el.dataset.fieldFlip === 'y', mouse, pad)
+      g.r.draw(x, y, w, h, phase, o, dpr, flipped(rg.el), mouse, pad)
     })
   }
 
@@ -625,12 +626,15 @@ void main() {
     return m
   }
 
+  function flipped(el) {
+    return el.dataset.fieldFlip === 'y' || (el.dataset.fieldFlipNarrow === 'y' && matchMedia('(max-width: 899px)').matches)
+  }
   function onPointer(rg, e) {
     const r = rg.el.getBoundingClientRect()
     const x = (e.clientX - r.left) / r.width
     const yDom = (e.clientY - r.top) / r.height
     // shader: vUv.y đi từ ĐÁY; vùng lật dọc thì uv.y = 1 - vUv.y = yDom
-    const y = rg.el.dataset.fieldFlip === 'y' ? yDom : 1 - yDom
+    const y = flipped(rg.el) ? yDom : 1 - yDom
     rg.target = { x, y, on: 1 }
     kick()
   }

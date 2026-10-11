@@ -9,6 +9,11 @@
 //   FORM_TO         người nhận, cách nhau dấu phẩy (mặc định 2 địa chỉ bên dưới)
 //   FORM_FROM       người gửi (mặc định "Chande Bootcamp <hello@chandebootcamp.com>" — tên miền
 //                   chandebootcamp.com đã xác minh trong Resend, vùng Tokyo, DNS ở GoDaddy)
+//   SHEET_WEBHOOK_URL  (tuỳ chọn) link Web app của Apps Script scripts/form-sheet.gs — mỗi form
+//                   thêm một dòng vào Google Sheet (tab Register / Partner) để xem tổng quan.
+//
+// Gửi mail và ghi Sheet chạy song song; một trong hai thành công là báo người dùng đã gửi
+// (bên lỗi chỉ ghi log Vercel) — mất mail vẫn còn dòng trong Sheet và ngược lại.
 //
 // Chống spam: ô bẫy hp phải trống, form phải mở ít nhất 3 s trước khi gửi, giới hạn độ dài.
 // =============================================================================
@@ -56,7 +61,8 @@ module.exports = async function handler(req, res) {
   if (!entries.length) return res.status(400).json({ ok: false, error: 'Empty form' })
 
   const key = process.env.RESEND_API_KEY
-  if (!key) return res.status(500).json({ ok: false, error: 'Mail is not configured' })
+  const sheet = process.env.SHEET_WEBHOOK_URL
+  if (!key && !sheet) return res.status(500).json({ ok: false, error: 'Mail is not configured' })
   const to = (process.env.FORM_TO || TO_DEFAULT.join(','))
     .split(',')
     .map((s) => s.trim())
@@ -80,19 +86,32 @@ module.exports = async function handler(req, res) {
     `</div>`
   const text = entries.map(([k, v]) => `${k}: ${v}`).join('\n')
 
-  try {
+  const mail = async () => {
+    if (!key) throw new Error('no RESEND_API_KEY')
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from, to, reply_to: email, subject: kind.subject(name), html, text }),
+      signal: AbortSignal.timeout(8000),
     })
-    if (!r.ok) {
-      console.error('[submit] resend', r.status, await r.text().catch(() => ''))
-      return res.status(502).json({ ok: false, error: 'Mail service error' })
-    }
-    return res.status(200).json({ ok: true })
-  } catch (err) {
-    console.error('[submit]', err)
-    return res.status(502).json({ ok: false, error: 'Mail service unreachable' })
+    if (!r.ok) throw new Error(`resend ${r.status} ${await r.text().catch(() => '')}`)
   }
+  // Apps Script trả 302 sang trang kết quả — fetch tự theo, đọc { ok }
+  const log = async () => {
+    if (!sheet) throw new Error('no SHEET_WEBHOOK_URL')
+    const r = await fetch(sheet, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ form: body.form, entries }),
+      signal: AbortSignal.timeout(8000),
+    })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok || !j.ok) throw new Error(`sheet ${r.status} ${j.error || ''}`)
+  }
+
+  const [m, l] = await Promise.allSettled([mail(), log()])
+  if (m.status === 'rejected') console.error('[submit] mail', m.reason?.message || m.reason)
+  if (l.status === 'rejected' && sheet) console.error('[submit] sheet', l.reason?.message || l.reason)
+  if (m.status === 'fulfilled' || l.status === 'fulfilled') return res.status(200).json({ ok: true })
+  return res.status(502).json({ ok: false, error: 'Mail service error' })
 }
