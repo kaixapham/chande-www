@@ -13,6 +13,10 @@
   font-size:calc(clamp(1440px, 100vw, 1920px) / 120);
 }
 *{box-sizing:border-box}
+/* Khoá chiều ngang: trên iPhone phần tử nào lọt ra ngoài mép là cả trang kéo sang hai bên được.
+   clip (không phải hidden): không biến html / body thành khung cuộn -> sticky + Lenis vẫn chạy theo
+   cửa sổ. text-size-adjust: Safari iOS không tự phóng chữ khi xoay ngang. */
+html, body{overflow-x:clip; overscroll-behavior-x:none; -webkit-text-size-adjust:100%; text-size-adjust:100%}
 body{
   margin:0; background:var(--cream); color:var(--green);
   font-family:'Phudu',ui-sans-serif,system-ui,sans-serif; font-weight:600;
@@ -368,12 +372,12 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
   .hero__sub{display:none}
   .hero__year{position:static}
   .hero__title, .hero__year{font-size:min(calc(56 / 375 * 100vw), 80px)}
-  .hero__field--c{grid-column:1 / -1; order:3; height:168px}
-  /* Section 2 = đúng một màn: dải neon 168 + phần còn lại; dòng "Special event…" sát dưới dải,
+  .hero__field--c{grid-column:1 / -1; order:3; height:clamp(80px, calc(100svh - var(--bar) - 440px), 168px)} /* màn thấp: dải neon thấp lại cho section 2 vẫn vừa một màn */
+  /* Section 2 = đúng một màn DƯỚI thanh header dính (header che 64 trên cùng): dải neon 168 + phần còn lại; dòng "Special event…" sát dưới dải,
      chữ giới thiệu + video recap dồn đáy màn */
-  .travel__col{position:static; width:auto; min-height:calc(100svh - 168px); padding:16px 12px 12px; background:#182220}
+  .travel__col{position:static; width:auto; min-height:calc(100svh - var(--bar) - clamp(80px, calc(100svh - var(--bar) - 440px), 168px)); padding:16px 12px 12px; background:#182220}
   .travel__intro{position:static; flex:1; gap:24px}
-  .hero__org{display:block; margin:0 0 auto; padding-bottom:71px; color:#d9cfd0; font-weight:500; font-size:16px; line-height:.98; letter-spacing:-.02em;
+  .hero__org{display:block; margin:0 0 auto; padding-bottom:24px; color:#d9cfd0; font-weight:500; font-size:16px; line-height:.98; letter-spacing:-.02em;
     text-transform:uppercase; text-box:trim-both cap alphabetic}
   .hero__intro-text{font-size:16px; gap:24px; color:#f4f3eb}
   .hero__intro-text p{text-box:none} /* Figma không cắt sát chữ ở khối này */
