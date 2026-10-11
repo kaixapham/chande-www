@@ -7,6 +7,10 @@
  * (như các mảng gạch mosaic ở hero) — càng ra ngoài ô càng co nhỏ và ngả dần sang màu
  * lõi, mép so le theo từng ô. Bubble đè lên lõi tới đâu thì lộ ảnh tới đó, chạm mép cũng thấy vài ô.
  *
+ * Máy cảm ứng (không có chuột): con bướm (chande-flyer.js) bay qua lõi vòng 2 / 3 thì DẮT bubble
+ * theo bướm (CHANDE_BUBBLE.lead) -> hiện giọt + ảnh bên trong như rê chuột; vòng vạch (.tex) của
+ * cả 3 vòng xoay theo cuộn (scrollSpin độ / px).
+ *
  * API: window.CHANDE_CIRCLES = { config, mount(root), destroy() }
  * ========================================================================== */
 (() => {
@@ -21,6 +25,8 @@
     edge: 2.2, // ô co dần trong dải mép rộng bằng edge × cạnh ô
     spin: 14, // bubble vào giữa lõi -> vòng vạch (.tex) xoay quanh tâm (độ / giây, 0 = tắt)
     spinIn: 0.55, // tâm bubble cách tâm lõi < spinIn × bán kính lõi thì xoay
+    scrollSpin: 0.12, // cảm ứng: vòng vạch xoay theo cuộn (độ / px vòng trôi trên màn)
+    flyNear: 1.15, // cảm ứng: bướm cách tâm lõi vòng 2 / 3 < flyNear × bán kính lõi thì dắt bubble theo bướm
   }
   window.CHANDE_SETTINGS_APPLY?.('circles', CONFIG)
   const api = { config: CONFIG, mount() {}, destroy() {} }
@@ -153,6 +159,21 @@
       o.drawn = true
     }
     if (!circles.length) return
+    const fine = matchMedia('(pointer: fine)')
+    let leading = false
+    // bướm đang ở trên lõi vòng 2 / 3 (chỉ máy cảm ứng) -> trả toạ độ bướm, không thì null
+    const flyOver = () => {
+      if (fine.matches) return null
+      const F = window.CHANDE_FLYER?.state
+      if (!F || !(F.a > 0.3)) return null
+      for (const o of circles) {
+        if (o.c.dataset.creature === 'butterfly') continue
+        const k = o.core.getBoundingClientRect()
+        const kr = k.width / 2
+        if (Math.hypot(F.x - (k.left + kr), F.y - (k.top + kr)) < kr * CONFIG.flyNear) return F
+      }
+      return null
+    }
     const ptr = { x: -1e4, y: -1e4 }
     const onMove = (e) => {
       ptr.x = e.clientX
@@ -172,12 +193,26 @@
       raf = 0
       const dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 0
       lastT = now
+      // cảm ứng: bướm qua lõi -> dắt bubble theo bướm; rời ra thì thả (giọt tan)
+      const fly = flyOver()
+      if (!!fly !== leading) {
+        leading = !!fly
+        window.CHANDE_BUBBLE?.lead?.(leading ? () => (fly.a > 0.3 ? { x: fly.x, y: fly.y, r: near || 0 } : null) : null)
+      }
+      // cảm ứng: vòng vạch xoay theo cuộn (theo vị trí vòng trên màn — cuộn ngược thì xoay ngược)
+      if (!fine.matches)
+        for (const o of circles) {
+          if (!o.tex) continue
+          const rot = (o.c.getBoundingClientRect().top * CONFIG.scrollSpin).toFixed(2)
+          if (rot !== o.srot) o.tex.style.transform = `rotate(${(o.srot = rot)}deg)`
+        }
       const B = window.CHANDE_BUBBLE?.state
       const R = B ? (B.size + B.swell) * B.presence * CONFIG.reveal : 0
       near = null
+      const src = leading ? B || ptr : ptr // điểm xét "gần lõi": bướm (qua giọt đang dắt) hoặc chuột
       // bubble không hiện (chuột ngoài dải vòng tròn) + vạch đã đứng + không còn vết lộ ảnh: khỏi đo / vẽ
       // gì (đo khung mỗi khung khi các module khác vừa ghi style = ép trình duyệt tính lại bố cục)
-      const idle = (!B || B.presence < 0.01) && circles.every((o) => !o.vel && !o.drawn)
+      const idle = fine.matches && (!B || B.presence < 0.01) && circles.every((o) => !o.vel && !o.drawn)
       if (idle) {
         if (inView) raf = requestAnimationFrame(tick)
         return
@@ -185,10 +220,10 @@
       for (const o of circles) {
         const k = o.core.getBoundingClientRect()
         const kr = k.width / 2
-        if (Math.hypot(ptr.x - (k.left + kr), ptr.y - (k.top + kr)) < kr * CONFIG.grow) near = kr * CONFIG.size
+        if (Math.hypot(src.x - (k.left + kr), src.y - (k.top + kr)) < kr * CONFIG.grow) near = kr * CONFIG.size
         // Bubble vào giữa lõi: vòng vạch xoay chậm quanh tâm — tăng / giảm tốc mượt,
         // rời ra thì dừng dần ở góc đang có (không giật về chỗ cũ)
-        if (o.tex) {
+        if (o.tex && fine.matches) {
           const inside = B && B.presence > 0.3 && Math.hypot(B.x - (k.left + kr), B.y - (k.top + kr)) < kr * CONFIG.spinIn
           o.vel += ((inside ? CONFIG.spin : 0) - o.vel) * (1 - Math.exp(-dt * 2.5))
           if (Math.abs(o.vel) < 0.01 && !inside) o.vel = 0
@@ -204,15 +239,22 @@
       }
       if (inView) raf = requestAnimationFrame(tick)
     }
-    const io = new IntersectionObserver(([e]) => {
-      inView = e.isIntersecting
+    const seen = new Set()
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) e.isIntersecting ? seen.add(e.target) : seen.delete(e.target)
+      inView = seen.size > 0
       if (inView && !raf) raf = requestAnimationFrame(tick)
       if (!inView) {
         near = null
         lastT = 0
+        if (leading) {
+          leading = false
+          window.CHANDE_BUBBLE?.lead?.(null)
+        }
       }
     })
-    io.observe(circles[0].c.closest('.circles') || circles[0].c)
+    // từng vòng (mobile: .circles là display: contents, không có khung -> không bao giờ "giao")
+    circles.forEach((o) => io.observe(o.c))
 
     live = {
       el: circles[0].c,
@@ -220,6 +262,7 @@
         io.disconnect()
         cancelAnimationFrame(raf)
         removeEventListener('pointermove', onMove)
+        if (leading) window.CHANDE_BUBBLE?.lead?.(null)
         window.CHANDE_BUBBLE?.lure?.(null, 'circles')
         for (const o of circles) {
           o.cv.remove()

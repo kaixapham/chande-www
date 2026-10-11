@@ -40,7 +40,7 @@
  *   (x, y), đổi bán kính thành r (px), hide = tan mất (bị nuốt); trả null -> về lại theo
  *   chuột; bỏ x / y thì chỉ đổi cỡ. Nhiều module hút cùng lúc được (mỗi module một key);
  *   fn(null) gỡ key đó.
- *   lead(fn): giọt bỏ chuột, bám theo điểm fn() trả về ({x, y} toạ độ màn,
+ *   lead(fn): giọt bỏ chuột, bám theo điểm fn() trả về ({x, y} toạ độ màn, r = bán kính tuỳ chọn,
  *   null = tan đi) mỗi khung — trang Gallery cho giọt đi theo vịt patin
  *   (chande-duck.js). lead(null) trả giọt về cho chuột.
  * Đẩy giọt (CONFIG.push, chỉ khi giọt đang được dắt — tự bám chuột thì con
@@ -1016,6 +1016,8 @@ void main () {
         targetX = p.x
         targetY = p.y
         presenceTarget = 1
+        // dắt kèm cỡ (r, px): giọt phình / co theo — vd bướm qua vòng tròn About trên máy cảm ứng
+        if (p.r) mulTarget = Math.max(0.02, p.r / Math.max(1, pooledRadius(1)))
       } else presenceTarget = 0
     }
     // Bị hút (lure): bay về điểm hút, co theo cỡ yêu cầu, có thể tan mất (bị nuốt)

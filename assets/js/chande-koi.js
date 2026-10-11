@@ -48,6 +48,7 @@ const api = { config: CONFIG, mount() {}, destroy() {} }
 window.CHANDE_KOI = api
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+const fine = matchMedia('(pointer: fine)')
 
 /* ------------------------------------------------------------- Con cá --- */
 // Ảnh koi bướm thật nhìn từ trên (tạo theo ảnh mẫu, tách nền): đầu ở mép TRÊN ảnh, trục
@@ -342,7 +343,8 @@ function mount(root = document) {
         const kr = k.width / 2
         // bướm đã bay ra khỏi vòng 1 (chande-flyer.js) -> vòng 1 không còn bướm
         if (o.kind === 'butterfly' && api.escaped) continue
-        if (Math.hypot(B.x - (k.left + kr), B.y - (k.top + kr)) < kr * CONFIG.spinIn) hit = o
+        // máy cảm ứng: giọt đi theo con bướm (chande-circles.js) chỉ lướt qua lõi -> nới vùng nhận
+        if (Math.hypot(B.x - (k.left + kr), B.y - (k.top + kr)) < kr * (fine.matches ? CONFIG.spinIn : 1.15)) hit = o
       }
     if (hit && !three) {
       if (!THREE) hit = null // three chưa nạp xong — khung sau
@@ -430,15 +432,18 @@ function mount(root = document) {
     if (inView) raf = requestAnimationFrame(tick)
   }
 
-  const io = new IntersectionObserver(([e]) => {
-    inView = e.isIntersecting
+  const seen = new Set()
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) e.isIntersecting ? seen.add(e.target) : seen.delete(e.target)
+    inView = seen.size > 0
     if (inView) loadThree()
     if (inView && !raf) {
       lastT = 0
       raf = requestAnimationFrame(tick)
     }
   })
-  io.observe(circles[0].c.closest('.circles') || circles[0].c)
+  // từng vòng (mobile: .circles là display: contents, không có khung -> không bao giờ "giao")
+  circles.forEach((o) => io.observe(o.c))
 
   live = {
     el: circles[0].c,
