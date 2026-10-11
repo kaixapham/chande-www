@@ -349,7 +349,11 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
        100svh là vùng nhỏ nhất theo trình duyệt; --ih = innerHeight lúc trang mở (chande-loading.js
        ghi, chỉ đổi khi xoay máy) — Safari iOS thanh nổi có lúc svh vẫn tính cả phần dưới thanh,
        lấy cái nhỏ hơn. Mọi section mobile "một màn" = --vp − header. */
-    --vp:min(100svh, var(--ih, 100svh))}
+    --vp:min(100svh, var(--ih, 100svh));
+    /* --s = 1px của design mobile (khung 375 × 748 dưới header), co theo cạnh BÓ hơn: bề ngang / 375
+       hoặc chiều cao thấy được / 748. iPhone SE (thanh Safari hiện, ~375 × 548) -> nhỏ lại theo chiều
+       cao; Pro Max -> to theo bề ngang nhưng không quá màn. Mọi khối "một màn" đo bằng --s. */
+    --s:min(calc(100vw / 375), calc((var(--vp) - var(--bar)) / 748))}
   .shot__ph{font-size:2rem}
 
   /* Hero mobile — Figma node 620:12593 (khổ 375). Section 1: lưới 2×2 ảnh (216 + thanh tên 48)
@@ -368,31 +372,41 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
   /* Section 1 = đúng một màn: header + 2 hàng ảnh (ảnh + thanh tên 48) + khối tiêu đề. Màn = 100svh
      (vùng nhìn thấy KHI thanh địa chỉ / thanh công cụ trình duyệt mobile đang hiện). Khối tiêu đề
      co theo bề ngang như Figma khổ 375 (220 cao, chữ 56) -> máy rộng hơn chữ to theo, ảnh lấy phần còn lại */
-  .hero{--hp:min(calc(220 / 375 * 100vw), 300px)}
-  .hero-card__media{aspect-ratio:auto; height:max(120px, calc((var(--vp) - var(--bar) - var(--hp)) / 2 - 48px))}
-  .hero-card__cap{height:48px; padding:0 16px; gap:16px; font-size:14px}
-  .hero-card__cap > span:first-child{width:20px; flex:none}
-  .hero__panel{grid-column:1 / -1; order:2; height:var(--hp); background:var(--cream); gap:0; padding:16px 12px}
-  .hero__mark{width:46.4px}
+  .hero{--hp:calc(220 * var(--s)); --capH:max(34px, calc(48 * var(--s)))}
+  .hero-card__media{aspect-ratio:auto; height:max(60px, calc((var(--vp) - var(--bar) - var(--hp)) / 2 - var(--capH)))}
+  .hero-card__cap{height:var(--capH); padding:0 calc(16 * var(--s)); gap:calc(16 * var(--s)); font-size:max(11px, calc(14 * var(--s)))}
+  .hero-card__cap > span:first-child{width:calc(20 * var(--s)); flex:none}
+  .hero__panel{grid-column:1 / -1; order:2; height:var(--hp); background:var(--cream); gap:0; padding:calc(16 * var(--s)) 12px}
+  .hero__mark{width:calc(46.4 * var(--s))}
   .hero__headline{position:static; height:auto; display:flex; align-items:flex-end; justify-content:space-between; gap:8px}
   .hero__headline > div{display:block}
   .hero__sub{display:none}
   .hero__year{position:static}
-  .hero__title, .hero__year{font-size:min(calc(56 / 375 * 100vw), 80px)}
-  .hero__field--c{grid-column:1 / -1; order:3; height:clamp(80px, calc(var(--vp) - var(--bar) - 440px), 168px)} /* màn thấp: dải neon thấp lại cho section 2 vẫn vừa một màn */
+  .hero__title, .hero__year{font-size:calc(56 * var(--s))}
+  /* Màn THẤP (iPhone SE / mini khi thanh Safari đang hiện, vùng thấy được < ~620): ưu tiên tiêu đề sự
+     kiện ở cỡ đủ (theo bề ngang như Figma) — bỏ thanh tên dưới ảnh, 4 ảnh lấy phần còn lại */
+  @media (max-height:620px){
+    .hero{--hp:calc(220 * 100vw / 375)}
+    .hero-card__cap{display:none}
+    .hero-card__media{height:max(60px, calc((var(--vp) - var(--bar) - var(--hp)) / 2))}
+    .hero__mark{width:calc(46.4 * 100vw / 375)}
+    .hero__panel{padding:16px 12px}
+    .hero__title, .hero__year{font-size:calc(56 * 100vw / 375)}
+  }
+  .hero__field--c{grid-column:1 / -1; order:3; height:calc(168 * var(--s))}
   /* Section 2 = đúng một màn DƯỚI thanh header dính (header che 64 trên cùng): dải neon 168 + phần còn lại; dòng "Special event…" sát dưới dải,
      chữ giới thiệu + video recap dồn đáy màn */
-  .travel__col{position:static; width:auto; min-height:calc(var(--vp) - var(--bar) - clamp(80px, calc(var(--vp) - var(--bar) - 440px), 168px)); padding:16px 12px 12px; background:#182220}
-  .travel__intro{position:static; flex:1; gap:24px}
-  .hero__org{display:block; margin:0 0 auto; padding-bottom:24px; color:#d9cfd0; font-weight:500; font-size:16px; line-height:.98; letter-spacing:-.02em;
+  .travel__col{position:static; width:auto; min-height:calc(var(--vp) - var(--bar) - 168 * var(--s)); padding:calc(16 * var(--s)) 12px calc(12 * var(--s)); background:#182220}
+  .travel__intro{position:static; flex:1; gap:calc(24 * var(--s))}
+  .hero__org{display:block; margin:0 0 auto; padding-bottom:calc(24 * var(--s)); color:#d9cfd0; font-weight:500; font-size:max(11px, calc(16 * var(--s))); line-height:.98; letter-spacing:-.02em;
     text-transform:uppercase; text-box:trim-both cap alphabetic}
-  .hero__intro-text{font-size:16px; gap:24px; color:#f4f3eb}
+  .hero__intro-text{font-size:max(11px, calc(16 * var(--s))); gap:calc(24 * var(--s)); color:#f4f3eb}
   .hero__intro-text p{text-box:none} /* Figma không cắt sát chữ ở khối này */
   /* nền tối suốt -> chỉ lớp chữ sáng (lớp tối cắt theo mép hero chỉ dùng ở desktop) */
-  .hero__intro-text > .it-light{clip-path:none; color:#f4f3eb; gap:24px}
+  .hero__intro-text > .it-light{clip-path:none; color:#f4f3eb; gap:calc(24 * var(--s))}
   .hero__intro-text > .it-dark{display:none}
-  .hero__recap{width:100%; height:auto; aspect-ratio:351 / 204}
-  .hero__recap figcaption{padding:11.7px 16px; font-size:14px}
+  .hero__recap{width:100%; height:calc(204 * var(--s)); aspect-ratio:auto}
+  .hero__recap figcaption{padding:calc(11.7 * var(--s)) calc(16 * var(--s)); font-size:max(11px, calc(14 * var(--s)))}
 }
 @media (max-width:599px){ :root{font-size:10px} }
 

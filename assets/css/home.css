@@ -518,11 +518,11 @@
   .hs-story__band{display:none}
   .hs-story__media{width:100%; height:calc(413 * var(--v))}
   .hs-story.is-zoom .hs-story__col, .hs-story__col{top:auto; width:100%}
-  .hs-story__panel{height:auto; min-height:calc(335 * var(--v)); padding:calc(20 * var(--v)) 12px 20px}
-  .hs-story .hs-story__panel h3{font-size:calc(40 * var(--q)); line-height:.78; letter-spacing:-.02em; text-box:trim-both cap alphabetic}
-  .hs-story__text{width:auto; min-width:0; min-height:0; gap:24px; margin-top:calc(98 * var(--v))}
-  .hs-story__text div{gap:24px}
-  .hs-story__text p{font-size:14px; line-height:.96; letter-spacing:-.02em; text-box:trim-both cap alphabetic}
+  .hs-story__panel{height:auto; min-height:calc(335 * var(--v)); padding:calc(20 * var(--s)) 12px calc(20 * var(--s))}
+  .hs-story .hs-story__panel h3{font-size:calc(40 * var(--s)); line-height:.78; letter-spacing:-.02em; text-box:trim-both cap alphabetic}
+  .hs-story__text{width:auto; min-width:0; min-height:0; gap:calc(24 * var(--s)); margin-top:calc(98 * var(--s))}
+  .hs-story__text div{gap:calc(24 * var(--s))}
+  .hs-story__text p{font-size:max(10px, calc(14 * var(--s))); line-height:.96; letter-spacing:-.02em; text-box:trim-both cap alphabetic}
   .hs-scheme{height:auto}
   .hs-scheme .scheme{position:relative; left:0; flex-direction:column}
   .hs-scheme .scheme > i{height:calc(60 * 100vw / 375)}
@@ -630,36 +630,36 @@
                giữa các khối · nút Register 64 · mảng gạch neon 80 */
   .hs-foot{--q:calc(100vw / 375); --V:calc(var(--vp) - var(--bar)); display:grid; grid-template-columns:100%; gap:0; padding:0;
     min-height:calc(2 * var(--V));
-    grid-template-rows:auto auto auto minmax(0, 1fr) auto auto 64px max(24px, calc(var(--V) - 626px)) auto auto auto 64px 80px}
+    grid-template-rows:auto auto auto minmax(0, 1fr) auto auto calc(64 * var(--s)) max(12px, calc(var(--V) - 626 * var(--s))) auto auto auto calc(64 * var(--s)) calc(80 * var(--s))}
   .hs-foot__col{display:contents}
   .hs-foot > *, .hs-foot__col > *{margin:0; grid-column:1} /* cột 1 cho mọi khối — khung tối chiếm hàng 8–11 nên không ghi rõ thì chữ bị xếp sang cột ngầm thứ 2 */
-  .hs-foot__logo{grid-row:1; width:calc(100% - 24px); max-width:none; height:auto; margin:12px 12px 0}
-  .names{width:auto; gap:4px; font-size:14px; line-height:.9; letter-spacing:-.02em; white-space:nowrap; color:#838b89}
-  .hs-foot__n1{grid-row:2; margin:16px 12px 0}
-  .hs-foot__n2, .hs-foot__col > .hs-foot__n2{grid-row:3; margin:32px 12px 0; gap:16px}
-  .hs-foot__n2 .pair{width:237.6px; justify-content:space-between}
-  .hs-foot__n2 > div{gap:4px}
-  .hs-foot__col > .hs-foot__face{grid-row:5; justify-self:start; width:117px; height:135px; max-height:none; aspect-ratio:auto; flex:none;
+  .hs-foot__logo{grid-row:1; justify-self:center; width:min(calc(100% - 24px), calc(351 * var(--s))); max-width:none; height:auto; margin:calc(12 * var(--s)) 12px 0}
+  .names{width:auto; gap:calc(4 * var(--s)); font-size:max(9px, calc(14 * var(--s))); line-height:.9; letter-spacing:-.02em; white-space:nowrap; color:#838b89}
+  .hs-foot__n1{grid-row:2; margin:calc(16 * var(--s)) 12px 0}
+  .hs-foot__n2, .hs-foot__col > .hs-foot__n2{grid-row:3; margin:calc(32 * var(--s)) 12px 0; gap:calc(16 * var(--s))}
+  .hs-foot__n2 .pair{width:calc(237.6 * var(--s)); justify-content:space-between}
+  .hs-foot__n2 > div{gap:calc(4 * var(--s))}
+  .hs-foot__col > .hs-foot__face{grid-row:5; justify-self:start; width:calc(117 * var(--s)); height:calc(135 * var(--s)); max-height:none; aspect-ratio:auto; flex:none;
     margin:0 12px !important; clip-path:none} /* !important: thẻ có style="margin:0" */
-  .hs-foot__n3{grid-row:6; margin:12px 12px 0; padding-bottom:12px}
-  .cta{width:100% !important; height:64px; font-size:14px}
-  .cta i{width:64px; gap:6px}
-  .cta span{padding-left:20px; gap:3px}
-  .cta span small{font-size:11px}
+  .hs-foot__n3{grid-row:6; margin:calc(12 * var(--s)) 12px 0; padding-bottom:calc(12 * var(--s))}
+  .cta{width:100% !important; height:calc(64 * var(--s)); font-size:max(9px, calc(14 * var(--s)))}
+  .cta i{width:calc(64 * var(--s)); gap:6px}
+  .cta span{padding-left:calc(20 * var(--s)); gap:3px}
+  .cta span small{font-size:max(9px, calc(11 * var(--s)))}
   .hs-foot__cta1{grid-row:7}
   .hs-foot__panel{grid-row:8 / 12; width:100%; height:auto; background:#1b2524}
   .hs-foot__hr, .hs-foot__vr{display:none}
   .links{width:auto; justify-content:space-between; gap:1rem}
-  .links ul{margin-top:24px; gap:8px}
-  .links a{font-size:14px}
-  .links .mono{font-size:14px}
+  .links ul{margin-top:calc(24 * var(--s)); gap:calc(8 * var(--s))}
+  .links a{font-size:max(9px, calc(14 * var(--s)))}
+  .links .mono{font-size:max(9px, calc(14 * var(--s)))}
   .hs-foot__social, .hs-foot__index, .hs-foot__legal{position:relative; z-index:1; margin:0 12px}
-  .hs-foot__social{grid-row:9; padding-bottom:22px; border-bottom:1px solid rgba(255,255,255,.08)}
-  .hs-foot__index{grid-row:10; padding:22px 0; border-bottom:1px solid rgba(255,255,255,.08)}
-  .hs-foot__legal{grid-row:11; width:auto; flex-direction:column; gap:8px; padding:22px 0; font-size:14px}
+  .hs-foot__social{grid-row:9; padding-bottom:calc(22 * var(--s)); border-bottom:1px solid rgba(255,255,255,.08)}
+  .hs-foot__index{grid-row:10; padding:calc(22 * var(--s)) 0; border-bottom:1px solid rgba(255,255,255,.08)}
+  .hs-foot__legal{grid-row:11; width:auto; flex-direction:column; gap:calc(8 * var(--s)); padding:calc(22 * var(--s)) 0; font-size:max(9px, calc(14 * var(--s)))}
   .hs-foot__ai{flex-wrap:wrap; gap:12px}
   .hs-foot__cta2{grid-row:12}
-  .hs-foot__field{grid-row:13; width:100%; height:80px}
+  .hs-foot__field{grid-row:13; width:100%; height:calc(80 * var(--s))}
 }
 @media (prefers-reduced-motion:reduce){
   .pillrun__track, .dotrun__track, .hs-quote__bar span{animation:none}
