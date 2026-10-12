@@ -281,12 +281,20 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .agenda__dates p span{display:block}
 .agenda__dates p:last-child{right:0; text-align:right}
 .agenda__nav{bottom:0; width:calc(64 * var(--u)); height:calc(64 * var(--u)); min-width:2.5rem; min-height:2.5rem; display:grid; place-items:center;
-  background:#f5f0e3; border:0; cursor:pointer; z-index:2}
+  background-color:#f5f0e3; border:0; cursor:pointer; z-index:2}
 .agenda__nav img{width:37.5%; height:37.5%}
 .agenda__nav--prev{right:calc(100% - 1px)}
 .agenda__nav--prev img{transform:rotate(180deg)}
 .agenda__nav--next{left:calc(100% - 1px)}
-.agenda__nav, .hs-quote__nav{transition:opacity .2s}
+.agenda__nav, .hs-quote__nav{transition:opacity .2s, background-size .35s cubic-bezier(.65,0,.35,1); --fill:#b4ff1f;
+  background-image:linear-gradient(var(--fill), var(--fill)); background-repeat:no-repeat; background-position:left center; background-size:0% 100%}
+.agenda__nav--prev, .hs-quote__nav--prev{background-position:right center}
+.agenda__nav img, .hs-quote__nav img{transition:translate .35s cubic-bezier(.65,0,.35,1)}
+/* hover: nền neon quét vào theo hướng mũi tên, mũi tên nhích theo hướng */
+.agenda__nav:hover, .agenda__nav:focus-visible, .hs-quote__nav:hover, .hs-quote__nav:focus-visible{background-size:100% 100%}
+.agenda__nav--next:hover img, .hs-quote__nav--next:hover img{translate:calc(4 * var(--u)) 0}
+.agenda__nav--prev:hover img, .hs-quote__nav--prev:hover img{translate:calc(-4 * var(--u)) 0}
+@media (prefers-reduced-motion:reduce){.agenda__nav, .hs-quote__nav, .agenda__nav img, .hs-quote__nav img{transition:none}}
 .agenda__nav[aria-disabled=true], .hs-quote__nav[aria-disabled=true]{opacity:.3; pointer-events:none}
 /* Cụm ngày = khối hộp lật khi đổi ngày (chande-home.js dựng .dc) */
 .agenda__dates p{perspective:420px; perspective-origin:50% 50%}
@@ -371,7 +379,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 /* chờ tới lần đầu section Cảm nhận vào màn (chande-home.js gắn .is-run), sau đó chạy luôn */
 .hs-quote__bar span{animation-play-state:paused}
 .hs-quote__bar.is-run span{animation-play-state:running}
-.hs-quote__nav{bottom:0; width:calc(56 * var(--u)); height:calc(56 * var(--u)); display:grid; place-items:center; background:var(--lime); border:0; cursor:pointer}
+.hs-quote__nav{bottom:0; width:calc(56 * var(--u)); height:calc(56 * var(--u)); display:grid; place-items:center; background-color:var(--lime); border:0; cursor:pointer}
 .hs-quote__nav img{width:calc(24 * var(--u)); height:calc(24 * var(--u)); min-width:14px; min-height:14px}
 .hs-quote__nav--prev{left:calc(1807 * var(--u))}
 .hs-quote__nav--prev img{transform:rotate(180deg)}

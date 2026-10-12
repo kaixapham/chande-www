@@ -7,7 +7,7 @@
  *     index.html). Rê vào ô: các dải màu (như đổi ảnh ở hero) rồi ảnh chân dung của người
  *     đó trồi từ dưới lên, tên ẩn; rời ô thì đọng lại rồi mờ dần (lướt qua nhiều ô = vệt ảnh).
  *   • 03 Become a partner · 04 Register for the next event · 05 Contact
- *   • hàng cuối: Facebook / YouTube / Instagram / LinkedIn / Patreon
+ *   • hàng cuối: Facebook / YouTube / Instagram / LinkedIn / Made by Lumen Studio / Patreon
  * Bấm nút menu: lưới trượt mở từ trên xuống; bấm lại / Esc / bấm link thì đóng.
  * Menu nằm ngoài container Barba nên dùng chung mọi trang. Mở thì khoá cuộn (Lenis).
  *
@@ -25,7 +25,7 @@
       ['Youtube', 'https://www.youtube.com/@chandedesign'],
       ['Instagram', 'https://www.instagram.com/design.chande/'],
       ['LinkedIn', 'https://www.linkedin.com/company/chande123/posts/?viewAsMember=true'],
-      null, // cột 5 trống như Figma
+      ['Made by Lumen Studio', 'https://www.lumen-studio.co/'], // cột 5: credit
       ['Patreon', 'https://www.patreon.com/cw/minggg'],
     ],
   }

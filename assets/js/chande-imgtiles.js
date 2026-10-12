@@ -249,7 +249,7 @@ void main() {
     canvas.style.height = `${r.height + 2 * pad}px`
     canvas.style.transform = `translate3d(${r.left - pad}px, ${r.top - pad}px, 0)`
     canvas.style.display = 'block'
-    canvas.classList.toggle('is-hero', !!el.closest('[data-hero-slot]')) // lớp màu film (chande-film.js) chỉ cho ảnh hero
+    canvas.classList.toggle('is-hero', !!el.closest('[data-hero-slot], .ab-journey__track')) // lớp màu film (chande-film.js) chỉ cho ảnh hero + dải ảnh hành trình About
 
     capture(el, W, H)
     gl.viewport(0, 0, cw, ch)

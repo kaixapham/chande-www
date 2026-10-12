@@ -83,3 +83,112 @@
   .fm__row{grid-template-columns:1fr; gap:1.75rem}
   .fm__send{width:100%}
 }
+
+/* =============================================================================
+ * partner.html (Figma 636:46989) + register.html (657:41907) — một màn 1920 × 1080, hai nửa:
+ * nửa ảnh (tiêu đề trắng đè lên) + nửa nội dung nền #121212: giới thiệu, form (gạch chân
+ * mờ, chữ mono), đáy: ô ghi chú + nút gửi (ô chấm neon). Partner: ảnh trái; register
+ * (.pt--rev): ảnh phải. Lưới 2 cột: hàng 1 giới thiệu (cao tối thiểu tới mốc form 344),
+ * hàng 2 form, hàng 3 giãn, hàng 4 đáy — chữ có sàn px nên màn 1024–1440 vẫn đọc được.
+ * ≤ 1023: một cột — ảnh + tiêu đề, giới thiệu, form, đáy.
+ * ========================================================================== */
+.fm.pt{--cream:#f4f3eb; --mono:max(11px, calc(14 * var(--u))); --lab:max(12px, calc(16 * var(--u)));
+  position:relative; padding:0; min-height:max(calc(100svh - var(--bar)), calc(1000 * var(--u))); /* .page đã chừa thanh header */
+  display:grid; grid-template-columns:1fr 1fr; grid-template-rows:minmax(calc(344 * var(--u)), auto) auto 1fr auto; column-gap:0;
+  background:#121212; color:var(--cream); overflow:hidden}
+.fm.pt > *, .fm.pt .pt__form > *{grid-column:2; min-width:0}
+.fm.pt--rev > *, .fm.pt--rev .pt__form > *{grid-column:1}
+.pt__media{grid-row:1 / -1; position:relative; margin:0; overflow:hidden}
+.fm.pt .pt__media{grid-column:1}
+.fm.pt--rev .pt__media{grid-column:2}
+.pt__media img{position:absolute; inset:0; display:block; width:100%; height:100%; object-fit:cover}
+.pt--rev .pt__media img{object-position:50% 64%}
+.pt--rev .pt__media::after{content:''; position:absolute; inset:0 0 auto; height:calc(344 * var(--u)); background:linear-gradient(#fff, rgba(255,255,255,0)); opacity:.3; pointer-events:none}
+.pt__title{position:absolute; z-index:1; left:calc(24 * var(--u)); top:calc(32 * var(--u)); width:calc(912 * var(--u)); margin:0;
+  color:#fff; font-weight:700; font-size:calc(106 * var(--u)); line-height:.72; letter-spacing:-.04em; text-transform:uppercase;
+  text-box:trim-both cap alphabetic; pointer-events:none}
+/* tiêu đề nằm trong ô lưới của ảnh (absolute trong lưới = định vị theo ô đó) */
+.fm.pt .pt__title{grid-column:1; grid-row:1 / -1}
+.fm.pt--rev .pt__title{grid-column:2}
+.pt__year{position:absolute; right:0; bottom:0}
+.pt__intro, .pt__fields, .fm.pt .pt__done{padding:0 calc(24 * var(--u)) 0 calc(32 * var(--u))}
+.pt__intro{grid-row:1; align-self:start; display:flex; flex-direction:column; gap:calc(24 * var(--u)); padding-top:calc(32 * var(--u)); padding-bottom:48px}
+.pt__intro p{margin:0; max-width:max(316px, calc(316 * var(--u))); font-weight:500; font-size:var(--lab); line-height:.98; letter-spacing:-.02em; text-transform:uppercase}
+.pt__intro p:first-child{max-width:max(290px, calc(290 * var(--u)))}
+
+/* form */
+.fm.pt .pt__form{display:contents} /* các phần của form xếp thẳng vào lưới section */
+.fm.pt .pt__form[hidden]{display:none}
+.pt__fields{grid-row:2; display:flex; flex-direction:column; gap:max(36px, calc(48 * var(--u))); padding-bottom:64px}
+.pt__row{display:grid; grid-template-columns:1fr 1fr; column-gap:calc(64 * var(--u))}
+.fm.pt .fm__group{position:relative; padding:0; border:0}
+.fm.pt .fm__head{display:block; margin:0; padding:0}
+.fm.pt .fm__head span{font-weight:500; font-size:var(--lab); line-height:.98; letter-spacing:-.02em; text-transform:uppercase}
+.fm.pt input[type=text], .fm.pt input[type=email], .fm.pt textarea{
+  height:max(32px, calc(40 * var(--u))); padding:max(10px, calc(13 * var(--u))) 0 0; border-bottom:1px solid rgba(255,255,255,.12); color:var(--cream); caret-color:#68f12b;
+  font:500 var(--mono)/1 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase; vertical-align:top}
+.fm.pt textarea{height:max(110px, calc(144 * var(--u))); min-height:max(110px, calc(144 * var(--u))); max-height:max(180px, calc(200 * var(--u))); resize:vertical; line-height:1.3;
+  color-scheme:dark} /* góc kéo dãn ô (dark: tay kéo màu sáng trên nền tối) */
+/* tay kéo rõ hơn (Chrome / Safari): 2 gạch chéo màu kem */
+.fm.pt textarea::-webkit-resizer{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M11 4L4 11M11 8L8 11' stroke='%23f4f3eb' stroke-opacity='.6' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E") right bottom / 12px no-repeat}
+.fm.pt input::placeholder, .fm.pt textarea::placeholder{color:rgba(244,243,235,.3)}
+.fm.pt input:focus, .fm.pt textarea:focus{border-bottom-color:rgba(244,243,235,.6)}
+.fm.pt .is-bad input, .fm.pt .is-bad textarea{border-bottom-color:#ff6b5a}
+.fm.pt .fm__err{position:absolute; left:0; top:calc(100% + 8px); margin:0; font-size:max(10px, calc(12 * var(--u))); color:#ff6b5a}
+
+/* lựa chọn: viên thuốc mono, chọn = nền lime; .pt__br = xuống hàng như Figma */
+.fm.pt .fm__opts{margin-top:max(12px, calc(16 * var(--u))); gap:max(4px, calc(4 * var(--u))) calc(2 * var(--u))}
+.pt__br{flex-basis:100%; height:0}
+.fm.pt .fm__opt span{display:flex; align-items:center; height:max(34px, calc(44 * var(--u))); padding:0 max(16px, calc(28 * var(--u))); border:1px solid rgba(255,255,255,.16);
+  font:500 var(--mono)/1 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; color:var(--cream); white-space:nowrap}
+.fm.pt .fm__opt:hover span{border-color:rgba(255,255,255,.5)}
+.fm.pt .fm__opt input:checked + span{background:#68f12b; border-color:#68f12b; color:#121212}
+.fm.pt .fm__opt input:focus-visible + span{outline-color:#68f12b}
+
+/* đáy: ghi chú (492/960) + nút gửi */
+.fm.pt .pt__foot{grid-row:4; position:relative; display:flex}
+.pt__note{flex:0 0 51.25%; height:max(64px, calc(92 * var(--u))); margin:0; box-sizing:border-box;
+  display:flex; align-items:center; gap:max(12px, calc(16 * var(--u))); padding:0 max(16px, calc(101 * var(--u))) 0 max(16px, calc(32 * var(--u))); background:#2c3a38;
+  font:500 var(--mono)/.96 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase; color:rgba(255,255,255,.3)}
+.pt__note::before{content:''; flex:none; width:2px; height:max(18px, calc(24 * var(--u))); border-radius:999px; background:#68f12b}
+.fm.pt .pt__send{flex:1 1 auto; width:auto; min-width:0; height:max(64px, calc(92 * var(--u))); justify-content:space-between; background:#236c3c; color:#fff}
+.fm.pt .pt__send i{width:max(64px, calc(92 * var(--u)))}
+.fm.pt .pt__send span{padding-left:max(20px, calc(48 * var(--u)))}
+/* nút gửi: mũi tên ghép từ chấm (cùng kiểu ô 4 chấm), hover nhích sang phải */
+.fm.pt .pt__send i svg.pt__arrow{width:30px; height:30px; transition:translate .35s cubic-bezier(.65,0,.35,1)}
+.fm.pt .pt__send:hover i svg.pt__arrow, .fm.pt .pt__send:focus-visible i svg.pt__arrow{translate:6px 0}
+.fm.pt .pt__status{position:absolute; left:max(16px, calc(32 * var(--u))); bottom:calc(100% + 20px); width:auto; margin:0; font-size:max(11px, calc(12 * var(--u))); color:var(--cream)}
+.fm.pt .pt__status.is-error{color:#ff6b5a}
+
+.fm.pt .pt__done{grid-row:2; align-self:start; border:0}
+.fm.pt .pt__done h2{color:#fff}
+.fm.pt .pt__done p{color:rgba(244,243,235,.7)}
+
+/* ≤ 1023: một cột — ảnh (tiêu đề đè lên) · giới thiệu · form · đáy */
+@media (max-width:1023px){
+  .fm.pt{--mono:12px; --lab:14px; grid-template-columns:1fr; grid-template-rows:auto; min-height:0}
+  .fm.pt > *, .fm.pt .pt__form > *, .fm.pt--rev > *, .fm.pt--rev .pt__form > *, .fm.pt .pt__media, .fm.pt--rev .pt__media{grid-column:1; grid-row:auto}
+  .pt__media{height:min(125vw, 560px)}
+  .pt--rev .pt__media::after{height:45%}
+  .fm.pt .pt__title, .fm.pt--rev .pt__title{grid-row:1;}
+  .pt__title, .pt--rev .pt__title{left:16px; top:24px; width:calc(100% - 32px); font-size:clamp(44px, 14.5vw, 96px)}
+  .pt--rev .pt__title{font-size:clamp(40px, 12.5vw, 88px)}
+  .pt__year{position:static; display:block}
+  .pt__intro, .pt__fields, .fm.pt .pt__done{padding-inline:16px}
+  .pt__intro{gap:14px; padding-top:32px; padding-bottom:48px}
+  .pt__fields{gap:36px; padding-bottom:56px}
+  .pt__row{grid-template-columns:1fr; row-gap:36px}
+  .pt__br{display:none}
+  .fm.pt .fm__opts{gap:6px 4px}
+  .fm.pt .fm__done{padding-top:32px; padding-bottom:64px}
+  .pt__note{flex-basis:auto}
+  .fm.pt .pt__foot{flex-direction:column}
+  /* nút gửi cố định đáy màn (chừa vùng an toàn iPhone); section chừa chỗ để không che ô ghi chú */
+  .fm.pt{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  .fm.pt .pt__send{flex:none; position:fixed; z-index:50; left:0; right:0; bottom:0; height:calc(64px + env(safe-area-inset-bottom)); align-items:flex-start}
+  .fm.pt .pt__send span{height:64px; justify-content:center}
+  .fm.pt .pt__send i{height:64px}
+  .fm.pt .pt__send i svg.pt__arrow{width:15px; height:15px}
+  .pt__note{height:auto; min-height:64px; padding:16px}
+  .fm.pt .pt__status{position:static; order:-1; padding:0 16px 16px}
+}

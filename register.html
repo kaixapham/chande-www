@@ -22,10 +22,10 @@
 <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/vendor/lenis.css">
-<link rel="stylesheet" href="assets/css/site.css?v=202610121635">
-<link rel="stylesheet" href="assets/css/home.css?v=202610121635">
-<link rel="stylesheet" href="assets/css/gallery.css?v=202610121635">
-<link rel="stylesheet" href="assets/css/form.css?v=202610121635">
+<link rel="stylesheet" href="assets/css/site.css?v=202610121727">
+<link rel="stylesheet" href="assets/css/home.css?v=202610121727">
+<link rel="stylesheet" href="assets/css/gallery.css?v=202610121727">
+<link rel="stylesheet" href="assets/css/form.css?v=202610121727">
 <!-- Khung hình đầu: màn loading do JS dựng ở cuối trang, nên trước đó tô nền tối + ẩn
      nội dung (không chớp nền kem). chande-loading.js gỡ cl-boot ngay khi đã gắn màn loading. -->
 <style>html.cl-boot,html.cl-boot body{background:#182220}html.cl-boot body>:not(.cl){visibility:hidden}</style>
@@ -47,81 +47,56 @@
 
 <main data-barba="container" data-barba-namespace="register">
   <div class="page">
-    <!-- FORM ĐĂNG KÝ MÙA SAU (Chande Season 3). Điều khiển: chande-form.js · gửi: api/submit.js
-         -> mail về ban tổ chức. Nhóm có data-req = bắt buộc. -->
-    <section class="fm" aria-labelledby="fm-title">
-      <aside class="fm__aside">
-        <p class="fm__num">(04) Register — Season 03</p>
-        <h1 class="fm__title" id="fm-title">Register for<br>the next<br><em>Chande</em></h1>
-        <p class="fm__lead">Chande is a community connecting event for Vietnamese designers — three days in nature to slow down, share and listen.</p>
-        <p class="fm__lead">Leave your details and we will reach out first when Season 03 opens. It takes about a minute.</p>
-      </aside>
+    <!-- REGISTER FOR THE NEXT CHANDE (Figma 657:41907) — một màn, đối xứng trang partner: trái giới thiệu
+         + form, phải ảnh + tiêu đề. Điều khiển: chande-form.js · gửi: api/submit.js -->
+    <section class="fm pt pt--rev" aria-labelledby="fm-title">
+      <figure class="pt__media"><img src="assets/img/register/hero.webp" alt="A lake among green mountains in northern Vietnam, seen from a boat" width="1440" height="2160" fetchpriority="high"></figure>
+      <h1 class="pt__title" id="fm-title">Register<br>for the next<br>Chande <span class="pt__year">(2027)</span></h1>
+      <div class="pt__intro">
+        <p>Leave your details below and we'll be the first to let you know when registrations open for the next gathering</p>
+        <p>We'd love to see you there.</p>
+      </div>
 
-      <form class="fm__form" data-form="register" novalidate>
-      <div class="fm__trap" aria-hidden="true"><label>Leave this empty <input type="text" name="company_site" tabindex="-1" autocomplete="off"></label></div>
-        <div class="fm__group" data-req>
-          <label class="fm__head" for="fm-name"><b>01</b><span>Full name</span></label>
-          <input id="fm-name" type="text" name="name" autocomplete="name" maxlength="120" placeholder="Your name">
-          <p class="fm__err">Please tell us your name</p>
+      <form class="fm__form pt__form" data-form="register" novalidate>
+        <div class="fm__trap" aria-hidden="true"><label>Leave this empty <input type="text" name="company_site" tabindex="-1" autocomplete="off"></label></div>
+        <div class="pt__fields">
+        <div class="fm__group pt__field" data-req>
+          <label class="fm__head" for="fm-name"><span>Your name</span></label>
+          <input id="fm-name" type="text" name="name" autocomplete="name" maxlength="120" placeholder="Enter your name">
+          <p class="fm__err">Please enter your name</p>
         </div>
-        <div class="fm__row">
-          <div class="fm__group" data-req>
-            <label class="fm__head" for="fm-age"><b>02</b><span>Age</span></label>
-            <input id="fm-age" type="number" name="age" min="13" max="99" inputmode="numeric" placeholder="25">
-            <p class="fm__err">Enter an age between 13 and 99</p>
-          </div>
-          <div class="fm__group" data-req>
-            <label class="fm__head" for="fm-email"><b>03</b><span>Email</span></label>
-            <input id="fm-email" type="email" name="email" autocomplete="email" maxlength="160" placeholder="you@email.com">
-            <p class="fm__err">Enter a valid email</p>
-          </div>
+        <div class="fm__group pt__field" data-req>
+          <label class="fm__head" for="fm-email"><span>Email address</span></label>
+          <input id="fm-email" type="email" name="email" autocomplete="email" maxlength="160" placeholder="Enter your email address">
+          <p class="fm__err">Enter a valid email</p>
         </div>
-        <div class="fm__group" data-req>
-          <label class="fm__head" for="fm-country"><b>04</b><span>Country</span></label>
-          <input id="fm-country" type="text" name="country" list="fm-countries" autocomplete="country-name" maxlength="80" placeholder="Vietnam">
-          <p class="fm__err">Where are you based?</p>
-        </div>
-        <div class="fm__group" data-req data-city hidden>
-          <label class="fm__head" for="fm-city"><b>04.1</b><span>City / Province</span></label>
-          <input id="fm-city" type="text" name="city" list="fm-vn-provinces" maxlength="80" placeholder="Hà Nội">
-          <p class="fm__err">Which city are you in?</p>
-        </div>
-        <div class="fm__group" data-req data-other>
-          <label class="fm__head" for="fm-field"><b>05</b><span>What do you do</span></label>
-          <select id="fm-field" name="field">
-            <option value="" selected disabled>Choose your field</option>
-            <option>UI/UX Design</option><option>Product Design</option><option>Graphic &amp; Brand Design</option>
-            <option>Motion Design</option><option>3D Design</option><option>Illustration</option>
-            <option>Photography / Video</option><option>Architecture / Interior</option><option>Development</option>
-            <option>Marketing / Creative</option><option>Student</option><option value="other">Other</option>
-          </select>
-          <div class="fm__more" hidden><input type="text" name="field_other" maxlength="120" placeholder="Tell us your field"></div>
-          <p class="fm__err">Choose your field</p>
-        </div>
-        <div class="fm__group" data-req>
-          <label class="fm__head" for="fm-expect"><b>06</b><span>What are you looking forward to at Chande Season 03?</span></label>
-          <textarea id="fm-expect" name="expect" maxlength="2000" placeholder="Workshops, people, nature, a slower pace…"></textarea>
-          <p class="fm__err">Share a few words</p>
-        </div>
-        <fieldset class="fm__group" data-req>
-          <legend class="fm__head"><b>07</b><span>If Chande Season 03 happens, will you join?</span></legend>
+        <fieldset class="fm__group pt__pick" data-req>
+          <legend class="fm__head"><span>What do you do</span></legend>
           <div class="fm__opts">
-            <label class="fm__opt"><input type="radio" name="attend" value="yes"><span>Yes, count me in</span></label>
-            <label class="fm__opt"><input type="radio" name="attend" value="maybe"><span>Maybe</span></label>
-            <label class="fm__opt"><input type="radio" name="attend" value="no"><span>Not this time</span></label>
+            <label class="fm__opt"><input type="checkbox" name="field" value="uiux"><span>UI/UX &amp; product design</span></label>
+            <label class="fm__opt"><input type="checkbox" name="field" value="brand"><span>Graphic &amp; brand design</span></label>
+            <label class="fm__opt"><input type="checkbox" name="field" value="ad"><span>Art direction</span></label>
+            <label class="fm__opt"><input type="checkbox" name="field" value="motion"><span>Motion &amp; 3D</span></label>
+            <i class="pt__br" aria-hidden="true"></i>
+            <label class="fm__opt"><input type="checkbox" name="field" value="pm"><span>Product management</span></label>
+            <label class="fm__opt"><input type="checkbox" name="field" value="dev"><span>Developer</span></label>
+            <label class="fm__opt"><input type="checkbox" name="field" value="founder"><span>Founder</span></label>
+            <label class="fm__opt"><input type="checkbox" name="field" value="student"><span>Student</span></label>
+            <label class="fm__opt"><input type="checkbox" name="field" value="others"><span>Other</span></label>
           </div>
-          <p class="fm__err">Pick one</p>
+          <p class="fm__err">Choose at least one</p>
         </fieldset>
-        <div class="fm__foot">
-          <button class="cta fm__send" type="submit"><i aria-hidden="true"><svg class="dots" viewBox="0 0 20 6" width="20" height="6"><circle cx="3" cy="3" r="3" fill="#0F1513"/><circle cx="17" cy="3" r="3" fill="#0F1513"/></svg><svg class="dots" viewBox="0 0 20 6" width="20" height="6"><circle cx="3" cy="3" r="3" fill="#0F1513"/><circle cx="17" cy="3" r="3" fill="#0F1513"/></svg></i><span><small>08</small><em class="cta__t">Send registration</em></span></button>
-          <p class="fm__note">We only use your details to contact you about Chande. No spam, ever.</p>
-          <p class="fm__status" role="status" aria-live="polite"></p>
+        </div>
+        <div class="pt__foot">
+          <p class="pt__note">We only use your details to contact you about Chande. No spam, ever.</p>
+          <p class="fm__status pt__status" role="status" aria-live="polite"></p>
+          <button class="cta fm__send pt__send" type="submit"><span><em class="cta__t">Join the waitlist</em></span><i aria-hidden="true"><svg class="pt__arrow" viewBox="0 0 30 30" width="30" height="30"><circle cx="15" cy="3" r="2.4" fill="#0F1513"/><circle cx="21" cy="9" r="2.4" fill="#0F1513"/><circle cx="3" cy="15" r="2.4" fill="#0F1513"/><circle cx="9" cy="15" r="2.4" fill="#0F1513"/><circle cx="15" cy="15" r="2.4" fill="#0F1513"/><circle cx="21" cy="15" r="2.4" fill="#0F1513"/><circle cx="27" cy="15" r="2.4" fill="#0F1513"/><circle cx="21" cy="21" r="2.4" fill="#0F1513"/><circle cx="15" cy="27" r="2.4" fill="#0F1513"/></svg></i></button>
         </div>
       </form>
 
-      <div class="fm__done" hidden>
+      <div class="fm__done pt__done" hidden>
         <h2>You are<br>on the list</h2>
-        <p>Thank you — we will email you first when Season 03 is announced. See you in nature.</p>
+        <p>Thank you — we will email you first when registrations open for the next Chande. See you in nature.</p>
         <p><a href="./">Back to home</a></p>
       </div>
     </section>
@@ -135,43 +110,43 @@
 <script src="assets/vendor/gsap.min.js"></script>
 <script src="assets/vendor/CustomEase.min.js"></script>
 
-<script src="assets/js/chande-settings.js?v=202610121635"></script>
-<script src="assets/js/chande-film.js?v=202610121635"></script>
-<script src="assets/js/chande-loading.js?v=202610121635"></script>
-<script src="assets/js/chande-textbox.js?v=202610121635"></script>
-<script src="assets/js/chande-menu.js?v=202610121635"></script>
-<script src="assets/js/chande-transition.js?v=202610121635"></script>
-<script src="assets/js/chande-reveal.js?v=202610121635"></script>
-<script src="assets/js/chande-hero.js?v=202610121635"></script>
-<script src="assets/js/chande-field.js?v=202610121635"></script>
-<script src="assets/js/chande-home.js?v=202610121635"></script>
-<script src="assets/js/chande-cursor.js?v=202610121635"></script>
-<script src="assets/js/chande-bubble.js?v=202610121635"></script>
-<script src="assets/js/chande-tilt.js?v=202610121635"></script>
-<script src="assets/js/chande-imgtiles.js?v=202610121635"></script>
-<script src="assets/js/chande-parallax.js?v=202610121635"></script>
-<script src="assets/js/chande-titlefx.js?v=202610121635"></script>
-<script src="assets/js/chande-eye.js?v=202610121635"></script>
-<script src="assets/js/chande-chips.js?v=202610121635"></script>
-<script src="assets/js/chande-story.js?v=202610121635"></script>
-<script src="assets/js/chande-circles.js?v=202610121635"></script>
-<script src="assets/js/chande-steps.js?v=202610121635"></script>
-<script src="assets/js/chande-members.js?v=202610121635"></script>
-<script src="assets/js/chande-scramble.js?v=202610121635"></script>
-<script src="assets/js/chande-sign.js?v=202610121635"></script>
-<script src="assets/js/chande-gallery.js?v=202610121635"></script>
-<script src="assets/js/chande-form.js?v=202610121635"></script>
+<script src="assets/js/chande-settings.js?v=202610121727"></script>
+<script src="assets/js/chande-film.js?v=202610121727"></script>
+<script src="assets/js/chande-loading.js?v=202610121727"></script>
+<script src="assets/js/chande-textbox.js?v=202610121727"></script>
+<script src="assets/js/chande-menu.js?v=202610121727"></script>
+<script src="assets/js/chande-transition.js?v=202610121727"></script>
+<script src="assets/js/chande-reveal.js?v=202610121727"></script>
+<script src="assets/js/chande-hero.js?v=202610121727"></script>
+<script src="assets/js/chande-field.js?v=202610121727"></script>
+<script src="assets/js/chande-home.js?v=202610121727"></script>
+<script src="assets/js/chande-cursor.js?v=202610121727"></script>
+<script src="assets/js/chande-bubble.js?v=202610121727"></script>
+<script src="assets/js/chande-tilt.js?v=202610121727"></script>
+<script src="assets/js/chande-imgtiles.js?v=202610121727"></script>
+<script src="assets/js/chande-parallax.js?v=202610121727"></script>
+<script src="assets/js/chande-titlefx.js?v=202610121727"></script>
+<script src="assets/js/chande-eye.js?v=202610121727"></script>
+<script src="assets/js/chande-chips.js?v=202610121727"></script>
+<script src="assets/js/chande-story.js?v=202610121727"></script>
+<script src="assets/js/chande-circles.js?v=202610121727"></script>
+<script src="assets/js/chande-steps.js?v=202610121727"></script>
+<script src="assets/js/chande-members.js?v=202610121727"></script>
+<script src="assets/js/chande-scramble.js?v=202610121727"></script>
+<script src="assets/js/chande-sign.js?v=202610121727"></script>
+<script src="assets/js/chande-gallery.js?v=202610121727"></script>
+<script src="assets/js/chande-form.js?v=202610121727"></script>
 <!-- Module: tự nạp paper-stack.js + three (assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-poster.js?v=202610121635"></script>
+<script type="module" src="assets/js/chande-poster.js?v=202610121727"></script>
 <!-- Module: vịt patin 3D trên lưới gallery (three ở assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-duck.js?v=202610121635"></script>
+<script type="module" src="assets/js/chande-duck.js?v=202610121727"></script>
 <!-- Module: thảm cỏ 3D dưới lưới gallery (preset data-floor="grass-3d"). -->
-<script type="module" src="assets/js/chande-grass.js?v=202610121635"></script>
+<script type="module" src="assets/js/chande-grass.js?v=202610121727"></script>
 <!-- Module: cá koi 3D bơi trong lõi vòng tròn About khi bubble ở tâm (three nạp động). -->
-<script type="module" src="assets/js/chande-koi.js?v=202610121635"></script>
+<script type="module" src="assets/js/chande-koi.js?v=202610121727"></script>
 <!-- Module: bướm bay ra khỏi vòng 1, bay theo cuộn tới cuối trang chủ (three nạp động). -->
-<script type="module" src="assets/js/chande-flyer.js?v=202610121635"></script>
+<script type="module" src="assets/js/chande-flyer.js?v=202610121727"></script>
 <!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
-<script src="assets/js/chande-devtools.js?v=202610121635"></script>
+<script src="assets/js/chande-devtools.js?v=202610121727"></script>
 </body>
 </html>

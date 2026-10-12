@@ -7,8 +7,8 @@
  *   • hạt: bộ lọc SVG #film-grain — một ô hạt 128 px (canvas -> data URL) lát kín ảnh,
  *     hoà kiểu overlay, chỉ trên phần ảnh có màu (ảnh tách nền giữ trong suốt). Bộ lọc
  *     chỉ tính khi ảnh được VẼ, cuộn / parallax (transform) không vẽ lại.
- * Chỉ áp cho 4 ô ảnh người ở hero trang chủ (canvas chân dung + ảnh dự phòng) và lớp vỡ ô
- * (chande-imgtiles.js) lúc đang rê ảnh hero.
+ * Chỉ áp cho 4 ô ảnh người ở hero trang chủ (canvas chân dung + ảnh dự phòng), dải ảnh hành trình
+ * ở About và lớp vỡ ô (chande-imgtiles.js) lúc đang rê các ảnh đó.
  * Bật / tắt + chỉnh số ở trang film.html (lưu vào chande-settings.js, khoá "film.*").
  *
  * API: window.CHANDE_FILM = { config, defaults, apply(), filterCSS() }
@@ -30,8 +30,9 @@
   window.CHANDE_SETTINGS_APPLY?.('film', CONFIG)
   const DEFAULTS = structuredClone(CONFIG)
 
-  // CHỈ ảnh người ở hero trang chủ (4 ô chân dung: canvas / ảnh dự phòng) + lớp vỡ ô khi đang rê ảnh hero
-  const SEL = ['.hero-card__media canvas', '.hero-card__media img', 'canvas.cimgtiles.is-hero']
+  // CHỈ ảnh người ở hero trang chủ (4 ô chân dung: canvas / ảnh dự phòng) + dải ảnh hành trình [2020-2026] ở About
+  // + lớp vỡ ô khi đang rê các ảnh đó
+  const SEL = ['.hero-card__media canvas', '.hero-card__media img', '.ab-journey__track img', 'canvas.cimgtiles.is-hero']
 
   // ô hạt xám ngẫu nhiên 128 × 128, alpha = độ đậm (overlay: xám giữa = không đổi)
   let tileKey = ''
