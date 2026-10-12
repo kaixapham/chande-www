@@ -113,7 +113,8 @@ function mount(scope = document) {
   const section = scope.querySelector('[data-poster-stack]')
   if (!section || live?.section === section) return
   const sheets = readSheets(section)
-  if (!sheets.length || !hasWebGL()) return
+  // ảnh poster tĩnh chỉ dùng khi KHÔNG dựng được chồng poster (CSS ẩn sẵn, không lộ lúc chờ nạp)
+  if (!sheets.length || !hasWebGL()) return void section.classList.add('is-fallback')
   const pin = section.querySelector('[data-poster-pin]')
   // Chỉ giữ một bản: về lại trang chủ khi bản cũ còn đó thì gỡ nó trước, không thì
   // afterLeave không còn trỏ tới nó nữa → rò WebGL context.

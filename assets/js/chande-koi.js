@@ -46,7 +46,7 @@ const CONFIG = {
   bird: 0.25, // chiều dài chim ruồi 3D, mỏ tới đuôi (× đường kính lõi)
   birdFlap: 11, // nhịp vỗ cánh (lần / giây)
   birdRange: 0.24, // phạm vi bay: bán kính quanh tâm (× đường kính lõi)
-  flower: 1, // cỡ khóm hoa ở vòng 2 trang About (1 = vừa lõi)
+  flower: 1.2, // cỡ khóm hoa cúc ở vòng 2 trang About (1 = cành cao bằng bán kính lõi)
 }
 window.CHANDE_SETTINGS_APPLY?.('koi', CONFIG)
 const api = { config: CONFIG, mount() {}, destroy() {} }
@@ -66,12 +66,9 @@ const fine = matchMedia('(pointer: fine)')
 // tách đôi theo dấu X (trái / phải), mỗi nửa xoay quanh vai của nó.
 const BIRD_GLB = new URL('../img/about/hummingbird.glb', import.meta.url).href
 let birdModel = null
-// bộ nạp GLB dùng chung (nạp động lúc cần); có giải nén meshopt cho model hoa
+// bộ nạp GLB dùng chung (nạp động lúc cần)
 let gltfLoader = null
-const getLoader = () =>
-  (gltfLoader ||= Promise.all([import('../vendor/three/GLTFLoader.min.js'), import('../vendor/three/meshopt_decoder.module.js')]).then(
-    ([{ GLTFLoader }, { MeshoptDecoder }]) => new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
-  ))
+const getLoader = () => (gltfLoader ||= import('../vendor/three/GLTFLoader.min.js').then(({ GLTFLoader }) => new GLTFLoader()))
 const loadBird = () => (birdModel ||= getLoader().then((l) => l.loadAsync(BIRD_GLB)))
 
 // hình của mesh -> Float32, đã nhân ma trận (mặc định: của chính mesh — dời + phóng của bước
@@ -271,137 +268,144 @@ function buildBird() {
 }
 
 /* ------------------------------------------------------------ Hoa nở --- */
-// Vòng 2 trang About: khóm hoa vườn MỌC + NỞ khi bubble vào lõi. Model "Garden Flower -
-// vegetation" — raguramkgr (Sketchfab), CC-BY-4.0; đã xử lý (gltf-transform): giảm lưới còn ~40%,
-// texture webp 512, nén meshopt -> ~550KB, nạp lúc cần. 3 lần vẽ (lá / hoa / cuống).
-// Không có animation sẵn -> tự làm trong shader (đồng hồ uT = số giây từ lúc hiện):
-//   - cuống + lá mọc từ đất lên (co theo chiều cao), lan từ giữa khóm ra ngoài;
-//   - cánh hoa (1540 mảnh nhỏ) được gom theo bông (theo khoảng cách) -> mỗi bông một tâm aC; khi
-//     cuống dưới nó mọc gần xong thì bông bung ra từ tâm (easeOutBack), cánh xoè ngang trước;
-//   - nở xong thì cả khóm đung đưa theo gió (lắc mạnh dần lên ngọn).
-const FLOWER_GLB = new URL('../img/about/flower.glb', import.meta.url).href
+// Vòng 2 trang About: khóm hoa cúc trắng MỌC + NỞ khi bubble vào lõi. Model "Flower" — alexerhart
+// (Sketchfab), CC-BY-4.0 (ghi công ở footer); đã xử lý (gltf-transform): texture webp, quantize ->
+// ~95KB, nạp lúc cần. Model là MỘT cành (cành + lá + 3 bông, các mảnh phẳng dán ảnh) -> nhân thành
+// khóm bằng InstancedMesh (1 lần vẽ cho cả khóm), mỗi cành xoay / cao / nghiêng / trễ khác nhau.
+// Không có animation sẵn -> làm trong shader (uT = số giây từ lúc hiện):
+//   - cành + lá mọc từ đất lên (co theo chiều cao), lần lượt từng cành (aDelay);
+//   - mỗi bông (cánh + nhuỵ, tâm aC) đi lên theo cành, cành gần xong thì bung ra từ tâm (easeOutBack);
+//   - nở xong thì đung đưa theo gió (lắc mạnh dần lên ngọn), mỗi cành một nhịp (aSeed).
+const FLOWER_GLB = new URL('../img/about/daisy.glb', import.meta.url).href
 let flowerModel = null
 const loadFlower = () => (flowerModel ||= getLoader().then((l) => l.loadAsync(FLOWER_GLB)))
-
-// đoạn GLSL dùng chung: trễ mọc theo vị trí ngang (giữa khóm trước), độ mọc, gió
-const GROW_GLSL = `
-uniform float uT;
-uniform float uH;
-float growDelay(vec2 p) { return 0.32 * length(p) + 0.12 * sin(p.x * 3.1) * cos(p.y * 2.7); }
-float growAt(vec2 p) { float g = 1.0 - clamp((uT - growDelay(p)) / 0.9, 0.0, 1.0); return 1.0 - g * g * g; }
-vec3 wind(vec3 q) { float k = q.y / uH; return vec3(sin(uT * 1.3 + q.z * 1.7) * 0.06 * k * k, 0.0, cos(uT * 1.1 + q.x * 1.9) * 0.03 * k * k); }
-`
 
 function buildFlowers() {
   const group = new THREE.Group()
   const inner = new THREE.Group()
-  inner.rotation.x = 0.38 // nghiêng khóm về phía camera: thấy mặt hoa từ hơi trên xuống
+  inner.rotation.x = 0.32 // nghiêng khóm về phía camera: thấy mặt hoa từ hơi trên xuống
   group.add(inner)
   const uniforms = { uT: { value: 0 }, uH: { value: 1 } }
 
   loadFlower().then((gltf) => {
     gltf.scene.updateMatrixWorld(true)
-    const parts = {}
-    gltf.scene.traverse((o) => {
-      if (o.isMesh) parts[/_Flower_/i.test(o.name) ? 'flower' : /_Leaf_/i.test(o.name) ? 'leaf' : 'stem'] = o // tên: flower_Leaf_… / flower_Flower_… / flower_Stem_…
-    })
-    // khung: hệ toạ độ thế giới của model (Y lên, đáy ở 0) -> dời tâm ngang về gốc
-    const box = new THREE.Box3().setFromObject(gltf.scene)
-    const cx = (box.min.x + box.max.x) / 2
-    const cz = (box.min.z + box.max.z) / 2
-    const H = box.max.y
-    const R = Math.max(box.max.x - box.min.x, box.max.z - box.min.z) / 2
+    let mesh = null
+    gltf.scene.traverse((o) => o.isMesh && (mesh = o))
+    if (!mesh) return
+    const geo = bake(mesh, mesh.matrixWorld, true)
+    const pos = geo.attributes.position
+    const uv = geo.attributes.uv
+    // gốc cành = đỉnh thấp nhất -> dời về (0, 0, 0)
+    let root = 0
+    for (let i = 1; i < pos.count; i++) if (pos.getY(i) < pos.getY(root)) root = i
+    geo.translate(-pos.getX(root), -pos.getY(root), -pos.getZ(root))
+    geo.computeBoundingBox()
+    const H = geo.boundingBox.max.y
     uniforms.uH.value = H
-    const k = 0.98 / R // bán kính khóm ~ bán kính lõi
-    inner.scale.setScalar(k * CONFIG.flower)
-    inner.position.set(0, -0.62, 0)
-    const shift = new THREE.Matrix4().makeTranslation(-cx, 0, -cz)
-
-    for (const [kind, mesh] of Object.entries(parts)) {
-      const geo = bake(mesh, new THREE.Matrix4().multiplyMatrices(shift, mesh.matrixWorld), true)
-      const mat = mesh.material
-      // BLEND -> cắt alpha: khỏi lỗi thứ tự vẽ giữa hàng nghìn mảnh lá / cánh
-      mat.transparent = false
-      mat.alphaTest = 0.45
-      mat.depthWrite = true
-      if (kind === 'flower') {
-        // gom mảnh cánh theo bông: tâm từng mảnh (nhóm đỉnh nối nhau) -> bông gần nhất trong 0.06·R
-        const pos = geo.attributes.position
-        const idx = geo.index.array
-        const par = new Int32Array(pos.count).map((_, i) => i)
-        const find = (x) => {
-          while (par[x] !== x) x = par[x] = par[par[x]]
-          return x
-        }
-        for (let i = 0; i < idx.length; i += 3) {
-          const a = find(idx[i])
-          par[find(idx[i + 1])] = a
-          par[find(idx[i + 2])] = a
-        }
-        const piece = new Map()
-        for (let i = 0; i < pos.count; i++) {
-          const r = find(i)
-          let c = piece.get(r)
-          if (!c) piece.set(r, (c = { x: 0, y: 0, z: 0, n: 0 }))
-          c.x += pos.getX(i)
-          c.y += pos.getY(i)
-          c.z += pos.getZ(i)
-          c.n++
-        }
-        const heads = []
-        const rad2 = (0.06 * R) ** 2
-        for (const c of piece.values()) {
-          c.x /= c.n
-          c.y /= c.n
-          c.z /= c.n
-          let h = heads.find((q) => (q.x - c.x) ** 2 + (q.y - c.y) ** 2 + (q.z - c.z) ** 2 < rad2)
-          if (!h) heads.push((h = { x: c.x, y: c.y, z: c.z, sx: 0, sy: 0, sz: 0, n: 0 }))
-          h.sx += c.x
-          h.sy += c.y
-          h.sz += c.z
-          h.n++
-          c.h = h
-        }
-        for (const h of heads) Object.assign(h, { x: h.sx / h.n, y: h.sy / h.n, z: h.sz / h.n })
-        const ac = new Float32Array(pos.count * 3)
-        for (let i = 0; i < pos.count; i++) {
-          const h = piece.get(find(i)).h
-          ac.set([h.x, h.y, h.z], i * 3)
-        }
-        geo.setAttribute('aC', new THREE.BufferAttribute(ac, 3))
-      }
-      mat.onBeforeCompile = (sh) => {
-        Object.assign(sh.uniforms, uniforms)
-        const head =
-          kind === 'flower'
-            ? `attribute vec3 aC;
-               float bloom(float p) { if (p <= 0.0) return 0.0; float q = p - 1.0; return 1.0 + 2.2 * q * q * q + 1.2 * q * q; }`
-            : ''
-        const body =
-          kind === 'flower'
-            ? `// bông: đi lên theo cuống, bung ra khi cuống dưới nó mọc gần xong
-               float gs = growAt(aC.xz);
-               float p = clamp((uT - growDelay(aC.xz) - 0.6) / 0.7, 0.0, 1.0);
-               float open = bloom(p);
-               float spread = bloom(clamp(p * 1.25 - 0.1, 0.0, 1.0));
-               vec3 c = vec3(aC.x, aC.y * gs, aC.z);
-               vec3 d = transformed - aC;
-               float w = open * (0.45 + 0.55 * spread);
-               transformed = c + vec3(d.x * w, d.y * open, d.z * w) + wind(c);`
-            : `// cuống / lá: co theo chiều cao lúc mọc, lá xoè dần
-               float g = growAt(transformed.xz);
-               transformed.y *= g;
-               ${kind === 'leaf' ? 'transformed.xz *= 0.55 + 0.45 * g;' : ''}
-               transformed += wind(transformed) * g;`
-        sh.vertexShader = sh.vertexShader
-          .replace('#include <common>', `#include <common>\n${GROW_GLSL}\n${head}`)
-          .replace('#include <begin_vertex>', `#include <begin_vertex>\n${body}`)
-      }
-      const m = new THREE.Mesh(geo, mat)
-      m.frustumCulled = false
-      inner.add(m)
+    // các mảnh (nhóm đỉnh nối nhau); mảnh BÔNG = vùng ảnh hoa cúc (cột trái, nửa dưới ảnh): u < .37, v > .45
+    const idx = geo.index.array
+    const par = new Int32Array(pos.count).map((_, i) => i)
+    const find = (x) => {
+      while (par[x] !== x) x = par[x] = par[par[x]]
+      return x
     }
+    for (let i = 0; i < idx.length; i += 3) {
+      const r = find(idx[i])
+      par[find(idx[i + 1])] = r
+      par[find(idx[i + 2])] = r
+    }
+    const piece = new Map()
+    for (let i = 0; i < pos.count; i++) {
+      const r = find(i)
+      let c = piece.get(r)
+      if (!c) piece.set(r, (c = { x: 0, y: 0, z: 0, n: 0, u1: 0, v0: 1 }))
+      c.x += pos.getX(i)
+      c.y += pos.getY(i)
+      c.z += pos.getZ(i)
+      c.n++
+      c.u1 = Math.max(c.u1, uv.getX(i))
+      c.v0 = Math.min(c.v0, uv.getY(i))
+    }
+    const aC = new Float32Array(pos.count * 3)
+    const aHead = new Float32Array(pos.count)
+    for (let i = 0; i < pos.count; i++) {
+      const c = piece.get(find(i))
+      if (c.u1 < 0.37 && c.v0 > 0.45) {
+        aC.set([c.x / c.n, c.y / c.n, c.z / c.n], i * 3)
+        aHead[i] = 1
+      }
+    }
+    geo.setAttribute('aC', new THREE.BufferAttribute(aC, 3))
+    geo.setAttribute('aHead', new THREE.BufferAttribute(aHead, 1))
+
+    // khóm: N cành rải trong một vệt elip, cành giữa cao hơn, mọc từ giữa ra
+    const N = 17
+    const delay = new Float32Array(N)
+    const seed = new Float32Array(N)
+    const mat = mesh.material
+    mat.transparent = false
+    mat.alphaTest = 0.45
+    mat.depthWrite = true
+    mat.side = THREE.DoubleSide
+    // sáng lên chút cho cánh trắng nổi trên nền rêu tối (tự phát sáng theo chính ảnh)
+    mat.emissive = new THREE.Color('#ffffff')
+    mat.emissiveMap = mat.map
+    mat.emissiveIntensity = 0.28
+    const im = new THREE.InstancedMesh(geo, mat, N)
+    im.frustumCulled = false
+    const d = new THREE.Object3D()
+    const k = CONFIG.flower / H // cành cao 1 đơn vị (= bán kính lõi) × CONFIG.flower
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2 * 2.618 // xoắn ốc vàng -> rải đều
+      const r = Math.sqrt((i + 0.5) / N)
+      const x = Math.cos(a) * r * 0.78
+      const z = Math.sin(a) * r * 0.42
+      d.position.set(x, 0, z)
+      d.rotation.set((Math.random() - 0.5) * 0.25, Math.random() * Math.PI * 2, (Math.random() - 0.5) * 0.3 - x * 0.25)
+      d.scale.setScalar(k * (1.05 - r * 0.35) * (0.85 + Math.random() * 0.3))
+      d.updateMatrix()
+      im.setMatrixAt(i, d.matrix)
+      delay[i] = r * 0.45 + Math.random() * 0.15
+      seed[i] = Math.random()
+    }
+    geo.setAttribute('aDelay', new THREE.InstancedBufferAttribute(delay, 1))
+    geo.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seed, 1))
+    mat.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, uniforms)
+      sh.vertexShader = sh.vertexShader
+        .replace(
+          '#include <common>',
+          `#include <common>
+          uniform float uT;
+          uniform float uH;
+          attribute vec3 aC;
+          attribute float aHead;
+          attribute float aDelay;
+          attribute float aSeed;
+          float bloom(float p) { if (p <= 0.0) return 0.0; float q = p - 1.0; return 1.0 + 2.2 * q * q * q + 1.2 * q * q; }`
+        )
+        .replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+          float g0 = clamp((uT - aDelay) / 0.9, 0.0, 1.0);
+          float g = 1.0 - (1.0 - g0) * (1.0 - g0) * (1.0 - g0);
+          if (aHead > 0.5) {
+            // bông: theo ngọn cành lên, cành gần xong (bông thấp nở trước) thì bung ra từ tâm
+            float p = clamp((uT - aDelay - 0.55 - 0.25 * aC.y / uH) / 0.6, 0.0, 1.0);
+            vec3 c = vec3(aC.x, aC.y * g, aC.z);
+            transformed = c + (transformed - aC) * bloom(p);
+          } else {
+            transformed.y *= g;
+            transformed.xz *= 0.4 + 0.6 * g;
+          }
+          float kk = transformed.y / uH;
+          transformed.x += sin(uT * 1.3 + aSeed * 6.283) * 0.05 * uH * kk * kk * g;
+          transformed.z += cos(uT * 1.1 + aSeed * 4.0) * 0.03 * uH * kk * kk * g;`
+        )
+    }
+    inner.add(im)
   })
+  inner.position.set(0, -0.72, 0)
 
   let shownFor = 0
   function update(t, dt, show) {

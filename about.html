@@ -22,10 +22,10 @@
 <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/vendor/lenis.css">
-<link rel="stylesheet" href="assets/css/site.css?v=202610112002">
-<link rel="stylesheet" href="assets/css/home.css?v=202610112002">
-<link rel="stylesheet" href="assets/css/gallery.css?v=202610112002">
-<link rel="stylesheet" href="assets/css/form.css?v=202610112002">
+<link rel="stylesheet" href="assets/css/site.css?v=202610120638">
+<link rel="stylesheet" href="assets/css/home.css?v=202610120638">
+<link rel="stylesheet" href="assets/css/gallery.css?v=202610120638">
+<link rel="stylesheet" href="assets/css/form.css?v=202610120638">
 <!-- Khung hình đầu: màn loading do JS dựng ở cuối trang, nên trước đó tô nền tối + ẩn
      nội dung (không chớp nền kem). chande-loading.js gỡ cl-boot ngay khi đã gắn màn loading. -->
 <style>html.cl-boot,html.cl-boot body{background:#182220}html.cl-boot body>:not(.cl){visibility:hidden}</style>
@@ -96,7 +96,7 @@
       <img data-parallax data-cms="about-founder" data-cms-label="Ảnh người sáng lập" data-cms-w="234" class="abs ab-founder" src="assets/img/about/founder.webp" alt="Khắc Minh Nguyễn (Mingg), người sáng lập Mingg Patreon" loading="lazy">
       <div class="abs ab-circles" aria-hidden="true">
         <div class="circle" data-creature="bird"><img class="ring" src="assets/img/about/circle-a-ring.svg" loading="lazy" alt=""><img class="tex" src="assets/img/about/circle-a-tex.webp" loading="lazy" alt=""><img class="core" src="assets/img/about/circle-a-core.svg" loading="lazy" alt=""><img class="peek" data-cms="about-circle-a-peek" data-cms-label="Vòng trái — ảnh lộ qua bubble" data-cms-w="900" src="assets/img/home/circle-2-marble.webp" alt="" loading="lazy"></div>
-        <div class="circle" data-creature="flower" data-peek-fill="#2f4a2c"><img class="ring" src="assets/img/about/circle-b-ring.svg" loading="lazy" alt=""><img class="core" src="assets/img/about/circle-b-core.svg" loading="lazy" alt=""><img class="tex tex--dim" src="assets/img/about/circle-b-tex.webp" loading="lazy" alt=""></div>
+        <div class="circle" data-creature="flower"><img class="ring" src="assets/img/about/circle-b-ring.svg" loading="lazy" alt=""><img class="core" src="assets/img/about/circle-b-core.svg" loading="lazy" alt=""><img class="tex tex--dim" src="assets/img/about/circle-b-tex.webp" loading="lazy" alt=""><img class="peek" data-cms="about-circle-b-peek" data-cms-label="Vòng phải — ảnh lộ qua bubble (nền sau hoa)" data-cms-w="900" src="assets/img/home/circle-3-water.webp" alt="" loading="lazy"></div>
       </div>
       <p class="abs ab-note">We don&rsquo;t say who will<br>be replaced (by AI).<br>We listen to each individual.</p>
       <div class="abs ab-cols">
@@ -236,7 +236,11 @@
       </div>
       <div class="abs links hs-foot__index">
         <div><p class="mono">[ Site index ]</p><ul><li><a href="index.html" data-scramble>Home</a></li><li><a href="gallery.html" data-scramble>Gallery</a></li><li><a href="about.html" data-scramble>About us</a></li><li><a href="#" data-scramble>Contact</a></li></ul></div>
-        <p class="mono"><a href="#top" data-back-top data-scramble>[ Back to top ][ → ]</a></p>
+        <div class="hs-foot__end">
+          <p class="mono"><a href="#top" data-back-top data-scramble>[ Back to top ][ → ]</a></p>
+          <!-- ghi công model 3D (giấy phép CC BY 4.0 bắt buộc): chim ruồi + hoa cúc trang About -->
+          <p class="mono hs-foot__credit"><a href="https://sketchfab.com/3d-models/swallow-tailed-hummingbird-db761226ef2b41b5b6dbdae5a80e715b" target="_blank" rel="noopener" data-scramble>[ 3D: Hummingbird — gelmi.com.br ]</a><br><a href="https://sketchfab.com/3d-models/flower-0a0f5b4e595940649ea3cabeb7a4b1e1" target="_blank" rel="noopener" data-scramble>[ Flower — alexerhart ]</a><br><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener" data-scramble>[ CC BY 4.0 ]</a></p>
+        </div>
       </div>
       <!-- Ask AI (AEO): bấm logo -> mở chatbot với câu hỏi về Chande điền sẵn (ChatGPT / Claude /
            Perplexity: ?q=; Gemini không nhận câu hỏi qua link -> Google AI Mode, chạy Gemini). -->
@@ -252,41 +256,41 @@
 <script src="assets/vendor/gsap.min.js"></script>
 <script src="assets/vendor/CustomEase.min.js"></script>
 
-<script src="assets/js/chande-settings.js?v=202610112002"></script>
-<script src="assets/js/chande-loading.js?v=202610112002"></script>
-<script src="assets/js/chande-textbox.js?v=202610112002"></script>
-<script src="assets/js/chande-menu.js?v=202610112002"></script>
-<script src="assets/js/chande-transition.js?v=202610112002"></script>
-<script src="assets/js/chande-reveal.js?v=202610112002"></script>
-<script src="assets/js/chande-hero.js?v=202610112002"></script>
-<script src="assets/js/chande-field.js?v=202610112002"></script>
-<script src="assets/js/chande-home.js?v=202610112002"></script>
-<script src="assets/js/chande-cursor.js?v=202610112002"></script>
-<script src="assets/js/chande-bubble.js?v=202610112002"></script>
-<script src="assets/js/chande-tilt.js?v=202610112002"></script>
-<script src="assets/js/chande-imgtiles.js?v=202610112002"></script>
-<script src="assets/js/chande-parallax.js?v=202610112002"></script>
-<script src="assets/js/chande-titlefx.js?v=202610112002"></script>
-<script src="assets/js/chande-eye.js?v=202610112002"></script>
-<script src="assets/js/chande-chips.js?v=202610112002"></script>
-<script src="assets/js/chande-story.js?v=202610112002"></script>
-<script src="assets/js/chande-circles.js?v=202610112002"></script>
-<script src="assets/js/chande-steps.js?v=202610112002"></script>
-<script src="assets/js/chande-scramble.js?v=202610112002"></script>
-<script src="assets/js/chande-sign.js?v=202610112002"></script>
-<script src="assets/js/chande-gallery.js?v=202610112002"></script>
-<script src="assets/js/chande-form.js?v=202610112002"></script>
+<script src="assets/js/chande-settings.js?v=202610120638"></script>
+<script src="assets/js/chande-loading.js?v=202610120638"></script>
+<script src="assets/js/chande-textbox.js?v=202610120638"></script>
+<script src="assets/js/chande-menu.js?v=202610120638"></script>
+<script src="assets/js/chande-transition.js?v=202610120638"></script>
+<script src="assets/js/chande-reveal.js?v=202610120638"></script>
+<script src="assets/js/chande-hero.js?v=202610120638"></script>
+<script src="assets/js/chande-field.js?v=202610120638"></script>
+<script src="assets/js/chande-home.js?v=202610120638"></script>
+<script src="assets/js/chande-cursor.js?v=202610120638"></script>
+<script src="assets/js/chande-bubble.js?v=202610120638"></script>
+<script src="assets/js/chande-tilt.js?v=202610120638"></script>
+<script src="assets/js/chande-imgtiles.js?v=202610120638"></script>
+<script src="assets/js/chande-parallax.js?v=202610120638"></script>
+<script src="assets/js/chande-titlefx.js?v=202610120638"></script>
+<script src="assets/js/chande-eye.js?v=202610120638"></script>
+<script src="assets/js/chande-chips.js?v=202610120638"></script>
+<script src="assets/js/chande-story.js?v=202610120638"></script>
+<script src="assets/js/chande-circles.js?v=202610120638"></script>
+<script src="assets/js/chande-steps.js?v=202610120638"></script>
+<script src="assets/js/chande-scramble.js?v=202610120638"></script>
+<script src="assets/js/chande-sign.js?v=202610120638"></script>
+<script src="assets/js/chande-gallery.js?v=202610120638"></script>
+<script src="assets/js/chande-form.js?v=202610120638"></script>
 <!-- Module: tự nạp paper-stack.js + three (assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-poster.js?v=202610112002"></script>
+<script type="module" src="assets/js/chande-poster.js?v=202610120638"></script>
 <!-- Module: vịt patin 3D trên lưới gallery (three ở assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-duck.js?v=202610112002"></script>
+<script type="module" src="assets/js/chande-duck.js?v=202610120638"></script>
 <!-- Module: thảm cỏ 3D dưới lưới gallery (preset data-floor="grass-3d"). -->
-<script type="module" src="assets/js/chande-grass.js?v=202610112002"></script>
+<script type="module" src="assets/js/chande-grass.js?v=202610120638"></script>
 <!-- Module: cá koi 3D bơi trong lõi vòng tròn About khi bubble ở tâm (three nạp động). -->
-<script type="module" src="assets/js/chande-koi.js?v=202610112002"></script>
+<script type="module" src="assets/js/chande-koi.js?v=202610120638"></script>
 <!-- Module: bướm bay ra khỏi vòng 1, bay theo cuộn tới cuối trang chủ (three nạp động). -->
-<script type="module" src="assets/js/chande-flyer.js?v=202610112002"></script>
+<script type="module" src="assets/js/chande-flyer.js?v=202610120638"></script>
 <!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
-<script src="assets/js/chande-devtools.js?v=202610112002"></script>
+<script src="assets/js/chande-devtools.js?v=202610120638"></script>
 </body>
 </html>
