@@ -701,6 +701,29 @@ function mount(root = document) {
   }
   live = me
   onScroll()
+  // Dựng sẵn + biên dịch shader lúc trang rảnh (lần bay đầu từng đứng trang ~40 ms vì biên dịch
+  // ngay khung đầu). Bướm / bóng để ẩn, canvas trong suốt — chỉ là làm nóng.
+  const idle = window.requestIdleCallback || ((f) => setTimeout(f, 300))
+  const warm = () =>
+    idle(
+      () =>
+        live === me &&
+        !gl &&
+        loadThree().then(() =>
+          idle(() => {
+            if (live !== me || gl) return
+            setup()
+            gl.bf.group.visible = true
+            gl.shadow.visible = true
+            gl.renderer.compile(gl.scene, gl.camera)
+            gl.bf.group.visible = false
+            gl.shadow.visible = false
+          }),
+        ),
+      { timeout: 6000 },
+    )
+  if (document.readyState === 'complete') setTimeout(warm, 4000)
+  else addEventListener('load', () => setTimeout(warm, 4000), { once: true })
 }
 
 function destroy() {

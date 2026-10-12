@@ -755,6 +755,8 @@ export function mount(container, config = {}) {
 
   function textureFrom(img) {
     const tex = new THREE.Texture(img)
+    // ImageBitmap đã lật sẵn lúc tạo (imageOrientation: 'flipY') — WebGL không lật được bitmap
+    if (typeof ImageBitmap !== 'undefined' && img instanceof ImageBitmap) tex.flipY = false
     tex.colorSpace = THREE.SRGBColorSpace
     tex.anisotropy = renderer.capabilities.getMaxAnisotropy()
     tex.needsUpdate = true
@@ -765,7 +767,7 @@ export function mount(container, config = {}) {
     const cfg = { ...SHEET_DEFAULTS, ...entry }
     const seg = clamp(Math.round(params.paper.segments), 8, 96)
     const box = params.stack.size * clamp(cfg.scale, 0.15, 3)
-    const ar = (img.naturalWidth || 4) / (img.naturalHeight || 5)
+    const ar = (img.naturalWidth || img.width || 4) / (img.naturalHeight || img.height || 5)
     let w = AW * box
     let h = w / ar
     if (h > AH * box) {
@@ -838,19 +840,51 @@ export function mount(container, config = {}) {
   function disposeSheet(s) {
     group.remove(s.node)
     s.geom.dispose()
-    if (s.front.material.map) s.front.material.map.dispose()
+    if (s.front.material.map) {
+      s.front.material.map.image?.close?.() // ImageBitmap: trả bộ nhớ ngay
+      s.front.material.map.dispose()
+    }
     s.front.material.dispose()
     s.back.material.dispose()
   }
 
+  // Ảnh tờ: giải mã + thu nhỏ NGOÀI luồng chính (createImageBitmap, cạnh dài ≤ TEX_MAX) rồi mới
+  // làm texture. Trước đây ảnh 1400 × 2490 giải mã + đẩy lên GPU ngay trong khung vẽ đầu — cả
+  // chồng 8 tờ đứng trang ~230 ms đúng lúc người xem đang cuộn tới.
+  const TEX_MAX = 1600
   function loadImage(src) {
-    return new Promise((resolve, reject) => {
-      const img = new Image()
-      img.crossOrigin = 'anonymous'
-      img.onload = () => resolve(img)
-      img.onerror = () => reject(new Error('Không nạp được ảnh'))
-      img.src = src
-    })
+    const viaImg = () =>
+      new Promise((resolve, reject) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => resolve(img)
+        img.onerror = () => reject(new Error('Không nạp được ảnh'))
+        img.src = src
+      })
+    if (typeof createImageBitmap !== 'function') return viaImg()
+    // tải về blob -> createImageBitmap(blob): giải mã ở luồng nền (từ <img> thì Chrome giải mã
+    // ngay trên luồng chính); ảnh quá to thì thu thêm một lượt bitmap -> bitmap (nhẹ)
+    const opts = { imageOrientation: 'flipY', premultiplyAlpha: 'none' }
+    return fetch(src)
+      .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(r.status))))
+      .then((b) => createImageBitmap(b, opts))
+      .then(async (bmp) => {
+        const k = Math.min(1, TEX_MAX / Math.max(bmp.width, bmp.height))
+        if (k >= 1) return bmp
+        const small = await createImageBitmap(bmp, { resizeWidth: Math.round(bmp.width * k), resizeHeight: Math.round(bmp.height * k), resizeQuality: 'high' })
+        bmp.close()
+        return small
+      })
+      .catch(viaImg)
+  }
+  // đẩy texture lên GPU từng tờ một, mỗi khung một tờ (không dồn cả chồng vào khung vẽ đầu)
+  async function uploadTextures(list) {
+    for (const s of list) {
+      const map = s.front.material.map
+      if (!map || !renderer.initTexture) continue
+      await new Promise((r) => requestAnimationFrame(r))
+      renderer.initTexture(map)
+    }
   }
 
   /** Nạp lại toàn bộ danh sách tờ. Ảnh đã có sẵn `img` thì dùng luôn, khỏi decode lại. */
@@ -861,6 +895,21 @@ export function mount(container, config = {}) {
     )
     while (sheets.length) disposeSheet(sheets.pop())
     list.forEach((entry, i) => sheets.push(buildSheet(entry, i, imgs[i])))
+    // ẩn tới khi texture đã lên GPU (khung vẽ ở giữa không tự đẩy cả chồng một lúc)
+    const fresh = [...sheets]
+    for (const s of fresh) s.wait = true
+    await uploadTextures(fresh)
+    // biên dịch shader (giấy + bóng) song song trước khi hiện — khung vẽ đầu từng đứng ~80 ms
+    if (renderer.compileAsync) {
+      try {
+        for (const s of fresh) s.node.visible = true
+        const job = renderer.compileAsync(scene, camera)
+        for (const s of fresh) s.node.visible = false
+        await job
+      } catch {}
+    }
+    for (const s of fresh) s.wait = false
+    needDraw = dirty = true
     state.head = clamp(state.head, minHead(), maxHead())
     state.target = state.head
     for (const s of sheets) {
@@ -888,7 +937,7 @@ export function mount(container, config = {}) {
   function rebuildGeometry(s, img) {
     const seg = clamp(Math.round(params.paper.segments), 8, 96)
     const box = params.stack.size * clamp(s.cfg.scale, 0.15, 3)
-    const ar = (img.naturalWidth || 4) / (img.naturalHeight || 5)
+    const ar = (img.naturalWidth || img.width || 4) / (img.naturalHeight || img.height || 5)
     let w = AW * box
     let h = w / ar
     if (h > AH * box) {
@@ -1088,7 +1137,7 @@ export function mount(container, config = {}) {
       }
 
       const visible = q > 0
-      s.node.visible = visible
+      s.node.visible = visible && !s.wait
       if (params.entry.fade > 0) {
         const o = clamp01(approach / Math.max(0.05, params.entry.fade))
         s.front.material.opacity = o

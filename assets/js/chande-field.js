@@ -739,6 +739,32 @@ void main() {
     all('[data-field]').forEach((el) => {
       if (!el.closest('[data-field-root]')) addGroup(el, [el])
     })
+    prewarm()
+  }
+
+  // Dựng sẵn WebGL (tạo context + biên dịch shader + vẽ một khung) cho các vùng chưa hiện,
+  // mỗi lần rảnh một vùng — trước đây làm lúc vùng vừa cuộn vào màn, đứng trang 50–70 ms
+  // đúng lúc đang cuộn (Agenda, dải sọc, footer).
+  let warmT = 0
+  function prewarm() {
+    if (warmT) return
+    const idle = window.requestIdleCallback || ((f) => setTimeout(() => f({ timeRemaining: () => 50 }), 200))
+    const step = () => {
+      warmT = 0
+      const g = [...groups].find((x) => !x.r && !x.failed && x.root.isConnected)
+      if (!g) return
+      ensureRenderer(g)
+      if (g.r) {
+        measure(g)
+        drawGroup(g)
+      }
+      warmT = idle(step, { timeout: 4000 })
+    }
+    // đợi trang tải xong + màn loading qua hẳn rồi mới bắt đầu
+    const start = () => (warmT = idle(step, { timeout: 4000 }))
+    if (document.readyState === 'complete') setTimeout(start, 2500)
+    else addEventListener('load', () => setTimeout(start, 2500), { once: true })
+    warmT = -1
   }
 
   function destroy(scope) {

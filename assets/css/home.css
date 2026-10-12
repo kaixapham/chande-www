@@ -497,13 +497,32 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .hs-foot__col > .hs-foot__n2{margin-left:calc(-2 * var(--u))}
 .hs-foot__col > .hs-foot__face{flex:1 1 0; min-height:0; max-height:calc(272 * var(--u)); width:auto; height:auto; aspect-ratio:235 / 272}
 .hs-foot__logo{left:auto; right:calc(32 * var(--u)); top:calc(var(--bar) + 32 * var(--u));
-  height:calc(100% - var(--bar) - var(--foot-bottom) - 64 * var(--u)); width:auto; max-width:calc(870 * var(--u))}
+  height:calc(100% - var(--bar) - var(--foot-bottom) - 64 * var(--u)); width:auto; max-width:calc(870 * var(--u));
+  object-fit:contain; object-position:right top} /* khung bị chặn rộng (màn cao / tablet): logo giữ đúng tỉ lệ, không kéo dãn */
 .hs-foot__n3{top:calc(100% - 420 * var(--u))}
 .hs-foot__cta1, .hs-foot__cta2{top:calc(100% - 420 * var(--u))}
 .hs-foot__field, .hs-foot__panel, .hs-foot__vr{top:calc(100% - 328 * var(--u))}
 .hs-foot__social, .hs-foot__index{top:calc(100% - 296 * var(--u))}
 .hs-foot__hr{top:calc(100% - 59 * var(--u))}
 .hs-foot__legal{top:calc(100% - 35 * var(--u))}
+/* iPad (900–1365): chữ đo bằng --u có sàn 14px */
+@media (min-width:900px) and (max-width:1365px){
+  .names{font-size:max(14px, calc(19.153 * var(--u)))}
+}
+/* tablet / iPad (900–1365): hàng chân quá chật -> bỏ dòng credit (Made by Lumen · Design by Kaixa),
+   các ô còn lại không xuống dòng */
+@media (min-width:900px) and (max-width:1365px){
+  .hs-foot__legal{align-items:center; gap:24px}
+  .hs-foot__legal > p:last-child{display:none}
+  .hs-foot__legal > p{white-space:nowrap}
+  .hs-foot__ai > span{display:none} /* chỉ giữ 4 icon AI */
+  /* chữ to hơn (≥ 14px): ghi chú About neo mép phải; cột Site index giữ khung, phần ghi công
+     model 3D bên phải được xuống dòng (căn phải) thay vì tràn mép */
+  .hs-about__note{left:auto; right:calc(32 * var(--u))}
+  .hs-foot__index{gap:1rem}
+  .hs-foot__end{min-width:0; flex:1 1 auto}
+  .hs-foot__end .hs-foot__credit{white-space:normal}
+}
 
 /* -------------------------------------------------------------- Responsive */
 /* Dưới 900px Figma chưa có bản — giữ bố cục desktop co theo bề rộng, chỉ nới
