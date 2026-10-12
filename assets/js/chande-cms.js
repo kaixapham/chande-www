@@ -192,6 +192,14 @@
   }
 
   // Danh sách: op giữ CẢ danh sách đã sửa + các ảnh mới (đường dẫn -> blob).
+  // Danh sách có ô "num" (Số): số tự đánh theo vị trí 01, 02… — đổi chỗ / thêm / xoá là số tự đúng
+  const pad2 = (n) => String(n).padStart(2, '0')
+  const hasNum = (list) => list.kind === 'objects' && list.fields.some((f) => f.k === 'num')
+  const renum = (list, items) => {
+    if (hasNum(list)) items.forEach((it, i) => it && typeof it === 'object' && (it.num = pad2(i + 1)))
+    return items
+  }
+
   function listOp(file, list) {
     const k = opKey(file, list.key)
     if (!S.ops.has(k)) {
@@ -240,6 +248,8 @@
       } else if (op.kind === 'objects') {
         const re = new RegExp(`(<script\\b[^>]*data-cms-list="${reEsc(op.key)}"[^>]*>)([\\s\\S]*?)(</script>)`)
         if (!re.test(html)) throw new Error(`không tìm thấy danh sách ${op.key}`)
+        // số thứ tự (num) luôn theo vị trí trước khi ghi
+        op.items.forEach((it, i) => it && typeof it === 'object' && 'num' in it && (it.num = pad2(i + 1)))
         // Mỗi người một dòng như bản viết tay, dễ đọc khi xem diff.
         const json = `[\n${op.items.map((it) => `        ${JSON.stringify(it)}`).join(',\n')}\n      ]`
         html = html.replace(re, (_, a, __, c) => `${a}\n      ${json}\n      ${c}`)
@@ -442,7 +452,9 @@
           <div class="fields">
             ${list.fields.map((f) => f.area
               ? `<textarea data-k="${esc(f.k)}" rows="3" placeholder="${esc(f.label)}">${esc(it[f.k] || '')}</textarea>`
-              : `<input type="text" class="f-${esc(f.k)}${!['num', 'name'].includes(f.k) && !it[f.k] ? ' is-opt' : ''}" data-k="${esc(f.k)}" value="${esc(it[f.k] || '')}" placeholder="${esc(f.label)}" title="${esc(f.label)}">`).join('')}
+              : f.k === 'num'
+                ? `<input type="text" class="f-num" value="${pad2(i + 1)}" readonly tabindex="-1" title="Số tự đánh theo vị trí — đổi chỗ là tự đổi">`
+                : `<input type="text" class="f-${esc(f.k)}${!['num', 'name'].includes(f.k) && !it[f.k] ? ' is-opt' : ''}" data-k="${esc(f.k)}" value="${esc(it[f.k] || '')}" placeholder="${esc(f.label)}" title="${esc(f.label)}">`).join('')}
           </div>
           <div class="ops"><button class="ico" type="button" data-move="-1" title="Lên">↑</button><button class="ico" type="button" data-move="1" title="Xuống">↓</button><button class="ico ico--bad" type="button" data-del title="Xoá">✕</button></div>
         </div>`
@@ -568,7 +580,7 @@
       const itemEl = e.target.closest('[data-i]')
       const i = itemEl ? +itemEl.dataset.i : -1
       if (e.target.closest('[data-del]')) {
-        listOp(page.file, list).items.splice(i, 1)
+        renum(list, listOp(page.file, list).items.splice(i, 1) && listOp(page.file, list).items)
         return render()
       }
       if (e.target.closest('[data-move]')) {
@@ -576,13 +588,15 @@
         const j = i + +e.target.closest('[data-move]').dataset.move
         if (j < 0 || j >= items.length) return
         ;[items[i], items[j]] = [items[j], items[i]]
+        renum(list, items)
         return render()
       }
       if (e.target.closest('[data-add]')) {
         const op = listOp(page.file, list)
         const at = op.items.length
         return pick(async (f) => {
-          op.items.push(list.kind === 'objects' ? { num: String(at + 1).padStart(2, '0'), name: 'Tên', img: '' } : '')
+          op.items.push(list.kind === 'objects' ? { num: pad2(at + 1), name: 'Tên', img: '' } : '')
+          renum(list, op.items)
           await listReplaceImage(page.file, list, at, f)
         })
       }
