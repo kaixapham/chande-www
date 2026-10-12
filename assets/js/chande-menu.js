@@ -100,6 +100,15 @@
       <a class="cmenu__contact" style="${at(6, 10, 1, 3)}" href="${esc(LINKS.contact)}"><span class="cmenu__num">05</span><span class="cmenu__huge" style="--d:.6s">${lines('Contact')}</span>${dots2}</a>
     </div>`
   document.body.appendChild(root)
+  // lớp chữ ĐEN trùng khít, lộ ra theo đúng vệt quét của nền neon lúc rê (clip-path cùng nhịp với
+  // ::before) -> không bao giờ có chữ trắng nằm trên neon (đổi màu cả khối thì lệch nhịp với vệt quét)
+  root.querySelectorAll('.cmenu__big, .cmenu__contact').forEach((a) => {
+    const ink = document.createElement('span')
+    ink.className = 'cmenu__ink'
+    ink.setAttribute('aria-hidden', 'true')
+    ink.innerHTML = a.innerHTML
+    a.append(ink)
+  })
   const items = root.querySelector('.cmenu__items')
   // rê vào ô mạng xã hội: chữ tên bên dưới chạy hiệu ứng "giải mã code" (chande-scramble.js, không gạch chân)
   items.addEventListener('pointerover', (e) => {
@@ -125,7 +134,13 @@
     if (!L) return 0
     return now < L.t ? L.a : Math.max(0, L.a * (1 - (now - L.t) / LIT.fade))
   }
+  // ô nằm dưới 2 nút lớn (Become a partner / Register: hàng 4–5, cột 1–5) và Contact (hàng 6, cột
+  // 10–12): không sáng xám khi rê — nút có hover nền neon riêng, vệt xám quanh nó nhìn bẩn
+  const NO_GLOW = new Set()
+  for (let r = 3; r <= 4; r++) for (let c = 0; c <= 4; c++) NO_GLOW.add(r * COLS + c)
+  for (let c = 9; c <= 11; c++) NO_GLOW.add(5 * COLS + c)
   const strike = (k, a, now) => {
+    if (NO_GLOW.has(k)) return
     if (a <= levelOf(k, now) + 0.02) return
     const el = lineCells[k]
     lit[k] = { a, t: now + LIT.hold }

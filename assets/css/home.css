@@ -1046,3 +1046,6 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-note{left:auto; right:calc(24 * var(--u))}
   .ab-member .mono{white-space:normal}
 }
+
+/* dải ảnh hành trình About: rê vào chữ chỉ chạy hiệu ứng code, không gạch chân */
+.ab-journey__cap [data-scramble], .ab-journey__cap [data-scramble]:hover{background:none}

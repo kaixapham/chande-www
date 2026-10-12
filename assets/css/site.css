@@ -473,7 +473,9 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
 @keyframes cmenu-ln{from{clip-path:inset(0 -10% 100% -10%); translate:0 60%} to{clip-path:inset(-40% -10% -40% -10%); translate:0 0}}
 .cmenu__big .cmenu__arr, .cmenu__contact .cmenu__arr{position:absolute; top:calc(18 * var(--u)); right:calc(18 * var(--u)); width:calc(22 * var(--u)); height:calc(22 * var(--u)); min-width:14px; min-height:14px;
   opacity:0; transition:opacity .2s ease}
-.cmenu__big:hover, .cmenu__contact:hover{color:#000}
+.cmenu__ink{position:absolute; inset:0; display:inherit; flex-direction:inherit; align-items:inherit; justify-content:inherit;
+  gap:inherit; padding:inherit; color:#000; clip-path:inset(0 100% 0 0); transition:clip-path .45s cubic-bezier(.65,0,.35,1); pointer-events:none}
+.cmenu__big:hover .cmenu__ink, .cmenu__contact:hover .cmenu__ink{clip-path:inset(0 0 0 0)}
 .cmenu__big:hover::before, .cmenu__contact:hover::before{transform:none}
 .cmenu__big:hover .cmenu__arr, .cmenu__contact:hover .cmenu__arr{opacity:1; transition:opacity .3s ease .2s}
 .cmenu__social{display:flex; flex-direction:column; justify-content:space-between; padding:calc(26 * var(--u)) calc(16 * var(--u)) calc(20 * var(--u));

@@ -8,7 +8,7 @@
  *     hoà kiểu overlay, chỉ trên phần ảnh có màu (ảnh tách nền giữ trong suốt). Bộ lọc
  *     chỉ tính khi ảnh được VẼ, cuộn / parallax (transform) không vẽ lại.
  * Chỉ áp cho 4 ô ảnh người ở hero trang chủ (canvas chân dung + ảnh dự phòng), dải ảnh hành trình
- * ở About và lớp vỡ ô (chande-imgtiles.js) lúc đang rê các ảnh đó.
+ * + ảnh sự kiện (Events) ở About và lớp vỡ ô (chande-imgtiles.js) lúc đang rê các ảnh đó.
  * Bật / tắt + chỉnh số ở trang film.html (lưu vào chande-settings.js, khoá "film.*").
  *
  * API: window.CHANDE_FILM = { config, defaults, apply(), filterCSS() }
@@ -34,7 +34,7 @@
   // dung hero và lớp vỡ ô thì "nướng" màu + hạt thẳng vào điểm ảnh lúc vẽ (bake() bên dưới): để
   // bộ lọc CSS / SVG trên canvas đang chuyển động thì trình duyệt lọc lại cả 4 ô MỖI KHUNG lúc đổi
   // ảnh -> tụt còn 20–30 khung/giây.
-  const SEL = ['.hero-card__media img', '.ab-journey__track img']
+  const SEL = ['.hero-card__media img', '.ab-journey__track img', '.ab-events__img img']
 
   // ô hạt xám ngẫu nhiên 128 × 128, alpha = độ đậm (overlay: xám giữa = không đổi)
   let tileKey = ''
