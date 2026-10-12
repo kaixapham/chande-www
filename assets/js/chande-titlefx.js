@@ -30,7 +30,7 @@
 
   const CONFIG = {
     enabled: true,
-    selector: '.hs-about__statement', // (2 đoạn chữ lớn trang About đã thử, Kaixa bỏ) (Agenda, danh sách vai trò đã bỏ — quá nặng) tiêu đề áp hiệu ứng (nhiều cái: cách nhau dấu phẩy)
+    selector: '.hs-about__statement, .ab-aim', // + câu lớn "We aim…" trang About; (2 đoạn chữ lớn trang About đã thử, Kaixa bỏ) (Agenda, danh sách vai trò đã bỏ — quá nặng) tiêu đề áp hiệu ứng (nhiều cái: cách nhau dấu phẩy)
     color: '#000000', // màu chữ sau khi tô xong
     accent: '#68f12b', // màu chuyển (dải ở mép quét)
     base: '#000000', // màu chữ lúc chưa tô

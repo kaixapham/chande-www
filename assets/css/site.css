@@ -263,7 +263,7 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
 }
 .hero__scroll > span:first-child{text-box:trim-both cap alphabetic; --tb:1}
 .hero__dots{
-  display:flex; align-items:center; gap:.5rem; height:.6875rem; padding:0 .5rem;
+  display:flex; align-items:center; gap:.5rem; height:calc(.6875rem + 2px); margin-block:-1px; padding:0 .5rem; /* cao thêm 1px trên + 1px dưới; margin âm giữ nguyên cao hàng -> chữ Scroll more không bị đẩy lệch */
   border:1px solid rgba(244,243,235,.2); border-radius:999px;
 }
 .hero__dots img{width:.25rem; height:.25rem; animation:hero-dot 1.6s ease-in-out infinite}

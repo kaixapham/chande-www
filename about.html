@@ -22,10 +22,10 @@
 <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/vendor/lenis.css">
-<link rel="stylesheet" href="assets/css/site.css?v=202610120638">
-<link rel="stylesheet" href="assets/css/home.css?v=202610120638">
-<link rel="stylesheet" href="assets/css/gallery.css?v=202610120638">
-<link rel="stylesheet" href="assets/css/form.css?v=202610120638">
+<link rel="stylesheet" href="assets/css/site.css?v=202610121052">
+<link rel="stylesheet" href="assets/css/home.css?v=202610121052">
+<link rel="stylesheet" href="assets/css/gallery.css?v=202610121052">
+<link rel="stylesheet" href="assets/css/form.css?v=202610121052">
 <!-- Khung hình đầu: màn loading do JS dựng ở cuối trang, nên trước đó tô nền tối + ẩn
      nội dung (không chớp nền kem). chande-loading.js gỡ cl-boot ngay khi đã gắn màn loading. -->
 <style>html.cl-boot,html.cl-boot body{background:#182220}html.cl-boot body>:not(.cl){visibility:hidden}</style>
@@ -52,23 +52,16 @@
            trên: ảnh nhà sàn | mảng tối dither + chữ giới thiệu
            dưới: mảng kem dither + tiêu đề lớn | mảng gạch neon (chande-field.js) -->
     <section class="ab-hero" data-cms-section="About — Hero" aria-label="Về Chande Bootcamp">
-      <!-- data-bubble-logo: bubble thành khối thuỷ tinh hình logo, đứng ở tâm stage (giao 4 mảng) -->
-      <div class="ab-hero__stage field-root" data-field-root data-bubble-logo>
+      <!-- (đã tắt khối thuỷ tinh hình logo của bubble ở hero — muốn bật lại: thêm data-bubble-logo vào div dưới) -->
+      <div class="ab-hero__stage field-root" data-field-root>
         <div class="ab-hero__photo" data-hero-dither="#182220" data-levels="8">
           <img data-parallax data-cms="about-hero-photo" data-cms-label="Ảnh lớn hero About" data-cms-w="960"
-               src="assets/img/about/hero-mountain.webp" alt="Người nằm thư giãn trên đồi cỏ, phía xa là dãy núi đá và mây">
+               src="assets/img/about/hero-photo.webp" alt="Chiếc ghế nhựa tráng bạc giữa bãi cỏ điểm hoa">
         </div>
         <div class="ab-hero__dark" data-hero-dither="#131313" data-levels="8">
           <div class="ab-hero__intro">
             <p>Mingg Patreon<br>Established in 2020</p>
             <p>A community connecting event<br>for Vietnamese designers.<br>In the most peaceful way.</p>
-          </div>
-          <!-- Scroll more (giống hero trang chủ), cách lề phải 24, chân chữ thẳng chân chữ giới thiệu -->
-          <div class="ab-hero__scroll">
-            <div class="hero__scroll">
-              <span>Scroll more</span>
-              <span class="hero__dots" aria-hidden="true"><img src="assets/img/home/dot.svg" alt="" width="4" height="4"><img src="assets/img/home/dot.svg" alt="" width="4" height="4"><img src="assets/img/home/dot.svg" alt="" width="4" height="4"></span>
-            </div>
           </div>
         </div>
         <div class="ab-hero__cream" data-hero-dither="#f4f3eb" data-levels="8">
@@ -93,20 +86,20 @@
       <i class="abs ab-pill ab-pill--1" aria-hidden="true"></i>
       <i class="abs ab-pill ab-pill--2" aria-hidden="true"></i>
       <i class="abs ab-pill ab-pill--3" aria-hidden="true"><span class="ab-eye"><img src="assets/img/about/eye.webp" alt="" loading="lazy"></span></i>
-      <img data-parallax data-cms="about-founder" data-cms-label="Ảnh người sáng lập" data-cms-w="234" class="abs ab-founder" src="assets/img/about/founder.webp" alt="Khắc Minh Nguyễn (Mingg), người sáng lập Mingg Patreon" loading="lazy">
+      <div class="abs ab-founder__pin"><img data-cms="about-founder" data-cms-label="Ảnh người sáng lập" data-cms-w="234" class="ab-founder" src="assets/img/about/founder-2.webp" alt="Khắc Minh Nguyễn (Mingg), người sáng lập Mingg Patreon" loading="lazy"></div>
       <div class="abs ab-circles" aria-hidden="true">
         <div class="circle" data-creature="bird"><img class="ring" src="assets/img/about/circle-a-ring.svg" loading="lazy" alt=""><img class="tex" src="assets/img/about/circle-a-tex.webp" loading="lazy" alt=""><img class="core" src="assets/img/about/circle-a-core.svg" loading="lazy" alt=""><img class="peek" data-cms="about-circle-a-peek" data-cms-label="Vòng trái — ảnh lộ qua bubble" data-cms-w="900" src="assets/img/home/circle-2-marble.webp" alt="" loading="lazy"></div>
         <div class="circle" data-creature="flower"><img class="ring" src="assets/img/about/circle-b-ring.svg" loading="lazy" alt=""><img class="core" src="assets/img/about/circle-b-core.svg" loading="lazy" alt=""><img class="tex tex--dim" src="assets/img/about/circle-b-tex.webp" loading="lazy" alt=""><img class="peek" data-cms="about-circle-b-peek" data-cms-label="Vòng phải — ảnh lộ qua bubble (nền sau hoa)" data-cms-w="900" src="assets/img/home/circle-3-water.webp" alt="" loading="lazy"></div>
       </div>
-      <p class="abs ab-note">We don&rsquo;t say who will<br>be replaced (by AI).<br>We listen to each individual.</p>
+      <div class="abs ab-note"><p>A journey of diligent<br>effort then<br><span class="ab-note__in">suddenly showing</span></p><span>(Talent)</span></div>
       <div class="abs ab-cols">
         <div class="ab-col">
           <div class="ab-stripes" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
           <article class="ab-panel ab-panel--a">
             <h3 class="ab-panel__t">Visual focus</h3>
             <div class="ab-panel__text mono">
-              <p>[ Xây dựng cho ]</p>
-              <p>Founded by Khac Mingg Nguyen, a Patreon and Discord group dedicated to UI/UX designers, we embody a spirit of sharing and mutual learning. Operating for 6 years, we have hosted many special events.</p>
+              <p>[ Focus on building the visual foundation ]</p>
+              <p>With the videos on Patreon, along with the help of key members who have knowledge in UI visual design. The group focuses on building aesthetic sense, while not neglecting logical thinking to produce high-quality standard products.</p>
             </div>
           </article>
           <div class="ab-field field" data-field></div>
@@ -117,8 +110,8 @@
           <article class="ab-panel ab-panel--b">
             <h3 class="ab-panel__t">Sharing &amp; learning</h3>
             <div class="ab-panel__text mono">
-              <p>[ Xây dựng cho ]</p>
-              <p>Founded by Khac Mingg Nguyen, a Patreon and Discord group dedicated to UI/UX designers, we embody a spirit of sharing and mutual learning. Operating for 6 years, we have hosted many special events.</p>
+              <p>[ A community of learning ]</p>
+              <p>Regardless of age or level, we hope to discover passion and enthusiasm in every individual. This group does not follow a teacher-student model - we aim for a spirit of mutual learning, growing together in design and all aspects of life.</p>
             </div>
           </article>
         </div>
@@ -127,51 +120,93 @@
       <div class="abs ab-scheme"><div class="scheme" data-flip3d aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
     </section>
 
-    <!-- SỰ KIỆN — khung tối "Memorable events (05)" + gạch neon, chữ mono, ảnh, danh sách sự kiện + năm -->
+    <!-- SỰ KIỆN — Figma 581:41898 từ y 5143 (toạ độ trong section, --u = 1px khổ 1920):
+         khung tối "Memorable events (07)" + gạch neon (540) ·
+         MÀN SỰ KIỆN (đúng 1 viewport dưới thanh menu): chữ mono "Every year…" (sticky top) ·
+         "What we have achieved (together)" · 7 sự kiện + năm · ảnh sticky đáy đổi theo nấc cuộn.
+         Mọi thứ từ danh sách trở xuống dời theo --vx = (cao màn − thanh menu) − 1000 (Figma 1920×1080:
+         --vx = 0) -> màn sự kiện luôn vừa 1 viewport ·
+         vòng "Key members" · (Vision) / (Our mission) · gạch đứt · dải ảnh "An exciting journey" (chạy) ·
+         câu lớn · tem · 2 nút Become a partner / Contact -->
     <section class="hs ab-events" data-cms-section="About — Sự kiện" aria-label="Các sự kiện">
       <div class="abs ab-events__dark">
         <img class="ab-events__logo" src="assets/img/home/logo-mark.svg" alt="" width="104" height="71.7241">
-        <h2 class="ab-events__t"><span>Memorable</span><span>Events <em>(05)</em></span></h2>
+        <h2 class="ab-events__t"><span>Memorable</span><span>Events      <em>(07)</em></span></h2>
       </div>
       <div class="abs ab-events__field field" data-field></div>
-      <div class="abs ab-events__notepin"><p class="mono ab-events__note">We do not only stop at roles around UI/UX design; we believe design has a common root.</p></div>
+      <div class="abs ab-events__notepin"><div class="mono ab-events__note"><p>Every year,</p><p>Mingg Patreon community holds a major event in the group to maintain connection and strengthen the bonds among its members.</p><span class="ab-events__chande">(Chande)</span></div></div>
       <!-- ảnh sticky đáy, đổi theo nấc cuộn: 7 nấc = 7 dòng sự kiện (chande-steps.js) -->
       <div class="abs ab-events__pin" data-steps><div class="ab-events__stick" data-steps-stick>
         <p class="mono ab-events__cap" aria-live="polite"><span data-steps-year>[ 2019 ]</span><span data-steps-name>[ UI visual Patreon ]</span></p>
         <div class="ab-events__img" data-steps-media><img data-cms="about-event-1" data-step-year="2019" data-cms-label="Ảnh sự kiện 1 — UI visual Patreon" data-cms-w="468" src="assets/img/about/event-1.webp" alt="UI visual Patreon" class="is-on" loading="lazy"><img data-cms="about-event-2" data-step-year="2020" data-cms-label="Ảnh sự kiện 2 — Amazing race" data-cms-w="468" src="assets/img/about/event-2.webp" alt="Amazing race" loading="lazy"><img data-cms="about-event-3" data-step-year="2022" data-cms-label="Ảnh sự kiện 3 — Product designer" data-cms-w="468" src="assets/img/about/event-3.webp" alt="Product designer" loading="lazy"><img data-cms="about-event-4" data-step-year="2023" data-cms-label="Ảnh sự kiện 4 — 30days layout practice" data-cms-w="468" src="assets/img/about/event-4.webp" alt="30days layout practice" loading="lazy"><img data-cms="about-event-5" data-step-year="2024" data-cms-label="Ảnh sự kiện 5 — DHVL - Design battle" data-cms-w="468" src="assets/img/about/event-5.webp" alt="DHVL - Design battle" loading="lazy"><img data-cms="about-event-6" data-step-year="2025" data-cms-label="Ảnh sự kiện 6 — Chande SS1: Design challenge" data-cms-w="468" src="assets/img/about/event-6.webp" alt="Chande SS1: Design challenge" loading="lazy"><img data-cms="about-event-7" data-step-year="2026" data-cms-label="Ảnh sự kiện 7 — Chande SS2: Bootcamp" data-cms-w="468" src="assets/img/about/event-7.webp" alt="Chande SS2: Bootcamp" loading="lazy"></div>
       </div></div>
-      <h2 class="abs d48 ab-events__ach">Achievements</h2>
-      <ul class="abs ab-events__list">
-        <li>UI visual Patreon <span>2019</span></li><li>Amazing race <span>2020</span></li><li>Product designer <span>2022</span></li><li>30days layout practice <span>2023</span></li><li>DHVL - Design battle <span>2024</span></li><li>Chande SS1: Design challenge <span>2025</span></li><li>Chande SS2: Bootcamp <span>2026</span></li>
-      </ul>
-    </section>
-
-    <!-- KHÉP LẠI — Figma 639:47135 … (kem): dải ảnh sự kiện (sọc màu · 4 ảnh · dải viên chạy · 4 ảnh ·
-         sọc đảo) · 2 đoạn chữ lớn · con tem vịt -->
-    <section class="hs ab-more" data-cms-section="About — Cộng đồng" aria-label="Cộng đồng Mingg Patreon">
-      <div class="abs ab-strip">
+      <h2 class="abs d48 ab-events__ach">What we have<br>achieved&nbsp; (together)</h2>
+      <div class="abs ab-events__listbox">
+        <ul class="ab-events__list">
+          <li>UI visual Patreon <span>2019</span></li><li>Amazing race <span>2020</span></li><li>Product designer <span>2022</span></li><li>30days layout practice <span>2023</span></li><li>DHVL - Design battle <span>2024</span></li><li>Chande SS1: Design challenge <span>2025</span></li><li>Chande SS2: Bootcamp <span>2026</span></li>
+        </ul>
         <div class="ab-stripes ab-stripes--thin" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-        <div class="ab-strip__row"><img data-cms="about-strip-1" data-cms-label="Dải ảnh sự kiện — ảnh 1" data-cms-w="234" src="assets/img/about/strip-1.webp" alt="Khoảnh khắc tại các sự kiện của cộng đồng" loading="lazy"><img data-cms="about-strip-2" data-cms-label="Dải ảnh sự kiện — ảnh 2" data-cms-w="234" src="assets/img/about/strip-2.webp" alt="Khoảnh khắc tại các sự kiện của cộng đồng" loading="lazy"><img data-cms="about-strip-3" data-cms-label="Dải ảnh sự kiện — ảnh 3" data-cms-w="234" src="assets/img/about/strip-3.webp" alt="Khoảnh khắc tại các sự kiện của cộng đồng" loading="lazy"><img data-cms="about-strip-4" data-cms-label="Dải ảnh sự kiện — ảnh 4" data-cms-w="234" src="assets/img/about/strip-4.webp" alt="Khoảnh khắc tại các sự kiện của cộng đồng" loading="lazy"></div>
-        <div class="ab-run" aria-hidden="true"><div class="pillrun pillrun--sm" data-marquee><div class="pillrun__track"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
-        <div class="ab-strip__row"><img data-cms="about-strip-5" data-cms-label="Dải ảnh sự kiện — ảnh 5" data-cms-w="234" src="assets/img/about/strip-5.webp" alt="Khoảnh khắc tại các sự kiện của cộng đồng" loading="lazy"><img data-cms="about-strip-6" data-cms-label="Dải ảnh sự kiện — ảnh 6" data-cms-w="234" src="assets/img/about/strip-6.webp" alt="Khoảnh khắc tại các sự kiện của cộng đồng" loading="lazy"><img data-cms="about-strip-7" data-cms-label="Dải ảnh sự kiện — ảnh 7" data-cms-w="234" src="assets/img/about/strip-7.webp" alt="Khoảnh khắc tại các sự kiện của cộng đồng" loading="lazy"><img data-cms="about-strip-8" data-cms-label="Dải ảnh sự kiện — ảnh 8" data-cms-w="234" src="assets/img/about/strip-8.webp" alt="Khoảnh khắc tại các sự kiện của cộng đồng" loading="lazy"></div>
+      </div>
+
+      <!-- vòng "Key members" (Figma 648:47453): vòng neon 936 · vạch 904 · lõi 648 · ảnh 216 + cung neon =
+           THANH TIẾN TRÌNH: chạy hết một vòng thì đổi sang người kế tiếp trong danh sách (chande-members.js) -->
+      <div class="abs ab-member" data-members data-peek-tint="#21392a">
+        <img class="ab-member__tex tex" src="assets/img/about/member-tex.webp" alt="" loading="lazy">
+        <img class="peek" data-member-peek src="assets/img/cms/index/hero-people-9-mv4svavi.webp" alt="" loading="lazy">
+        <div class="ab-member__core">
+          <p class="mono ab-member__t">[ Key members ]</p>
+          <div class="ab-member__row">
+            <p class="mono" data-member-name>[ Huu Phap ]</p>
+            <div class="ab-member__face" data-member-face>
+              <img class="core" src="assets/img/about/member-1.webp" alt="Huu Phap — Co-host" loading="lazy">
+              <svg class="ab-member__arc" viewBox="0 0 216 216" aria-hidden="true"><circle cx="108" cy="108" r="107" pathLength="100" data-member-bar/></svg>
+            </div>
+            <p class="mono" data-member-role>[ Co-host ]</p>
+          </div>
+          <p class="mono ab-member__t" data-member-meta>[ 1993 - Hanoi ]</p>
+        </div>
+        <script type="application/json" data-member-list data-cms-list="about-members" data-cms-label="Key members — lần lượt theo thanh tiến trình" data-cms-w="216" data-cms-fields="name:Tên|role:Vai trò|meta:Năm sinh - Quê" data-cms-images="img:Ảnh thành viên:216|peek:Ảnh lộ qua bubble:648">
+        [
+          {"name":"Huu Phap","role":"Co-host","meta":"1993 - Hanoi","img":"assets/img/about/member-1.webp","peek":"assets/img/cms/index/hero-people-9-mv4svavi.webp"},
+          {"name":"Kaixa","role":"Co-host","meta":"1995 - Hanoi","img":"assets/img/cms/index/hero-people-10-mv3l5u4j.webp","peek":"assets/img/about/journey-5.webp"},
+          {"name":"Blacknuts","role":"Co-host","meta":"1997 - Namdinh","img":"assets/img/cms/index/hero-people-11-mv4wvgyt.webp","peek":"assets/img/about/journey-7.webp"}
+        ]
+        </script>
+      </div>
+
+      <div class="abs ab-vision">
         <div class="ab-stripes ab-stripes--thin ab-stripes--rev" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="d48 ab-vision__box">
+          <div class="ab-vision__text">
+            <p>Through countless events and the dedication of its core members, the Mingg Patreon Discord has become a place that brings people together: to talk design, &amp; to share every other part of life too.</p>
+            <p>We&rsquo;re building a community where anyone can share, connect, and learn, whatever their level. All it takes is a positive spirit and a willingness to grow, and our members will always be there to help you get better.</p>
+          </div>
+          <span class="ab-vision__tag ab-vision__tag--v">(Vision)</span>
+          <span class="ab-vision__tag ab-vision__tag--m">(Our mission)</span>
+        </div>
       </div>
-      <div class="abs d48 ab-more__text">
-        <p>Through countless events and the dedication of its core members, the Mingg Patreon Discord has become a place that brings people together: to talk design, and to share every other part of life too.</p>
-        <p>We&rsquo;re building a community where anyone can share, connect, and learn, whatever their level. All it takes is a positive spirit and a willingness to grow, and our members will always be there to help you get better.</p>
+      <i class="abs ab-events__hr" aria-hidden="true"></i>
+
+      <div class="abs ab-journey">
+        <p class="mono ab-journey__cap"><span>[ 2020-2026 ]</span><span>[ An exciting journey ]</span></p>
+        <div class="ab-journey__run" data-marquee><div class="ab-journey__track" data-loop><img data-cms="about-journey-1" data-cms-label="Dải ảnh hành trình — ảnh 1" data-cms-w="234" src="assets/img/about/journey-1.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"><img data-cms="about-journey-2" data-cms-label="Dải ảnh hành trình — ảnh 2" data-cms-w="234" src="assets/img/about/journey-2.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"><img data-cms="about-journey-3" data-cms-label="Dải ảnh hành trình — ảnh 3" data-cms-w="234" src="assets/img/about/journey-3.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"><img data-cms="about-journey-4" data-cms-label="Dải ảnh hành trình — ảnh 4" data-cms-w="234" src="assets/img/about/journey-4.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"><img data-cms="about-journey-5" data-cms-label="Dải ảnh hành trình — ảnh 5" data-cms-w="234" src="assets/img/about/journey-5.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"><img data-cms="about-journey-6" data-cms-label="Dải ảnh hành trình — ảnh 6" data-cms-w="234" src="assets/img/about/journey-6.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"><img data-cms="about-journey-7" data-cms-label="Dải ảnh hành trình — ảnh 7" data-cms-w="234" src="assets/img/about/journey-7.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"><img data-cms="about-journey-8" data-cms-label="Dải ảnh hành trình — ảnh 8" data-cms-w="234" src="assets/img/about/journey-8.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"><img data-cms="about-journey-9" data-cms-label="Dải ảnh hành trình — ảnh 9" data-cms-w="234" src="assets/img/about/journey-9.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"><img data-cms="about-journey-10" data-cms-label="Dải ảnh hành trình — ảnh 10 (ảnh tạm)" data-cms-w="234" src="assets/img/about/event-2.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"><img data-cms="about-journey-11" data-cms-label="Dải ảnh hành trình — ảnh 11 (ảnh tạm)" data-cms-w="234" src="assets/img/about/event-3.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"><img data-cms="about-journey-12" data-cms-label="Dải ảnh hành trình — ảnh 12 (ảnh tạm)" data-cms-w="234" src="assets/img/about/event-4.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"><img data-cms="about-journey-13" data-cms-label="Dải ảnh hành trình — ảnh 13 (ảnh tạm)" data-cms-w="234" src="assets/img/about/event-5.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"><img data-cms="about-journey-14" data-cms-label="Dải ảnh hành trình — ảnh 14 (ảnh tạm)" data-cms-w="234" src="assets/img/about/event-6.webp" alt="Khoảnh khắc trên hành trình 2020–2026 của cộng đồng" loading="lazy"></div></div>
       </div>
-      <div class="abs ab-amid">
-        <p>Amid the relentless (rise of AI).</p>
-        <p>We long for a space rooted in nature, a place of deep (stillness).</p>
-        <p>Here we slow down together,</p>
+      <div class="abs ab-aim">
+        <p>We aim to take Vietnamese pride global, proven by quality, professionalism, and the respect of leading designers.</p>
+        <p>A hard road, but worth it.</p>
       </div>
+      <img data-cms="about-stamp" data-cms-label="Con tem" data-cms-w="218" class="abs ab-stamp" src="assets/img/about/stamp.webp" alt="" width="218" height="254" loading="lazy">
+      <nav class="abs pills mono ab-events__cta" aria-label="Liên hệ">
+        <a class="pill pill--green" href="partner.html">Become a partner</a>
+        <a class="pill pill--lime" href="mailto:hello@chandebootcamp.com">Contact</a>
+      </nav>
     </section>
 
     <!-- ALWAYS A COMMUNITY — Figma 639:47242 (780): dải màu lật 3D · ảnh đường làng · gạch neon ·
          dải chấm chạy trên nền neon + tiêu đề (giống khối cuối About trang chủ) -->
     <section class="hs ab-comm" data-cms-section="About — Always a community" aria-label="Always a community">
       <div class="abs scheme ab-comm__scheme" data-flip3d aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <img data-parallax data-cms="about-comm" data-cms-label="Ảnh giữa dải màu và mảng gạch" data-cms-w="468" class="abs ab-comm__img" src="assets/img/about/community-road.webp" alt="Mọi người đi dạo trên con đường làng giữa rừng xanh" loading="lazy">
+      <img data-parallax data-cms="about-comm" data-cms-label="Ảnh giữa dải màu và mảng gạch" data-cms-w="468" class="abs ab-comm__img" src="assets/img/about/community-2.webp" alt="Tấm thiệp Chande Bootcamp đặt trên lan can gỗ giữa cây xanh" loading="lazy">
       <div class="abs ab-comm__field field" data-field></div>
       <div class="abs ab-comm__band">
         <div class="dotrun" data-marquee aria-hidden="true"><div class="dotrun__track"></div></div>
@@ -256,41 +291,42 @@
 <script src="assets/vendor/gsap.min.js"></script>
 <script src="assets/vendor/CustomEase.min.js"></script>
 
-<script src="assets/js/chande-settings.js?v=202610120638"></script>
-<script src="assets/js/chande-loading.js?v=202610120638"></script>
-<script src="assets/js/chande-textbox.js?v=202610120638"></script>
-<script src="assets/js/chande-menu.js?v=202610120638"></script>
-<script src="assets/js/chande-transition.js?v=202610120638"></script>
-<script src="assets/js/chande-reveal.js?v=202610120638"></script>
-<script src="assets/js/chande-hero.js?v=202610120638"></script>
-<script src="assets/js/chande-field.js?v=202610120638"></script>
-<script src="assets/js/chande-home.js?v=202610120638"></script>
-<script src="assets/js/chande-cursor.js?v=202610120638"></script>
-<script src="assets/js/chande-bubble.js?v=202610120638"></script>
-<script src="assets/js/chande-tilt.js?v=202610120638"></script>
-<script src="assets/js/chande-imgtiles.js?v=202610120638"></script>
-<script src="assets/js/chande-parallax.js?v=202610120638"></script>
-<script src="assets/js/chande-titlefx.js?v=202610120638"></script>
-<script src="assets/js/chande-eye.js?v=202610120638"></script>
-<script src="assets/js/chande-chips.js?v=202610120638"></script>
-<script src="assets/js/chande-story.js?v=202610120638"></script>
-<script src="assets/js/chande-circles.js?v=202610120638"></script>
-<script src="assets/js/chande-steps.js?v=202610120638"></script>
-<script src="assets/js/chande-scramble.js?v=202610120638"></script>
-<script src="assets/js/chande-sign.js?v=202610120638"></script>
-<script src="assets/js/chande-gallery.js?v=202610120638"></script>
-<script src="assets/js/chande-form.js?v=202610120638"></script>
+<script src="assets/js/chande-settings.js?v=202610121052"></script>
+<script src="assets/js/chande-loading.js?v=202610121052"></script>
+<script src="assets/js/chande-textbox.js?v=202610121052"></script>
+<script src="assets/js/chande-menu.js?v=202610121052"></script>
+<script src="assets/js/chande-transition.js?v=202610121052"></script>
+<script src="assets/js/chande-reveal.js?v=202610121052"></script>
+<script src="assets/js/chande-hero.js?v=202610121052"></script>
+<script src="assets/js/chande-field.js?v=202610121052"></script>
+<script src="assets/js/chande-home.js?v=202610121052"></script>
+<script src="assets/js/chande-cursor.js?v=202610121052"></script>
+<script src="assets/js/chande-bubble.js?v=202610121052"></script>
+<script src="assets/js/chande-tilt.js?v=202610121052"></script>
+<script src="assets/js/chande-imgtiles.js?v=202610121052"></script>
+<script src="assets/js/chande-parallax.js?v=202610121052"></script>
+<script src="assets/js/chande-titlefx.js?v=202610121052"></script>
+<script src="assets/js/chande-eye.js?v=202610121052"></script>
+<script src="assets/js/chande-chips.js?v=202610121052"></script>
+<script src="assets/js/chande-story.js?v=202610121052"></script>
+<script src="assets/js/chande-circles.js?v=202610121052"></script>
+<script src="assets/js/chande-steps.js?v=202610121052"></script>
+<script src="assets/js/chande-members.js?v=202610121052"></script>
+<script src="assets/js/chande-scramble.js?v=202610121052"></script>
+<script src="assets/js/chande-sign.js?v=202610121052"></script>
+<script src="assets/js/chande-gallery.js?v=202610121052"></script>
+<script src="assets/js/chande-form.js?v=202610121052"></script>
 <!-- Module: tự nạp paper-stack.js + three (assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-poster.js?v=202610120638"></script>
+<script type="module" src="assets/js/chande-poster.js?v=202610121052"></script>
 <!-- Module: vịt patin 3D trên lưới gallery (three ở assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-duck.js?v=202610120638"></script>
+<script type="module" src="assets/js/chande-duck.js?v=202610121052"></script>
 <!-- Module: thảm cỏ 3D dưới lưới gallery (preset data-floor="grass-3d"). -->
-<script type="module" src="assets/js/chande-grass.js?v=202610120638"></script>
+<script type="module" src="assets/js/chande-grass.js?v=202610121052"></script>
 <!-- Module: cá koi 3D bơi trong lõi vòng tròn About khi bubble ở tâm (three nạp động). -->
-<script type="module" src="assets/js/chande-koi.js?v=202610120638"></script>
+<script type="module" src="assets/js/chande-koi.js?v=202610121052"></script>
 <!-- Module: bướm bay ra khỏi vòng 1, bay theo cuộn tới cuối trang chủ (three nạp động). -->
-<script type="module" src="assets/js/chande-flyer.js?v=202610120638"></script>
+<script type="module" src="assets/js/chande-flyer.js?v=202610121052"></script>
 <!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
-<script src="assets/js/chande-devtools.js?v=202610120638"></script>
+<script src="assets/js/chande-devtools.js?v=202610121052"></script>
 </body>
 </html>

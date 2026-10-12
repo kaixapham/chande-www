@@ -372,6 +372,10 @@ function buildFlowers() {
     geo.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seed, 1))
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, uniforms)
+      // bông (cánh + nhuỵ) tự toả sáng thêm -> nổi lên giữa nền, lá / cành giữ độ tối
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying float vHead;')
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * vHead * 0.75;')
       sh.vertexShader = sh.vertexShader
         .replace(
           '#include <common>',
@@ -382,11 +386,13 @@ function buildFlowers() {
           attribute float aHead;
           attribute float aDelay;
           attribute float aSeed;
+          varying float vHead;
           float bloom(float p) { if (p <= 0.0) return 0.0; float q = p - 1.0; return 1.0 + 2.2 * q * q * q + 1.2 * q * q; }`
         )
         .replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
+          vHead = aHead;
           float g0 = clamp((uT - aDelay) / 0.9, 0.0, 1.0);
           float g = 1.0 - (1.0 - g0) * (1.0 - g0) * (1.0 - g0);
           if (aHead > 0.5) {

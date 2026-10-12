@@ -38,12 +38,13 @@
   function mount(root = document) {
     destroy()
     const scope = root.querySelector ? root : document
-    const circles = [...scope.querySelectorAll('.hs-about .circle, .ab-circles .circle')] // trang chủ (3 vòng) / trang About (2 vòng)
+    const circles = [...scope.querySelectorAll('.hs-about .circle, .ab-circles .circle, .ab-member[data-members]')] // trang chủ (3 vòng) / trang About (2 vòng + vòng Key members)
       // data-peek-fill="#màu": lòng bubble là màu trơn thay cho ảnh (vòng 1 — nền trắng cho bướm 3D)
       .map((c) => ({ c, core: c.querySelector('.core') || c, peek: c.querySelector('.peek'), fill: c.dataset.peekFill, tex: c.querySelector('.tex'), rot: 0, vel: 0 }))
       .filter((o) => o.peek || o.fill)
     const dpr = Math.min(devicePixelRatio || 1, 2)
-    const CORE = 324 / 468 // lõi / vòng ngoài (home.css)
+    // lõi / vòng ngoài: 324 / 468 ở các vòng thường; vòng Key members lõi = ảnh 216 / 936 -> đo thật
+    const coreK = (o) => (o.core !== o.c && o.c.offsetWidth ? o.core.offsetWidth / o.c.offsetWidth : 324 / 468)
     // so le mép theo từng ô (cố định, không nhấp nháy)
     const jit = Array.from({ length: 997 }, () => Math.random() - 0.5)
     for (const o of circles) {
@@ -72,7 +73,8 @@
           o.tint = `${d[0]},${d[1]},${d[2]}`
         } catch {}
       }
-      if (o.core.complete && o.core.naturalWidth) readTint()
+      if (o.c.dataset.peekTint) o.tint = o.c.dataset.peekTint.replace(/^#(..)(..)(..)$/, (_, r, g, b) => `${parseInt(r, 16)},${parseInt(g, 16)},${parseInt(b, 16)}`) // màu nền cố định
+      else if (o.core.complete && o.core.naturalWidth) readTint()
       else o.core.addEventListener('load', readTint, { once: true })
     }
     // Vẽ lên canvas phủ cả vòng tròn ngoài; (bx, by, R) = bubble trong toạ độ canvas (px CSS).
@@ -88,7 +90,7 @@
       o.drawn = false
       const img = o.peek
       if (R < 1 || (!o.fill && (!img.complete || !img.naturalWidth))) return
-      const D = W * CORE // đường kính lõi
+      const D = W * coreK(o) // đường kính lõi
       const co = (W - D) / 2
       const c = D / CONFIG.cells
       const nn = Math.ceil(W / c)

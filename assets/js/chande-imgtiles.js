@@ -22,7 +22,7 @@
 
   const CONFIG = {
     enabled: true,
-    selector: '[data-hero-slot] .hero-card__media',
+    selector: '[data-hero-slot] .hero-card__media, .ab-journey__track img', // 4 ảnh hero trang chủ · dải ảnh "An exciting journey" trang About
     cellScale: 1, // nhân cỡ ô so với ô của mảng xanh
   }
   window.CHANDE_SETTINGS_APPLY?.('imgtiles', CONFIG)
@@ -199,6 +199,17 @@ void main() {
       snap.height = h
     }
     sctx.clearRect(0, 0, w, h)
+    // phần tử là chính ảnh (dải ảnh About): vẽ đúng phần cắt object-fit: cover
+    if (el instanceof HTMLImageElement) {
+      if (!el.naturalWidth) return
+      const k = Math.max(w / el.naturalWidth, h / el.naturalHeight)
+      const sw = w / k
+      const sh = h / k
+      try {
+        sctx.drawImage(el, (el.naturalWidth - sw) / 2, (el.naturalHeight - sh) / 2, sw, sh, 0, 0, w, h)
+      } catch (e) {}
+      return
+    }
     for (const c of el.children) {
       if (!(c instanceof HTMLCanvasElement || c instanceof HTMLImageElement)) continue
       if (getComputedStyle(c).display === 'none' || getComputedStyle(c).visibility === 'hidden') continue

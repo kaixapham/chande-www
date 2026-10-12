@@ -91,7 +91,7 @@
     // Con trỏ nằm trong các section này thì giọt tan đi (ra khỏi thì hiện lại)
     hideIn: '.hs-land, .hs-poster, .cmenu', // .cmenu: trang menu — bubble bẻ cong ảnh member thành hình tròn
     zoneOn: true, // giọt theo chuột CHỈ sống trong vùng zoneSel: chuột ra ngoài thì mờ hẳn, giọt không ra khỏi vùng
-    zoneSel: '.hs-about .circles, .ab-circles', // dải 3 vòng tròn About trang chủ / 2 vòng tròn trang About
+    zoneSel: '.hs-about .circles, .ab-circles, .ab-member', // dải 3 vòng tròn About trang chủ / 2 vòng tròn + vòng Key members trang About
     zonePad: 24, // nới vùng ra mỗi phía (px ở khổ 1920) — tới đúng hai đường gạch
     // Trỏ vào nút / link: giọt co còn hoverScale (so với cỡ gốc), rời ra thì về lại.
     hoverOn: true,
