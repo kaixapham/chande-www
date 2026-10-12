@@ -505,9 +505,13 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .hs-foot__social, .hs-foot__index{top:calc(100% - 296 * var(--u))}
 .hs-foot__hr{top:calc(100% - 59 * var(--u))}
 .hs-foot__legal{top:calc(100% - 35 * var(--u))}
-/* iPad (900–1365): chữ đo bằng --u có sàn 14px */
+/* iPad / tablet ngang (900–1365): CHỮ NHỎ không dưới 14px cho đọc được (chỉ nâng chữ nhỏ —
+   tiêu đề lớn giữ nguyên cỡ, nâng cả gốc rem thì tiêu đề hero to ra đè lên ảnh) */
 @media (min-width:900px) and (max-width:1365px){
   .names{font-size:max(14px, calc(19.153 * var(--u)))}
+  .b16, .mono, .pill, .cta, .links, .hs-foot__legal, .hero-card__cap, .hero__scroll, .hero__recap,
+  .hero__intro-text, .hs-quote__name, .hs-about__roots, .hero__recap figcaption, .hs-story__text p, .hs-quote__by p{font-size:14px}
+  .hero__intro-text{white-space:normal} /* 14px rộng hơn cột: xuống dòng (2 lớp sáng / tối cùng cỡ nên vẫn khớp) */
 }
 /* tablet / iPad (900–1365): hàng chân quá chật -> bỏ dòng credit (Made by Lumen · Design by Kaixa),
    các ô còn lại không xuống dòng */
@@ -1026,4 +1030,14 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-comm__band h2{width:auto; padding:0 12px; font-size:calc(48 * var(--q))}
   .ab-pics{--q:calc(100vw / 375); height:auto; display:flex; flex-direction:column}
   .ab-pics img{position:relative; width:100%; height:auto; aspect-ratio:960 / 1080}
+}
+
+/* About · iPad / tablet ngang (900–1365): chữ nhỏ không dưới 14px (đặt cuối file để đè các cỡ
+   max(11px, …) của About); ghi chú (Talent) neo mép phải cho khỏi tràn */
+@media (min-width:900px) and (max-width:1365px){
+  .ab-hero__intro, .ab-hero__intro *, .ab-note, .ab-note p, .ab-note span, .ab-panel__text, .ab-panel__text p,
+  .ab-events__note, .ab-events__note *, .ab-events__cap, .ab-events__cap *, .ab-member__t, .ab-member .mono,
+  .ab-journey__cap, .ab-journey__cap *{font-size:14px}
+  .ab-note{left:auto; right:calc(24 * var(--u))}
+  .ab-member .mono{white-space:normal}
 }

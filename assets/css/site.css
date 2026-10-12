@@ -12,11 +12,6 @@
   --bar:5rem;                 /* 80px của bản thiết kế khổ 1920 */
   font-size:calc(clamp(1440px, 100vw, 1920px) / 120);
 }
-/* iPad / tablet ngang (900–1365): chữ nhỏ (rem) không dưới 14px cho đọc được — gốc rem 16px
-   (.875rem = 14px); thanh header giữ đúng 60px như trước. Chữ đo bằng --u có sàn riêng ở home.css. */
-@media (min-width:900px) and (max-width:1365px){
-  :root{font-size:16px; --bar:60px}
-}
 *{box-sizing:border-box}
 /* Khoá chiều ngang: trên iPhone phần tử nào lọt ra ngoài mép là cả trang kéo sang hai bên được.
    clip (không phải hidden): không biến html / body thành khung cuộn -> sticky + Lenis vẫn chạy theo

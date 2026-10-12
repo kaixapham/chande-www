@@ -182,6 +182,7 @@
     ctx.imageSmoothingQuality = 'high'
     ctx.drawImage(im, (w - dw) * px, (h - dh) * py, dw, dh)
     if (dither) ctx.putImageData(ditherPixels(ctx.getImageData(0, 0, w, h), levels), 0, 0)
+    window.CHANDE_FILM?.bake(canvas, scale) // màu film + hạt nướng sẵn (không lọc CSS mỗi khung)
     canvas.dataset.w = cw
     canvas.dataset.h = ch
     return canvas

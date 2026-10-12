@@ -30,9 +30,11 @@
   window.CHANDE_SETTINGS_APPLY?.('film', CONFIG)
   const DEFAULTS = structuredClone(CONFIG)
 
-  // CHỈ ảnh người ở hero trang chủ (4 ô chân dung: canvas / ảnh dự phòng) + dải ảnh hành trình [2020-2026] ở About
-  // + lớp vỡ ô khi đang rê các ảnh đó
-  const SEL = ['.hero-card__media canvas', '.hero-card__media img', '.ab-journey__track img', 'canvas.cimgtiles.is-hero']
+  // Bộ lọc CSS chỉ còn cho ẢNH TĨNH (ảnh dự phòng hero + dải ảnh hành trình About). Canvas chân
+  // dung hero và lớp vỡ ô thì "nướng" màu + hạt thẳng vào điểm ảnh lúc vẽ (bake() bên dưới): để
+  // bộ lọc CSS / SVG trên canvas đang chuyển động thì trình duyệt lọc lại cả 4 ô MỖI KHUNG lúc đổi
+  // ảnh -> tụt còn 20–30 khung/giây.
+  const SEL = ['.hero-card__media img', '.ab-journey__track img']
 
   // ô hạt xám ngẫu nhiên 128 × 128, alpha = độ đậm (overlay: xám giữa = không đổi)
   let tileKey = ''
@@ -94,7 +96,67 @@
     style.textContent = `${SEL.map((x) => `html.film-on ${x}`).join(', ')}{filter:${filterCSS()}}`
   }
 
-  window.CHANDE_FILM = { config: CONFIG, defaults: DEFAULTS, apply, filterCSS }
+  // Nướng film vào nội dung canvas (một lần, lúc vẽ): màu = ctx.filter (cùng chuỗi CSS), hạt = ô
+  // hạt lát kín hoà overlay, chỉ trên phần có điểm ảnh (giữ vùng trong suốt).
+  const colorCSS = (c = CONFIG) =>
+    `contrast(${mix(c.contrast, 1)}) saturate(${mix(c.saturate, 1)}) brightness(${mix(c.brightness, 1)}) sepia(${mix(c.sepia, 0)}) hue-rotate(${mix(c.hue, 0)}deg)`
+  let grainCv = null
+  let grainCvKey = ''
+  function grainCanvas() {
+    const gr = Math.min(1, Math.max(0, CONFIG.grain * k()))
+    const key = `${gr}`
+    if (grainCv && key === grainCvKey) return grainCv
+    const N = 128
+    grainCv = document.createElement('canvas')
+    grainCv.width = grainCv.height = N
+    const g = grainCv.getContext('2d')
+    const img = g.createImageData(N, N)
+    const a = Math.round(gr * 255)
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = 128 + (Math.random() - 0.5) * 255
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = v
+      img.data[i + 3] = a
+    }
+    g.putImageData(img, 0, 0)
+    grainCvKey = key
+    return grainCv
+  }
+  // pxScale: số điểm ảnh canvas / 1 px CSS (để hạt cùng cỡ như bản lọc CSS)
+  function bake(canvas, pxScale = 1) {
+    if (!CONFIG.enabled || !canvas?.width) return canvas
+    const w = canvas.width
+    const h = canvas.height
+    const ctx = canvas.getContext('2d')
+    const copy = document.createElement('canvas')
+    copy.width = w
+    copy.height = h
+    const cx = copy.getContext('2d')
+    if ('filter' in cx) cx.filter = colorCSS()
+    cx.drawImage(canvas, 0, 0)
+    cx.filter = 'none'
+    if (CONFIG.grain * k() > 0) {
+      // lớp hạt cắt theo hình (destination-in) rồi hoà overlay lên
+      const gl = document.createElement('canvas')
+      gl.width = w
+      gl.height = h
+      const gx = gl.getContext('2d')
+      const pat = gx.createPattern(grainCanvas(), 'repeat')
+      const sc = pxScale * Math.max(0.5, CONFIG.grainScale || 1)
+      pat.setTransform?.(new DOMMatrix().scale(sc, sc))
+      gx.fillStyle = pat
+      gx.fillRect(0, 0, w, h)
+      gx.globalCompositeOperation = 'destination-in'
+      gx.drawImage(copy, 0, 0)
+      cx.globalCompositeOperation = 'overlay'
+      cx.drawImage(gl, 0, 0)
+      cx.globalCompositeOperation = 'source-over'
+    }
+    ctx.clearRect(0, 0, w, h)
+    ctx.drawImage(copy, 0, 0)
+    return canvas
+  }
+
+  window.CHANDE_FILM = { config: CONFIG, defaults: DEFAULTS, apply, filterCSS, bake }
   if (document.body) apply()
   else addEventListener('DOMContentLoaded', apply, { once: true })
 })()

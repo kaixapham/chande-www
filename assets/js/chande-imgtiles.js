@@ -207,6 +207,8 @@ void main() {
       const sh = h / k
       try {
         sctx.drawImage(el, (el.naturalWidth - sw) / 2, (el.naturalHeight - sh) / 2, sw, sh, 0, 0, w, h)
+        // dải ảnh hành trình About: ảnh gốc mang film bằng CSS -> nướng vào bản chụp cho khớp màu
+        if (el.closest('.ab-journey__track')) window.CHANDE_FILM?.bake(snap, w / Math.max(1, el.clientWidth))
       } catch (e) {}
       return
     }
@@ -249,7 +251,6 @@ void main() {
     canvas.style.height = `${r.height + 2 * pad}px`
     canvas.style.transform = `translate3d(${r.left - pad}px, ${r.top - pad}px, 0)`
     canvas.style.display = 'block'
-    canvas.classList.toggle('is-hero', !!el.closest('[data-hero-slot], .ab-journey__track')) // lớp màu film (chande-film.js) chỉ cho ảnh hero + dải ảnh hành trình About
 
     capture(el, W, H)
     gl.viewport(0, 0, cw, ch)
