@@ -25,7 +25,7 @@
       ['Youtube', 'https://www.youtube.com/@chandedesign'],
       ['Instagram', 'https://www.instagram.com/design.chande/'],
       ['LinkedIn', 'https://www.linkedin.com/company/chande123/posts/?viewAsMember=true'],
-      ['Made by Lumen Studio', 'https://www.lumen-studio.co/'], // cột 5: credit
+      { credit: '[ Made by Lumen Studio ]', url: 'https://www.lumen-studio.co/' }, // cột 5: credit — chữ mono như dòng credit ở footer
       ['Patreon', 'https://www.patreon.com/cw/minggg'],
     ],
   }
@@ -80,9 +80,11 @@
     for (let c = 1; c <= COLS; c++) cells += `<i style="${at(r, c)}; --ld:${(0.2 + (r - 1) * 0.06 + (c - 1) * 0.025).toFixed(3)}s"></i>`
   const socials = LINKS.social
     .map((s, i) =>
-      s
-        ? `<a class="cmenu__social" style="${at(6, i + 1)}" href="${esc(s[1])}" target="_blank" rel="noopener">${dots2}<span>${esc(s[0])}</span></a>`
-        : '',
+      !s
+        ? ''
+        : s.credit
+          ? `<p class="cmenu__credit mono" style="${at(6, i + 1)}"><a href="${esc(s.url)}" target="_blank" rel="noopener" data-scramble>${esc(s.credit)}</a></p>`
+          : `<a class="cmenu__social" style="${at(6, i + 1)}" href="${esc(s[1])}" target="_blank" rel="noopener">${dots2}<span>${esc(s[0])}</span></a>`,
     )
     .join('')
   // chữ lớn tách từng dòng: mở menu / rê vào thì các dòng trồi lên lần lượt
