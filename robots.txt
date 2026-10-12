@@ -1,7 +1,9 @@
 User-agent: *
 Allow: /
 Disallow: /cms.html
+Disallow: /cms
 Disallow: /poster-edit.html
+Disallow: /poster-edit
 Disallow: /tools/
 Disallow: /api/
 

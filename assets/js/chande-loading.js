@@ -119,10 +119,10 @@
     clockCity: 'HANOI', // dòng trên, ô trái, sau khi xong
     clockZone: 'Asia/Ho_Chi_Minh',
     clockSuffix: 'GMT',
-    home: 'index.html', // logo + wordmark là link về trang chủ
+    home: './', // logo + wordmark là link về trang chủ (URL gọn — Vercel cleanUrls)
     nav: [
-      { num: '01', during: 'WORKJAM', after: 'GALLERY', href: 'gallery.html' },
-      { num: '02', during: 'CHILL & FUN', after: 'ABOUT', href: 'about.html' },
+      { num: '01', during: 'WORKJAM', after: 'GALLERY', href: 'gallery' },
+      { num: '02', during: 'CHILL & FUN', after: 'ABOUT', href: 'about' },
     ],
 
     // ---- Trục thời gian (ms) ------------------------------------------------

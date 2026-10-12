@@ -1262,13 +1262,24 @@ void main () {
   // Thu nhỏ theo vị trí cuộn (section shrinkFrom) và khi trỏ vào nút (hoverSel) —
   // lấy mức nhỏ hơn. Giọt đang ẩn thì đặt luôn.
   // vùng sống của giọt (zoneSel nới zonePad) — null nếu tắt / không có trên trang
+  // Nhiều vùng (vd. 2 vòng tròn câu chuyện + vòng Key members trang About): lấy vùng đang chứa
+  // con trỏ; không vùng nào chứa thì vùng gần con trỏ nhất (để kẹp giọt khi rời vùng).
   function zoneRect() {
     if (!CONFIG.zoneOn) return null
-    const el = document.querySelector(CONFIG.zoneSel || '.hs-about .circles')
-    const r = el?.getBoundingClientRect()
-    if (!r?.width) return { l: 0, t: 0, r: -1, b: -1 } // trang không có vùng -> không bao giờ hiện
     const p = ((+CONFIG.zonePad || 0) * innerWidth) / 1920
-    return { l: r.left - p, t: r.top - p, r: r.right + p, b: r.bottom + p }
+    let best = null
+    let bestD = Infinity
+    for (const el of document.querySelectorAll(CONFIG.zoneSel || '.hs-about .circles')) {
+      const r = el.getBoundingClientRect()
+      if (!r.width) continue
+      const z = { l: r.left - p, t: r.top - p, r: r.right + p, b: r.bottom + p }
+      const dx = Math.max(z.l - ptrX, 0, ptrX - z.r)
+      const dy = Math.max(z.t - ptrY, 0, ptrY - z.b)
+      const d = dx + dy
+      if (d === 0) return z
+      if (d < bestD) (bestD = d), (best = z)
+    }
+    return best || { l: 0, t: 0, r: -1, b: -1 } // trang không có vùng -> không bao giờ hiện
   }
   function hiddenHere() {
     const z = zoneRect()

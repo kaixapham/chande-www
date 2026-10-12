@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://www.chandebootcamp.com/</loc><lastmod>2026-10-11</lastmod><priority>1.0</priority></url>
-  <url><loc>https://www.chandebootcamp.com/about.html</loc><lastmod>2026-10-11</lastmod><priority>0.7</priority></url>
-  <url><loc>https://www.chandebootcamp.com/gallery.html</loc><lastmod>2026-10-11</lastmod><priority>0.7</priority></url>
-  <url><loc>https://www.chandebootcamp.com/register.html</loc><lastmod>2026-10-11</lastmod><priority>0.7</priority></url>
-  <url><loc>https://www.chandebootcamp.com/partner.html</loc><lastmod>2026-10-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://www.chandebootcamp.com/about</loc><lastmod>2026-10-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://www.chandebootcamp.com/gallery</loc><lastmod>2026-10-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://www.chandebootcamp.com/register</loc><lastmod>2026-10-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://www.chandebootcamp.com/partner</loc><lastmod>2026-10-11</lastmod><priority>0.7</priority></url>
 </urlset>
