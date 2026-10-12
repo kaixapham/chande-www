@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Film màu hero — Chande CMS</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#0e0e0e; --panel:#171717; --panel-2:#1f1f1f; --line:rgba(250,250,250,.08); --line-2:rgba(250,250,250,.14); --fg:#f2f2f2; --dim:#9a9a9a; --lime:#68f12b; --bad:#ff6b6b}
+*{box-sizing:border-box}
+html,body{margin:0; height:100%; background:var(--bg); color:var(--fg); font:13px/1.4 Inter,system-ui,sans-serif}
+.app{display:grid; grid-template-columns:1fr 340px; height:100vh}
+.stage{display:flex; flex-direction:column; min-width:0; border-right:1px solid var(--line)}
+.bar{display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line)}
+.bar b{font-weight:600}
+.bar .sp{flex:1}
+main{flex:1; overflow:auto; padding:16px; display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:12px; align-content:start; background:#fffef8}
+main figure{margin:0; position:relative; aspect-ratio:234/311; overflow:hidden; border-radius:4px}
+main .hero-card__media{position:absolute; inset:0}
+main img{display:block; width:100%; height:100%; object-fit:cover}
+main figcaption{position:absolute; left:6px; bottom:6px; padding:2px 6px; border-radius:4px; font:10px 'Geist Mono',monospace; background:rgba(0,0,0,.55); color:#fff}
+.side{display:flex; flex-direction:column; min-height:0; background:var(--panel)}
+.side__head{display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line)}
+.side__head h1{font-size:13px; margin:0; flex:1}
+.side__body{overflow:auto; flex:1; padding:12px; display:flex; flex-direction:column; gap:14px}
+.side__msg{padding:8px 12px; border-top:1px solid var(--line); font-size:12px; color:var(--dim); min-height:34px}
+.side__msg.is-bad{color:var(--bad)} .side__msg.is-ok{color:var(--lime)}
+.row{display:grid; grid-template-columns:96px 1fr 52px; gap:8px; align-items:center}
+.row label{color:var(--dim)}
+.row--big{padding:10px 12px; border:1px solid var(--line-2); border-radius:10px; background:var(--panel-2)}
+.row--big label b{color:var(--fg); font-weight:600}
+.row output{font:12px 'Geist Mono',monospace; text-align:right}
+input[type=range]{width:100%; accent-color:var(--lime)}
+.sw{display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border:1px solid var(--line-2); border-radius:10px; background:var(--panel-2)}
+.sw b{font-weight:600}
+.presets{display:flex; flex-wrap:wrap; gap:6px}
+.btn{height:30px; padding:0 12px; border-radius:8px; border:1px solid var(--line-2); background:var(--panel-2); color:var(--fg); font:inherit; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center}
+.btn:hover{border-color:var(--fg)}
+.btn--go{background:var(--lime); color:#0f1513; border-color:var(--lime); font-weight:600}
+.btn--sm{height:26px; padding:0 9px; font-size:12px}
+.btn.is-on{border-color:var(--lime); color:var(--lime)}
+.hint{font-size:12px; color:var(--dim)}
+h2{margin:4px 0 0; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); font-weight:600}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="stage">
+    <div class="bar">
+      <a class="btn btn--sm" href="cms.html">← CMS</a>
+      <b>Xem trước</b>
+      <span class="hint" data-count>ảnh người ở hero trang chủ (lấy từ danh sách CMS)</span>
+      <span class="sp"></span>
+      <button class="btn btn--sm" type="button" data-hold title="Giữ chuột để xem ảnh gốc">Giữ để xem ảnh gốc</button>
+    </div>
+    <main data-barba="container">
+      <!-- ảnh người ở hero: film-edit.js đọc danh sách từ index.html (đủ cả danh sách, khớp CMS) -->
+    </main>
+  </section>
+  <aside class="side">
+    <div class="side__head"><h1>Film màu (Fuji) — ảnh người ở hero</h1><button class="btn btn--go btn--sm" type="button" data-save>Lưu</button></div>
+    <div class="side__body">
+      <label class="sw"><span><b>Bật hiệu ứng</b><br><span class="hint">tắt = ảnh người ở hero về ảnh gốc</span></span><input type="checkbox" data-k="enabled"></label>
+      <div class="row row--big"><label><b>Cường độ tổng</b></label><input type="range" data-k="strength" min="0" max="1" step="0.01"><output></output></div>
+      <div><h2>Kiểu phim</h2></div>
+      <div class="presets" data-presets></div>
+      <div><h2>Màu</h2></div>
+      <div class="row"><label>Tương phản</label><input type="range" data-k="contrast" min="0.8" max="1.4" step="0.01"><output></output></div>
+      <div class="row"><label>Bão hoà</label><input type="range" data-k="saturate" min="0.5" max="1.4" step="0.01"><output></output></div>
+      <div class="row"><label>Độ sáng</label><input type="range" data-k="brightness" min="0.8" max="1.2" step="0.01"><output></output></div>
+      <div class="row"><label>Ngả ấm</label><input type="range" data-k="sepia" min="0" max="0.5" step="0.01"><output></output></div>
+      <div class="row"><label>Xoay sắc (°)</label><input type="range" data-k="hue" min="-30" max="30" step="1"><output></output></div>
+      <div><h2>Hạt (noise)</h2></div>
+      <div class="row"><label>Độ đậm</label><input type="range" data-k="grain" min="0" max="0.4" step="0.01"><output></output></div>
+      <div class="row"><label>Cỡ hạt</label><input type="range" data-k="grainScale" min="0.5" max="3" step="0.1"><output></output></div>
+      <p class="hint">Lưu ghi vào <code>assets/js/chande-settings.js</code> (khoá <code>film.*</code>) — trên máy (node serve.mjs) ghi thẳng xuống đĩa, trên site dùng token GitHub đã nhập ở CMS. Commit + push để lên live.</p>
+    </div>
+    <div class="side__msg" data-msg></div>
+  </aside>
+</div>
+<script src="assets/js/chande-settings.js"></script>
+<script src="assets/js/chande-film.js"></script>
+<script src="assets/js/film-edit.js"></script>
+</body>
+</html>

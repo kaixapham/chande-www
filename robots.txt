@@ -4,6 +4,8 @@ Disallow: /cms.html
 Disallow: /cms
 Disallow: /poster-edit.html
 Disallow: /poster-edit
+Disallow: /film.html
+Disallow: /film
 Disallow: /tools/
 Disallow: /api/
 
