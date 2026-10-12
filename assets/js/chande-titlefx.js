@@ -184,7 +184,9 @@
     L.forEach((l, i) => {
       const fin = lineCol[i] !== own ? lineCol[i] : dark ? own : CONFIG.color
       // vùng dọc: từ giữa dòng trên tới giữa dòng dưới (dòng đầu / cuối nới thêm)
-      const y0 = i ? (mid(i - 1) + mid(i)) / 2 : mid(i) - l.h * 0.65
+      // dòng đầu: chỉ vươn tới ngay trên đỉnh chữ hoa (≈ tâm − 0.24 × cao hộp từ) — vươn xa hơn thì lớp
+      // hoà trộn lấn sang thứ nằm sát phía trên (dải ảnh trên câu lớn trang About bị nhuộm màu)
+      const y0 = i ? (mid(i - 1) + mid(i)) / 2 : mid(i) - l.h * 0.36
       const y1 = i < L.length - 1 ? (mid(i) + mid(i + 1)) / 2 : mid(i) + l.h * 0.65
       const cols = Math.max(1, Math.round((CONFIG.band * l.width) / dz))
       const b = CONFIG.dither ? cols * dz : Math.max(1, CONFIG.band * l.width)

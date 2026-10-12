@@ -90,12 +90,24 @@
     const img = face.querySelector('img')
     const bar = $('[data-member-bar]')
     // đổi chữ + hiệu ứng "giải mã" (ký hiệu code chốt dần về chữ mới — chande-scramble.js), lệch nhịp từng dòng
+    // đổi chữ: chữ cũ trượt lên + mờ đi, chữ mới trồi lên từ dưới kèm hiệu ứng "giải mã"
+    // (chande-scramble.js); từng dòng lệch nhau một nhịp
     let nth = 0
     const set = (sel, v) => {
       const el = $(sel)
       if (!el) return
-      el.textContent = `[ ${v} ]`
-      if (!reduced) window.CHANDE_SCRAMBLE?.run(el, 90 * nth++)
+      const text = `[ ${v} ]`
+      if (reduced || !el.animate) return void (el.textContent = text)
+      const delay = 90 * nth++
+      const ease = 'cubic-bezier(.65, 0, .35, 1)'
+      el.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(-70%)', opacity: 0 }], { duration: 260, delay, easing: ease, fill: 'forwards' })
+        .finished.then(() => {
+          el.textContent = text
+          el.getAnimations().forEach((a) => a.cancel())
+          el.animate([{ transform: 'translateY(70%)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2, .8, .2, 1)' })
+          window.CHANDE_SCRAMBLE?.run(el)
+        })
+        .catch(() => (el.textContent = text))
     }
     // nạp trước ảnh cả danh sách (lúc rảnh)
     setTimeout(() => list.forEach((m) => (new Image().src = m.img)), 1500)

@@ -809,7 +809,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 /* --vx: màn sự kiện (từ đáy khung tối tới đáy ảnh sticky) = đúng 1 viewport dưới thanh menu. Figma
    1920 × 1080: cao 1000 -> --vx = 0; màn cao hơn / thấp hơn thì mọi thứ từ danh sách trở xuống dời
    theo (chặn dưới −300 cho màn quá dẹt khỏi đè tiêu đề). */
-.ab-events{--vx:max(-300 * var(--u), 100svh - var(--bar) - 1000 * var(--u)); height:calc(4320 * var(--u) + var(--vx)); background:#fffef8; color:#0e1813; overflow:visible; z-index:2}
+.ab-events{--vx:max(-300 * var(--u), 100svh - var(--bar) - 1000 * var(--u)); height:calc(4416 * var(--u) + var(--vx)); background:#fffef8; color:#0e1813; overflow:visible; z-index:2}
 .ab-events__dark{left:0; top:0; width:calc(960 * var(--u)); height:calc(540 * var(--u)); background:#112020}
 .ab-events__logo{position:absolute; left:calc(24 * var(--u)); top:calc(24 * var(--u)); width:calc(104 * var(--u)); height:auto; filter:invert(1)}
 .ab-events__t{position:absolute; left:calc(24 * var(--u)); top:calc(359 * var(--u)); margin:0; color:#fff; font-weight:700; font-size:calc(106 * var(--u)); line-height:.78; letter-spacing:-.04em; white-space:nowrap; text-box:trim-both cap alphabetic; --tb:1}
@@ -883,10 +883,10 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .ab-vision__tag--v{left:calc(793 * var(--u)); top:0}
 .ab-vision__tag--m{left:calc(530 * var(--u)); bottom:0}
 /* gạch đứt mảnh hết bề ngang (Figma 648:47419) */
-.ab-events__hr{left:calc(24 * var(--u)); right:calc(24 * var(--u)); top:calc(2961 * var(--u) + var(--vx)); height:1px; /* cách chân đoạn Vision / Mission 32 (Figma 16, gấp đôi theo Kaixa) */
+.ab-events__hr{left:calc(24 * var(--u)); right:calc(24 * var(--u)); top:calc(2945 * var(--u) + var(--vx)); height:1px; /* cách chân đoạn Vision / Mission 16 (Figma) */
   background:repeating-linear-gradient(90deg, rgba(0,0,0,.15) 0 4px, transparent 4px 8px)}
 /* "An exciting journey" (Figma 648:47511): chú thích ở x 960, dải ảnh 234 × 175 tràn hết bề ngang — chạy ngang vô tận */
-.ab-journey{left:0; right:0; top:calc(3185 * var(--u) + var(--vx))}
+.ab-journey{left:0; right:0; top:calc(3281 * var(--u) + var(--vx))} /* cách gạch đứt 336 (Figma 240 · Kaixa: gấp đôi rồi bớt 30%) */
 .ab-journey__cap{display:flex; justify-content:space-between; width:calc(468 * var(--u)); margin:0 0 0 calc(960 * var(--u)); font-size:max(11px, calc(16 * var(--u))); color:#0e1813}
 .ab-journey__cap span{text-box:trim-both cap alphabetic; --tb:1}
 .ab-journey__run{margin-top:calc(27 * var(--u) - .71 * max(11px, 16 * var(--u))); overflow:hidden}
@@ -896,10 +896,10 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 @keyframes ab-journey{to{transform:translateX(-50%)}}
 .ab-journey:hover .ab-journey__track{animation-play-state:paused}
 /* câu lớn (Figma 639:47375): 106.7, dòng .8, rộng 1404 */
-.ab-aim{left:calc(24 * var(--u)); top:calc(3419 * var(--u) + var(--vx)); width:calc(1404 * var(--u)); margin:0; color:#000; font-weight:700; font-size:calc(106.7 * var(--u)); line-height:.8; letter-spacing:-.04em; text-transform:uppercase; text-box:trim-both cap alphabetic; --tb:1}
+.ab-aim{left:calc(24 * var(--u)); top:calc(3515 * var(--u) + var(--vx)); width:calc(1404 * var(--u)); margin:0; color:#000; font-weight:700; font-size:calc(106.7 * var(--u)); line-height:.8; letter-spacing:-.04em; text-transform:uppercase; text-box:trim-both cap alphabetic; --tb:1}
 .ab-aim p{margin:0}
-.ab-stamp{left:calc(1678 * var(--u)); top:calc(4034 * var(--u) + var(--vx)); width:calc(218 * var(--u)); height:auto}
-.ab-events__cta{left:calc(24 * var(--u)); top:calc(4232 * var(--u) + var(--vx)); display:flex; gap:2px}
+.ab-stamp{left:calc(1678 * var(--u)); top:calc(4130 * var(--u) + var(--vx)); width:calc(218 * var(--u)); height:auto}
+.ab-events__cta{left:calc(24 * var(--u)); top:calc(4328 * var(--u) + var(--vx)); display:flex; gap:2px}
 .ab-events__cta .pill{width:auto; padding-inline:calc(40 * var(--u)); white-space:nowrap}
 
 /* chữ cạnh 2 vòng tròn (Figma 648:47558): ngay sau vòng phải (x 1662), chân thẳng chân vòng (1679 trong câu chuyện).
