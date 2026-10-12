@@ -70,7 +70,7 @@ window.CHANDE_SETTINGS = {
   "film.hue": -8,
   "film.saturate": 0.9,
   "film.sepia": 0.12,
-  "film.strength": 0.59,
+  "film.strength": 0.47,
   "gallery.clusterGap": 0.09,
   "gallery.colGap": 2.02,
   "gallery.floor": "",

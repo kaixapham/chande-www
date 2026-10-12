@@ -78,7 +78,9 @@
         st.lock = null
       }
     }
-    st.raf = requestAnimationFrame(tick)
+    // không trễ: vẽ khung đầu (toàn ký hiệu) NGAY — đổi chữ xong chạy liền thì chữ mới không lộ một khung
+    if (delay <= 0) tick(performance.now())
+    else st.raf = requestAnimationFrame(tick)
   }
 
   document.addEventListener(

@@ -605,6 +605,16 @@
     spans.forEach((sp, k) => {
       if (sp.textContent === text[k]) return
       if (reduced.matches) return void (sp.textContent = text[k])
+      // Đổi chữ bằng hiệu ứng "giải mã" (ký hiệu code chốt dần về chữ mới — chande-scramble.js),
+      // đúng lúc đổi ảnh; không có module đó thì dùng khối màu quét như cũ (bên dưới).
+      const S = window.CHANDE_SCRAMBLE
+      if (S) {
+        setTimeout(() => {
+          sp.textContent = text[k]
+          S.run(sp)
+        }, delay + k * R.stagger)
+        return
+      }
       sp.classList.add('cap-w')
       const block = document.createElement('i')
       block.className = 'cap-w__b'
