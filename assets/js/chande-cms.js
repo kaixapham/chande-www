@@ -445,9 +445,12 @@
     const items = op ? op.items : list.items
     let h = `<section class="panel${op ? ' is-changed' : ''}"><header class="panel__head"><b>${esc(list.label)}</b><span class="c">${items.length}</span>${op ? `<button class="btn btn--ghost btn--sm" type="button" data-list-undo="${esc(list.key)}">Hoàn tác</button>` : ''}</header>`
     if (list.kind === 'objects') {
-      h += `<div class="cards" data-list="${esc(list.key)}">`
+      // danh sách người ở hero: đổi 4 người mỗi lượt -> chia hàng 4 thẻ, mỗi hàng ghi "Lượt n"
+      const rounds = list.key === 'hero-people'
+      h += `<div class="cards${rounds ? ' cards--rounds' : ''}" data-list="${esc(list.key)}">`
       items.forEach((it, i) => {
-        h += `<div class="card" data-i="${i}">
+        if (rounds && i % 4 === 0) h += `<div class="round-label">Lượt ${i / 4 + 1}<small>${pad2(i + 1)}–${pad2(Math.min(i + 4, items.length))}</small></div>`
+        h += `<div class="card" data-i="${i}" draggable="true" title="Kéo thả để đổi vị trí">
           <div class="phs">${list.images.map((im) => `<div class="ph" data-pick-i data-ik="${esc(im.k)}" style="background-image:url('${esc(shown(it[im.k] || ''))}')" title="Bấm / thả ảnh để thay ${esc(im.label || 'ảnh')}"><em>Thay</em>${im.label && list.images.length > 1 ? `<small>${esc(im.label)}</small>` : ''}</div>`).join('')}</div>
           <div class="fields">
             ${list.fields.map((f) => f.area
@@ -631,6 +634,54 @@
   })
 
   // Kéo-thả ảnh vào ô
+  // Kéo thả THẺ trong danh sách để đổi vị trí (kéo số 21 thả vào ô số 4 -> chèn vào vị trí 4,
+  // các thẻ khác dồn theo, số tự đánh lại). Đang gõ trong ô chữ thì tắt kéo để còn bôi chọn chữ.
+  let dragCard = null
+  document.addEventListener('pointerdown', (e) => {
+    const c = e.target.closest?.('.card[data-i]')
+    if (c) c.draggable = !e.target.closest('input, textarea')
+  })
+  document.addEventListener('dragstart', (e) => {
+    const c = e.target.closest?.('.card[data-i]')
+    if (!c || !c.draggable) return
+    dragCard = { list: c.closest('[data-list]').dataset.list, i: +c.dataset.i }
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/x-cms-card', String(dragCard.i))
+    c.classList.add('is-moving')
+  })
+  document.addEventListener('dragend', () => {
+    dragCard = null
+    document.querySelectorAll('.is-moving, .card.is-drag').forEach((n) => n.classList.remove('is-moving', 'is-drag'))
+  })
+  const cardTarget = (e) => {
+    const c = dragCard && e.target.closest?.('.card[data-i]')
+    return c && c.closest('[data-list]').dataset.list === dragCard.list ? c : null
+  }
+  document.addEventListener('dragover', (e) => {
+    const c = cardTarget(e)
+    if (!c) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    document.querySelectorAll('.card.is-drag').forEach((n) => n !== c && n.classList.remove('is-drag'))
+    c.classList.add('is-drag')
+  })
+  document.addEventListener('drop', (e) => {
+    const c = cardTarget(e)
+    if (!c) return
+    e.preventDefault()
+    e.stopImmediatePropagation()
+    const { page, sec } = ctx()
+    const list = sec.lists.find((l) => l.key === dragCard.list)
+    const items = listOp(page.file, list).items
+    const from = dragCard.i
+    const to = +c.dataset.i
+    dragCard = null
+    if (from === to) return render()
+    items.splice(to, 0, items.splice(from, 1)[0])
+    renum(list, items)
+    render()
+  })
+
   document.addEventListener('dragover', (e) => {
     const t = e.target.closest('.slot[data-slot], [data-pick-i]')
     if (!t) return

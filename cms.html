@@ -107,7 +107,14 @@ a{color:var(--lime)}
 .panel__head b{font-size:14px}
 .panel__head .c{font-size:11px; color:var(--muted); padding:2px 7px; border-radius:99px; background:var(--panel-2)}
 .cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px}
+/* danh sách người ở hero: 4 thẻ một hàng = 4 người hiện cùng một lượt trên trang chủ */
+.cards--rounds{grid-template-columns:max-content repeat(4, minmax(150px, 200px)); justify-content:start; row-gap:18px; align-items:start}
+.round-label{grid-column:1; align-self:center; display:flex; flex-direction:column; gap:2px; padding-right:6px; font-size:12px; font-weight:600; color:var(--fg); white-space:nowrap}
+.round-label small{font-weight:400; color:var(--muted)}
+.cards--rounds .addbox{grid-column:2}
 .card{position:relative; display:flex; flex-direction:column; gap:6px; padding:6px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2)}
+.card[draggable=true]{cursor:grab}
+.card.is-moving{opacity:.35}
 .card.is-changed{border-color:var(--warn)}
 .card .phs{display:flex; gap:4px}
 .card .ph{position:relative; flex:1; aspect-ratio:4/5; border-radius:8px; background:#222 center/cover no-repeat; cursor:pointer}
@@ -181,6 +188,6 @@ input[type=file]{display:none}
 <div class="toast" data-toast></div>
 <input type="file" accept="image/*" data-file>
 
-<script src="assets/js/chande-cms.js?v=202610121256"></script>
+<script src="assets/js/chande-cms.js?v=202610121323"></script>
 </body>
 </html>
