@@ -457,6 +457,8 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
   font-weight:600; font-size:.875rem; line-height:.9; letter-spacing:-.02em; white-space:nowrap; text-box:trim-both cap alphabetic; --tb:1;
   transition:opacity .35s ease .65s} /* tên hiện lại lúc ảnh đã tua ngược gần hết */
 .cmenu__member.is-on span{opacity:0; transition:opacity .1s ease}
+/* ô trống: không có ảnh -> đoàn dải màu chỉ quét QUA rồi ra hẳn mép trên, không đọng lớp màu nào thay ảnh */
+.cmenu__member--empty .cmenu__fx > i{--y1:calc(var(--y0) - 280%)}
 
 .cmenu__num{align-self:start; padding:calc(15 * var(--u)) calc(16 * var(--u)); color:#fff;
   font-weight:600; font-size:1.25rem; line-height:.9; font-feature-settings:"ornm" 1, "numr" 1; text-box:trim-both cap alphabetic; --tb:1}
@@ -538,4 +540,5 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
   .cmenu__credit{order:-1; grid-column:1 / -1 !important; padding:.9rem 0}
   .cmenu__member{aspect-ratio:1; margin:0; border:1px solid rgba(233,226,200,.2); margin:-1px 0 0 -1px}
   .cmenu__member span{left:.6rem; bottom:.6rem; font-size:.75rem; white-space:normal}
+  .cmenu__member--empty{display:none}
 }

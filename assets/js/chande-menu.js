@@ -25,7 +25,7 @@
       ['Youtube', 'https://www.youtube.com/@chandedesign'],
       ['Instagram', 'https://www.instagram.com/design.chande/'],
       ['LinkedIn', 'https://www.linkedin.com/company/chande123/posts/?viewAsMember=true'],
-      { credit: '[ Made by Lumen Studio ]', url: 'https://www.lumen-studio.co/' }, // cột 5: credit — chữ mono như dòng credit ở footer
+      { credit: 'Made by Lumen Studio', url: 'https://www.lumen-studio.co/' }, // cột 5: credit — chữ mono như dòng credit ở footer
       ['Patreon', 'https://www.patreon.com/cw/minggg'],
     ],
   }
@@ -232,9 +232,14 @@
         return `<div class="cmenu__member" style="${at(r, c)}"><div class="cmenu__fx" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><img alt="" decoding="async" src="${esc(p.img)}"${p.pos ? ` style="object-position:${esc(p.pos)}"` : ''}></div><span>${esc(p.name)}</span></div>`
       })
       .join('')
-    items.insertAdjacentHTML('afterbegin', html)
+    // ô TRỐNG (slot member dư + hàng cuối cột 7–9): cũng chạy đoàn dải màu khi rê, không ảnh / tên
+    const empty = [...memberSlots.slice(list.length), [6, 7], [6, 8], [6, 9]]
+    const blank = empty
+      .map(([r, c]) => `<div class="cmenu__member cmenu__member--empty" style="${at(r, c)}" data-rc="${r},${c}"><div class="cmenu__fx" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>`)
+      .join('')
+    items.insertAdjacentHTML('afterbegin', html + blank)
     items.querySelectorAll('.cmenu__member').forEach((m, i) => {
-      const [r, c] = memberSlots[i]
+      const [r, c] = m.dataset.rc ? m.dataset.rc.split(',').map(Number) : memberSlots[i]
       memberAt[(r - 1) * COLS + (c - 1)] = m
     })
   }
