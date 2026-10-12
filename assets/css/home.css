@@ -739,13 +739,17 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .ab-hero__field{left:calc(960 * var(--u)); right:0; top:var(--band)}
 
 .ab-hero__intro{
-  position:absolute; left:calc(468 * var(--u)); bottom:calc(40 * var(--u)); width:calc(234 * var(--u));
+  position:absolute; left:calc(468 * var(--u)); bottom:calc(32 * var(--u)); width:calc(234 * var(--u));
   display:flex; flex-direction:column; gap:1.5rem;
   color:#f4f3eb; font-weight:500; font-size:1rem; line-height:calc(.98em + 2px); letter-spacing:-.02em;
   white-space:nowrap;
 }
 /* cắt sát đỉnh cap / chân chữ: đáy khối = chân dòng cuối -> thẳng hàng chân chữ "Scroll more" */
 .ab-hero__intro p{margin:0; text-box:trim-both cap alphabetic; --tb:1}
+/* số năm góc phải: cùng kiểu chữ, chân chữ thẳng chân dòng cuối của khối giới thiệu */
+.ab-hero__years{position:absolute; right:calc(32 * var(--u)); bottom:calc(32 * var(--u)); margin:0;
+  color:#f4f3eb; font-weight:500; font-size:1rem; line-height:calc(.98em + 2px); letter-spacing:-.02em; text-transform:uppercase; white-space:nowrap;
+  text-box:trim-both cap alphabetic; --tb:1}
 /* Scroll more (kiểu .hero__scroll trang chủ), không nền: cách lề phải 24, chân chữ
    thẳng chân dòng cuối chữ giới thiệu (cùng cách đáy hàng 40, cả hai cắt sát chân chữ) */
 .ab-hero__scroll{
@@ -772,6 +776,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-hero__bar{--u:calc(100cqw / 960); position:relative; align-self:stretch; margin:-3rem -1.25rem 1.5rem}
   .ab-hero__dark{height:auto; padding:2rem 1.25rem}
   .ab-hero__intro{position:static; width:auto}
+  .ab-hero__years{position:static; margin-top:1.5rem}
   .ab-hero__scroll{display:none}
   /* tiêu đề giữ 3 dòng: cỡ chữ co theo bề ngang để dòng dài nhất ("COMMUNITY THAT"
      ≈ 6.5 lần cỡ chữ) vừa khít; (©26) xuống dưới, căn phải */
@@ -1035,7 +1040,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 /* About · iPad / tablet ngang (900–1365): chữ nhỏ không dưới 14px (đặt cuối file để đè các cỡ
    max(11px, …) của About); ghi chú (Talent) neo mép phải cho khỏi tràn */
 @media (min-width:900px) and (max-width:1365px){
-  .ab-hero__intro, .ab-hero__intro *, .ab-note, .ab-note p, .ab-note span, .ab-panel__text, .ab-panel__text p,
+  .ab-hero__intro, .ab-hero__intro *, .ab-hero__years, .ab-note, .ab-note p, .ab-note span, .ab-panel__text, .ab-panel__text p,
   .ab-events__note, .ab-events__note *, .ab-events__cap, .ab-events__cap *, .ab-member__t, .ab-member .mono,
   .ab-journey__cap, .ab-journey__cap *{font-size:14px}
   .ab-note{left:auto; right:calc(24 * var(--u))}
