@@ -122,30 +122,41 @@
     return grainCv
   }
   // pxScale: số điểm ảnh canvas / 1 px CSS (để hạt cùng cỡ như bản lọc CSS).
-  // KHÔNG tạo canvas tạm (iOS giới hạn tổng bộ nhớ canvas rất chặt — canvas tạm làm Chrome / Safari
-  // iPhone bỏ trắng ảnh hero): màu = vẽ canvas lên chính nó qua ctx.filter (chế độ 'copy'), hạt = phủ
-  // mẫu hạt chế độ 'overlay'. Mọi chỗ gọi đều là ảnh kín (không trong suốt). Lỗi gì thì giữ ảnh gốc.
+  // iOS giới hạn tổng bộ nhớ canvas rất chặt -> KHÔNG tạo canvas tạm mỗi lần: dùng MỘT canvas nháp
+  // chung, xong thì thu về 1×1 trả bộ nhớ. Không vẽ canvas lên chính nó ở chế độ 'copy' (Safari xoá
+  // đích trước khi đọc nguồn -> ảnh trắng). Mọi chỗ gọi đều là ảnh kín. Lỗi gì thì giữ ảnh gốc.
+  let scratch = null
   function bake(canvas, pxScale = 1) {
     if (!CONFIG.enabled || !canvas?.width) return canvas
     try {
       const ctx = canvas.getContext('2d')
       if (!ctx) return canvas
-      ctx.save()
+      const w = canvas.width
+      const h = canvas.height
       if ('filter' in ctx) {
-        ctx.globalCompositeOperation = 'copy'
-        ctx.filter = colorCSS()
-        ctx.drawImage(canvas, 0, 0)
-        ctx.filter = 'none'
+        scratch = scratch || document.createElement('canvas')
+        scratch.width = w
+        scratch.height = h
+        const sx = scratch.getContext('2d')
+        if (sx) {
+          sx.drawImage(canvas, 0, 0)
+          ctx.save()
+          ctx.filter = colorCSS()
+          ctx.drawImage(scratch, 0, 0)
+          ctx.restore()
+        }
+        scratch.width = scratch.height = 1
       }
       if (CONFIG.grain * k() > 0) {
         const pat = ctx.createPattern(grainCanvas(), 'repeat')
         const sc = pxScale * Math.max(0.5, CONFIG.grainScale || 1)
         pat?.setTransform?.(new DOMMatrix().scale(sc, sc))
+        ctx.save()
         ctx.globalCompositeOperation = 'overlay'
         ctx.fillStyle = pat
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.fillRect(0, 0, w, h)
+        ctx.restore()
       }
-      ctx.restore()
     } catch (e) {}
     return canvas
   }
