@@ -45,6 +45,10 @@
 //   • Safari iOS 26+ (thanh nổi "Liquid Glass"): trang vẽ cả xuống DƯỚI thanh địa chỉ nổi ở đáy ->
 //     innerHeight tính luôn phần bị thanh che. Trừ thêm phần thanh che khi đang cuộn (thanh thu
 //     gọn, ~IOS_BAR px) để mỗi khối "một màn" của design hiện đủ, không bị thanh đè.
+// Safari thật (không phải Chrome / Firefox / Edge trên iPhone — cùng lõi WebKit nhưng UA khác):
+// đánh dấu html.is-safari cho vài chỉnh riêng (vd. dòng tiêu đề hero mobile thoáng hơn)
+if (/^((?!chrome|chromium|crios|fxios|edgios|android).)*safari/i.test(navigator.userAgent)) document.documentElement.classList.add('is-safari')
+
 ;(() => {
   const root = document.documentElement
   const IOS_BAR = 56

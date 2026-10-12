@@ -390,6 +390,7 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
   .hero__sub{display:none}
   .hero__year{position:static}
   .hero__title, .hero__year{font-size:calc(56 * var(--s))}
+  html.is-safari .hero__title{line-height:.78} /* Safari mobile: dòng thoáng hơn (.72) cho khỏi dính nhau */
   /* Màn THẤP (iPhone SE / mini khi thanh Safari đang hiện, vùng thấy được < ~620): ưu tiên tiêu đề sự
      kiện ở cỡ đủ (theo bề ngang như Figma) — bỏ thanh tên dưới ảnh, 4 ảnh lấy phần còn lại */
   @media (max-height:620px){
