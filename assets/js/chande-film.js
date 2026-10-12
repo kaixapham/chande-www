@@ -121,38 +121,32 @@
     grainCvKey = key
     return grainCv
   }
-  // pxScale: số điểm ảnh canvas / 1 px CSS (để hạt cùng cỡ như bản lọc CSS)
+  // pxScale: số điểm ảnh canvas / 1 px CSS (để hạt cùng cỡ như bản lọc CSS).
+  // KHÔNG tạo canvas tạm (iOS giới hạn tổng bộ nhớ canvas rất chặt — canvas tạm làm Chrome / Safari
+  // iPhone bỏ trắng ảnh hero): màu = vẽ canvas lên chính nó qua ctx.filter (chế độ 'copy'), hạt = phủ
+  // mẫu hạt chế độ 'overlay'. Mọi chỗ gọi đều là ảnh kín (không trong suốt). Lỗi gì thì giữ ảnh gốc.
   function bake(canvas, pxScale = 1) {
     if (!CONFIG.enabled || !canvas?.width) return canvas
-    const w = canvas.width
-    const h = canvas.height
-    const ctx = canvas.getContext('2d')
-    const copy = document.createElement('canvas')
-    copy.width = w
-    copy.height = h
-    const cx = copy.getContext('2d')
-    if ('filter' in cx) cx.filter = colorCSS()
-    cx.drawImage(canvas, 0, 0)
-    cx.filter = 'none'
-    if (CONFIG.grain * k() > 0) {
-      // lớp hạt cắt theo hình (destination-in) rồi hoà overlay lên
-      const gl = document.createElement('canvas')
-      gl.width = w
-      gl.height = h
-      const gx = gl.getContext('2d')
-      const pat = gx.createPattern(grainCanvas(), 'repeat')
-      const sc = pxScale * Math.max(0.5, CONFIG.grainScale || 1)
-      pat.setTransform?.(new DOMMatrix().scale(sc, sc))
-      gx.fillStyle = pat
-      gx.fillRect(0, 0, w, h)
-      gx.globalCompositeOperation = 'destination-in'
-      gx.drawImage(copy, 0, 0)
-      cx.globalCompositeOperation = 'overlay'
-      cx.drawImage(gl, 0, 0)
-      cx.globalCompositeOperation = 'source-over'
-    }
-    ctx.clearRect(0, 0, w, h)
-    ctx.drawImage(copy, 0, 0)
+    try {
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return canvas
+      ctx.save()
+      if ('filter' in ctx) {
+        ctx.globalCompositeOperation = 'copy'
+        ctx.filter = colorCSS()
+        ctx.drawImage(canvas, 0, 0)
+        ctx.filter = 'none'
+      }
+      if (CONFIG.grain * k() > 0) {
+        const pat = ctx.createPattern(grainCanvas(), 'repeat')
+        const sc = pxScale * Math.max(0.5, CONFIG.grainScale || 1)
+        pat?.setTransform?.(new DOMMatrix().scale(sc, sc))
+        ctx.globalCompositeOperation = 'overlay'
+        ctx.fillStyle = pat
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+      }
+      ctx.restore()
+    } catch (e) {}
     return canvas
   }
 
