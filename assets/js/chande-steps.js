@@ -49,8 +49,14 @@
     // dòng chú thích [ năm ] [ tên sự kiện ] đổi ngay khi sang nấc (ảnh thì chạy hiệu ứng)
     const caption = (i) => {
       const im = imgs[i]
-      if (yearEl && im?.dataset.stepYear) yearEl.textContent = `[ ${im.dataset.stepYear} ]`
-      if (nameEl && im?.alt) nameEl.textContent = `[ ${im.alt} ]`
+      // đổi chữ kèm hiệu ứng "giải mã" (ký hiệu code chốt dần về chữ mới — chande-scramble.js)
+      const put = (el, v, d) => {
+        if (!el || !v || el.textContent === v) return
+        el.textContent = v
+        if (!reduced) window.CHANDE_SCRAMBLE?.run(el, d)
+      }
+      put(yearEl, im?.dataset.stepYear && `[ ${im.dataset.stepYear} ]`, 0)
+      put(nameEl, im?.alt && `[ ${im.alt} ]`, 90)
     }
     const imgs = [...media.querySelectorAll('img')]
     if (imgs.length < 2) return

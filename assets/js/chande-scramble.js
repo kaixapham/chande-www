@@ -37,6 +37,14 @@
 
   function run(el, delay = 0) {
     if (reduced || !el) return
+    // nội dung đã bị thay (textContent = chữ mới): nút chữ cũ rời khỏi phần tử -> dừng lượt cũ,
+    // đọc lại chữ mới (không thì giải mã vào nút cũ đã tách ra, màn không thấy gì)
+    const old = el._scr
+    if (old && old.nodes.some((n) => !el.contains(n))) {
+      cancelAnimationFrame(old.raf)
+      if (old.lock) el.style.minWidth = old.lock.minWidth
+      el._scr = null
+    }
     if (!el._scr) el._scr = { nodes: textNodes(el) }
     const st = el._scr
     // chữ thật lấy một lần (lần hover sau giữa chừng vẫn trả về đúng chữ)

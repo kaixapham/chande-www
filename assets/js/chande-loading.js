@@ -327,7 +327,7 @@
    ngoài nội dung (góc bo của khung trình duyệt, overscroll) — nền kem lộ thành mảng sáng */
 html.cl-loading{background:${S.bg}}
 .cl{
-  position:fixed; inset:0; z-index:9998;
+  position:fixed; inset:0; z-index:10002; /* trên bubble (10000) + chữ cạnh vòng tròn About (10001): bubble / chữ không trùm thanh menu */
   font-size:calc(clamp(1440px, 100vw, 1920px) / 120);
   font-family:'Phudu',ui-sans-serif,system-ui,sans-serif; font-weight:600;
   text-transform:uppercase; -webkit-font-smoothing:antialiased;
