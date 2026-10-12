@@ -167,7 +167,8 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .hs-land__receipt > img{width:calc(825.14 * var(--u)); height:calc(1031.43 * var(--u)); transform:rotate(-6.14deg)}
 .hs-land__atom{left:calc(550 * var(--u)); top:calc(435 * var(--u)); width:calc(476.43 * var(--u)); height:calc(476.43 * var(--u))}
 .hs-land__atom > img{width:calc(405.48 * var(--u)); height:calc(405.48 * var(--u)); transform:rotate(11.19deg)}
-.hs-land__stickers{left:calc(1277.74 * var(--u)); top:calc(554.46 * var(--u)); width:calc(572.58 * var(--u))}
+/* cụm tem ảnh + thẻ kẹp: ảnh thẳng 509.71 × 381.67, nghiêng 10.75° như Figma (rotate riêng, không đụng transform của nhịp dán) */
+.hs-land__stickers{left:calc(1309 * var(--u)); top:calc(599 * var(--u)); width:calc(509.71 * var(--u)); rotate:10.75deg}
 /* Vòng % — tiến độ cuộn trang (chande-home.js ghi số) */
 
 /* ---------------------------------------------------------------- 6. ABOUT */
@@ -591,7 +592,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-land__receipt > img{width:calc(428.33 * var(--s)); height:calc(535.41 * var(--s))}
   .hs-land__atom{left:calc(50% + (31 - 187.5) * var(--s)); top:calc(160 * var(--s)); width:calc(405.6 * var(--s)); height:calc(405.6 * var(--s))}
   .hs-land__atom > img{width:calc(345.19 * var(--s)); height:calc(345.19 * var(--s))}
-  .hs-land__stickers{left:calc(50% + (22 - 187.5) * var(--s)); top:calc(401 * var(--s)); width:calc(395.55 * var(--s))}
+  .hs-land__stickers{left:calc(50% + (44 - 187.5) * var(--s)); top:calc(432 * var(--s)); width:calc(352.1 * var(--s))}
 
   /* 6. About — Figma Section-Poster mobile (628:610, khổ 375; --q = 1px khổ 375, co theo bề ngang).
      Một cột giữa, xếp lại thứ tự bằng `order` (các khối vẫn là con trực tiếp; .circles / nav pills

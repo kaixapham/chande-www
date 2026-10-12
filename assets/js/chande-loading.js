@@ -122,7 +122,7 @@ if (/^((?!chrome|chromium|crios|fxios|edgios|android).)*safari/i.test(navigator.
     loadingLabel: 'LOADING', // dòng trên, ô trái, lúc đang tải
     clockCity: 'HANOI', // dòng trên, ô trái, sau khi xong
     clockZone: 'Asia/Ho_Chi_Minh',
-    clockSuffix: 'GMT',
+    clockSuffix: 'GMT+7', // giờ Hà Nội (Asia/Ho_Chi_Minh) = UTC+7
     home: './', // logo + wordmark là link về trang chủ (URL gọn — Vercel cleanUrls)
     nav: [
       { num: '01', during: 'WORKJAM', after: 'GALLERY', href: 'gallery' },
