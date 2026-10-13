@@ -326,8 +326,12 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
    một ô SVG lặp lại, nét trên + nét trái. */
 .hs-wall__grid{left:0; right:0; top:calc(322 * var(--u)); bottom:calc(96 * var(--u));
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cpath d='M0 .5H96M.5 0V96' stroke='%23212121' stroke-dasharray='4 4'/%3E%3C/svg%3E") 0 0 / calc(96 * var(--u)) calc(96 * var(--u))}
-.hs-wall__collage{left:calc(120 * var(--u)); top:calc(293 * var(--u)); width:calc(1696 * var(--u))}
-.hs-wall__93{left:calc(157 * var(--u)); top:calc(1048 * var(--u)); width:calc(281 * var(--u))}
+/* bảng collage kéo thả (chande-wall.js): toạ độ mảnh theo px bản 1920 (× --u) tính từ đỉnh section */
+.hs-wall__board{inset:0; z-index:1}
+.wall__piece{position:absolute; display:block; height:auto; max-width:none; transform-origin:50% 50%; user-select:none; -webkit-user-drag:none;
+  transition:scale .2s cubic-bezier(.2,.7,.2,1), filter .2s ease}
+@media (hover:hover) and (pointer:fine){ .wall__piece{cursor:grab} }
+.wall__piece.is-drag{cursor:grabbing; scale:1.04; filter:drop-shadow(0 18px 28px rgba(0,0,0,.55))}
 .hs-wall .strip{top:calc(1460 * var(--u))}
 
 /* ---------------------------------------------------------------- 10. QUOTE */
