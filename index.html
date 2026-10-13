@@ -28,10 +28,10 @@
 <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/vendor/lenis.css">
-<link rel="stylesheet" href="assets/css/site.css?v=202610131940">
-<link rel="stylesheet" href="assets/css/home.css?v=202610131940">
-<link rel="stylesheet" href="assets/css/gallery.css?v=202610131940">
-<link rel="stylesheet" href="assets/css/form.css?v=202610131940">
+<link rel="stylesheet" href="assets/css/site.css?v=202610132057">
+<link rel="stylesheet" href="assets/css/home.css?v=202610132057">
+<link rel="stylesheet" href="assets/css/gallery.css?v=202610132057">
+<link rel="stylesheet" href="assets/css/form.css?v=202610132057">
 <!-- Khung hình đầu: màn loading do JS dựng ở cuối trang, nên trước đó tô nền tối + ẩn
      nội dung (không chớp nền kem). chande-loading.js gỡ cl-boot ngay khi đã gắn màn loading. -->
 <style>html.cl-boot,html.cl-boot body{background:#182220}html.cl-boot body>:not(.cl){visibility:hidden}</style>
@@ -243,10 +243,12 @@
     <section class="hs hs-land" data-cms-section="Phong cảnh + sticker" aria-label="Khoảnh khắc ở Chande">
       <div class="hs-land__pin">
       <img data-cms="land-bg" data-cms-label="Ảnh nền phong cảnh" data-cms-w="1920" class="abs hs-land__bg" src="assets/img/cms/index/land-bg-k2560.webp" alt="Mọi người ngồi quanh bàn gỗ cùng làm đồ thủ công" decoding="async" fetchpriority="low">
+      <!-- 3 món dán lên ảnh nền: vị trí / cỡ / góc trong style (--x --y --w --r: khổ 1920 · --mx --my --mw --mr:
+           mobile khổ 375) — sửa bằng land-edit.html -->
       <div class="hs-land__frame">
-      <div class="abs tilt hs-land__receipt" data-land-step="1"><img data-cms="land-receipt" data-cms-label="Tờ hoá đơn (PNG trong suốt)" data-cms-w="825" src="assets/img/home/land-receipt.webp" alt="" loading="lazy"></div>
-      <div class="abs tilt hs-land__atom" data-land-step="2"><img data-cms="land-atom" data-cms-label="Tem vịt patin (PNG trong suốt)" data-cms-w="405" src="assets/img/home/sticker-duck.webp" alt="" loading="lazy"></div>
-      <img data-cms="land-stickers" data-cms-label="Cụm tem ảnh + sticker (PNG trong suốt)" data-cms-w="573" class="abs hs-land__stickers" data-land-step="3" src="assets/img/home/land-stickers-2.webp" alt="" loading="lazy">
+      <div class="abs hs-land__piece" data-land-step="1" data-land-key="receipt" data-land-name="Tờ hoá đơn" style="--x:59.9;--y:193;--w:773.5;--r:-4.65;--mx:-29.6;--my:40;--mw:428.3;--mr:-6.14"><img data-cms="land-receipt" data-cms-label="Tờ hoá đơn (PNG trong suốt)" data-cms-w="825" src="assets/img/cms/index/land-receipt-mv75a1na.webp" alt="" loading="lazy"></div>
+      <div class="abs hs-land__piece" data-land-step="2" data-land-key="atom" data-land-name="Tem vịt" style="--x:670.8;--y:496.9;--w:453.2;--r:3.73;--mx:61.2;--my:190.2;--mw:345.2;--mr:11.19"><img data-cms="land-atom" data-cms-label="Tem vịt patin (PNG trong suốt)" data-cms-w="405" src="assets/img/cms/index/land-atom-mv75fbkx.webp" alt="" loading="lazy"></div>
+      <div class="abs hs-land__piece" data-land-step="3" data-land-key="stickers" data-land-name="Cụm sticker" style="--x:959.1;--y:80.2;--w:875;--r:1.76;--mx:44;--my:432;--mw:352.1;--mr:10.75"><img data-cms="land-stickers" data-cms-label="Cụm tem ảnh + sticker (PNG trong suốt)" data-cms-w="573" src="assets/img/cms/index/land-stickers-mv75tq9y.webp" alt="" loading="lazy"></div>
       </div><!-- /.hs-land__frame -->
       </div><!-- /.hs-land__pin -->
     </section>
@@ -279,12 +281,12 @@
 
       <p class="abs b16 hs-about__who"><span>Who is included</span><span>in this event</span></p>
       <img data-cms="about-friends" data-cms-label="Ảnh cạnh &quot;Who is included&quot;" data-cms-w="234" class="abs hs-about__friends" src="assets/img/home/about-who.webp" alt="Bạn trẻ áo đen ngồi cười dưới giàn cây" loading="lazy">
-      <p class="abs mono hs-about__roots">We do not only stop at roles around UI/UX design; we believe design has a common root, and each role will have interesting perspectives and connections with one another.</p>
+      <p class="abs mono hs-about__roots">We do not only stop at roles around UI/UX design; we believe design has a common root, and each role will have interesting perspectives and connections with one another.&nbsp;&nbsp; <span style="white-space:pre">[ For everyone ]</span></p>
       <ul class="abs d48 hs-about__roles">
         <li>Art director</li><li>Founder studio</li><li>Gamer</li><li>Awards winner</li><li>Product designer</li>
         <li>Planter</li><li>UI.UX designer</li><li>Motion designer</li><li>3D designer</li><li>Photographer</li>
       </ul>
-      <p class="abs d48 hs-about__count">01</p>
+      <p class="abs d48 hs-about__passion"><span>All you need</span><span>is passion</span></p>
       <i class="dash" style="top:calc(1930 * var(--u))" aria-hidden="true"></i>
 
       <nav class="abs pills hs-about__pills mono" aria-label="Xem thêm">
@@ -388,7 +390,7 @@
       <div class="abs hs-wall__board" data-wall>
       <script type="application/json" data-wall-pieces>
       [
-        {"num":"01","name":"image 183","img":"assets/img/cms/index/wall-mv6xmuo2qut-d1119.webp","x":810.7,"y":672.8,"w":559.3,"rot":2.9,"orig":"assets/img/cms/index/wall-mv6xmuo2qut.png"},
+        {"num":"01","name":"image 183","img":"assets/img/cms/index/wall-mv752dpyphv-d1119.webp","x":810.7,"y":672.8,"w":559.3,"rot":2.9,"orig":"assets/img/cms/index/wall-mv752dpyphv.png"},
         {"num":"02","name":"Tâm Đô","img":"assets/img/cms/index/wall-tamdo.webp","x":1438.9,"y":1065.9,"w":305.6,"rot":-4.2},
         {"num":"03","name":"Concho","img":"assets/img/cms/index/wall-mv6xxnpjsen-d636.webp","x":134.2,"y":596,"w":318,"rot":8.3,"orig":"assets/img/cms/index/wall-mv6xxnpjsen.png"},
         {"num":"04","name":"Dezi","img":"assets/img/cms/index/wall-mv6wo523t3l-d1001.webp","x":1125.2,"y":358.8,"w":500.3,"rot":5.5,"orig":"assets/img/cms/index/wall-mv6wo523t3l.png"},
@@ -518,45 +520,45 @@
 <script src="assets/vendor/gsap.min.js"></script>
 <script src="assets/vendor/CustomEase.min.js"></script>
 
-<script src="assets/js/chande-settings.js?v=202610131940"></script>
-<script src="assets/js/chande-film.js?v=202610131940"></script>
-<script src="assets/js/chande-loading.js?v=202610131940"></script>
-<script src="assets/js/chande-textbox.js?v=202610131940"></script>
-<script src="assets/js/chande-menu.js?v=202610131940"></script>
-<script src="assets/js/chande-transition.js?v=202610131940"></script>
-<script src="assets/js/chande-reveal.js?v=202610131940"></script>
-<script src="assets/js/chande-hero.js?v=202610131940"></script>
-<script src="assets/js/chande-entrance.js?v=202610131940"></script>
-<script src="assets/js/chande-field.js?v=202610131940"></script>
-<script src="assets/js/chande-home.js?v=202610131940"></script>
-<script src="assets/js/chande-wall.js?v=202610131940"></script>
-<script src="assets/js/chande-cursor.js?v=202610131940"></script>
-<script src="assets/js/chande-bubble.js?v=202610131940"></script>
-<script src="assets/js/chande-tilt.js?v=202610131940"></script>
-<script src="assets/js/chande-imgtiles.js?v=202610131940"></script>
-<script src="assets/js/chande-parallax.js?v=202610131940"></script>
-<script src="assets/js/chande-titlefx.js?v=202610131940"></script>
-<script src="assets/js/chande-eye.js?v=202610131940"></script>
-<script src="assets/js/chande-chips.js?v=202610131940"></script>
-<script src="assets/js/chande-story.js?v=202610131940"></script>
-<script src="assets/js/chande-circles.js?v=202610131940"></script>
-<script src="assets/js/chande-steps.js?v=202610131940"></script>
-<script src="assets/js/chande-members.js?v=202610131940"></script>
-<script src="assets/js/chande-scramble.js?v=202610131940"></script>
-<script src="assets/js/chande-sign.js?v=202610131940"></script>
-<script src="assets/js/chande-gallery.js?v=202610131940"></script>
-<script src="assets/js/chande-form.js?v=202610131940"></script>
+<script src="assets/js/chande-settings.js?v=202610132057"></script>
+<script src="assets/js/chande-film.js?v=202610132057"></script>
+<script src="assets/js/chande-loading.js?v=202610132057"></script>
+<script src="assets/js/chande-textbox.js?v=202610132057"></script>
+<script src="assets/js/chande-menu.js?v=202610132057"></script>
+<script src="assets/js/chande-transition.js?v=202610132057"></script>
+<script src="assets/js/chande-reveal.js?v=202610132057"></script>
+<script src="assets/js/chande-hero.js?v=202610132057"></script>
+<script src="assets/js/chande-entrance.js?v=202610132057"></script>
+<script src="assets/js/chande-field.js?v=202610132057"></script>
+<script src="assets/js/chande-home.js?v=202610132057"></script>
+<script src="assets/js/chande-wall.js?v=202610132057"></script>
+<script src="assets/js/chande-cursor.js?v=202610132057"></script>
+<script src="assets/js/chande-bubble.js?v=202610132057"></script>
+<script src="assets/js/chande-tilt.js?v=202610132057"></script>
+<script src="assets/js/chande-imgtiles.js?v=202610132057"></script>
+<script src="assets/js/chande-parallax.js?v=202610132057"></script>
+<script src="assets/js/chande-titlefx.js?v=202610132057"></script>
+<script src="assets/js/chande-eye.js?v=202610132057"></script>
+<script src="assets/js/chande-chips.js?v=202610132057"></script>
+<script src="assets/js/chande-story.js?v=202610132057"></script>
+<script src="assets/js/chande-circles.js?v=202610132057"></script>
+<script src="assets/js/chande-steps.js?v=202610132057"></script>
+<script src="assets/js/chande-members.js?v=202610132057"></script>
+<script src="assets/js/chande-scramble.js?v=202610132057"></script>
+<script src="assets/js/chande-sign.js?v=202610132057"></script>
+<script src="assets/js/chande-gallery.js?v=202610132057"></script>
+<script src="assets/js/chande-form.js?v=202610132057"></script>
 <!-- Module: tự nạp paper-stack.js + three (assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-poster.js?v=202610131940"></script>
+<script type="module" src="assets/js/chande-poster.js?v=202610132057"></script>
 <!-- Module: vịt patin 3D trên lưới gallery (three ở assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-duck.js?v=202610131940"></script>
+<script type="module" src="assets/js/chande-duck.js?v=202610132057"></script>
 <!-- Module: thảm cỏ 3D dưới lưới gallery (preset data-floor="grass-3d"). -->
-<script type="module" src="assets/js/chande-grass.js?v=202610131940"></script>
+<script type="module" src="assets/js/chande-grass.js?v=202610132057"></script>
 <!-- Module: cá koi 3D bơi trong lõi vòng tròn About khi bubble ở tâm (three nạp động). -->
-<script type="module" src="assets/js/chande-koi.js?v=202610131940"></script>
+<script type="module" src="assets/js/chande-koi.js?v=202610132057"></script>
 <!-- Module: bướm bay ra khỏi vòng 1, bay theo cuộn tới cuối trang chủ (three nạp động). -->
-<script type="module" src="assets/js/chande-flyer.js?v=202610131940"></script>
+<script type="module" src="assets/js/chande-flyer.js?v=202610132057"></script>
 <!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
-<script src="assets/js/chande-devtools.js?v=202610131940"></script>
+<script src="assets/js/chande-devtools.js?v=202610132057"></script>
 </body>
 </html>

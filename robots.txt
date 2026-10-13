@@ -6,6 +6,8 @@ Disallow: /poster-edit.html
 Disallow: /poster-edit
 Disallow: /wall-edit.html
 Disallow: /wall-edit
+Disallow: /land-edit.html
+Disallow: /land-edit
 Disallow: /film.html
 Disallow: /film
 Disallow: /tools/

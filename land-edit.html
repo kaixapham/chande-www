@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Land Editor</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#0e0e0e; --panel:#171717; --panel-2:#1f1f1f; --line:rgba(250,250,250,.08); --line-2:rgba(250,250,250,.14);
+  --fg:#f2f2f2; --dim:#9a9a9a; --lime:#68f12b; --warn:#ffb648; --bad:#ff6b6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0; height:100%; background:var(--bg); color:var(--fg); font:13px/1.4 Inter,system-ui,sans-serif}
+.app{display:grid; grid-template-columns:1fr 380px; grid-template-rows:minmax(0, 1fr); height:100vh; overflow:hidden}
+.stage{display:flex; flex-direction:column; min-width:0; min-height:0; border-right:1px solid var(--line)}
+.stage__bar{display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line); flex-wrap:wrap}
+.stage__bar b{font-weight:600}
+.stage__bar .hint{color:var(--dim); font-size:12px}
+.stage__view{flex:1; min-height:0; overflow:auto; padding:20px; background:repeating-conic-gradient(#141414 0 25%, #111 0 50%) 0 0 / 24px 24px}
+.stage__view.is-drop{outline:2px dashed var(--lime); outline-offset:-10px}
+/* khung = section Phong cảnh thu nhỏ (desktop 1920 × 1028 / mobile 375 × 748), u = px khung / đơn vị thiết kế */
+.board{position:relative; margin:0 auto; background:#000; overflow:hidden; box-shadow:0 0 0 1px var(--line-2), 0 20px 60px rgba(0,0,0,.5)}
+.board__bg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none; user-select:none}
+.modes{display:flex; gap:4px}
+.modes .btn.is-on{background:var(--fg); color:#0e0e0e; border-color:var(--fg)}
+.land__piece{position:absolute; display:block; height:auto; max-width:none; transform-origin:50% 50%; cursor:grab; user-select:none; -webkit-user-drag:none}
+.land__piece.is-drag{cursor:grabbing}
+.hdl{position:absolute; pointer-events:none; outline:1.5px solid var(--lime); transform-origin:50% 50%; z-index:9999}
+.hdl[hidden]{display:none}
+.hdl i{position:absolute; width:12px; height:12px; margin:-6px 0 0 -6px; background:#fff; border:1.5px solid var(--lime); pointer-events:auto}
+.hdl i[data-h=nw]{left:0; top:0; cursor:nwse-resize} .hdl i[data-h=ne]{left:100%; top:0; cursor:nesw-resize}
+.hdl i[data-h=sw]{left:0; top:100%; cursor:nesw-resize} .hdl i[data-h=se]{left:100%; top:100%; cursor:nwse-resize}
+.hdl i[data-h=rot]{left:50%; top:-34px; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:var(--lime); cursor:grab}
+.hdl::before{content:''; position:absolute; left:50%; top:-26px; height:26px; border-left:1.5px solid var(--lime)}
+.hdl b{position:absolute; left:50%; bottom:-26px; transform:translateX(-50%); font:500 10px 'Geist Mono',monospace; color:#0f1513; background:var(--lime); padding:2px 5px; border-radius:4px; white-space:nowrap}
+.side{display:flex; flex-direction:column; min-height:0; background:var(--panel)}
+.side__head{display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line)}
+.side__head h1{font-size:13px; margin:0; flex:1}
+.side__body{overflow:auto; flex:1; padding:10px 12px; display:flex; flex-direction:column; gap:8px}
+.side__msg{padding:8px 12px; border-top:1px solid var(--line); font-size:12px; color:var(--dim); min-height:34px}
+.side__msg.is-bad{color:var(--bad)} .side__msg.is-ok{color:var(--lime)}
+.btn{height:30px; padding:0 12px; border-radius:8px; border:1px solid var(--line-2); background:var(--panel-2); color:var(--fg); font:inherit; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px}
+.btn:hover{border-color:var(--fg)} .btn:disabled{opacity:.5; cursor:progress}
+.btn--go{background:var(--lime); color:#0f1513; border-color:var(--lime); font-weight:600}
+.btn--sm{height:24px; padding:0 8px; font-size:11px}
+.piece{display:grid; grid-template-columns:52px 1fr; gap:8px; padding:8px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); cursor:pointer}
+.piece.is-sel{border-color:var(--lime)}
+.piece img{width:52px; height:52px; object-fit:contain; background:repeating-conic-gradient(#2a2a2a 0 25%, #222 0 50%) 0 0 / 10px 10px; border-radius:6px}
+.piece__top{display:flex; gap:6px; align-items:center}
+.piece__top input{flex:1; min-width:0; background:transparent; border:0; border-bottom:1px solid var(--line-2); color:var(--fg); font:inherit; font-weight:600; padding:2px 0}
+.piece__nums{display:grid; grid-template-columns:repeat(4, 1fr); gap:4px; margin-top:6px}
+.piece__nums label{display:flex; flex-direction:column; font:10px 'Geist Mono',monospace; color:var(--dim)}
+.piece__nums input{width:100%; background:#121212; border:1px solid var(--line-2); border-radius:6px; color:var(--fg); font:11px 'Geist Mono',monospace; padding:3px 5px}
+.piece__acts{display:flex; gap:4px; margin-top:6px; flex-wrap:wrap}
+.gh{display:flex; flex-direction:column; gap:6px; padding:10px 12px; border-top:1px solid var(--line)}
+.gh[hidden]{display:none}
+.gh input{background:#121212; border:1px solid var(--line-2); border-radius:6px; color:var(--fg); padding:6px 8px; font:12px 'Geist Mono',monospace}
+.dirty{color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="stage">
+    <div class="stage__bar">
+      <a class="btn btn--sm" href="cms.html">← CMS</a>
+      <b>Phong cảnh + sticker</b>
+      <div class="modes"><button class="btn btn--sm is-on" type="button" data-mode="desktop">Desktop (1920 × 1028)</button><button class="btn btn--sm" type="button" data-mode="mobile">Mobile (375 × 748)</button></div>
+      <span class="hint">Kéo để dời · kéo góc để đổi cỡ · kéo nút tròn để xoay (Shift: bước 15°) · lăn chuột trên món cũng đổi cỡ · phím mũi tên nhích (Shift ×10) · thả file ảnh lên một món để đổi ảnh</span>
+    </div>
+    <div class="stage__view" data-view>
+      <div class="board" data-board><img class="board__bg" data-bg alt=""></div>
+    </div>
+  </section>
+  <aside class="side">
+    <div class="side__head">
+      <h1>3 món dán</h1>
+      <button class="btn btn--sm" type="button" data-undo>Hoàn tác</button>
+      <button class="btn btn--go btn--sm" type="button" data-save>Lưu</button>
+    </div>
+    <div class="side__body" data-list></div>
+    <form class="gh" data-gh hidden>
+      <b>Lưu thẳng lên GitHub</b>
+      <input name="repo" placeholder="owner/repo">
+      <input name="token" type="password" placeholder="token (fine-grained, Contents: read & write)" autocomplete="off">
+      <label><input type="checkbox" name="remember"> nhớ trên máy này</label>
+      <button class="btn btn--go btn--sm" type="submit">Lưu</button>
+    </form>
+    <div class="side__msg" data-msg></div>
+  </aside>
+</div>
+<script src="assets/js/land-edit.js?v=202610132057"></script>
+</body>
+</html>

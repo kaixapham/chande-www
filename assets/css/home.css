@@ -165,14 +165,11 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .hs-land.is-staged [data-land-step="2"]{transform:translate3d(0, calc(-30 * var(--u)), 0) scale(1.22) rotate(6deg)}
 .hs-land.is-staged [data-land-step].is-in{opacity:1; transform:none}
 @media (prefers-reduced-motion:reduce){ .hs-land.is-staged [data-land-step]{transition:opacity .2s ease; transform:none} }
-.hs-land .tilt{display:grid; place-items:center}
-.hs-land .tilt > img{max-width:none; object-fit:cover}
-.hs-land__receipt{left:calc(-28 * var(--u)); top:calc(-66 * var(--u)); width:calc(930.79 * var(--u)); height:calc(1113.82 * var(--u))}
-.hs-land__receipt > img{width:calc(825.14 * var(--u)); height:calc(1031.43 * var(--u)); transform:rotate(-6.14deg)}
-.hs-land__atom{left:calc(550 * var(--u)); top:calc(435 * var(--u)); width:calc(476.43 * var(--u)); height:calc(476.43 * var(--u))}
-.hs-land__atom > img{width:calc(405.48 * var(--u)); height:calc(405.48 * var(--u)); transform:rotate(11.19deg)}
-/* cụm tem ảnh + thẻ kẹp: ảnh thẳng 509.71 × 381.67, nghiêng 10.75° như Figma (rotate riêng, không đụng transform của nhịp dán) */
-.hs-land__stickers{left:calc(1309 * var(--u)); top:calc(599 * var(--u)); width:calc(509.71 * var(--u)); rotate:10.75deg}
+/* 3 món: x, y = góc trên trái ảnh (chưa xoay), w = bề rộng (cao theo tỉ lệ ảnh), r = độ xoay quanh tâm —
+   số đo khổ 1920 (--u); mobile dùng --mx … (khổ 375, --s). Sửa bằng land-edit.html. Xoay đặt ở ảnh (rotate),
+   khung ngoài để dành transform cho nhịp dán. */
+.hs-land__piece{left:calc(var(--x) * var(--u)); top:calc(var(--y) * var(--u)); width:calc(var(--w) * var(--u))}
+.hs-land__piece > img{display:block; width:100%; height:auto; max-width:none; rotate:calc(var(--r) * 1deg)}
 /* Vòng % — tiến độ cuộn trang (chande-home.js ghi số) */
 
 /* ---------------------------------------------------------------- 6. ABOUT */
@@ -208,7 +205,9 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .hs-about__roots{left:calc(24 * var(--u)); top:auto; bottom:calc(1176 * var(--u)); width:calc(234 * var(--u)); margin:0; font-size:1rem; color:#000; opacity:.3}
 .hs-about__roles{left:calc(960 * var(--u)); top:auto; bottom:calc(1176 * var(--u)); width:calc(368 * var(--u)); margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:0} /* sát nhau như Figma: 10 dòng × .78em ≈ 374u, vừa khoảng 1538 → 1914 */
 .hs-about__roles li{position:relative; white-space:nowrap; width:fit-content; cursor:default}
-.hs-about__count{left:calc(1848 * var(--u)); top:calc(1614 * var(--u)); margin:0}
+/* "All you need is passion": mép phải theo đường nét đứt, đáy ngang đáy danh sách vai trò */
+.hs-about__passion{left:auto; right:calc(24 * var(--u)); top:auto; bottom:calc(1176 * var(--u)); margin:0; text-align:right}
+.hs-about__passion span{display:block; white-space:nowrap}
 .hs-about__pills{left:calc(492 * var(--u)); top:calc(2310 * var(--u) - 24px - 56px)} /* nút cao 56px, đáy cách ảnh đá (top 2310) đúng 24px */
 /* 2 nút Gallery / About us: đúng cỡ Figma 144 × 56 px, không co theo màn */
 .hs-about__pills .pill{width:144px; height:56px}
@@ -615,11 +614,8 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .strip__run .pillrun__track > i{width:calc(108 * var(--q)); height:calc(42 * var(--q))}
   .hs-land.is-staged .hs-land__frame{--s:min(calc(100vw / 375), calc((var(--vp) - var(--bar)) / 748)); inset:var(--bar) 0 0; top:var(--bar); height:auto;
     transform:none; overflow:hidden}
-  .hs-land__receipt{left:calc(50% + (-57 - 187.5) * var(--s)); top:calc(-134 * var(--s)); width:calc(483.17 * var(--s)); height:calc(578.18 * var(--s))}
-  .hs-land__receipt > img{width:calc(428.33 * var(--s)); height:calc(535.41 * var(--s))}
-  .hs-land__atom{left:calc(50% + (31 - 187.5) * var(--s)); top:calc(160 * var(--s)); width:calc(405.6 * var(--s)); height:calc(405.6 * var(--s))}
-  .hs-land__atom > img{width:calc(345.19 * var(--s)); height:calc(345.19 * var(--s))}
-  .hs-land__stickers{left:calc(50% + (44 - 187.5) * var(--s)); top:calc(432 * var(--s)); width:calc(352.1 * var(--s))}
+  .hs-land__piece{left:calc(50% + (var(--mx) - 187.5) * var(--s)); top:calc(var(--my) * var(--s)); width:calc(var(--mw) * var(--s))}
+  .hs-land__piece > img{rotate:calc(var(--mr) * 1deg)}
 
   /* 6. About — Figma Section-Poster mobile (628:610, khổ 375; --q = 1px khổ 375, co theo bề ngang).
      Một cột giữa, xếp lại thứ tự bằng `order` (các khối vẫn là con trực tiếp; .circles / nav pills
@@ -656,7 +652,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-about__pills .pill{font-size:14px; letter-spacing:-.02em; min-height:0}
   .hs-about .circle[data-creature="koi"]{order:12; margin-top:calc(96 * var(--q))}
   .hs-about .circle[data-creature="frog"]{order:12; margin-top:calc(14 * var(--q))}
-  .hs-about__count{display:none}
+  .hs-about .hs-about__passion{order:10; position:relative; right:auto; bottom:auto; margin-top:calc(40 * var(--q)); text-align:center; font-size:calc(40 * var(--q))}
   /* phần dưới tràn hết bề ngang */
   .hs-about__scheme{order:13; width:100vw; margin-top:calc(16 * var(--q))}
   .hs-about__scheme .scheme > i, .hs-about__scheme > i{height:calc(60 * var(--q))}
