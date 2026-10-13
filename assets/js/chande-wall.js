@@ -8,7 +8,8 @@
  *   x, y = góc trên trái, w = bề rộng — đơn vị px của bản thiết kế 1920 (co theo --u như mọi
  *   thứ trong section); rot = độ xoay quanh tâm; thứ tự trong danh sách = thứ tự chồng (sau = trên).
  * Không có hiệu ứng cuộn: cuộn tới là mọi mảnh đã nằm sẵn. Người xem kéo thả được (chuột / bút):
- * nhấc mảnh lên trên cùng, kéo đi, thả là nằm đó (không lưu — tải lại trang về như cũ).
+ * kéo đi, thả là nằm đó (giữ nguyên lớp chồng — mảnh dưới không tự trồi lên trên; không lưu,
+ * tải lại trang về như cũ).
  * Màn cảm ứng: không kéo (để vuốt cuộn trang như thường).
  *
  * API: window.CHANDE_WALL = { mount(root), render(board, pieces, opts) }
@@ -53,7 +54,6 @@
   function bindDrag(board) {
     if (board._wallDrag) return
     board._wallDrag = true
-    let top = 1000
     board.addEventListener('pointerdown', (e) => {
       const el = e.target.closest?.('.wall__piece')
       if (!el || !canDrag() || e.button !== 0) return
@@ -62,7 +62,6 @@
       const base = (el._d ||= { x: 0, y: 0 })
       const sx = e.clientX - base.x
       const sy = e.clientY - base.y
-      el.style.zIndex = ++top
       el.classList.add('is-drag')
       const move = (ev) => {
         base.x = ev.clientX - sx

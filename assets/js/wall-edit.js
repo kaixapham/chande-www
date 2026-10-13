@@ -68,7 +68,7 @@
   function placeHandles() {
     const el = sel >= 0 && pieceEl(sel)
     if (!el) return void (hdl.hidden = true)
-    board.append(hdl)
+    if (!hdl.isConnected) board.append(hdl) // gắn một lần (gắn lại giữa lúc kéo sẽ mất pointer capture)
     hdl.hidden = false
     const p = pieces[sel]
     hdl.style.left = `${p.x * u}px`
@@ -129,6 +129,7 @@
             <button class="btn btn--sm" type="button" data-act="down" title="Xuống một lớp">↓ lớp</button>
             <button class="btn btn--sm" type="button" data-act="up" title="Lên một lớp">↑ lớp</button>
             <button class="btn btn--sm" type="button" data-act="img">Đổi ảnh</button>
+            <button class="btn btn--sm" type="button" data-act="trim" title="Cắt bỏ viền trong suốt thừa quanh hình">Cắt viền</button>
             <button class="btn btn--sm" type="button" data-act="del">Xoá</button>
           </div>
         </div>
@@ -178,6 +179,9 @@
     } else if (act === 'img') {
       history.pop()
       return pickFiles(false, (f) => replaceImage(i, f))
+    } else if (act === 'trim') {
+      history.pop()
+      return trimPiece(i)
     }
     renum()
     all()
@@ -307,25 +311,57 @@
 
   /* ------------------------------------------------------------------ ảnh --- */
   const MAX = 2400
+  // Ảnh mới: cắt bỏ viền trong suốt thừa quanh hình (khung tay cầm ôm đúng hình thấy được — PNG xuất
+  // từ Figma / Photoshop hay dư nền trong suốt rất rộng). Không cắt được gì + không quá lớn thì giữ
+  // nguyên file gốc; có cắt thì lưu PNG (không nén mất dữ liệu); ảnh > 2400 px mới thu nhỏ.
   async function processImage(file) {
+    if (file.type === 'image/svg+xml') return { blob: file, ext: 'svg', w: 600 }
     const bmp = await createImageBitmap(file)
-    const big = Math.max(bmp.width, bmp.height) > MAX
-    if (!big && /^image\/(png|webp)$/.test(file.type)) return { blob: file, ext: file.type === 'image/png' ? 'png' : 'webp', w: bmp.width }
     const k = Math.min(1, MAX / Math.max(bmp.width, bmp.height))
+    const W0 = Math.round(bmp.width * k)
+    const H0 = Math.round(bmp.height * k)
     const c = document.createElement('canvas')
-    c.width = Math.round(bmp.width * k)
-    c.height = Math.round(bmp.height * k)
-    const x = c.getContext('2d')
+    c.width = W0
+    c.height = H0
+    const x = c.getContext('2d', { willReadFrequently: true })
     x.imageSmoothingQuality = 'high'
-    x.drawImage(bmp, 0, 0, c.width, c.height)
-    const blob = await new Promise((res) => c.toBlob(res, 'image/webp', 0.9))
-    return { blob, ext: 'webp', w: c.width }
+    x.drawImage(bmp, 0, 0, W0, H0)
+    // khung bao phần có hình (alpha > 8)
+    let x0 = W0, y0 = H0, x1 = -1, y1 = -1
+    if (/png|webp|gif/.test(file.type)) {
+      const d = x.getImageData(0, 0, W0, H0).data
+      for (let y = 0; y < H0; y++)
+        for (let xx = 0; xx < W0; xx++)
+          if (d[(y * W0 + xx) * 4 + 3] > 8) {
+            if (xx < x0) x0 = xx
+            if (xx > x1) x1 = xx
+            if (y < y0) y0 = y
+            if (y > y1) y1 = y
+          }
+    }
+    const pad = 2
+    const trim = x1 >= 0 && (x0 > pad || y0 > pad || x1 < W0 - 1 - pad || y1 < H0 - 1 - pad)
+    if (!trim && k === 1 && /^image\/(png|webp)$/.test(file.type)) return { blob: file, ext: file.type === 'image/png' ? 'png' : 'webp', w: bmp.width }
+    let out = c
+    let crop = null
+    if (trim) {
+      const cx = Math.max(0, x0 - pad), cy = Math.max(0, y0 - pad)
+      const cw = Math.min(W0, x1 + pad + 1) - cx, ch = Math.min(H0, y1 + pad + 1) - cy
+      crop = { cx, cy, cw, ch, W0 }
+      out = document.createElement('canvas')
+      out.width = cw
+      out.height = ch
+      out.getContext('2d').drawImage(c, cx, cy, cw, ch, 0, 0, cw, ch)
+    }
+    const png = trim || file.type === 'image/png'
+    const blob = await new Promise((res) => out.toBlob(res, png ? 'image/png' : 'image/webp', 0.92))
+    return { blob, ext: png ? 'png' : 'webp', w: out.width, crop }
   }
   async function stash(file) {
     const img = await processImage(file)
     const path = `assets/img/cms/index/wall-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}.${img.ext}`
     pending.set(path, { blob: img.blob, url: URL.createObjectURL(img.blob) })
-    return { path, w: img.w }
+    return { path, w: img.w, crop: img.crop }
   }
   async function addImages(files, at) {
     files = [...files].filter((f) => f.type?.startsWith('image/'))
@@ -350,6 +386,30 @@
     pieces[i].img = path
     all()
     msg(`Đã đổi ảnh mảnh ${i + 1} (chưa lưu).`)
+  }
+  // cắt viền trong suốt của một mảnh đã có, giữ hình đứng nguyên chỗ trên bảng
+  async function trimPiece(i) {
+    const p = pieces[i]
+    msg('Đang cắt viền…')
+    try {
+      const blob = await fetch(shown(p.img)).then((r) => r.blob())
+      const file = new File([blob], 'x', { type: blob.type || 'image/png' })
+      const { path, crop } = await stash(file)
+      if (!crop) {
+        pending.delete(path)
+        return msg('Ảnh này không có viền trong suốt thừa.')
+      }
+      snap()
+      const k = p.w / crop.W0
+      p.img = path
+      p.x = round(p.x + crop.cx * k)
+      p.y = round(p.y + crop.cy * k)
+      p.w = round(crop.cw * k)
+      all()
+      msg(`Đã cắt viền mảnh ${i + 1} (chưa lưu).`)
+    } catch (e) {
+      msg(`Không cắt được: ${e.message || e}`, 'bad')
+    }
   }
   function pickFiles(multiple, fn) {
     const inp = document.createElement('input')
