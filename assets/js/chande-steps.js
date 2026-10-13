@@ -28,7 +28,7 @@
         const dh = img.naturalHeight * k
         c.getContext('2d').drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh)
         // ảnh sự kiện mang film màu bằng CSS -> nướng vào khung chuyển cho khớp màu (không lọc canvas đang chạy)
-        window.CHANDE_FILM?.bake(c, w / Math.max(1, img.parentElement?.clientWidth || w))
+        if (!img.classList.contains('film-baked')) window.CHANDE_FILM?.bake(c, w / Math.max(1, img.parentElement?.clientWidth || w)) // Safari: ảnh đã nướng sẵn
         res(c)
       }
       if (img.complete) draw()

@@ -208,7 +208,7 @@ void main() {
       try {
         sctx.drawImage(el, (el.naturalWidth - sw) / 2, (el.naturalHeight - sh) / 2, sw, sh, 0, 0, w, h)
         // dải ảnh hành trình About: ảnh gốc mang film bằng CSS -> nướng vào bản chụp cho khớp màu
-        if (el.closest('.ab-journey__track')) window.CHANDE_FILM?.bake(snap, w / Math.max(1, el.clientWidth))
+        if (el.closest('.ab-journey__track') && !el.classList.contains('film-baked')) window.CHANDE_FILM?.bake(snap, w / Math.max(1, el.clientWidth)) // Safari: ảnh đã nướng sẵn
       } catch (e) {}
       return
     }
