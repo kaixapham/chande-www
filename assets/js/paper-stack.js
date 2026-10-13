@@ -753,14 +753,15 @@ export function mount(container, config = {}) {
 
   /* ---- tạo tờ ---- */
 
-  // ảnh có điểm nào không đặc (alpha < ~98%)? lấy mẫu trên bản thu nhỏ 64×64
+  // ảnh có điểm nào không đặc (alpha < ~98%)? lấy mẫu trên bản thu nhỏ 32×32
   function hasAlpha(img) {
+    if (img?._noAlpha) return false
     try {
       const c = document.createElement('canvas')
-      c.width = c.height = 64
+      c.width = c.height = 32
       const x = c.getContext('2d', { willReadFrequently: true })
-      x.drawImage(img, 0, 0, 64, 64)
-      const d = x.getImageData(0, 0, 64, 64).data
+      x.drawImage(img, 0, 0, 32, 32)
+      const d = x.getImageData(0, 0, 32, 32).data
       for (let i = 3; i < d.length; i += 4) if (d[i] < 250) return true
     } catch {}
     return false
@@ -825,7 +826,7 @@ export function mount(container, config = {}) {
     // Ảnh có phần trong suốt (PNG / WebP alpha: tem răng cưa, túi nhựa…) — tự nhận, hoặc ép bằng cfg.cut:
     // mặt trước hoà trong suốt thật (nửa trong vẫn xuyên thấu) + bỏ hẳn điểm trong suốt hoàn toàn,
     // mặt sau = giấy trắng mang đúng alpha của ảnh, bóng đổ cắt theo hình (customDepthMaterial)
-    const alpha = cfg.cut || hasAlpha(img)
+    const alpha = cfg.cut || img._alpha || hasAlpha(img)
     if (alpha) {
       front.material.transparent = true
       front.material.alphaTest = 0.02
@@ -840,7 +841,7 @@ export function mount(container, config = {}) {
       front.material.customProgramCacheKey = () => 'unpremul'
       try {
         const c = document.createElement('canvas')
-        c.width = Math.min(512, img.width || img.naturalWidth || 512)
+        c.width = Math.min(256, img.width || img.naturalWidth || 256) // mặt sau chỉ lộ lúc mép cong — 256 px đủ
         c.height = Math.round(c.width * ((img.height || img.naturalHeight || 1) / (img.width || img.naturalWidth || 1)))
         const x = c.getContext('2d')
         x.drawImage(img, 0, 0, c.width, c.height)
@@ -915,11 +916,12 @@ export function mount(container, config = {}) {
     if (typeof createImageBitmap !== 'function') return viaImg()
     // tải về blob -> createImageBitmap(blob): giải mã ở luồng nền (từ <img> thì Chrome giải mã
     // ngay trên luồng chính); ảnh quá to thì thu thêm một lượt bitmap -> bitmap (nhẹ)
-    // premultiply: ảnh có trong suốt thì mép mịn trộn đúng (không dính màu đen của điểm trong suốt)
-    const opts = { imageOrientation: 'flipY', premultiplyAlpha: 'premultiply' }
+    // giải mã thường (luồng nền). premultiply (để mép ảnh trong suốt không dính viền đen) chỉ làm cho
+    // ảnh có trong suốt, ở setSheets — đặt premultiply ở đây bắt trình duyệt giải mã MỌI ảnh trên luồng chính
+    const opts = { imageOrientation: 'flipY', premultiplyAlpha: 'none' }
     return fetch(src)
       .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(r.status))))
-      .then((b) => createImageBitmap(b, opts))
+      .then((b) => createImageBitmap(b, opts).then((bm) => (/jpe?g/.test(b.type) && (bm._noAlpha = true), bm)))
       .then(async (bmp) => {
         const k = Math.min(1, TEX_MAX / Math.max(bmp.width, bmp.height))
         if (k >= 1) return bmp
@@ -946,7 +948,22 @@ export function mount(container, config = {}) {
       list.map((entry) => (entry.img ? Promise.resolve(entry.img) : loadImage(entry.src))),
     )
     while (sheets.length) disposeSheet(sheets.pop())
-    list.forEach((entry, i) => sheets.push(buildSheet(entry, i, imgs[i])))
+    // dựng từng tờ một, nhả luồng chính giữa các tờ (dò alpha + mặt sau cắt hình mỗi tờ vài chục ms —
+    // dồn cả chồng 12 tờ vào một khung là đứng trang ~100 ms lúc cuộn tới)
+    for (const [i, entry] of list.entries()) {
+      let img = imgs[i]
+      // ảnh có trong suốt: bitmap nhân alpha (mép lọc đúng) — chỉ vài tờ, mỗi khung một tờ
+      if (typeof ImageBitmap !== 'undefined' && img instanceof ImageBitmap && (entry.cut || hasAlpha(img))) {
+        try {
+          const pm = await createImageBitmap(img, { premultiplyAlpha: 'premultiply' })
+          pm._alpha = true
+          img.close?.()
+          img = imgs[i] = pm
+        } catch {}
+      }
+      sheets.push(buildSheet(entry, i, img))
+      await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0))) // mỗi khung đúng một tờ
+    }
     // ẩn tới khi texture đã lên GPU (khung vẽ ở giữa không tự đẩy cả chồng một lúc)
     const fresh = [...sheets]
     for (const s of fresh) s.wait = true
