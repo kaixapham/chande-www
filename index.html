@@ -28,10 +28,10 @@
 <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/vendor/lenis.css">
-<link rel="stylesheet" href="assets/css/site.css?v=202610130517">
-<link rel="stylesheet" href="assets/css/home.css?v=202610130517">
-<link rel="stylesheet" href="assets/css/gallery.css?v=202610130517">
-<link rel="stylesheet" href="assets/css/form.css?v=202610130517">
+<link rel="stylesheet" href="assets/css/site.css?v=202610130544">
+<link rel="stylesheet" href="assets/css/home.css?v=202610130544">
+<link rel="stylesheet" href="assets/css/gallery.css?v=202610130544">
+<link rel="stylesheet" href="assets/css/form.css?v=202610130544">
 <!-- Khung hình đầu: màn loading do JS dựng ở cuối trang, nên trước đó tô nền tối + ẩn
      nội dung (không chớp nền kem). chande-loading.js gỡ cl-boot ngay khi đã gắn màn loading. -->
 <style>html.cl-boot,html.cl-boot body{background:#182220}html.cl-boot body>:not(.cl){visibility:hidden}</style>
@@ -120,7 +120,7 @@
             <p>2-4 October<br>Ke Retreat - Hanoi, VN</p>
             <p>A community connecting event<br>for Vietnamese designers.<br>In the most peaceful way.</p>
           </div>
-          <figure class="hero__recap">
+          <figure class="hero__recap" data-video="HwBovuP3Aec" role="button" tabindex="0" aria-label="Xem video recap đầy đủ">
             <video data-src="assets/video/preview-1013b.mp4" poster="assets/video/preview-1013b-poster.webp" muted loop playsinline preload="none" aria-label="Video recap Ke Retreat, Hà Nội"></video>
             <figcaption>Video recap</figcaption>
           </figure>
@@ -340,7 +340,10 @@
           <button class="pill" role="tab" aria-selected="true" data-tab="bootcamp">Bootcamp</button>
         </div>
         <h2 data-tilt class="d106 agenda__head" data-day="02|Oct|D-1|08H"><span>Kick-off</span><span>Settle in</span><span>Get to know each other</span><span class="hot">Workshop-001: DAS</span><span class="hot">by Lumen Stu.</span><span class="hot">Chan-party</span></h2>
-        <figure class="agenda__shot" style="margin:0">
+        <!-- Ảnh ngày 1: thanh process ở mép trên, chạy hết thì tự đổi sang ảnh kế tiếp trong data-photos
+             (chande-home.js). Ảnh đầu = ảnh trong <img> (CMS: "Ảnh ngày 1"). -->
+        <figure class="agenda__shot" style="margin:0" data-agenda-auto
+                data-photos='["assets/img/register/hero.webp","assets/img/home/agenda-1.webp","assets/img/partner/hero.webp","assets/img/about/event-meetup.webp","assets/img/home/story-walk.webp"]'>
           <img data-cms="agenda-1" data-cms-label="Ảnh ngày 1 (cả mảng ảnh)" data-cms-w="685" src="assets/img/cms/index/agenda-1-muye74sc.webp" alt="Leo núi cùng nhau" loading="lazy">
           <div class="field" data-field></div>
         </figure>
@@ -486,44 +489,44 @@
 <script src="assets/vendor/gsap.min.js"></script>
 <script src="assets/vendor/CustomEase.min.js"></script>
 
-<script src="assets/js/chande-settings.js?v=202610130517"></script>
-<script src="assets/js/chande-film.js?v=202610130517"></script>
-<script src="assets/js/chande-loading.js?v=202610130517"></script>
-<script src="assets/js/chande-textbox.js?v=202610130517"></script>
-<script src="assets/js/chande-menu.js?v=202610130517"></script>
-<script src="assets/js/chande-transition.js?v=202610130517"></script>
-<script src="assets/js/chande-reveal.js?v=202610130517"></script>
-<script src="assets/js/chande-hero.js?v=202610130517"></script>
-<script src="assets/js/chande-entrance.js?v=202610130517"></script>
-<script src="assets/js/chande-field.js?v=202610130517"></script>
-<script src="assets/js/chande-home.js?v=202610130517"></script>
-<script src="assets/js/chande-cursor.js?v=202610130517"></script>
-<script src="assets/js/chande-bubble.js?v=202610130517"></script>
-<script src="assets/js/chande-tilt.js?v=202610130517"></script>
-<script src="assets/js/chande-imgtiles.js?v=202610130517"></script>
-<script src="assets/js/chande-parallax.js?v=202610130517"></script>
-<script src="assets/js/chande-titlefx.js?v=202610130517"></script>
-<script src="assets/js/chande-eye.js?v=202610130517"></script>
-<script src="assets/js/chande-chips.js?v=202610130517"></script>
-<script src="assets/js/chande-story.js?v=202610130517"></script>
-<script src="assets/js/chande-circles.js?v=202610130517"></script>
-<script src="assets/js/chande-steps.js?v=202610130517"></script>
-<script src="assets/js/chande-members.js?v=202610130517"></script>
-<script src="assets/js/chande-scramble.js?v=202610130517"></script>
-<script src="assets/js/chande-sign.js?v=202610130517"></script>
-<script src="assets/js/chande-gallery.js?v=202610130517"></script>
-<script src="assets/js/chande-form.js?v=202610130517"></script>
+<script src="assets/js/chande-settings.js?v=202610130544"></script>
+<script src="assets/js/chande-film.js?v=202610130544"></script>
+<script src="assets/js/chande-loading.js?v=202610130544"></script>
+<script src="assets/js/chande-textbox.js?v=202610130544"></script>
+<script src="assets/js/chande-menu.js?v=202610130544"></script>
+<script src="assets/js/chande-transition.js?v=202610130544"></script>
+<script src="assets/js/chande-reveal.js?v=202610130544"></script>
+<script src="assets/js/chande-hero.js?v=202610130544"></script>
+<script src="assets/js/chande-entrance.js?v=202610130544"></script>
+<script src="assets/js/chande-field.js?v=202610130544"></script>
+<script src="assets/js/chande-home.js?v=202610130544"></script>
+<script src="assets/js/chande-cursor.js?v=202610130544"></script>
+<script src="assets/js/chande-bubble.js?v=202610130544"></script>
+<script src="assets/js/chande-tilt.js?v=202610130544"></script>
+<script src="assets/js/chande-imgtiles.js?v=202610130544"></script>
+<script src="assets/js/chande-parallax.js?v=202610130544"></script>
+<script src="assets/js/chande-titlefx.js?v=202610130544"></script>
+<script src="assets/js/chande-eye.js?v=202610130544"></script>
+<script src="assets/js/chande-chips.js?v=202610130544"></script>
+<script src="assets/js/chande-story.js?v=202610130544"></script>
+<script src="assets/js/chande-circles.js?v=202610130544"></script>
+<script src="assets/js/chande-steps.js?v=202610130544"></script>
+<script src="assets/js/chande-members.js?v=202610130544"></script>
+<script src="assets/js/chande-scramble.js?v=202610130544"></script>
+<script src="assets/js/chande-sign.js?v=202610130544"></script>
+<script src="assets/js/chande-gallery.js?v=202610130544"></script>
+<script src="assets/js/chande-form.js?v=202610130544"></script>
 <!-- Module: tự nạp paper-stack.js + three (assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-poster.js?v=202610130517"></script>
+<script type="module" src="assets/js/chande-poster.js?v=202610130544"></script>
 <!-- Module: vịt patin 3D trên lưới gallery (three ở assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-duck.js?v=202610130517"></script>
+<script type="module" src="assets/js/chande-duck.js?v=202610130544"></script>
 <!-- Module: thảm cỏ 3D dưới lưới gallery (preset data-floor="grass-3d"). -->
-<script type="module" src="assets/js/chande-grass.js?v=202610130517"></script>
+<script type="module" src="assets/js/chande-grass.js?v=202610130544"></script>
 <!-- Module: cá koi 3D bơi trong lõi vòng tròn About khi bubble ở tâm (three nạp động). -->
-<script type="module" src="assets/js/chande-koi.js?v=202610130517"></script>
+<script type="module" src="assets/js/chande-koi.js?v=202610130544"></script>
 <!-- Module: bướm bay ra khỏi vòng 1, bay theo cuộn tới cuối trang chủ (three nạp động). -->
-<script type="module" src="assets/js/chande-flyer.js?v=202610130517"></script>
+<script type="module" src="assets/js/chande-flyer.js?v=202610130544"></script>
 <!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
-<script src="assets/js/chande-devtools.js?v=202610130517"></script>
+<script src="assets/js/chande-devtools.js?v=202610130544"></script>
 </body>
 </html>

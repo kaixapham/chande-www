@@ -543,3 +543,18 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
   .cmenu__member span{left:.6rem; bottom:.6rem; font-size:.75rem; white-space:normal}
   .cmenu__member--empty{display:none}
 }
+
+/* khung xem video đầy đủ (chande-home.js — bấm ô có data-video) */
+.vbox{position:fixed; inset:0; z-index:10010; display:grid; place-items:center; padding:max(16px, 4vw);
+  background:rgba(15,21,19,.94); opacity:0; transition:opacity .35s ease}
+.vbox.is-open{opacity:1}
+.vbox__frame{width:min(100%, calc((100svh - 2 * max(16px, 4vw)) * 16 / 9)); aspect-ratio:16 / 9; background:#000;
+  transform:scale(.96); transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+.vbox.is-open .vbox__frame{transform:none}
+.vbox__frame iframe{display:block; width:100%; height:100%; border:0}
+.vbox__close{position:absolute; top:0; right:0; width:var(--bar, 64px); height:var(--bar, 64px); display:grid; place-items:center;
+  border:0; padding:0; background:var(--lime); color:#0f1513; cursor:pointer}
+.vbox__close svg{width:22px; height:22px; transition:rotate .35s cubic-bezier(.65,0,.35,1)}
+.vbox__close:hover svg{rotate:90deg}
+.vbox__close:focus-visible{outline:2px solid #fff; outline-offset:-6px}
+@media (prefers-reduced-motion:reduce){ .vbox, .vbox__frame, .vbox__close svg{transition:none} }

@@ -404,39 +404,54 @@
         })
         Promise.all(slides.map((s, i) => swap(s, d, i * 150, srcs[i]))).finally(() => (sliding = false))
       }
-      // Thanh process neon ở mép trên ảnh trái: chạy hết (AUTO ms) thì tự đổi sang cặp ảnh kế tiếp như
-      // bấm ›, rồi chạy lại. Chỉ chạy khi Agenda đang trong màn; bấm ‹ › thì thanh chạy lại từ đầu.
+      // Ảnh ngày 1 ([data-agenda-auto]): thanh process neon ở mép trên, chạy hết (AUTO ms) thì tự đổi
+      // sang ảnh kế tiếp (ảnh trong <img> + data-photos, quay vòng; hiệu ứng như cặp ảnh ngày 2) rồi
+      // chạy lại. Chỉ chạy khi ảnh đang trong màn.
       const AUTO = 6000
-      let prog = null
-      let progAnim = null
-      const shot = slides[0]?.box
-      if (shot && new Set(slides.flatMap((s) => s.list)).size > 1) {
-        prog = document.createElement('i')
-        prog.className = 'agenda__prog'
-        prog.setAttribute('aria-hidden', 'true')
-        prog.innerHTML = '<b></b>'
-        shot.append(prog)
-        const run = () => {
-          progAnim?.cancel()
-          progAnim = prog.firstChild.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: AUTO, easing: 'linear', fill: 'forwards' })
-          if (!agendaSeen) progAnim.pause()
-          progAnim.onfinish = () => {
-            if (!agenda.isConnected) return
-            slide(1)
-            run()
+      const auto = agenda.querySelector('[data-agenda-auto]')
+      if (auto) {
+        const aimg = auto.querySelector('img')
+        let alist = []
+        try {
+          alist = JSON.parse(auto.dataset.photos || '[]')
+        } catch {}
+        alist = [...new Set([aimg.getAttribute('src'), ...alist])]
+        preloadLater(alist.slice(1))
+        if (alist.length > 1) {
+          let ai = 0
+          const prog = document.createElement('i')
+          prog.className = 'agenda__prog'
+          prog.setAttribute('aria-hidden', 'true')
+          prog.innerHTML = '<b></b>'
+          auto.append(prog)
+          let anim = null
+          let seen = false
+          const advance = () => {
+            ai = (ai + 1) % alist.length
+            const src = alist[ai]
+            const R = window.CHANDE_REVEAL
+            if (R?.play && !reducedMotion) return swapShapes(R, aimg, src, 0).catch(() => {})
+            aimg.src = src
           }
+          const run = () => {
+            anim?.cancel()
+            anim = prog.firstChild.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: AUTO, easing: 'linear', fill: 'forwards' })
+            if (!seen) anim.pause()
+            anim.onfinish = () => {
+              if (!agenda.isConnected) return
+              advance()
+              run()
+            }
+          }
+          new IntersectionObserver(([e]) => {
+            seen = e.isIntersecting
+            if (anim) seen ? anim.play() : anim.pause()
+          }).observe(auto)
+          run()
         }
-        let agendaSeen = false
-        new IntersectionObserver(([e]) => {
-          agendaSeen = e.isIntersecting
-          if (!progAnim) return
-          agendaSeen ? progAnim.play() : progAnim.pause()
-        }).observe(shot)
-        run()
-        prog._run = run
       }
-      prev?.addEventListener('click', () => (slide(-1), prog?._run()))
-      next?.addEventListener('click', () => (slide(1), prog?._run()))
+      prev?.addEventListener('click', () => slide(-1))
+      next?.addEventListener('click', () => slide(1))
       prev?.setAttribute('aria-label', 'Ảnh trước')
       next?.setAttribute('aria-label', 'Ảnh sau')
     }
@@ -1046,4 +1061,60 @@
   }
 
   window.CHANDE_HOME = { mount, destroy }
+})()
+
+/* -----------------------------------------------------------------------------
+ * Video đầy đủ: bấm ô có data-video (mã YouTube, vd. ô "Video recap" ở hero) -> khung xem toàn màn.
+ * iframe YouTube chỉ nạp lúc bấm (youtube-nocookie: không cookie theo dõi trước khi phát; rel=0: hết
+ * video chỉ gợi ý video cùng kênh). Đóng: nút ×, Esc, bấm nền, chuyển trang. Mở thì khoá cuộn (Lenis).
+ * -------------------------------------------------------------------------- */
+;(() => {
+  let box = null
+  let lastFocus = null
+  const lenis = () => window.CHANDE_TRANSITION?.lenis
+  function close() {
+    if (!box) return
+    const b = box
+    box = null
+    b.classList.remove('is-open')
+    document.documentElement.classList.remove('vbox-open')
+    lenis()?.start?.()
+    setTimeout(() => b.remove(), 400)
+    lastFocus?.focus?.({ preventScroll: true })
+  }
+  function open(id) {
+    if (box || !/^[\w-]{6,20}$/.test(id)) return
+    lastFocus = document.activeElement
+    box = document.createElement('div')
+    box.className = 'vbox'
+    box.setAttribute('role', 'dialog')
+    box.setAttribute('aria-modal', 'true')
+    box.setAttribute('aria-label', 'Video recap')
+    const src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1&modestbranding=1`
+    box.innerHTML = `<div class="vbox__frame"><iframe src="${src}" title="Video recap Chande Bootcamp" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div><button class="vbox__close" type="button" aria-label="Đóng video"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 4l12 12M16 4L4 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`
+    document.body.append(box)
+    document.documentElement.classList.add('vbox-open')
+    lenis()?.stop?.()
+    requestAnimationFrame(() => box?.classList.add('is-open'))
+    box.querySelector('.vbox__close').focus({ preventScroll: true })
+    box.addEventListener('click', (e) => {
+      if (e.target === box || e.target.closest('.vbox__close')) close()
+    })
+  }
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest?.('[data-video]')
+    if (el) {
+      e.preventDefault()
+      open(el.dataset.video)
+    }
+  })
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') return close()
+    const el = (e.key === 'Enter' || e.key === ' ') && e.target.closest?.('[data-video]')
+    if (el) {
+      e.preventDefault()
+      open(el.dataset.video)
+    }
+  })
+  window.barba?.hooks?.before(() => close())
 })()
