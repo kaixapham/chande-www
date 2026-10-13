@@ -645,7 +645,10 @@ void main() {
   function loop(t) {
     raf = 0
     let any = false
-    if (t - last >= 1000 / CONFIG.fps - 1) {
+    // Safari đang chuyển trang: vẽ thưa (20 khung/giây) — canvas WebGL vẽ lại trong lớp trang đang trượt
+    // tốn ghép lớp; đồng hồ hiệu ứng vẫn chạy đúng nhịp (advance theo thời gian thật)
+    const fps = WEBKIT && window.CHANDE_TRANSITION?.moving ? Math.min(20, CONFIG.fps) : CONFIG.fps
+    if (t - last >= 1000 / fps - 1) {
       frameScale = last ? Math.min(4, (t - last) / (1000 / 30)) : 1
       last = t
       advance(t)
@@ -760,6 +763,9 @@ void main() {
     const idle = window.requestIdleCallback || ((f) => setTimeout(() => f({ timeRemaining: () => 50 }), 200))
     const step = () => {
       warmT = 0
+      // đang chuyển trang: đợi xong (Safari không có requestIdleCallback — hẹn giờ rơi đúng lúc trang trượt)
+      const T = window.CHANDE_TRANSITION
+      if (T?.moving) return T.afterMove(() => (warmT = idle(step, { timeout: 4000 })))
       const g = [...groups].find((x) => !x.r && !x.failed && x.root.isConnected)
       if (!g) return
       ensureRenderer(g)

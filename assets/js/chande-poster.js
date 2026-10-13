@@ -127,6 +127,11 @@ function mount(scope = document) {
   // khung theo đúng cỡ khối dính (đổi khi is-live bật, khi đổi cỡ cửa sổ)
   let fitKey = ''
   me.fit = () => {
+    if (live !== me) return
+    // đang chuyển trang: trang cũ bị nhấc thành lớp cố định -> ResizeObserver báo đổi cỡ giả, resize WebGL
+    // (~15 ms) giữa lúc trượt — đợi xong hẵng đo
+    const T = window.CHANDE_TRANSITION
+    if (T?.moving) return T.afterMove(me.fit)
     const key = `${pin.clientWidth}x${pin.clientHeight}`
     if (key === fitKey || pin.clientWidth < 2 || pin.clientHeight < 2) return
     fitKey = key
@@ -271,7 +276,12 @@ function destroy() {
 if (window.barba?.hooks) {
   // Cùng nhịp với hero: dựng ở beforeEnter; `sync: true` nên afterLeave tới SAU
   // beforeEnter — chỉ gỡ khi section thuộc container cũ.
-  window.barba.hooks.beforeEnter((data) => mount(data.next.container))
+  // dựng chồng poster (WebGL, nạp ảnh) đợi chuyển trang xong — dựng giữa chừng làm khung trượt trang khựng
+  window.barba.hooks.beforeEnter((data) => {
+    const T = window.CHANDE_TRANSITION
+    if (T?.moving) T.afterMove(() => data.next.container.isConnected && mount(data.next.container))
+    else mount(data.next.container)
+  })
   window.barba.hooks.afterLeave((data) => {
     if (live && data.current.container?.contains(live.section)) destroy()
   })

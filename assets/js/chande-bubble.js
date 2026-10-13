@@ -990,6 +990,13 @@ void main () {
   let running = false
 
   function frame(now) {
+    // đang chuyển trang: nghỉ, chạy tiếp khi chuyển xong (mỗi khung ~12 ms trên Safari, đúng lúc trang trượt)
+    const T = window.CHANDE_TRANSITION
+    if (T?.moving) {
+      running = false
+      T.afterMove(start)
+      return
+    }
     const delta = Math.min((now - last) / 1000, 1 / 30)
     last = now
     // logo: mặt phẳng lớn -> ánh óng ánh (nhiễu theo thời gian) đổi là cả mảng sáng / tối cùng lúc,

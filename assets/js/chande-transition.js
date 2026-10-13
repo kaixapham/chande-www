@@ -919,8 +919,8 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
     },
     // chạy fn khi chuyển trang xong (không đang chuyển thì chạy ngay)
     afterMove(fn) {
-      if (moving) afterMoveQ.push(fn)
-      else fn()
+      if (!moving) fn()
+      else if (!afterMoveQ.includes(fn)) afterMoveQ.push(fn) // vòng lặp gọi nhiều lần cùng một hàm -> một lần thôi
     },
     // Đổi biến thể rèm rồi dựng lại DOM cho nó.
     setVariant(name) {

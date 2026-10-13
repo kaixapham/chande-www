@@ -255,6 +255,9 @@
     }
 
     const check = () => {
+      // đang chuyển trang: class của <html> đổi liên tục -> mỗi lần đo bố cục cả trang; đợi xong hẵng đo
+      const T = window.CHANDE_TRANSITION
+      if (T?.moving) return T.afterMove(check)
       const r = box.getBoundingClientRect()
       const was = inView
       inView = r.bottom > 0 && r.top < innerHeight

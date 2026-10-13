@@ -88,6 +88,14 @@
 
   function frame(t) {
     raf = 0
+    // đang chuyển trang: khỏi đo / dời ảnh (đo vị trí mỗi khung lúc trang đang trượt bắt Safari tính lại
+    // bố cục cả trang, ~14 ms / khung) — chuyển xong thì chạy tiếp
+    const T = window.CHANDE_TRANSITION
+    if (T?.moving) {
+      last = 0
+      T.afterMove(kick)
+      return
+    }
     const dt = last ? Math.min(0.1, (t - last) / 1000) : 1 / 60
     last = t
     const ease = 1 - Math.pow(1 - Math.min(Math.max(CONFIG.smooth, 0.01), 1), dt * 60)

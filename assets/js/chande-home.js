@@ -14,6 +14,7 @@
  * ========================================================================== */
 (() => {
   'use strict'
+  const WEBKIT = /^((?!chrome|chromium|android|edg).)*safari/i.test(navigator.userAgent) || /iP(hone|ad|od)/.test(navigator.userAgent)
 
   // Nạp sẵn ảnh dùng sau (ảnh kế của slider, ảnh hover…) — CHỈ sau khi trang tải xong và
   // trình duyệt rảnh, để không chen vào lúc loading (làm màn loading chờ lâu, giật).
@@ -110,7 +111,9 @@
           if (!e.isIntersecting) return
           decodeIo.unobserve(e.target)
           e.target.loading = 'eager'
-          e.target.decode?.().catch(() => {})
+          // Safari (WebKit): đang decode() dở mà script khác vẽ cùng ảnh đó lên canvas thì ra canvas RỖNG
+          // (ảnh dither cả nhóm trang About thành mảng đen) -> chỉ tải sớm, không decode trước
+          if (!WEBKIT) e.target.decode?.().catch(() => {})
         }),
       { rootMargin: '150% 0px' },
     )
