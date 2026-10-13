@@ -368,7 +368,15 @@ function syncInputs(){
 
 // ---------- xuất ----------
 const poseName = () => st.preset || 'custom';
-function download(blob, name){
+// trong trang preview claude.ai thì tải qua capability downloads, trên site thì dùng link thường
+const dlCap = window.claude?.use ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+async function download(blob, name){
+  const cap = await dlCap;
+  if (cap){
+    try{ await cap.save({filename:name, data:blob}); }
+    catch(e){ if (e?.code !== 'declined') msg('Không tải được file trong chế độ xem này.'); }
+    return;
+  }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
