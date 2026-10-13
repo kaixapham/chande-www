@@ -40,6 +40,7 @@
  * ========================================================================== */
 (() => {
   'use strict'
+  const WEBKIT = (/^((?!chrome|chromium|android|edg).)*safari/i.test(navigator.userAgent) || /iP(hone|ad|od)/.test(navigator.userAgent))
 
   const CONFIG = {
     // ---- Preset (gradient-studio) -----------------------------------------
@@ -576,7 +577,8 @@ void main() {
     if (!g.r) return
     // ngân sách điểm ảnh: màn rất lớn (5K, toàn màn hình) thì hạ độ phân giải canvas — ô gạch
     // mềm, nhìn không khác mà đỡ hẳn việc cho GPU
-    const dpr = Math.min(devicePixelRatio || 1, CONFIG.maxDpr, Math.sqrt(3.2e6 / Math.max(1, g.cssW * g.cssH)))
+    // Safari (WebKit): WebGL + composite chậm hơn Chrome nhiều -> 1× là đủ (ô khảm to, gờ mềm)
+    const dpr = Math.min(devicePixelRatio || 1, WEBKIT ? 1 : CONFIG.maxDpr, Math.sqrt((WEBKIT ? 2e6 : 3.2e6) / Math.max(1, g.cssW * g.cssH)))
     g.r.begin(Math.max(1, Math.round(g.cssW * dpr)), Math.max(1, Math.round(g.cssH * dpr)))
     // Vùng đang bị rê vẽ SAU CÙNG để ô tràn ra nằm trên vùng bên cạnh.
     const order = [...g.regions].sort((a, b) => (a.target ? 1 : 0) - (b.target ? 1 : 0))

@@ -107,6 +107,11 @@ const clamp = (v, a, b) => (v < a ? a : v > b ? b : v)
 const clamp01 = (v) => clamp(v, 0, 1)
 const lerp = (a, b, t) => a + (b - a) * t
 const RAD = Math.PI / 180
+// Safari / mọi trình duyệt iPhone-iPad (WebKit)
+const WEBKIT = (() => {
+  const ua = navigator.userAgent
+  return /^((?!chrome|chromium|android|edg).)*safari/i.test(ua) || /iP(hone|ad|od)/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+})()
 // Màu mặt sau riêng của từng tờ (theo thứ tự trong chồng): tờ thứ 2 (thư mời xanh) có mặt sau xanh
 // đậm = màu viền mặt trước của nó. Tờ khác dùng params.paper.back. params.paper.backs đè được.
 const SHEET_BACKS = { 1: '#183723' }
@@ -474,7 +479,7 @@ export function mount(container, config = {}) {
     alpha: true, // canvas trong suốt + nền CSS = màu khung: lỡ có khung bị xoá (đổi cỡ) thì lộ nền chứ không lộ ĐEN
     preserveDrawingBuffer: true,
   })
-  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1, Math.sqrt(4.2e6 / Math.max(1, innerWidth * innerHeight)))) // ngân sách điểm ảnh cho màn rất lớn
+  renderer.setPixelRatio(Math.min(WEBKIT ? 1.5 : 2, window.devicePixelRatio || 1, Math.sqrt((WEBKIT ? 2.6e6 : 4.2e6) / Math.max(1, innerWidth * innerHeight)))) // ngân sách điểm ảnh cho màn rất lớn (Safari ít hơn)
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
@@ -909,11 +914,14 @@ export function mount(container, config = {}) {
       new Promise((resolve, reject) => {
         const img = new Image()
         img.crossOrigin = 'anonymous'
-        img.onload = () => resolve(img)
+        img.onload = () => (img.decode ? img.decode().catch(() => {}) : Promise.resolve()).then(() => resolve(img))
         img.onerror = () => reject(new Error('Không nạp được ảnh'))
         img.src = src
       })
-    if (typeof createImageBitmap !== 'function') return viaImg()
+    // Safari: ImageBitmap mất kênh trong suốt khi lên WebGL (tem / sticker PNG thành mảng đen) -> nạp bằng
+    // <img> + decode() (giải mã ở luồng nền), WebGL tự nhân alpha lúc đẩy lên (textureFrom)
+    // (mọi trình duyệt trên iPhone / iPad đều là WebKit, kể cả Chrome)
+    if (typeof createImageBitmap !== 'function' || WEBKIT) return viaImg()
     // tải về blob -> createImageBitmap(blob): giải mã ở luồng nền (từ <img> thì Chrome giải mã
     // ngay trên luồng chính); ảnh quá to thì thu thêm một lượt bitmap -> bitmap (nhẹ)
     // giải mã thường (luồng nền). premultiply (để mép ảnh trong suốt không dính viền đen) chỉ làm cho
@@ -1735,7 +1743,7 @@ export function mount(container, config = {}) {
 
   function restoreRenderSize() {
     needDraw = true
-    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1, Math.sqrt(4.2e6 / Math.max(1, innerWidth * innerHeight)))) // ngân sách điểm ảnh cho màn rất lớn
+    renderer.setPixelRatio(Math.min(WEBKIT ? 1.5 : 2, window.devicePixelRatio || 1, Math.sqrt((WEBKIT ? 2.6e6 : 4.2e6) / Math.max(1, innerWidth * innerHeight)))) // ngân sách điểm ảnh cho màn rất lớn (Safari ít hơn)
     renderer.setSize(viewW, viewH, false)
     canvas.style.width = `${viewW}px`
     canvas.style.height = `${viewH}px`

@@ -785,7 +785,9 @@ void main () {
 
   function sync() {
     // ngân sách điểm ảnh: canvas phủ cả màn, màn 5K × retina thì hạ độ phân giải (giọt mờ mềm)
-    const dpr = Math.min(devicePixelRatio || 1, Math.max(CONFIG.maxDpr, 0.5), Math.sqrt(2.6e6 / Math.max(1, innerWidth * innerHeight)))
+    // Safari (WebKit): canvas phủ cả màn ở 1× cho nhẹ
+    const webkit = /^((?!chrome|chromium|android|edg).)*safari/i.test(navigator.userAgent) || /iP(hone|ad|od)/.test(navigator.userAgent)
+    const dpr = Math.min(devicePixelRatio || 1, webkit ? 1 : Math.max(CONFIG.maxDpr, 0.5), Math.sqrt(2.6e6 / Math.max(1, innerWidth * innerHeight)))
     const w = Math.max(1, Math.round(innerWidth * dpr))
     const h = Math.max(1, Math.round(innerHeight * dpr))
     if (output.width !== w || output.height !== h) {

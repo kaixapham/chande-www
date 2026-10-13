@@ -37,6 +37,12 @@
 (() => {
   'use strict'
 
+  // Safari / mọi trình duyệt iPhone-iPad (WebKit): clip-path động + 3D trên lớp cả trang rất nặng
+  const WEBKIT = (() => {
+    const ua = navigator.userAgent
+    return /^((?!chrome|chromium|android|edg).)*safari/i.test(ua) || /iP(hone|ad|od)/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+  })()
+
   const CONFIG = {
     enabled: true,
 
@@ -619,8 +625,8 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
     // cắt theo cái hộp 0px đó — mất sạch cả header lẫn hai trang. Ghim 100vh là
     // hết.
     gsap.set(parent, {
-      perspective: '100vw',
-      transformStyle: 'preserve-3d',
+      perspective: WEBKIT ? 'none' : '100vw',
+      transformStyle: WEBKIT ? 'flat' : 'preserve-3d',
       overflow: 'clip',
       minHeight: '100vh',
       backgroundColor: v.bg,
@@ -628,7 +634,7 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
 
     gsap.set(wrapper, {
       position: 'fixed', top: 0, left: 0, right: 0, width: '100%', height: '100vh',
-      overflow: 'clip', zIndex: 3, transformStyle: 'preserve-3d',
+      overflow: 'clip', zIndex: 3, transformStyle: WEBKIT ? 'flat' : 'preserve-3d',
       willChange: 'transform', clipPath: flat,
     })
 
@@ -644,7 +650,7 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
 
     gsap.set(next, {
       position: 'fixed', top: 0, left: 0, right: 0, width: '100%', height: '100vh',
-      overflow: 'clip', zIndex: 1, transformStyle: 'preserve-3d',
+      overflow: 'clip', zIndex: 1, transformStyle: WEBKIT ? 'flat' : 'preserve-3d',
       willChange: 'transform, opacity', backfaceVisibility: 'hidden',
       autoAlpha: 1, yPercent: 0, scale: 1, clipPath: flat,
     })
@@ -681,8 +687,10 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
       },
     })
 
-    // Ba lớp cùng bo góc rồi cùng co lại.
-    tl.to([wrapper, middle, next], { clipPath: round(v.radius), duration: v.clipDuration }, 0)
+    // Ba lớp cùng bo góc rồi cùng co lại. Safari: tween clip-path = vẽ lại cả trang mỗi khung (giật rõ) ->
+    // bo / bỏ bo một lần, chỉ tween transform (GPU lo)
+    const flipClip = (r, at) => (WEBKIT ? tl.set([wrapper, middle, next], { clipPath: round(r) }, at) : tl.to([wrapper, middle, next], { clipPath: round(r), duration: v.clipDuration }, at))
+    flipClip(v.radius, 0)
     tl.to(wrapper, { scale: v.wrapperScale, yPercent: v.wrapperY,
       duration: v.shrinkDuration, ease: v.shrinkEase, overwrite: 'auto' }, 0)
     tl.to(middle, { scale: v.middleScale, yPercent: v.middleY,
@@ -697,7 +705,7 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
       ease: v.shrinkEase, overwrite: 'auto' }, tNext)
 
     // Bỏ bo góc đúng lúc trang mới về cỡ thật.
-    tl.to([wrapper, middle, next], { clipPath: round(0), duration: v.clipDuration }, tUnclip)
+    flipClip(0, WEBKIT ? tNext + v.exitDuration : tUnclip)
 
     addHeaderMotion(tl, tNext)
     return tl
