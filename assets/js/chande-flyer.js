@@ -186,7 +186,7 @@ function buildButterfly() {
     U.uEdge.value.set(M.edge || '#5BE83B')
   }
   const setPhase = (v) => (ph = v)
-  return { group, update, morph, setPhase }
+  return { group, update, morph, setPhase, textures: [tex, tex2] }
 }
 
 let live = null
@@ -710,14 +710,30 @@ function mount(root = document) {
         live === me &&
         !gl &&
         loadThree().then(() =>
-          idle(() => {
+          idle(async () => {
             if (live !== me || gl) return
             setup()
+            // biên dịch shader song song (compileAsync — KHR_parallel_shader_compile), không chặn
+            // luồng chính: compile() đồng bộ từng đứng trang ~390 ms giữa lúc đang cuộn
+            await new Promise((r) => idle(r))
+            if (live !== me || !gl) return
             gl.bf.group.visible = true
             gl.shadow.visible = true
-            gl.renderer.compile(gl.scene, gl.camera)
+            const job = gl.renderer.compileAsync ? gl.renderer.compileAsync(gl.scene, gl.camera) : (gl.renderer.compile(gl.scene, gl.camera), null)
             gl.bf.group.visible = false
             gl.shadow.visible = false
+            await job?.catch(() => {})
+            if (live !== me || !gl) return
+            // đẩy sẵn 2 ảnh bướm lên GPU (ảnh tải xong mới đẩy được) — không thì khung bướm thoát
+            // ra đầu tiên phải giải mã + tải texture, đứng ~40–60 ms
+            const push = (tries = 0) =>
+              idle(() => {
+                if (live !== me || !gl) return
+                const wait = gl.bf.textures.filter((t) => !t.image)
+                gl.bf.textures.forEach((t) => t.image && !t.__warm && ((t.__warm = true), gl.renderer.initTexture(t)))
+                if (wait.length && tries < 20) setTimeout(() => push(tries + 1), 500)
+              })
+            push()
           }),
         ),
       { timeout: 6000 },

@@ -84,6 +84,7 @@
   }
 
   let io = null
+  let decodeIo = null
   let onScroll = null
 
   function mount(root = document) {
@@ -99,6 +100,21 @@
       el.classList.add('is-off')
       io.observe(el)
     })
+
+    // Giải mã trước ảnh lazy khi còn cách màn ~1.5 màn (img.decode() — luồng nền). Không có
+    // bước này thì ảnh to (About: 1500 × 2000, 2000 × 1501…) bị giải mã ngay khung đầu nó
+    // lên màn -> lần cuộn đầu tới cụm 3 vòng tròn đứng trang ~100 ms.
+    decodeIo = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return
+          decodeIo.unobserve(e.target)
+          e.target.loading = 'eager'
+          e.target.decode?.().catch(() => {})
+        }),
+      { rootMargin: '150% 0px' },
+    )
+    scope.querySelectorAll('img[loading="lazy"]:not([src$=".svg"])').forEach((img) => decodeIo.observe(img))
 
     // Việc chạy theo cuộn: gom chung MỘT listener + một rAF, mỗi việc chỉ ghi DOM
     // khi giá trị đổi.
@@ -1048,6 +1064,8 @@
   function destroy() {
     io?.disconnect()
     io = null
+    decodeIo?.disconnect()
+    decodeIo = null
     if (onScroll) {
       removeEventListener('scroll', onScroll)
       removeEventListener('resize', onScroll)

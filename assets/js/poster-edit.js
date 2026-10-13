@@ -100,8 +100,11 @@ const IMG_W = 900 // bề rộng hiển thị (như data-cms-w của danh sách)
 async function processImage(file, w = IMG_W) {
   if (file.type === 'image/svg+xml') return { blob: file, ext: 'svg' }
   const bmp = await createImageBitmap(file)
-  const width = Math.min(bmp.width, w * 2)
-  const height = Math.round((bmp.height * width) / bmp.width)
+  // cạnh dài ≤ 1600 (= TEX_MAX của paper-stack.js): ảnh to hơn thì lúc chạy trang phải thu nhỏ trên
+  // luồng chính (~35 ms mỗi ảnh, giật lúc cuộn tới chồng poster)
+  const k = Math.min(1, (w * 2) / bmp.width, 1600 / Math.max(bmp.width, bmp.height))
+  const width = Math.round(bmp.width * k)
+  const height = Math.round(bmp.height * k)
   const c = document.createElement('canvas')
   c.width = width
   c.height = height

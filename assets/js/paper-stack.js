@@ -919,15 +919,20 @@ export function mount(container, config = {}) {
     // giải mã thường (luồng nền). premultiply (để mép ảnh trong suốt không dính viền đen) chỉ làm cho
     // ảnh có trong suốt, ở setSheets — đặt premultiply ở đây bắt trình duyệt giải mã MỌI ảnh trên luồng chính
     const opts = { imageOrientation: 'flipY', premultiplyAlpha: 'none' }
+    // Ảnh quá to: giải mã LẠI từ blob kèm resize (vẫn ở luồng nền). Thu bitmap -> bitmap thì Chrome
+    // làm đồng bộ trên luồng chính (10–25 ms mỗi ảnh, cả chồng dồn vào cùng lúc -> giật lúc cuộn tới).
     return fetch(src)
       .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(r.status))))
-      .then((b) => createImageBitmap(b, opts).then((bm) => (/jpe?g/.test(b.type) && (bm._noAlpha = true), bm)))
-      .then(async (bmp) => {
-        const k = Math.min(1, TEX_MAX / Math.max(bmp.width, bmp.height))
-        if (k >= 1) return bmp
-        const small = await createImageBitmap(bmp, { resizeWidth: Math.round(bmp.width * k), resizeHeight: Math.round(bmp.height * k), resizeQuality: 'high' })
-        bmp.close()
-        return small
+      .then(async (b) => {
+        let bm = await createImageBitmap(b, opts)
+        const k = Math.min(1, TEX_MAX / Math.max(bm.width, bm.height))
+        if (k < 1) {
+          const size = { resizeWidth: Math.round(bm.width * k), resizeHeight: Math.round(bm.height * k), resizeQuality: 'high' }
+          bm.close()
+          bm = await createImageBitmap(b, { ...opts, ...size })
+        }
+        if (/jpe?g/.test(b.type)) bm._noAlpha = true
+        return bm
       })
       .catch(viaImg)
   }
