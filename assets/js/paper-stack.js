@@ -758,17 +758,50 @@ export function mount(container, config = {}) {
 
   /* ---- tạo tờ ---- */
 
-  // ảnh có điểm nào không đặc (alpha < ~98%)? lấy mẫu trên bản thu nhỏ 32×32
+  // ảnh có điểm nào không đặc (alpha < ~98%)? Hai lượt, dùng chung một canvas (iOS giới hạn bộ nhớ canvas):
+  //  1) bản thu nhỏ cạnh dài 256 — Safari thu nhỏ kiểu lấy mẫu điểm (không làm mịn), ở 32 / 128 px trượt hết
+  //     lỗ răng cưa của tem (lỗ cách đều nhau) -> tem bị coi là ảnh đặc, lỗ thành mảng đen
+  //  2) viền 2 px ngoài cùng ở độ phân giải gốc — ảnh chỉ trong suốt ở mép (viền khử răng cưa khi xuất)
+  let probeCv = null
   function hasAlpha(img) {
     if (img?._noAlpha) return false
     try {
-      const c = document.createElement('canvas')
-      c.width = c.height = 32
-      const x = c.getContext('2d', { willReadFrequently: true })
-      x.drawImage(img, 0, 0, 32, 32)
-      const d = x.getImageData(0, 0, 32, 32).data
-      for (let i = 3; i < d.length; i += 4) if (d[i] < 250) return true
-    } catch {}
+      const W = img.naturalWidth || img.width
+      const H = img.naturalHeight || img.height
+      if (!W || !H) return false
+      probeCv ||= document.createElement('canvas')
+      const x = probeCv.getContext('2d', { willReadFrequently: true })
+      const solid = (w, h) => {
+        const d = x.getImageData(0, 0, w, h).data
+        for (let i = 3; i < d.length; i += 4) if (d[i] < 250) return false
+        return true
+      }
+      const k = Math.min(1, 256 / Math.max(W, H))
+      const w = Math.max(1, Math.round(W * k))
+      const h = Math.max(1, Math.round(H * k))
+      probeCv.width = Math.max(w, W)
+      probeCv.height = Math.max(h, 2)
+      x.imageSmoothingQuality = 'high'
+      x.clearRect(0, 0, probeCv.width, probeCv.height)
+      x.drawImage(img, 0, 0, w, h)
+      if (!solid(w, h)) return true
+      // viền: trên, dưới (W × 2) rồi trái, phải (2 × H)
+      for (const [sx, sy, sw, sh] of [[0, 0, W, 2], [0, H - 2, W, 2]]) {
+        x.clearRect(0, 0, probeCv.width, 2)
+        x.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh)
+        if (!solid(sw, sh)) return true
+      }
+      probeCv.width = 2
+      probeCv.height = H
+      for (const sx of [0, W - 2]) {
+        x.clearRect(0, 0, 2, H)
+        x.drawImage(img, sx, 0, 2, H, 0, 0, 2, H)
+        if (!solid(2, H)) return true
+      }
+    } catch {
+    } finally {
+      if (probeCv) probeCv.width = probeCv.height = 1 // nhả bộ nhớ
+    }
     return false
   }
 
