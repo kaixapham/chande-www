@@ -166,7 +166,7 @@ async function loadSheets() {
   const list = m ? JSON.parse(m[2]) : []
   return list.filter((s) => s && s.img)
 }
-const toRuntime = (s) => ({ src: shown(s.img), x: s.x ?? 0, y: s.y ?? 0, rot: s.rot ?? 0, scale: s.scale ?? 1, from: s.from ?? null, together: !!s.together })
+const toRuntime = (s) => ({ src: shown(s.img), x: s.x ?? 0, y: s.y ?? 0, rot: s.rot ?? 0, scale: s.scale ?? 1, from: s.from ?? null, together: !!s.together, cut: !!s.cut })
 // nấc rơi của từng tờ (tờ "cùng lượt" đi chung nấc với tờ trước)
 function turnOf(i) {
   let t = -1

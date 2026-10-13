@@ -753,10 +753,25 @@ export function mount(container, config = {}) {
 
   /* ---- tạo tờ ---- */
 
+  // ảnh có điểm nào không đặc (alpha < ~98%)? lấy mẫu trên bản thu nhỏ 64×64
+  function hasAlpha(img) {
+    try {
+      const c = document.createElement('canvas')
+      c.width = c.height = 64
+      const x = c.getContext('2d', { willReadFrequently: true })
+      x.drawImage(img, 0, 0, 64, 64)
+      const d = x.getImageData(0, 0, 64, 64).data
+      for (let i = 3; i < d.length; i += 4) if (d[i] < 250) return true
+    } catch {}
+    return false
+  }
+
   function textureFrom(img) {
     const tex = new THREE.Texture(img)
     // ImageBitmap đã lật sẵn lúc tạo (imageOrientation: 'flipY') — WebGL không lật được bitmap
     if (typeof ImageBitmap !== 'undefined' && img instanceof ImageBitmap) tex.flipY = false
+    // ảnh thường (<img>, không phải bitmap đã premultiply ở loadImage): nhân alpha lúc đẩy lên GPU cho đồng bộ
+    else tex.premultiplyAlpha = true
     tex.colorSpace = THREE.SRGBColorSpace
     tex.anisotropy = renderer.capabilities.getMaxAnisotropy()
     tex.needsUpdate = true
@@ -807,12 +822,48 @@ export function mount(container, config = {}) {
         transparent: params.entry.fade > 0,
       }),
     )
+    // Ảnh có phần trong suốt (PNG / WebP alpha: tem răng cưa, túi nhựa…) — tự nhận, hoặc ép bằng cfg.cut:
+    // mặt trước hoà trong suốt thật (nửa trong vẫn xuyên thấu) + bỏ hẳn điểm trong suốt hoàn toàn,
+    // mặt sau = giấy trắng mang đúng alpha của ảnh, bóng đổ cắt theo hình (customDepthMaterial)
+    const alpha = cfg.cut || hasAlpha(img)
+    if (alpha) {
+      front.material.transparent = true
+      front.material.alphaTest = 0.02
+      // texture đã nhân alpha (lọc mép đúng, hết viền đen) -> chia lại ngay sau khi lấy mẫu để phần
+      // chiếu sáng / hoà trộn thường của three nhận màu gốc
+      front.material.onBeforeCompile = (sh) => {
+        sh.fragmentShader = sh.fragmentShader.replace(
+          '#include <map_fragment>',
+          '#include <map_fragment>\n\tif (diffuseColor.a > 0.0) diffuseColor.rgb /= diffuseColor.a;',
+        )
+      }
+      front.material.customProgramCacheKey = () => 'unpremul'
+      try {
+        const c = document.createElement('canvas')
+        c.width = Math.min(512, img.width || img.naturalWidth || 512)
+        c.height = Math.round(c.width * ((img.height || img.naturalHeight || 1) / (img.width || img.naturalWidth || 1)))
+        const x = c.getContext('2d')
+        x.drawImage(img, 0, 0, c.width, c.height)
+        x.globalCompositeOperation = 'source-in'
+        x.fillStyle = '#fff'
+        x.fillRect(0, 0, c.width, c.height)
+        const bt = new THREE.CanvasTexture(c)
+        bt.flipY = map.flipY
+        back.material.map = bt
+        back.material.transparent = true
+        back.material.alphaTest = 0.02
+      } catch {}
+      const depth = (m) => new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: m, alphaTest: 0.5 })
+      front.customDepthMaterial = depth(map)
+      back.customDepthMaterial = depth(back.material.map || map)
+    }
     const node = new THREE.Group()
     node.add(front, back)
     group.add(node)
 
     const s = {
       index,
+      alpha,
       cfg,
       geom,
       base,
@@ -864,7 +915,8 @@ export function mount(container, config = {}) {
     if (typeof createImageBitmap !== 'function') return viaImg()
     // tải về blob -> createImageBitmap(blob): giải mã ở luồng nền (từ <img> thì Chrome giải mã
     // ngay trên luồng chính); ảnh quá to thì thu thêm một lượt bitmap -> bitmap (nhẹ)
-    const opts = { imageOrientation: 'flipY', premultiplyAlpha: 'none' }
+    // premultiply: ảnh có trong suốt thì mép mịn trộn đúng (không dính màu đen của điểm trong suốt)
+    const opts = { imageOrientation: 'flipY', premultiplyAlpha: 'premultiply' }
     return fetch(src)
       .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(r.status))))
       .then((b) => createImageBitmap(b, opts))
@@ -1690,8 +1742,8 @@ export function mount(container, config = {}) {
       s.front.material.roughness = params.paper.roughness
       s.back.material.color.set(backOf(params, s.index))
       const fadeOn = params.entry.fade > 0
-      s.front.material.transparent = fadeOn
-      s.back.material.transparent = fadeOn
+      s.front.material.transparent = fadeOn || !!s.alpha
+      s.back.material.transparent = fadeOn || !!s.alpha
       if (!fadeOn) {
         s.front.material.opacity = 1
         s.back.material.opacity = 1

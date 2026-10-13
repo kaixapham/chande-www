@@ -889,6 +889,7 @@
       const ALIAS = {
         'dinh tren duong tau': 'huong pham',
         'thu sinh phap': 'huu phap', // Thu Sinh (Pháp) = Huu Phap
+        'nguyen v hung': 'van hung', // Nguyen V.Hung = Van Hung
       }
       // Ảnh riêng cho tên footer KHÔNG có trong danh sách hero
       const OWN = {

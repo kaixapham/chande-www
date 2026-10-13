@@ -82,8 +82,8 @@ function readSheets(section) {
   // đè mất mặc định 1 -> kích thước NaN, tờ biến mất (đã dính ở tờ không ghi scale).
   return list
     .filter((s) => s && s.img)
-    .map(({ img, x, y, rot, scale, from, together }) =>
-      Object.fromEntries(Object.entries({ src: img, x, y, rot, scale, from, together }).filter(([, v]) => v !== undefined)),
+    .map(({ img, x, y, rot, scale, from, together, cut }) =>
+      Object.fromEntries(Object.entries({ src: img, x, y, rot, scale, from, together, cut }).filter(([, v]) => v !== undefined)),
     )
 }
 
