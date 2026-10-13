@@ -25,6 +25,8 @@ html,body{margin:0; height:100%; background:var(--bg); color:var(--fg); font:13p
 .pose svg{width:100%; height:auto; display:block}
 .pose:hover{border-color:rgba(250,250,250,.3)}
 .pose.is-sel{border-color:var(--lime); color:var(--fg)}
+.row.is-off{opacity:.35; pointer-events:none}
+.note{font-size:11px; color:var(--dim)}
 .side{display:flex; flex-direction:column; min-height:0; background:var(--panel)}
 .side__body{overflow:auto; flex:1; scrollbar-width:thin; scrollbar-color:rgba(250,250,250,.12) transparent}
 details{border-bottom:1px solid var(--line)}
@@ -89,12 +91,8 @@ input[type=checkbox]{accent-color:var(--lime)}
       </details>
 
       <details>
-        <summary>Biểu cảm &amp; chi tiết</summary>
+        <summary>Chi tiết</summary>
         <div class="grp">
-          <div class="row row--2"><label>Mắt</label>
-            <select id="eyes"><option value="normal">Bình thường</option><option value="happy">Cười ^^</option><option value="wink">Nháy mắt</option><option value="wow">Ngạc nhiên</option><option value="closed">Nhắm</option></select></div>
-          <div class="row row--2"><label>Miệng</label>
-            <select id="mouth"><option value="smile">Mỉm cười</option><option value="open">Cười to</option><option value="flat">Thẳng</option><option value="o">Chữ O</option></select></div>
           <label class="check"><input type="checkbox" id="headHands"> Hai tay trên đầu</label>
           <label class="check"><input type="checkbox" id="earring"> Khuyên tai</label>
           <label class="check"><input type="checkbox" id="pocket"> Túi bụng</label>
@@ -107,7 +105,6 @@ input[type=checkbox]{accent-color:var(--lime)}
         <div class="grp">
           <label class="check"><input type="checkbox" id="sticker"> Viền sticker trắng</label>
           <div class="row"><label>Độ dày viền</label><input type="range" id="stickerW" min="2" max="24" step="1"><output id="stickerWo"></output></div>
-          <div class="row"><label>Nét vẽ</label><input type="range" id="lineW" min="1.5" max="6" step="0.5"><output id="lineWo"></output></div>
           <label class="check"><input type="checkbox" id="bgOn"> Có màu nền</label>
           <div class="row row--2"><label>Màu nền</label><input type="color" id="bgColor"></div>
         </div>
@@ -127,19 +124,21 @@ input[type=checkbox]{accent-color:var(--lime)}
         </div>
       </details>
     </div>
-    <div class="msg" id="msg">SVG mở được bằng Illustrator, Figma, Inkscape. Mọi phần là path riêng, đổi màu tiếp được.</div>
+    <div class="msg" id="msg">Đầu nhân vật được vector hoá từ ảnh gốc. SVG mở được bằng Illustrator, Figma, Inkscape.</div>
   </aside>
 </div>
 
+<script src="traced.js"></script>
 <script>
 // ---------- dữ liệu ----------
 const COLOR_FIELDS = [
   ['body', 'Thân'], ['white', 'Bụng / tay / chân'], ['collar', 'Vòng cổ'], ['bell', 'Chuông'],
-  ['tailC', 'Đuôi'], ['skin', 'Da'], ['hair', 'Tóc'], ['cheek', 'Má'], ['ink', 'Nét viền'],
+  ['tailC', 'Đuôi'], ['skin', 'Da'], ['palm', 'Lòng bàn tay'], ['hair', 'Tóc'], ['cheek', 'Má'], ['ink', 'Nét viền'],
 ];
-const BASE_COLORS = {body:'#1f8fe3', white:'#ffffff', collar:'#e5322d', bell:'#f6c41c', tailC:'#e5322d', skin:'#dfa877', hair:'#4b2c17', cheek:'#f49bb0', ink:'#1d1410'};
+// màu lấy mẫu từ ảnh gốc
+const BASE_COLORS = {body:'#05a1e2', white:'#ffffff', collar:'#e6262b', bell:'#f6e00e', tailC:'#e6262b', skin:'#e2ab70', palm:'#e986a2', hair:'#3f2c27', cheek:'#e27a9b', ink:'#070606'};
 const PALETTES = [
-  {body:'#1f8fe3', collar:'#e5322d', bell:'#f6c41c', tailC:'#e5322d'},
+  {body:'#05a1e2', collar:'#e6262b', bell:'#f6e00e', tailC:'#e6262b'},
   {body:'#f7d24a', collar:'#e5322d', bell:'#ffffff', tailC:'#e5322d'},
   {body:'#f58bb5', collar:'#7c3aed', bell:'#f6c41c', tailC:'#7c3aed'},
   {body:'#43c06b', collar:'#f6c41c', bell:'#e5322d', tailC:'#f6c41c'},
@@ -158,22 +157,23 @@ const POSE_FIELDS = [
   ['ll', 'Chân trái', -40, 90], ['rl', 'Chân phải', -40, 90],
 ];
 const PRESETS = [
-  {id:'fly',   label:'Bay',         p:{tilt:-14, head:12, lift:10, la:82, lb:8, ra:28, rb:-24, ll:-22, rl:48}, e:'normal', m:'smile'},
-  {id:'stand', label:'Đứng',        p:{tilt:0, head:0, lift:0, la:14, lb:0, ra:14, rb:0, ll:6, rl:6}, e:'normal', m:'smile'},
-  {id:'wave',  label:'Vẫy tay',     p:{tilt:-3, head:-7, lift:0, la:14, lb:0, ra:120, rb:50, ll:6, rl:6}, e:'happy', m:'smile'},
-  {id:'jump',  label:'Nhảy',        p:{tilt:0, head:0, lift:24, la:138, lb:18, ra:138, rb:18, ll:38, rl:38}, e:'happy', m:'open'},
-  {id:'hips',  label:'Chống nạnh',  p:{tilt:0, head:5, lift:0, la:62, lb:-122, ra:62, rb:-122, ll:12, rl:12}, e:'normal', m:'flat'},
-  {id:'win',   label:'Chiến thắng', p:{tilt:5, head:-6, lift:6, la:18, lb:0, ra:170, rb:0, ll:4, rl:24}, e:'wink', m:'open'},
-  {id:'sit',   label:'Ngồi',        p:{tilt:0, head:6, lift:-14, la:28, lb:-28, ra:28, rb:-28, ll:72, rl:72}, e:'closed', m:'smile'},
-  {id:'dance', label:'Nhảy múa',    p:{tilt:-9, head:9, lift:5, la:122, lb:-58, ra:40, rb:72, ll:32, rl:-12}, e:'happy', m:'open'},
-  {id:'run',   label:'Chạy',        p:{tilt:8, head:-4, lift:8, la:64, lb:-66, ra:-18, rb:58, ll:34, rl:-14}, e:'normal', m:'open'},
-  {id:'shock', label:'Hoảng hốt',   p:{tilt:0, head:0, lift:4, la:150, lb:-40, ra:150, rb:-40, ll:20, rl:20}, e:'wow', m:'o'},
+  {id:'orig',  label:'Gốc',         p:{tilt:0, head:0, lift:0, la:0, lb:0, ra:0, rb:0, ll:0, rl:0}},
+  {id:'fly',   label:'Bay',         p:{tilt:-14, head:12, lift:10, la:82, lb:8, ra:28, rb:-24, ll:-22, rl:48}},
+  {id:'stand', label:'Đứng',        p:{tilt:0, head:0, lift:0, la:14, lb:0, ra:14, rb:0, ll:6, rl:6}},
+  {id:'wave',  label:'Vẫy tay',     p:{tilt:-3, head:-7, lift:0, la:14, lb:0, ra:120, rb:50, ll:6, rl:6}},
+  {id:'jump',  label:'Nhảy',        p:{tilt:0, head:0, lift:24, la:138, lb:18, ra:138, rb:18, ll:38, rl:38}},
+  {id:'hips',  label:'Chống nạnh',  p:{tilt:0, head:5, lift:0, la:62, lb:-122, ra:62, rb:-122, ll:12, rl:12}},
+  {id:'win',   label:'Chiến thắng', p:{tilt:5, head:-6, lift:6, la:18, lb:0, ra:170, rb:0, ll:4, rl:24}},
+  {id:'sit',   label:'Ngồi',        p:{tilt:0, head:6, lift:-14, la:28, lb:-28, ra:28, rb:-28, ll:72, rl:72}},
+  {id:'dance', label:'Nhảy múa',    p:{tilt:-9, head:9, lift:5, la:122, lb:-58, ra:40, rb:72, ll:32, rl:-12}},
+  {id:'run',   label:'Chạy',        p:{tilt:8, head:-4, lift:8, la:64, lb:-66, ra:-18, rb:58, ll:34, rl:-14}},
+  {id:'shock', label:'Hoảng hốt',   p:{tilt:0, head:0, lift:4, la:150, lb:-40, ra:150, rb:-40, ll:20, rl:20}},
 ];
 const DEFAULTS = {
-  colors:{...BASE_COLORS}, pose:{...PRESETS[0].p}, preset:'fly', eyes:'normal', mouth:'smile',
-  headHands:true, earring:true, pocket:true, tail:true, sticker:true, stickerW:10, lineW:3, bgOn:false, bgColor:'#ffffff',
+  colors:{...BASE_COLORS}, pose:{...PRESETS[0].p}, preset:'orig',
+  headHands:true, earring:true, pocket:true, tail:true, sticker:true, stickerW:9, bgOn:false, bgColor:'#ffffff',
 };
-const KEY = 'chande-character-v1';
+const KEY = 'chande-character-v2';
 let st = load();
 
 function load(){
@@ -199,10 +199,26 @@ function E(tag, a){
   return `<${tag} ${Object.entries(a).map(([k, v]) => `${k}="${v}"`).join(' ')}/>`;
 }
 const G = (tf, inner, id) => `<g${id ? ` id="${id}"` : ''}${tf ? ` transform="${tf}"` : ''}>${inner}</g>`;
-const mirrorX = 'matrix(-1 0 0 1 400 0)';
+const mirrorX = 'matrix(-1 0 0 1 400 0)'; // lật quanh trục giữa của thân (x = 200 trước khi dời)
+
+const T = window.CHANDE_TRACED;
+const TRACED_FILL = {sil:'ink', ink:'ink', hair:'hair', skin:'skin', palm:'palm', cheek:'cheek', body:'body', white:'white', collar:'collar', tail:'tailC', bell:'bell'};
+// một lớp vector hoá từ ảnh gốc; ở lượt viền sticker chỉ cần bóng (sil)
+function traced(layer, c, s){
+  return G('', T[layer].map(([k, d]) => {
+    if (SIL ? k !== 'sil' : false) return '';
+    if (k === 'tail' && !s.tail) return '';
+    const fill = c[TRACED_FILL[k]];
+    if (d.startsWith('E ')){
+      const [cx, cy, rx, ry, an] = d.slice(2).split(' ');
+      return E('ellipse', {cx, cy, rx, ry, transform:`rotate(${an} ${cx} ${cy})`, fill});
+    }
+    return E('path', {d, fill, 'fill-rule':'evenodd'});
+  }).join(''), layer === 'head' ? 'dau' : layer === 'hands' ? 'tay-tren-dau' : 'than-goc');
+}
 
 function figure(s){
-  const c = s.colors, p = s.pose, W = s.lineW, ink = c.ink;
+  const c = s.colors, p = s.pose, W = 2.6, ink = c.ink, orig = s.preset === 'orig';
   const shape = (d, fill, extra = {}) => E('path', {d, fill, stroke:ink, 'stroke-width':W, 'stroke-linejoin':'round', 'stroke-linecap':'round', ...extra});
   const line = (d, w = W, col = ink) => E('path', {d, fill:'none', stroke:col, 'stroke-width':w, 'stroke-linecap':'round', 'stroke-linejoin':'round'});
   const ell = (cx, cy, rx, ry, fill, extra = {}) => E('ellipse', {cx, cy, rx, ry, fill, stroke:ink, 'stroke-width':W, ...extra});
@@ -211,74 +227,47 @@ function figure(s){
 
   // tay: vai -> khuỷu -> bàn tay, tính ở bên trái rồi lật sang phải
   function arm(a, b, right){
-    const S = [154, 270], d1 = dir(a), E1 = [S[0] + d1[0] * 28, S[1] + d1[1] * 28], d2 = dir(a + b), H = [E1[0] + d2[0] * 26, E1[1] + d2[1] * 26];
+    const S = [154, 270], d1 = dir(a), E1 = [S[0] + d1[0] * 26, S[1] + d1[1] * 26], d2 = dir(a + b), H = [E1[0] + d2[0] * 24, E1[1] + d2[1] * 24];
     const d = `M${pt(S)} L${pt(E1)} L${pt(H)}`;
-    const inner = line(d, 24 + W * 2) + line(d, 24, c.body) + E('circle', {cx:f1(H[0]), cy:f1(H[1]), r:15, fill:c.white, stroke:ink, 'stroke-width':W});
+    const inner = line(d, 26 + W * 2) + line(d, 26, c.body) + E('circle', {cx:f1(H[0]), cy:f1(H[1]), r:17, fill:c.white, stroke:ink, 'stroke-width':W});
     return G(right ? mirrorX : '', inner, right ? 'tay-phai' : 'tay-trai');
   }
   function leg(a, right){
-    const Hp = [178, 350], d1 = dir(a), F = [Hp[0] + d1[0] * 18, Hp[1] + d1[1] * 18], fc = [F[0] + d1[0] * 6, F[1] + d1[1] * 6];
+    const Hp = [176, 348], d1 = dir(a), F = [Hp[0] + d1[0] * 18, Hp[1] + d1[1] * 18], fc = [F[0] + d1[0] * 7, F[1] + d1[1] * 7];
     const d = `M${pt(Hp)} L${pt(F)}`;
-    const inner = line(d, 30 + W * 2) + line(d, 30, c.body) + ell(f1(fc[0]), f1(fc[1]), 24, 12.5, c.white, {transform:`rotate(${f1(a * .35)} ${f1(fc[0])} ${f1(fc[1])})`});
+    const inner = line(d, 32 + W * 2) + line(d, 32, c.body) + ell(f1(fc[0]), f1(fc[1]), 27, 15, c.white, {transform:`rotate(${f1(a * .35)} ${f1(fc[0])} ${f1(fc[1])})`});
     return G(right ? mirrorX : '', inner, right ? 'chan-phai' : 'chan-trai');
   }
 
-  // --- đầu ---
-  const hand = shape('M142,116 Q128,84 150,62 Q172,44 194,32 Q206,28 205,42 Q200,58 186,72 Q176,90 172,116 Z', c.skin)
-    + shape('M150,66 Q142,52 150,46 Q158,44 160,56', c.skin)
-    + line('M164,58 Q178,48 192,36', W * .7) + line('M170,66 Q184,56 196,44', W * .7) + line('M176,74 Q188,64 198,52', W * .7);
-  const headHands = s.headHands ? G('', G('', hand, 'tay-dau-trai') + G(mirrorX, hand, 'tay-dau-phai'), 'tay-tren-dau') : '';
-  const hairBack = shape('M138,166 Q126,108 170,96 Q200,88 230,96 Q274,108 262,166 L266,214 Q270,250 284,274 L266,266 L268,282 L252,262 L246,232 L252,176 L148,176 L154,232 L148,262 L132,282 L134,266 L116,274 Q130,250 134,214 Z', c.hair);
-  const ears = ell(145, 194, 11, 14, c.skin) + ell(255, 194, 11, 14, c.skin) + line('M252,190 Q258,194 253,200', W * .7);
-  const face = shape('M146,162 Q144,226 172,244 Q200,258 228,244 Q256,226 254,162 Q254,128 200,126 Q146,128 146,162 Z', c.skin);
-  const earring = s.earring ? E('circle', {cx:257, cy:212, r:4.5, fill:'none', stroke:ink, 'stroke-width':W * .8}) : '';
-  const bangs = shape('M140,172 Q132,108 200,100 Q268,108 260,172 L252,152 L246,170 L236,146 L226,164 L216,142 L204,160 L194,140 L182,162 L172,144 L162,166 L154,148 Z', c.hair);
-  const strand = shape('M150,152 Q136,190 140,230 L132,262 L150,246 L156,262 L160,220 Q158,186 164,162 Z', c.hair);
-  const brows = line('M164,181 Q176,176 189,181', W * 1.7) + line('M211,181 Q224,176 236,181', W * 1.7);
-  const eyeN = (x) => ell(x, 196, 3.6, 3, ink, {stroke:'none'});
-  const eyeArc = (x) => line(`M${x - 7},199 Q${x},190 ${x + 7},199`, W);
-  const eyeClosed = (x) => line(`M${x - 7},195 Q${x},201 ${x + 7},195`, W);
-  const eyeWow = (x) => ell(x, 196, 6, 6.5, '#ffffff', {'stroke-width':W * .8}) + ell(x, 196, 2.6, 2.6, ink, {stroke:'none'});
-  const eyes = {
-    normal: eyeN(178) + eyeN(222), happy: eyeArc(178) + eyeArc(222), wink: eyeN(178) + eyeArc(222),
-    wow: eyeWow(178) + eyeWow(222), closed: eyeClosed(178) + eyeClosed(222),
-  }[s.eyes] || '';
-  const cheeks = ell(161, 215, 12, 7, c.cheek, {stroke:'none'}) + ell(239, 215, 12, 7, c.cheek, {stroke:'none'});
-  const nose = line('M201,200 Q199,212 192,216 Q195,221 200,219 Q205,221 208,216', W * .8);
-  const stache = shape('M200,227 Q187,221 176,227 Q166,233 161,242 Q173,236 186,237 Q196,238 200,234 Q204,238 214,237 Q227,236 239,242 Q234,233 224,227 Q213,221 200,227 Z', c.hair);
-  const mouth = {
-    smile: line('M191,243 Q200,249 209,243', W * .9),
-    open: shape('M189,242 Q200,256 211,242 Q200,245 189,242 Z', '#c23a3a', {'stroke-width':W * .9}),
-    flat: line('M192,245 L208,245', W * .9),
-    o: ell(200, 246, 4.5, 5, '#c23a3a', {'stroke-width':W * .9}),
-  }[s.mouth] || '';
-  const head = G(`rotate(${f1(p.head)} 200 250)`,
-    headHands + hairBack + ears + earring + face + G('', eyes + brows, 'mat') + cheeks + nose + mouth + stache + bangs + strand, 'dau');
+  // đầu: nét gốc, xoay quanh cằm
+  const ring = s.earring ? E('circle', {cx:237.4, cy:192.4, r:4.3, fill:'none', stroke:ink, 'stroke-width':2.4}) + E('circle', {cx:237.4, cy:192.4, r:4.3, fill:'none', stroke:'#b9b4ae', 'stroke-width':1}) : '';
+  const head = G(`rotate(${f1(p.head)} 177 238)`, traced('head', c, s) + (SIL ? '' : ring) + (s.headHands ? traced('hands', c, s) : ''));
+  if (orig) return G(`translate(0 ${f1(-p.lift)}) rotate(${f1(p.tilt)} 182 290)`, traced('body', c, s) + head);
 
-  // --- thân ---
-  const tail = s.tail ? line('M250,336 L262,338', W * 1.4) + E('circle', {cx:266, cy:338, r:8.5, fill:c.tailC, stroke:ink, 'stroke-width':W}) : '';
-  const body = shape('M152,252 Q136,300 146,342 Q152,360 178,360 L222,360 Q248,360 254,342 Q264,300 248,252 Z', c.body);
-  const belly = ell(200, 310, 42, 40, c.white);
-  const pocket = s.pocket ? shape('M174,318 Q200,346 226,318 Z', c.white) : '';
-  const collar = E('rect', {x:148, y:246, width:104, height:16, rx:8, fill:c.collar, stroke:ink, 'stroke-width':W});
-  const bell = E('circle', {cx:200, cy:272, r:12, fill:c.bell, stroke:ink, 'stroke-width':W})
-    + line('M189,268 L211,268', W * .8) + E('circle', {cx:200, cy:276, r:2.6, fill:ink}) + line('M200,277 L200,283', W * .8);
-
-  // chân dang rộng (ngồi) vẽ đè lên thân, còn lại nằm sau thân
+  // thân dựng lại (toạ độ 400px cũ, dời về dưới cằm)
+  const tail = s.tail ? line('M250,336 L262,338', W * 1.4) + E('circle', {cx:268, cy:336, r:10, fill:c.tailC, stroke:ink, 'stroke-width':W}) : '';
+  const body = shape('M150,250 Q132,300 144,342 Q150,362 178,362 L222,362 Q250,362 256,342 Q268,300 250,250 Z', c.body);
+  const belly = ell(200, 308, 45, 42, c.white);
+  const pocket = s.pocket ? shape('M172,316 Q200,348 228,316 Z', c.white) : '';
+  const collar = E('rect', {x:146, y:244, width:108, height:15, rx:7.5, fill:c.collar, stroke:ink, 'stroke-width':W});
+  const bell = E('circle', {cx:200, cy:270, r:13, fill:c.bell, stroke:ink, 'stroke-width':W})
+    + line('M188,266 L212,266', W * .8) + E('circle', {cx:200, cy:274, r:2.8, fill:ink}) + line('M200,275 L200,282', W * .8);
   const legs = leg(p.ll, false) + leg(p.rl, true), legsFront = Math.max(p.ll, p.rl) > 55;
-  const inner = G('', tail, 'duoi') + (legsFront ? '' : legs) + G('', body + belly + pocket, 'than') + (legsFront ? legs : '')
-    + G('', collar + bell, 'vong-co') + head + arm(p.la, p.lb, false) + arm(p.ra, p.rb, true);
-  return G(`translate(0 ${f1(-p.lift)}) rotate(${f1(p.tilt)} 200 300)`, inner);
+  const back = G('', tail, 'duoi') + (legsFront ? '' : legs) + G('', body + belly + pocket, 'than') + (legsFront ? legs : '') + G('', collar + bell, 'vong-co');
+  const front = arm(p.la, p.lb, false) + arm(p.ra, p.rb, true);
+  return G(`translate(0 ${f1(-p.lift)}) rotate(${f1(p.tilt)} 182 290)`, G(BODY_TF, back) + head + G(BODY_TF, front));
 }
+const BODY_TF = 'translate(-23 -6)';
 
+const VB = [-26, -26, 420, 420];
 function render(s, size){
   SW = s.stickerW;
   let out = '';
-  if (s.bgOn) out += `<rect x="-20" y="-20" width="440" height="440" fill="${s.bgColor}"/>`;
+  if (s.bgOn) out += `<rect x="${VB[0]}" y="${VB[1]}" width="${VB[2]}" height="${VB[3]}" fill="${s.bgColor}"/>`;
   if (s.sticker){ SIL = true; out += G('', figure(s), 'vien-sticker'); SIL = false; }
   out += G('', figure(s), 'nhan-vat');
   const wh = size ? ` width="${size}" height="${size}"` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 440 440"${wh}>${out}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${VB.join(' ')}"${wh}>${out}</svg>`;
 }
 
 // ---------- giao diện ----------
@@ -290,7 +279,7 @@ function draw(){ view.innerHTML = render(st); save(); }
 function drawThumbs(){
   document.querySelectorAll('.pose').forEach(b => {
     const pr = PRESETS.find(x => x.id === b.dataset.id);
-    b.querySelector('i').innerHTML = render({...st, pose:pr.p, eyes:pr.e, mouth:pr.m});
+    b.querySelector('i').innerHTML = render({...st, pose:pr.p, preset:pr.id});
     b.classList.toggle('is-sel', st.preset === pr.id);
   });
 }
@@ -312,12 +301,14 @@ $('palettes').addEventListener('click', e => {
 // dáng
 $('poseRows').innerHTML = POSE_FIELDS.map(([k, l, mn, mx]) =>
   `<div class="row"><label>${l}</label><input type="range" data-p="${k}" min="${mn}" max="${mx}" step="1"><output data-po="${k}"></output></div>`).join('')
+  + `<div class="note" id="origNote">Dáng gốc giữ nguyên thân như ảnh. Chọn dáng khác (hoặc kéo tay/chân) để chỉnh.</div>`
   + `<button class="btn" id="mirror">Lật dáng trái ↔ phải</button>`;
 document.querySelectorAll('[data-p]').forEach(inp => inp.addEventListener('input', () => {
-  st.pose[inp.dataset.p] = +inp.value; st.preset = null; syncPose(); draw(); drawThumbs();
+  st.pose[inp.dataset.p] = +inp.value; if (st.preset !== 'orig') st.preset = null; syncPose(); draw(); drawThumbs();
 }));
 $('mirror').addEventListener('click', () => {
   const p = st.pose;
+  if (st.preset === 'orig'){ msg('Dáng gốc không lật được, chọn dáng khác trước.'); return; }
   animateTo({...p, tilt:-p.tilt, head:-p.head, la:p.ra, lb:p.rb, ra:p.la, rb:p.lb, ll:p.rl, rl:p.ll});
   st.preset = null; drawThumbs();
 });
@@ -325,7 +316,7 @@ $('poses').innerHTML = PRESETS.map(p => `<button class="pose" data-id="${p.id}">
 $('poses').addEventListener('click', e => {
   const b = e.target.closest('.pose'); if (!b) return;
   const pr = PRESETS.find(x => x.id === b.dataset.id);
-  st.preset = pr.id; st.eyes = pr.e; st.mouth = pr.m; syncInputs();
+  st.preset = pr.id; syncInputs();
   animateTo(pr.p); drawThumbs();
 });
 $('undoPose').addEventListener('click', () => {
@@ -347,21 +338,23 @@ function animateTo(target){
 }
 
 // chi tiết + viền
-['eyes', 'mouth'].forEach(k => $(k).addEventListener('change', () => { st[k] = $(k).value; draw(); }));
 ['headHands', 'earring', 'pocket', 'tail', 'sticker', 'bgOn'].forEach(k => $(k).addEventListener('change', () => { st[k] = $(k).checked; draw(); drawThumbs(); }));
-['stickerW', 'lineW'].forEach(k => $(k).addEventListener('input', () => { st[k] = +$(k).value; $(k + 'o').textContent = st[k]; draw(); }));
-['stickerW', 'lineW'].forEach(k => $(k).addEventListener('change', drawThumbs));
+$('stickerW').addEventListener('input', () => { st.stickerW = +$('stickerW').value; $('stickerWo').textContent = st.stickerW; draw(); });
+$('stickerW').addEventListener('change', drawThumbs);
 $('bgColor').addEventListener('input', () => { st.bgColor = $('bgColor').value; draw(); });
 
 function syncPose(){
   document.querySelectorAll('[data-p]').forEach(inp => { inp.value = st.pose[inp.dataset.p]; });
   document.querySelectorAll('[data-po]').forEach(o => { o.textContent = Math.round(st.pose[o.dataset.po]); });
+  // dáng gốc giữ nguyên thân trong ảnh, chỉ nghiêng / nâng được
+  document.querySelectorAll('[data-p]').forEach(inp => inp.closest('.row').classList.toggle('is-off', st.preset === 'orig' && !['tilt', 'head', 'lift'].includes(inp.dataset.p)));
+  $('origNote').hidden = st.preset !== 'orig';
+  $('pocket').closest('label').classList.toggle('is-off', st.preset === 'orig');
 }
 function syncInputs(){
   document.querySelectorAll('[data-c]').forEach(inp => { inp.value = st.colors[inp.dataset.c]; });
-  ['eyes', 'mouth'].forEach(k => $(k).value = st[k]);
   ['headHands', 'earring', 'pocket', 'tail', 'sticker', 'bgOn'].forEach(k => $(k).checked = st[k]);
-  ['stickerW', 'lineW'].forEach(k => { $(k).value = st[k]; $(k + 'o').textContent = st[k]; });
+  $('stickerW').value = st.stickerW; $('stickerWo').textContent = st.stickerW;
   $('bgColor').value = st.bgColor;
   syncPose();
 }
@@ -402,7 +395,7 @@ $('dlSheet').addEventListener('click', () => {
   const cols = 5, cell = 440, rows = Math.ceil(PRESETS.length / cols);
   const cells = PRESETS.map((pr, i) => {
     const x = (i % cols) * cell, y = Math.floor(i / cols) * (cell + 40);
-    const inner = render({...st, pose:pr.p, eyes:pr.e, mouth:pr.m}).replace('<svg xmlns="http://www.w3.org/2000/svg"', `<svg x="${x}" y="${y}" width="${cell}" height="${cell}"`);
+    const inner = render({...st, pose:pr.p, preset:pr.id}).replace('<svg xmlns="http://www.w3.org/2000/svg"', `<svg x="${x}" y="${y}" width="${cell}" height="${cell}"`);
     return `<g id="dang-${pr.id}">${inner}<text x="${x + cell / 2}" y="${y + cell + 24}" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="22" fill="#666">${pr.label}</text></g>`;
   }).join('');
   const W = cols * cell, H = rows * (cell + 40);
