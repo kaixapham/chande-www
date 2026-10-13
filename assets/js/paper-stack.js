@@ -479,7 +479,7 @@ export function mount(container, config = {}) {
     alpha: true, // canvas trong suốt + nền CSS = màu khung: lỡ có khung bị xoá (đổi cỡ) thì lộ nền chứ không lộ ĐEN
     preserveDrawingBuffer: true,
   })
-  renderer.setPixelRatio(Math.min(WEBKIT ? 1.5 : 2, window.devicePixelRatio || 1, Math.sqrt((WEBKIT ? 2.6e6 : 4.2e6) / Math.max(1, innerWidth * innerHeight)))) // ngân sách điểm ảnh cho màn rất lớn (Safari ít hơn)
+  renderer.setPixelRatio(WEBKIT ? 1 : Math.min(2, window.devicePixelRatio || 1, Math.sqrt(4.2e6 / Math.max(1, innerWidth * innerHeight)))) // ngân sách điểm ảnh cho màn rất lớn; Safari 1× (đo: rơi khung 18 -> 7 / 240)
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
@@ -1743,7 +1743,7 @@ export function mount(container, config = {}) {
 
   function restoreRenderSize() {
     needDraw = true
-    renderer.setPixelRatio(Math.min(WEBKIT ? 1.5 : 2, window.devicePixelRatio || 1, Math.sqrt((WEBKIT ? 2.6e6 : 4.2e6) / Math.max(1, innerWidth * innerHeight)))) // ngân sách điểm ảnh cho màn rất lớn (Safari ít hơn)
+    renderer.setPixelRatio(WEBKIT ? 1 : Math.min(2, window.devicePixelRatio || 1, Math.sqrt(4.2e6 / Math.max(1, innerWidth * innerHeight)))) // ngân sách điểm ảnh cho màn rất lớn; Safari 1× (đo: rơi khung 18 -> 7 / 240)
     renderer.setSize(viewW, viewH, false)
     canvas.style.width = `${viewW}px`
     canvas.style.height = `${viewH}px`

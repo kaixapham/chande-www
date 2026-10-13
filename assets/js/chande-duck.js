@@ -321,6 +321,9 @@ function mount(root = document) {
   const scope = root.querySelector ? root : document
   const stage = scope.querySelector('[data-gallery]')
   if (!stage) return
+  // đang chuyển trang: dựng WebGL đợi chuyển xong (khung đầu từng đứng ~280 ms giữa hiệu ứng)
+  const T = window.CHANDE_TRANSITION
+  if (T?.moving) return T.afterMove(() => root.isConnected !== false && mount(root))
   destroy()
 
   const canvas = document.createElement('canvas')

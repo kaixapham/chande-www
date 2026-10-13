@@ -715,10 +715,17 @@ void main() {
             if (!g) return
             g.visible = e.isIntersecting
             if (g.visible) {
-              ensureRenderer(g)
-              measure(g)
-              drawGroup(g)
-              kick()
+              const go = () => {
+                if (!g.visible || !g.root.isConnected) return
+                ensureRenderer(g)
+                measure(g)
+                drawGroup(g)
+                kick()
+              }
+              // đang chuyển trang: tạo context + biên dịch shader đợi chuyển xong (đứng khung ~160 ms)
+              const T = window.CHANDE_TRANSITION
+              if (!g.r && T?.moving) T.afterMove(go)
+              else go()
             }
           }),
         { rootMargin: '150px 0px' },

@@ -796,6 +796,14 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
     }
     const barba = window.barba
 
+    // Cờ "đang chuyển trang": hiệu ứng WebGL nặng (vịt 3D, ô khảm…) đợi chuyển xong mới dựng
+    // (afterMove) — dựng giữa chừng làm khung chuyển trang đứng 150–280 ms, Safari rõ nhất.
+    barba.hooks.before(() => {
+      moving = true
+      clearTimeout(movingTimer)
+      movingTimer = setTimeout(endMove, 5000) // lỡ không có 'done' thì vẫn nhả
+    })
+
     barba.hooks.beforeEnter((data) => {
       // Đặt container mới nằm đè lên trên trong lúc hai bên cùng tồn tại.
       // Biến thể trượt thẻ tự lo phần này trong prepareStack() — đụng vào đây
@@ -882,6 +890,19 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
 
   /* --------------------------------------------------------------- API ---- */
   let busy = false
+  let moving = false
+  let movingTimer = 0
+  let afterMoveQ = []
+  function endMove() {
+    if (!moving) return
+    moving = false
+    clearTimeout(movingTimer)
+    const q = afterMoveQ
+    afterMoveQ = []
+    // nhả từng việc một, mỗi khung một việc (dựng WebGL dồn một khung lại đứng trang)
+    q.forEach((fn, i) => setTimeout(() => requestAnimationFrame(() => fn()), 60 + i * 80))
+  }
+  document.addEventListener('chande-transition:done', endMove)
 
   const API = {
     config: S,
@@ -891,6 +912,15 @@ ${S.header.selector}{translate:0 calc(var(--ct-header, 0) * 1%)}
     },
     get variant() {
       return S.variant
+    },
+    // đang chuyển trang (Barba) — chưa xong hiệu ứng
+    get moving() {
+      return moving
+    },
+    // chạy fn khi chuyển trang xong (không đang chuyển thì chạy ngay)
+    afterMove(fn) {
+      if (moving) afterMoveQ.push(fn)
+      else fn()
     },
     // Đổi biến thể rèm rồi dựng lại DOM cho nó.
     setVariant(name) {

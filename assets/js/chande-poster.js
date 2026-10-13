@@ -248,15 +248,23 @@ function destroy() {
   if (sec && hasWebGL()) {
     const sh = readSheets(sec)
     if (sh.length) presize(sec, sh)
-    const io = new IntersectionObserver(
-      (es) => {
-        if (!es.some((e) => e.isIntersecting)) return
-        io.disconnect()
-        mount(document)
-      },
-      { rootMargin: '150% 0px' },
-    )
+    let built = false
+    const build = () => {
+      if (built) return
+      built = true
+      io.disconnect()
+      mount(document)
+    }
+    const io = new IntersectionObserver((es) => es.some((e) => e.isIntersecting) && build(), { rootMargin: '150% 0px' })
     io.observe(sec)
+    // Desktop: dựng sẵn lúc trang rảnh (~3 s sau khi tải xong, người xem còn ở đầu trang) — dựng lúc cuộn
+    // tới thì đúng lúc đang lướt qua cụm vòng tròn, Safari giật rõ. Máy cảm ứng giữ cách cũ (đỡ bộ nhớ).
+    if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      const idle = window.requestIdleCallback || ((f) => setTimeout(f, 50))
+      const later = () => setTimeout(() => idle(build, { timeout: 2000 }), 3000)
+      if (document.readyState === 'complete') later()
+      else addEventListener('load', later, { once: true })
+    }
   }
 }
 
