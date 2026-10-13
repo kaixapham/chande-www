@@ -37,7 +37,7 @@
     if (history.length > 80) history.shift()
   }
   const dirty = () => JSON.stringify(pieces) !== JSON.stringify(saved) || [...pending.keys()].some(used)
-  const used = (p) => pieces.some((x) => x.img === p)
+  const used = (p) => pieces.some((x) => x.img === p || x.orig === p)
   const markDirty = () => ($('[data-save]').textContent = dirty() ? 'Lưu •' : 'Lưu')
   const round = (v, d = 1) => Math.round(v * 10 ** d) / 10 ** d
 
@@ -384,6 +384,7 @@
     snap()
     const { path } = await stash(file)
     pieces[i].img = path
+    delete pieces[i].orig
     all()
     msg(`Đã đổi ảnh mảnh ${i + 1} (chưa lưu).`)
   }
@@ -392,7 +393,7 @@
     const p = pieces[i]
     msg('Đang cắt viền…')
     try {
-      const blob = await fetch(shown(p.img)).then((r) => r.blob())
+      const blob = await fetch(shown(p.orig || p.img)).then((r) => r.blob()) // cắt từ ảnh gốc
       const file = new File([blob], 'x', { type: blob.type || 'image/png' })
       const { path, crop } = await stash(file)
       if (!crop) {
@@ -402,6 +403,7 @@
       snap()
       const k = p.w / crop.W0
       p.img = path
+      delete p.orig // ảnh vừa cắt thành gốc mới (lúc lưu tạo lại bản nhẹ)
       p.x = round(p.x + crop.cx * k)
       p.y = round(p.y + crop.cy * k)
       p.w = round(crop.cw * k)
@@ -457,6 +459,39 @@
     } catch {}
     return { repo: cfg.repo || 'kaixapham/chande-www', branch: cfg.branch || 'main', token: cfg.token || '' }
   }
+  // Bản cho trang: WebP trong suốt rộng = 2 × cỡ hiển thị (màn nét), từ ảnh gốc (orig — PNG giữ nguyên
+  // để sau này phóng to vẫn nét). Làm lại khi: ảnh mới / vừa cắt viền, hoặc cỡ hiển thị đổi nhiều so
+  // với bản đang có. Trang chỉ tải bản này (19 PNG gốc ~45 MB -> ~1 MB).
+  const loadImg = (src) => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src })
+  async function optimize() {
+    let n = 0
+    for (const p of pieces) {
+      const isNew = pending.has(p.img)
+      if (isNew && /\.(png|webp)$/.test(p.img)) p.orig = p.img
+      const src = p.orig
+      if (!src || /\.svg$/.test(src)) continue
+      const need = Math.max(400, Math.ceil(p.w * 2))
+      let curW = 0
+      if (!isNew && p.img !== src) curW = await loadImg(shown(p.img)).then((im) => im.naturalWidth).catch(() => 0)
+      if (!isNew && p.img !== src && curW >= need * 0.9 && curW <= need * 1.6) continue
+      const im = await loadImg(shown(src))
+      const tw = Math.min(im.naturalWidth, need)
+      const c = document.createElement('canvas')
+      c.width = tw
+      c.height = Math.round((im.naturalHeight * tw) / im.naturalWidth)
+      const x = c.getContext('2d')
+      x.imageSmoothingQuality = 'high'
+      x.drawImage(im, 0, 0, c.width, c.height)
+      const blob = await new Promise((r) => c.toBlob(r, 'image/webp', 0.85))
+      const path = `${src.replace(/\.(png|webp)$/, '')}-d${tw}.webp`
+      pending.set(path, { blob, url: URL.createObjectURL(blob) })
+      p.img = path
+      n++
+    }
+    return n
+  }
+  const usedPath = (path) => pieces.some((x) => x.img === path || x.orig === path)
+
   async function save() {
     const btn = $('[data-save]')
     btn.disabled = true
@@ -464,6 +499,8 @@
     try {
       const ping = await fetch('__cms/ping', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
       let done
+      const opt = await optimize()
+      if (opt) msg(`Đã tạo ${opt} bản ảnh nhẹ cho trang — đang lưu…`)
       const imgs = await imageFiles()
       if (ping?.local) {
         const html = await fetch(`index.html?t=${Date.now()}`, { cache: 'no-store' }).then((r) => r.text())
