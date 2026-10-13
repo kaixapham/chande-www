@@ -895,6 +895,8 @@
       const OWN = {
         'nhatminh p': 'assets/img/home/foot-nhatminh-p.webp',
         'tuyen n': 'assets/img/home/foot-tuyen-n.webp',
+        'duongg vu': 'assets/img/home/foot-duongg-vu.webp', // Duongg Vu (2 chữ g) — khác Duong Vu ở hero
+        justhiutwokay: 'assets/img/home/foot-justhiutwokay.webp',
       }
       const assign = (people) => {
         const list = people.filter((p) => p && p.img && !/\.svg$/i.test(p.img))

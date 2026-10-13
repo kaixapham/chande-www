@@ -25,6 +25,8 @@
 .pills{display:flex; gap:2px}
 .pill{display:grid; place-items:center; width:calc(144 * var(--u)); min-width:7rem; height:calc(56 * var(--u)); min-height:2.6rem;
   border-radius:99px; font-size:.875rem; text-decoration:none; color:var(--ink); background:var(--cream); border:0; cursor:pointer}
+/* 2 nút Agenda / Bootcamp là <button>: không tự kế thừa font (ra Arial) -> lấy kiểu chữ mono của khối cha */
+.pills button.pill{font-family:inherit; font-weight:inherit; text-transform:inherit; letter-spacing:inherit; line-height:inherit}
 .pill--lime{background:var(--lime)}
 .pill--green{background:#236c3c; color:#f5f0e3}
 .pill[aria-selected=false]{background:#f5f0e3}
@@ -207,9 +209,11 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .hs-about__roles{left:calc(960 * var(--u)); top:auto; bottom:calc(1176 * var(--u)); width:calc(368 * var(--u)); margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:0} /* sát nhau như Figma: 10 dòng × .78em ≈ 374u, vừa khoảng 1538 → 1914 */
 .hs-about__roles li{position:relative; white-space:nowrap; width:fit-content; cursor:default}
 .hs-about__count{left:calc(1848 * var(--u)); top:calc(1614 * var(--u)); margin:0}
-.hs-about__pills{left:calc(492 * var(--u)); top:calc(2230 * var(--u))}
+.hs-about__pills{left:calc(492 * var(--u)); top:calc(2310 * var(--u) - 24px - 56px)} /* nút cao 56px, đáy cách ảnh đá (top 2310) đúng 24px */
+/* 2 nút Gallery / About us: đúng cỡ Figma 144 × 56 px, không co theo màn */
+.hs-about__pills .pill{width:144px; height:56px}
+.hs-about__pills .pill--green{width:auto; padding-inline:44px; white-space:nowrap} /* chữ dài (Explore Gallery): rộng theo chữ, cao giữ 56 */
 /* nút "Explore Gallery": giữ đúng đệm 2 bên của nút "Gallery" cũ (rộng 144 với 7 ký tự mono = (144u − 7ch) / 2 mỗi bên) -> nút dài ra theo chữ */
-.hs-about__pills .pill--green{width:auto; padding-inline:calc((144 * var(--u) - 7ch) / 2); white-space:nowrap}
 /* +1px chui dưới ảnh đá (ảnh vẽ sau, nằm trên): hai mép trùng ở toạ độ lẻ thì
    điểm ảnh mép phủ không đủ, lộ nền kem thành vạch sáng 1px. */
 .hs-about__scheme{left:0; top:calc(2310 * var(--u)); width:calc(492 * var(--u) + 1px)}
