@@ -356,9 +356,18 @@
           box.remove()
         }
       }
-      const swap = ({ img, list }, d, delay) => {
-        if (list.length < 2) return Promise.resolve()
-        const src = list[(((slideIdx % list.length) + list.length) % list.length)]
+      // ảnh kế tiếp của một bên. Bên nào có < 2 ảnh (CMS mới nhập 1) thì mượn thêm ảnh của bên kia
+      // (ảnh của chính nó đứng đầu) -> bấm ‹ › lúc nào cũng đổi CẢ HAI ảnh; trùng ảnh bên kia thì nhảy tiếp
+      const pick = (s, avoid) => {
+        const own = s.list.length ? s.list : [s.img.getAttribute('src')]
+        const pool = own.length > 1 ? own : [...new Set([...own, ...slides.flatMap((o) => o.list)])]
+        const at = (k) => pool[((k % pool.length) + pool.length) % pool.length]
+        let src = at(slideIdx)
+        for (let k = 1; avoid.has(src) && k < pool.length; k++) src = at(slideIdx + k)
+        return src
+      }
+      const swap = ({ img }, d, delay, src) => {
+        if (!src || src === img.getAttribute('src')) return Promise.resolve()
         const R = window.CHANDE_REVEAL
         if (R?.play && !reducedMotion) return swapShapes(R, img, src, delay)
         const top = img.cloneNode()
@@ -384,13 +393,50 @@
         })
       }
       const slide = (d) => {
-        if (sliding || !slides.some((s) => s.list.length > 1)) return
+        if (sliding || !slides.length || new Set(slides.flatMap((s) => s.list)).size < 2) return
         sliding = true
         slideIdx += d
-        Promise.all(slides.map((s, i) => swap(s, d, i * 150))).finally(() => (sliding = false))
+        const used = new Set()
+        const srcs = slides.map((s) => {
+          const src = pick(s, used)
+          used.add(src)
+          return src
+        })
+        Promise.all(slides.map((s, i) => swap(s, d, i * 150, srcs[i]))).finally(() => (sliding = false))
       }
-      prev?.addEventListener('click', () => slide(-1))
-      next?.addEventListener('click', () => slide(1))
+      // Thanh process neon ở mép trên ảnh trái: chạy hết (AUTO ms) thì tự đổi sang cặp ảnh kế tiếp như
+      // bấm ›, rồi chạy lại. Chỉ chạy khi Agenda đang trong màn; bấm ‹ › thì thanh chạy lại từ đầu.
+      const AUTO = 6000
+      let prog = null
+      let progAnim = null
+      const shot = slides[0]?.box
+      if (shot && new Set(slides.flatMap((s) => s.list)).size > 1) {
+        prog = document.createElement('i')
+        prog.className = 'agenda__prog'
+        prog.setAttribute('aria-hidden', 'true')
+        prog.innerHTML = '<b></b>'
+        shot.append(prog)
+        const run = () => {
+          progAnim?.cancel()
+          progAnim = prog.firstChild.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: AUTO, easing: 'linear', fill: 'forwards' })
+          if (!agendaSeen) progAnim.pause()
+          progAnim.onfinish = () => {
+            if (!agenda.isConnected) return
+            slide(1)
+            run()
+          }
+        }
+        let agendaSeen = false
+        new IntersectionObserver(([e]) => {
+          agendaSeen = e.isIntersecting
+          if (!progAnim) return
+          agendaSeen ? progAnim.play() : progAnim.pause()
+        }).observe(shot)
+        run()
+        prog._run = run
+      }
+      prev?.addEventListener('click', () => (slide(-1), prog?._run()))
+      next?.addEventListener('click', () => (slide(1), prog?._run()))
       prev?.setAttribute('aria-label', 'Ảnh trước')
       next?.setAttribute('aria-label', 'Ảnh sau')
     }
@@ -827,6 +873,12 @@
       // Biệt danh ở footer -> tên trong danh sách hero (viết thường, không dấu)
       const ALIAS = {
         'dinh tren duong tau': 'huong pham',
+        'thu sinh phap': 'huu phap', // Thu Sinh (Pháp) = Huu Phap
+      }
+      // Ảnh riêng cho tên footer KHÔNG có trong danh sách hero
+      const OWN = {
+        'nhatminh p': 'assets/img/home/foot-nhatminh-p.webp',
+        'tuyen n': 'assets/img/home/foot-tuyen-n.webp',
       }
       const assign = (people) => {
         const list = people.filter((p) => p && p.img && !/\.svg$/i.test(p.img))
@@ -836,6 +888,8 @@
         nms.forEach((nm) => {
           if (nm.dataset.photo) return
           let k = norm(nm.textContent)
+          // người không có trong danh sách hero nhưng có ảnh riêng
+          if (OWN[k.trim()]) return void (nm.dataset.photo = OWN[k.trim()])
           if (ALIAS[k.trim()]) k = norm(ALIAS[k.trim()])
           // trùng hẳn (kể cả viết liền: "minhsharing" = "Minh Sharing") > tên hero là cụm từ nguyên vẹn
           // trong tên footer ("Huy Ta (remote)" ∋ "Huy Ta"), ưu tiên cụm dài nhất
@@ -845,7 +899,7 @@
           if (hit) nm.dataset.photo = hit[1]
           else miss.push(nm)
         })
-        // cặp tên cùng một người (.pair: "Dylan (5K_HA-KIBO)" … "(Adobe)"): phần sau dùng ảnh phần đầu
+        // cặp tên (.pair): phần sau dùng ảnh phần đầu — trừ tên có ảnh riêng (OWN, vd. "(Tuyen.N)")
         const pairs = [...foot.querySelectorAll('.pair')].map((pair) => [...pair.querySelectorAll('.nm')])
         pairs.forEach(([, ...rest]) => rest.forEach((nm) => miss.includes(nm) && miss.splice(miss.indexOf(nm), 1)))
         // tên không khớp ai: lấy lần lượt ảnh của người CHƯA có tên ở footer (khỏi trùng mặt người khác)
@@ -853,7 +907,7 @@
         const rest = photos.filter((src) => !used.has(src))
         const from = rest.length ? rest : photos
         miss.forEach((nm, i) => (nm.dataset.photo = from[i % Math.max(1, from.length)] || ''))
-        pairs.forEach(([first, ...rest]) => rest.forEach((nm) => (nm.dataset.photo = first?.dataset.photo || '')))
+        pairs.forEach(([first, ...rest]) => rest.forEach((nm) => OWN[norm(nm.textContent).trim()] || (nm.dataset.photo = first?.dataset.photo || ''))) // tên có ảnh riêng thì giữ
         preloadLater([...new Set(nms.map((nm) => nm.dataset.photo).filter(Boolean))]) // nạp trước, hover là có ngay
       }
       const readPeople = (doc) => {

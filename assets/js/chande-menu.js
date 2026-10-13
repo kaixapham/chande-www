@@ -19,7 +19,7 @@
   const LINKS = {
     partner: 'partner',
     register: 'register',
-    contact: '#',
+    contact: 'mailto:phap22011994@gmail.com',
     social: [
       ['Facebook', 'https://www.facebook.com/profile.php?id=61574988325950'],
       ['Youtube', 'https://www.youtube.com/@chandedesign'],

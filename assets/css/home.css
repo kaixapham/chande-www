@@ -143,6 +143,8 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 /* ---------------------------------------------------------------- 5. LAND */
 .hs-land{height:calc(1028 * var(--u)); overflow:visible; z-index:1}
 .hs-land__bg{inset:0; width:100%; height:100%; object-fit:cover}
+/* trong lúc ảnh nền tải: bản thu nhỏ 32px (nhoè) thay cho nền trắng — ảnh thật phủ lên khi xong */
+.hs-land__bg{background:#4a3520 url("data:image/webp;base64,UklGRuwAAABXRUJQVlA4IOAAAABQBgCdASogABIAPu1mqk2ppaQiMAgBMB2JQBWDat23/ugA2YB5PdlQ3LdfycTmg2Frvb8OICxNt5zOAAD+7qFPAKbgvVlk+8Ea+lGRfQ+8ao/IZuJLKpHIbIUvLdYro8qxXzBDJJd3JakAXi6Bh1RrznDHVaNZBsS+juPco9IGWy9IcGqeaibAyUSwgm7l47fCvDl5/Qgnpni3e8K4i+luP+GT03gMFEv4H5ZNSn1ckM7X8mNNLJC4msrpT/MzrkF4kzQN2zvgdCYj8LIW72z8N8KRX3qaCXCLShN29BwAAA==") center / cover no-repeat}
 /* Ghim 1 màn (chande-home.js gắn .is-staged khi chạy được): section dài thêm
    (số món + 1) nhịp --land-step; khối trong dính ở đỉnh, cao đúng 1 màn. Nhịp đầu
    chỉ ảnh nền, mỗi nhịp sau dán thêm 1 món (data-land-step, trái -> phải), nhịp
@@ -268,6 +270,9 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .agenda__shot{position:relative; width:calc(685 * var(--u))}
 .agenda__shot > img:first-child{width:100%; height:calc(576 * var(--u)); object-fit:cover}
 .agenda__shot > .field{height:calc(136 * var(--u))}
+/* thanh process tự đổi ảnh (chande-home.js): vạch neon mép trên ảnh trái */
+.agenda__prog{position:absolute; left:0; top:0; width:100%; height:max(4px, calc(8 * var(--u))); z-index:3; pointer-events:none}
+.agenda__prog b{display:block; width:100%; height:100%; background:var(--lime); transform:scaleX(0); transform-origin:0 50%}
 .agenda__pair{position:relative; display:flex; width:calc(1255 * var(--u))}
 .agenda__house{position:relative; width:calc(570 * var(--u)); height:calc(712 * var(--u)); overflow:hidden}
 .agenda__house > img{width:100%; height:100%; object-fit:cover; object-position:35% 50%}
@@ -502,6 +507,20 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   object-fit:contain; object-position:right top} /* khung bị chặn rộng (màn cao / tablet): logo giữ đúng tỉ lệ, không kéo dãn */
 .hs-foot__n3{top:calc(100% - 420 * var(--u))}
 .hs-foot__cta1, .hs-foot__cta2{top:calc(100% - 420 * var(--u))}
+/* 2 nút footer: bỏ số, chữ căn giữa theo chiều dọc, cách ô chấm 32 */
+/* ô neon: mũi tên ↗ ghép 7 chấm (cùng hình mũi tên ở menu), rê vào nhích lên phải */
+.cta i svg.cta__arr{width:20px; height:20px}
+/* rê vào: mũi tên đang có trượt ra góc trên phải, đồng thời bản thứ hai trượt vào từ góc dưới trái
+   (cùng lúc, cùng đường cong — liền mạch, không giật); rời chuột thì trượt ngược lại. Ô neon cắt phần tràn.
+   Chấm đứng yên (đè hiệu ứng giãn 4 chấm của .cta) */
+.cta:has(.cta__arr) i{position:relative; overflow:hidden}
+.cta i svg.cta__arr circle, .cta:hover i svg.cta__arr circle{transform:none !important}
+.cta i svg.cta__arr{transition:translate .55s cubic-bezier(.65,0,.35,1)}
+.cta i svg.cta__arr--in{position:absolute; left:50%; top:50%; margin:-10px 0 0 -10px; translate:-64px 64px}
+.cta:hover i svg.cta__arr{translate:64px -64px}
+.cta:hover i svg.cta__arr--in{translate:0 0}
+@media (prefers-reduced-motion:reduce){ .cta i svg.cta__arr{transition:none} }
+.hs-foot__cta1 span, .hs-foot__cta2 span{justify-content:center; padding-left:calc(32 * var(--u))}
 .hs-foot__field, .hs-foot__panel, .hs-foot__vr{top:calc(100% - 328 * var(--u))}
 .hs-foot__social, .hs-foot__index{top:calc(100% - 296 * var(--u))}
 .hs-foot__hr{top:calc(100% - 59 * var(--u))}
