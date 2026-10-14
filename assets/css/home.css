@@ -682,7 +682,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-agenda{--q:calc(100vw / 375); height:auto; padding-top:calc(96 * var(--q))}
   .hs-agenda .agenda__dates{display:none}
   .hs-agenda .agenda{gap:0; padding-top:0}
-  .agenda .pills .pill{width:calc(144 * var(--q)); height:calc(56 * var(--q)); min-width:0; min-height:0; font-size:calc(14 * var(--q)); letter-spacing:-.02em}
+  .agenda .pills .pill{width:calc(144 * var(--q)); height:calc(56 * var(--q)); min-width:0; min-height:0; font-size:max(14px, calc(14 * var(--q))); letter-spacing:-.02em}
   .hs-agenda .agenda__day{display:block; margin:calc(32 * var(--q)) 0 0; font-size:calc(52 * var(--q)); text-align:center; white-space:nowrap}
   .hs-agenda .pills + .agenda__day{margin-top:calc(16 * var(--q))}
   .agenda__day span{display:block}
@@ -826,7 +826,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-foot__col{display:contents}
   .hs-foot > *, .hs-foot__col > *{margin:0; grid-column:1}
   .hs-foot__field{grid-row:1; width:100%; height:100%}
-  .cta{width:100% !important; height:calc(64 * var(--q)); font-size:calc(16 * var(--q))}
+  .cta{width:100% !important; height:calc(64 * var(--q)); font-size:max(14px, calc(16 * var(--q, .875px)))} /* chữ nút mobile không dưới 14px (trang không có --q, màn 320) */
   .cta i{width:calc(64 * var(--q)); gap:6px}
   .cta span{padding-left:calc(24 * var(--q)); gap:3px}
   .cta span small{font-size:max(9px, calc(11 * var(--q)))}
@@ -1175,7 +1175,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-events .ab-aim{font-size:calc(36 * var(--q))}
   .ab-events .ab-stamp{width:calc(120 * var(--q)); align-self:flex-end}
   .ab-events .ab-events__cta{display:flex}
-  .ab-events__cta .pill{font-size:13px; padding-inline:20px; min-height:44px}
+  .ab-events__cta .pill{font-size:14px; padding-inline:20px; min-height:44px}
   .ab-note{flex-direction:column; align-items:flex-start; gap:8px; font-size:12px}
   .ab-events .ab-events__stick{position:static}
   .ab-comm{--q:calc(100vw / 375); height:auto; display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr)}

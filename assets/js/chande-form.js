@@ -53,7 +53,29 @@
   function mount(root = document) {
     const scope = root.querySelectorAll ? root : document
     scope.querySelectorAll('form[data-form]').forEach(setup)
+    fitIntro()
   }
+
+  // Partner / Register trên màn hẹp (≤ 1023, một cột): màn đầu phải thấy đủ đoạn giới thiệu — ảnh co lại
+  // cho vừa. CSS (form.css) lấy chiều cao đoạn giới thiệu từ --pt-intro (đo ở đây: tới hết chữ + 16).
+  let fitW = 0
+  function fitIntro(force) {
+    if (!force && innerWidth === fitW) return
+    fitW = innerWidth
+    document.querySelectorAll('.fm.pt').forEach((sec) => {
+      const intro = sec.querySelector('.pt__intro')
+      if (!intro) return
+      const pb = parseFloat(getComputedStyle(intro).paddingBottom) || 0
+      sec.style.setProperty('--pt-intro', `${Math.ceil(intro.offsetHeight - pb + 16)}px`)
+      // chỗ trống thật = từ đáy header tới mép trên nút gửi cố định (đo lúc mở trang, thanh trình duyệt đang hiện)
+      const send = sec.querySelector('.pt__send')
+      const bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bar')) || 64
+      if (send && getComputedStyle(send).position === 'fixed') sec.style.setProperty('--pt-room', `${Math.floor(send.getBoundingClientRect().top - bar)}px`)
+      else sec.style.removeProperty('--pt-room')
+    })
+  }
+  addEventListener('resize', () => fitIntro())
+  document.fonts?.ready.then(() => fitIntro(true))
 
   function setup(form) {
     if (form._fm) return

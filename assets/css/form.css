@@ -171,12 +171,14 @@
   .fm.pt{--mono:12px; --lab:14px; grid-template-columns:1fr; grid-template-rows:auto; height:auto; min-height:0}
   .fm.pt .pt__msg textarea{flex:none; height:120px; resize:vertical}
   .fm.pt > *, .fm.pt .pt__form > *, .fm.pt--rev > *, .fm.pt--rev .pt__form > *, .fm.pt .pt__media, .fm.pt--rev .pt__media{grid-column:1; grid-row:auto}
-  .pt__media{height:min(125vw, 560px)}
+  /* màn đầu thấy đủ đoạn giới thiệu: ảnh = chỗ từ header tới nút gửi cố định (--pt-room) − đoạn giới thiệu
+     (--pt-intro) — chande-form.js đo lúc mở trang; không cao hơn cỡ cũ, không thấp hơn 200 */
+  .pt__media{height:clamp(200px, calc(var(--pt-room, calc(var(--vp, 100svh) - var(--bar) - 64px - env(safe-area-inset-bottom))) - var(--pt-intro, 260px)), min(125vw, 560px))}
   .pt--rev .pt__media::after{height:45%}
-  .fm.pt .pt__title, .fm.pt--rev .pt__title{grid-row:1;}
+  .fm.pt .pt__title, .fm.pt--rev .pt__title{grid-row:1; grid-column:1} /* --rev desktop đặt cột 2 -> mobile mất tiêu đề */
   .pt__title, .pt--rev .pt__title{left:16px; top:24px; width:calc(100% - 32px); font-size:clamp(44px, 14.5vw, 96px)}
   .pt--rev .pt__title{font-size:clamp(40px, 12.5vw, 88px)}
-  .pt__year{position:static; display:block}
+  .pt__year{position:absolute; right:0; bottom:0} /* (2027) căn phải, cùng đáy với dòng "Chande" như desktop */
   .pt__intro, .pt__fields, .fm.pt .pt__done{padding-inline:16px}
   .pt__intro{gap:14px; padding-top:32px; padding-bottom:48px}
   .pt__fields{gap:36px; padding-bottom:56px}
@@ -190,6 +192,7 @@
   .fm.pt{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
   .fm.pt .pt__send{flex:none; position:fixed; z-index:50; left:0; right:0; bottom:0; height:calc(64px + env(safe-area-inset-bottom)); align-items:flex-start}
   .fm.pt .pt__send span{height:64px; justify-content:center}
+  .fm.pt .pt__send{font-size:14px} /* chữ nút trên mobile 14 (trước rơi về 10px) */
   .fm.pt .pt__send i{height:64px}
   .fm.pt .pt__send i svg.pt__arrow{width:15px; height:15px}
   .pt__note{height:auto; min-height:64px; padding:16px}
