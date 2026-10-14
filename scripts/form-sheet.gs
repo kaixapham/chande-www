@@ -15,6 +15,8 @@
  *   • POST { kind: 'message', image, name, avatar, text } -> thêm dòng vào tab "Messages"
  *     (Time · Image · Name · Avatar · Message · Hide; tab cũ thiếu cột thì tự thêm cột cuối).
  *   • GET ?action=messages&image=… -> các lời nhắn của ảnh đó, mới nhất trước.
+ *     GET ?action=all -> { all: { ảnh: [lời nhắn…] } } — mọi ảnh trong một lần đọc (trang tải một lần là note
+ *     của ảnh nào cũng hiện ngay, khỏi chờ Sheet mỗi lần mở ảnh).
  *     GET ?action=ping -> { ok } (site dùng để biết đã bật lời nhắn).
  *   • DUYỆT: gõ x (hay bất kỳ chữ gì) vào cột Hide của một dòng -> lời nhắn đó thôi hiện trên site.
  *
@@ -31,24 +33,39 @@ const safeCell = (v) => (typeof v === 'string' && /^[=+\-@]/.test(v) ? "'" + v :
 function doGet(e) {
   const p = (e && e.parameter) || {}
   if (p.action === 'ping') return out({ ok: true, messages: true })
-  if (p.action !== 'messages') return out({ ok: false, error: 'bad request' })
+  if (p.action !== 'messages' && p.action !== 'all') return out({ ok: false, error: 'bad request' })
+  const rows = messageRows() // mới nhất trước, đã bỏ dòng có chữ ở cột Hide
+  if (p.action === 'all') {
+    const all = {}
+    rows.forEach((m) => {
+      const list = all[m.image] || (all[m.image] = [])
+      if (list.length < 50) list.push(m.msg)
+    })
+    return out({ ok: true, all: all })
+  }
   const image = String(p.image || '')
+  return out({ ok: true, messages: rows.filter((m) => m.image === image).slice(0, 200).map((m) => m.msg) })
+}
+
+function messageRows() {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MSG_TAB)
-  if (!sh || sh.getLastRow() < 2) return out({ ok: true, messages: [] })
+  if (!sh || sh.getLastRow() < 2) return []
   const head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]
   const at = (n) => head.indexOf(n)
-  const rows = sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues()
-  const list = rows
-    .filter((r) => String(r[at('Image')]) === image && !String(r[at('Hide')] ?? '').trim())
+  return sh
+    .getRange(2, 1, sh.getLastRow() - 1, head.length)
+    .getValues()
+    .filter((r) => r[at('Image')] && !String(r[at('Hide')] ?? '').trim())
     .map((r) => ({
-      name: String(r[at('Name')] ?? '').replace(/^'/, ''),
-      avatar: at('Avatar') >= 0 ? String(r[at('Avatar')] ?? '') : '',
-      text: String(r[at('Message')] ?? '').replace(/^'/, ''),
-      createdAt: new Date(r[at('Time')]).getTime() || 0,
+      image: String(r[at('Image')]),
+      msg: {
+        name: String(r[at('Name')] ?? '').replace(/^'/, ''),
+        avatar: at('Avatar') >= 0 ? String(r[at('Avatar')] ?? '') : '',
+        text: String(r[at('Message')] ?? '').replace(/^'/, ''),
+        createdAt: new Date(r[at('Time')]).getTime() || 0,
+      },
     }))
     .reverse()
-    .slice(0, 200)
-  return out({ ok: true, messages: list })
 }
 
 function addMessage(body) {

@@ -944,15 +944,56 @@ function mount(root = document) {
     } catch {}
   })
   chatBtn.hidden = true
-  fetch(`${MSG_API}?ping=1`)
-    .then((r) => (r.ok ? r.json() : null))
-    .then((j) => {
-      if (j?.ok && !ac.signal.aborted) {
-        msgOn = true
-        chatBtn.hidden = false
+  // Bật lời nhắn: thử lấy MỌI lời nhắn một lần (?all=1 — vừa là ping, vừa để note của ảnh nào mở ra cũng hiện
+  // ngay); Apps Script bản cũ chưa có thì chỉ ping, note lấy theo từng ảnh. Lỗi vặt thì thử lại (3 lượt) — trước
+  // đây ping hỏng một lần là cả phiên không có lời nhắn.
+  let msgAll = null // { ảnh: [lời nhắn…] } hoặc null
+  const msgCache = new Map() // ảnh -> { at, p: Promise<list> } (khi không có msgAll)
+  const getJSON = (url) =>
+    fetch(url, { signal: ac.signal })
+      .then((r) => r.json())
+      .catch(() => null)
+  const msgReady = (async () => {
+    for (let i = 0; i < 3 && !ac.signal.aborted; i++) {
+      const all = await getJSON(`${MSG_API}?all=1`)
+      if (all?.ok) {
+        msgAll = all.all || {}
+        return true
       }
-    })
-    .catch(() => {})
+      if ((await getJSON(`${MSG_API}?ping=1`))?.ok) return true
+      await wait(1500 * (i + 1))
+    }
+    return false
+  })()
+  msgReady.then((ok) => {
+    if (!ok || ac.signal.aborted) return
+    msgOn = true
+    chatBtn.hidden = false
+  })
+  // giữ bộ "mọi lời nhắn" mới (bộ đệm CDN 15 s): lời nhắn người khác vừa viết cũng hiện thành note
+  const msgTimer = setInterval(async () => {
+    if (!msgAll || document.hidden || ac.signal.aborted) return
+    const all = await getJSON(`${MSG_API}?all=1`)
+    if (all?.ok) msgAll = all.all || {}
+  }, 60000)
+  ac.signal.addEventListener('abort', () => clearInterval(msgTimer))
+  // lời nhắn của một ảnh: có bộ "mọi lời nhắn" thì lấy luôn; không thì hỏi theo ảnh (nhớ 60 s, lỗi thì thử lại 1 lần)
+  function getMessages(key) {
+    if (msgAll) return Promise.resolve(msgAll[key] || [])
+    const c = msgCache.get(key)
+    if (c && Date.now() - c.at < 60000) return c.p
+    const p = (async () => {
+      for (let i = 0; i < 2 && !ac.signal.aborted; i++) {
+        const j = await getJSON(`${MSG_API}?image=${encodeURIComponent(key)}`)
+        if (j?.ok) return j.messages || []
+        await wait(800)
+      }
+      msgCache.delete(key)
+      return []
+    })()
+    msgCache.set(key, { at: Date.now(), p })
+    return p
+  }
   // chữ trên nút: tách từng chữ để trồi lên lần lượt (CSS đọc --i)
   {
     const l = q('[data-g3-label]')
@@ -1002,6 +1043,10 @@ function mount(root = document) {
       const j = await r.json()
       if (!chatOpen || lbItem?.key !== key) return
       const got = Array.isArray(j.messages) ? j.messages : []
+      if (j.ok) {
+        if (msgAll) msgAll[key] = got
+        else msgCache.set(key, { at: Date.now(), p: Promise.resolve(got) })
+      }
       // bản vừa gửi chưa có trong Sheet (bộ đệm 10 s) thì giữ ở đầu
       const seen = new Set(got.map(msgKey))
       chatLocal = chatLocal.filter((m) => m.image === key && !seen.has(msgKey(m)) && Date.now() - m.createdAt < 120000)
@@ -1199,11 +1244,12 @@ function mount(root = document) {
   async function showNotes(item, frame, delay) {
     const token = ++notesToken
     notesBox.replaceChildren()
-    if (!msgOn || !item) return
+    if (!item) return
+    // mở ảnh lúc lời nhắn chưa bật xong (vài giây đầu vào trang) thì đợi — trước đây bỏ luôn, ảnh đó không có note
+    if (!msgOn && !(await msgReady)) return
     let list = []
     try {
-      const r = await fetch(`${MSG_API}?image=${encodeURIComponent(item.key)}`, { signal: ac.signal })
-      list = (await r.json()).messages || []
+      list = await getMessages(item.key)
     } catch {}
     const seen = new Set(list.map(msgKey))
     list = uniqMsgs([...chatLocal.filter((m) => m.image === item.key && !seen.has(msgKey(m))), ...list]).slice(0, MAX_NOTES)

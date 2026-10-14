@@ -92,6 +92,17 @@ function devMessages(req, res) {
   const u = new URL(req.url, 'http://x')
   if (req.method === 'GET') {
     if (u.searchParams.get('ping')) return send(200, { ok: true, dev: true })
+    if (u.searchParams.get('all')) {
+      if (process.env.DEV_NO_ALL) return send(502, { ok: false, error: 'messages unavailable', reason: 'bad request' }) // giả Apps Script bản cũ
+      const all = {}
+      const seen = new Set()
+      for (const m of devMsgs.slice().reverse()) {
+        if (seen.has(devKey(m))) continue
+        seen.add(devKey(m))
+        ;(all[m.image] ||= []).push(m)
+      }
+      return send(200, { ok: true, all })
+    }
     const image = u.searchParams.get('image') || ''
     const seen = new Set()
     const list = devMsgs.filter((m) => m.image === image).slice().reverse().filter((m) => !seen.has(devKey(m)) && seen.add(devKey(m)))

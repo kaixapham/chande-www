@@ -3,6 +3,8 @@
 // Hàm serverless của Vercel:
 //   GET  /api/messages?image=<đường dẫn ảnh>  -> { ok, messages: [{ name, text, createdAt }] } (mới nhất trước)
 //   GET  /api/messages?ping=1                 -> { ok } — trang dùng để biết có bật lời nhắn không
+//   GET  /api/messages?all=1                  -> { ok, all: { ảnh: [lời nhắn…] } } — mọi ảnh một lần (cần Apps
+//        Script bản có action=all; bản cũ thì lỗi -> trang quay về lấy theo từng ảnh)
 //   POST /api/messages  { image, name, text, avatar, hp, t }  -> { ok }   (avatar: một trong 8 emoji)
 //
 // Lưu vào CÙNG Google Sheet với form (Apps Script scripts/form-sheet.gs, biến SHEET_WEBHOOK_URL trên
@@ -26,6 +28,16 @@ const dupKey = (image, name, text) => `${image}|${norm(name)}|${norm(text)}`
 // coi như đã nhận, không ghi thêm dòng; đang gửi dở thì đợi chính lần gửi đó. Nhớ trong bộ nhớ máy chủ (như
 // giới hạn theo IP) — trang còn tự kiểm tra Sheet trước khi gửi lại, và lúc đọc ra thì lời nhắn trùng chỉ hiện một.
 const DUP_MS = 10 * 60 * 1000
+// lời nhắn trùng (kể cả các dòng trùng đã lỡ vào Sheet) chỉ hiện một — giữ bản mới nhất (Sheet trả mới trước)
+function uniq(image, list) {
+  const seen = new Set()
+  return list.filter((m) => {
+    const k = dupKey(image, m?.name, m?.text)
+    if (seen.has(k)) return false
+    seen.add(k)
+    return true
+  })
+}
 const sent = new Map() // dupKey -> mốc đã ghi
 const inflight = new Map() // dupKey -> Promise lần đang gửi
 // tối đa 10 lời nhắn / 7 phút / IP (5 / 10 phút như trước thì người thật viết được vài ảnh là bị chặn)
@@ -75,17 +87,17 @@ module.exports = async function handler(req, res) {
         res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
         return res.status(200).json({ ok: true })
       }
+      if (req.query.all) {
+        const j = await sheetGet(sheet, { action: 'all' })
+        const all = {}
+        for (const [image, list] of Object.entries(j.all || {})) if (IMAGE.test(image)) all[image] = uniq(image, Array.isArray(list) ? list : [])
+        res.setHeader('Cache-Control', 'public, s-maxage=15, stale-while-revalidate=120')
+        return res.status(200).json({ ok: true, all })
+      }
       const image = String(req.query.image || '')
       if (!IMAGE.test(image)) return res.status(400).json({ ok: false, error: 'bad image' })
       const j = await sheetGet(sheet, { action: 'messages', image })
-      // lời nhắn trùng (kể cả các dòng trùng đã lỡ vào Sheet) chỉ hiện một — giữ bản mới nhất (Sheet trả mới trước)
-      const seen = new Set()
-      const messages = (Array.isArray(j.messages) ? j.messages : []).filter((m) => {
-        const k = dupKey(image, m?.name, m?.text)
-        if (seen.has(k)) return false
-        seen.add(k)
-        return true
-      })
+      const messages = uniq(image, Array.isArray(j.messages) ? j.messages : [])
       res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=60')
       return res.status(200).json({ ok: true, messages })
     } catch (e) {
