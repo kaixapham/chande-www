@@ -1077,7 +1077,14 @@ function mount(root = document) {
       l.appendChild(sp)
     })
   }
+  // Lật xong sang mặt lời nhắn thì "duỗi phẳng" (.is-flat: bỏ xoay 3D, ẩn hẳn mặt ảnh) — Safari iOS không cho
+  // chạm / gõ vào ô nhập nằm trong khối đang xoay rotateY(180) + backface-visibility; hình y hệt. Lật về thì
+  // trả trạng thái 3D trước rồi mới quay.
+  let flatT = 0
   function flipCard(toBack) {
+    clearTimeout(flatT)
+    lb.classList.remove('is-flat')
+    if (toBack) flatT = setTimeout(() => chatOpen && lb.classList.add('is-flat'), reduceMotion ? 0 : FLIP_MS)
     if (reduceMotion) return
     const a = toBack ? 0 : 180
     const b = toBack ? 180 : 0

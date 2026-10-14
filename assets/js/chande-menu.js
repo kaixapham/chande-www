@@ -281,9 +281,21 @@
   const mobile = () => mobileMQ.matches
   mobileMQ.addEventListener?.('change', () => isOpen && !mobile() && fill())
   const btn = () => document.querySelector('.cl__menu')
+  // Chiều cao thấy được LÚC MỞ menu (bản mobile neo cụm credit cách đáy 32): --vp của trang trừ sẵn thanh nổi
+  // Safari iOS 26 (~56, cho lúc đang cuộn) — mở menu thường lúc thanh đang mở rộng, không đè trang -> trừ thừa,
+  // cụm dưới hở quá. innerHeight lớn hơn lúc tải trang (thanh đã thu, trang vẽ xuống dưới thanh) mới trừ.
+  const IOS_BAR = 56
+  const ios26 = /iPhone|iPad|iPod/.test(navigator.userAgent) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent) && +(navigator.userAgent.match(/Version\/(\d+)/)?.[1] || 0) >= 26
+  const ihLoad = innerHeight
+  function fitHeight() {
+    const h = innerHeight
+    root.style.setProperty('--mvh', `${ios26 && h > ihLoad + 10 ? h - IOS_BAR : h}px`)
+  }
+  addEventListener('resize', () => isOpen && fitHeight())
   function open() {
     if (isOpen) return
     isOpen = true
+    fitHeight()
     clearTimeout(closeT)
     ;(mobile() ? Promise.resolve() : fill()).then(codeIn)
     root.hidden = false

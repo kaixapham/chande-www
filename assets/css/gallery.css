@@ -53,6 +53,10 @@ html.g3-on, html.g3-on body{overflow:hidden; overscroll-behavior:none}
 .g3-card__front{filter:drop-shadow(0 2px 25px rgba(0, 0, 0, .2))}
 .g3-card__front canvas{display:block; width:100%; height:100%}
 .g3-card__back{transform:rotateY(180deg); cursor:auto; filter:drop-shadow(0 2px 25px rgba(0, 0, 0, .2))}
+/* lật xong sang lời nhắn: phẳng hẳn (Safari iOS không nhận chạm / gõ vào ô nhập trong khối xoay 3D) */
+.g3-lb.is-flat .g3-card{transform:none; transform-style:flat}
+.g3-lb.is-flat .g3-card__back{transform:none}
+.g3-lb.is-flat .g3-card__front{visibility:hidden}
 .g3-lb__caption{display:none} /* tên ảnh chỉ để làm tên của hộp thoại (đọc màn hình) */
 /* note lời nhắn rải hai bên tem (Figma 688:48951): giấy trắng 176 · lỗ chấm · emoji · lời · tên */
 .g3-notes{position:absolute; inset:0; pointer-events:none; z-index:1}
