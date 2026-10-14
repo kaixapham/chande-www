@@ -1213,7 +1213,10 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 @media (max-width:899px){
   .ab-events{gap:0; padding:0 calc(12 * var(--q)) calc(16 * var(--q))}
   .ab-events .ab-events__dark{order:1} .ab-events .ab-events__field{order:2}
-  .ab-events .ab-events__notepin{order:3; margin-top:calc(16 * var(--q))}
+  /* Màn sự kiện = đúng MỘT màn thấy được dưới header: 16 · chữ mono · (khoảng co giãn) · tiêu đề 48 · 16 · chú thích 11 · 12 ·
+     ảnh · 12. Khoảng co giãn = min-height của khối chữ mono; ảnh vuông 351, màn quá thấp thì thấp lại (vẫn đủ bề ngang). */
+  .ab-events{--ev-img:min(calc(351 * var(--q)), calc(var(--vp, 100svh) - var(--bar) - 231 * var(--q)))}
+  .ab-events .ab-events__notepin{order:3; margin-top:calc(16 * var(--q)); min-height:calc(var(--vp, 100svh) - var(--bar) - 115 * var(--q) - var(--ev-img))}
   .ab-events .ab-events__ach{order:4} .ab-events .ab-events__pin{order:5} .ab-events .ab-events__listbox{order:6}
   .ab-events .ab-member{order:7} .ab-events .ab-vision{order:8} .ab-events .ab-journey{order:9}
   .ab-events .ab-aim{order:10} .ab-events .ab-stamp{order:11} .ab-events .ab-events__cta{order:12}
@@ -1223,11 +1226,11 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-events__note p:first-of-type{margin-bottom:.96em} /* dòng trống sau "Every year," (đoạn sau nằm inline nên không nhận margin) */
   .ab-events__note p:nth-of-type(2){display:inline}
   .ab-events__note .ab-events__chande{position:static; display:inline; margin-left:.6em; white-space:nowrap}
-  /* tiêu đề: đỉnh cách đỉnh chữ mono 347 (Figma 16 → 363) */
-  .ab-events .ab-events__ach{margin-top:calc(243 * var(--q));
+  .ab-events .ab-events__ach{margin-top:0;
     font-size:calc(32 * var(--q)); line-height:.78; letter-spacing:-.02em}
   .ab-events .ab-events__pin{margin-top:calc(16 * var(--q))}
   .ab-events .ab-events__stick{gap:calc(12 * var(--q))}
+  .ab-events .ab-events__img{aspect-ratio:auto; height:var(--ev-img)}
   .ab-events .ab-events__cap{font:500 calc(16 * var(--q))/.96 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase}
   /* danh sách: tên rộng 263 trái, năm phải (chân chữ thẳng dòng cuối), kẻ đứt mảnh giữa các dòng, cách 12 */
   .ab-events .ab-events__listbox{margin-top:calc(28 * var(--q)); gap:calc(12 * var(--q))}
