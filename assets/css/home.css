@@ -621,7 +621,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-story__panel:last-child{min-height:calc(375 * var(--v))} /* Figma: khung Chande. cao 375 */
   .hs-story .hs-story__panel h3{font-size:calc(40 * var(--s)); line-height:.78; letter-spacing:-.02em; text-box:trim-both cap alphabetic; --tb:1}
   .hs-story__panel{justify-content:flex-start} /* Figma: chữ canh trên, cách đầu khung 144 */
-  .hs-story__text{width:calc(263 * var(--s)); max-width:100%; min-width:0; min-height:0; gap:calc(24 * var(--s)); margin-top:calc(93 * var(--s))}
+  .hs-story__text{width:75%; max-width:none; min-width:0; min-height:0; gap:calc(24 * var(--s)); margin-top:calc(93 * var(--s))} /* chữ thân = 3/4 lưới 4 cột (12 → 363 ở khổ 375 -> 263) */
   .hs-story__text div{gap:calc(24 * var(--s))}
   .hs-story__text p{font-size:max(10px, calc(14 * var(--s))); line-height:.96; letter-spacing:-.02em; text-box:trim-both cap alphabetic; --tb:1}
   .hs-story__panel:last-child .hs-story__text div p:last-child{font-size:max(11px, calc(16 * var(--s)))} /* Figma: đoạn Chande. 16 */
