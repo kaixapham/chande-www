@@ -18,7 +18,8 @@ const IMAGE = /^assets\/img\/[\w\-/.]+\.(webp|jpe?g|png|gif)$/i
 const AVATARS = ['🐺', '🐻', '🦊', '🐯', '🐶', '🐟', '🐷', '👨‍🌾'] // khớp hàng chọn avatar ở gallery.html
 const clip = (s, n) => String(s ?? '').replace(/\s+\n/g, '\n').trim().slice(0, n)
 const hits = new Map() // ip -> [mốc gửi gần đây]
-const LIMIT = { n: 5, ms: 10 * 60 * 1000 } // tối đa 5 lời nhắn / 10 phút / IP
+// tối đa 10 lời nhắn / 7 phút / IP (5 / 10 phút như trước thì người thật viết được vài ảnh là bị chặn)
+const LIMIT = { n: 10, ms: 7 * 60 * 1000 }
 
 function limited(ip) {
   const now = Date.now()
