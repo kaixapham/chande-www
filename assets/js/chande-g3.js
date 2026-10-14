@@ -1280,10 +1280,11 @@ function mount(root = document) {
     tag.className = 'g3-count'
     tag.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1 0 12 3.5Z"/><path d="M8.5 10.5h7M8.5 14h4.5"/></svg><span>${n} message${n > 1 ? 's' : ''} on this photo</span>`
     notesBox.appendChild(tag)
-    // phía trên tem nếu đủ chỗ (dưới thanh nav), không thì dán ở mép trên của tem
+    // phía trên tem nếu đủ chỗ (dưới thanh nav); ảnh dọc cao không còn chỗ thì dán vào trong ảnh — qua hẳn lề
+    // giấy răng cưa (PERF.margin) thêm 16 px, không chạm mép tem
     const top = parseFloat(getComputedStyle(lb).paddingTop) || 76
     const h = tag.offsetHeight
-    const y = frame.top - 14 - h >= top - 8 ? frame.top - 14 - h : frame.top + 12
+    const y = frame.top - 14 - h >= top - 8 ? frame.top - 14 - h : frame.top + PERF.margin + 16
     tag.style.transform = `translate(${Math.round(frame.left + frame.width / 2 - tag.offsetWidth / 2)}px, ${Math.round(y)}px)`
     tag.addEventListener('click', (e) => {
       e.stopPropagation()
