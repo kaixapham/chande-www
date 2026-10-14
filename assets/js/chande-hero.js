@@ -152,7 +152,9 @@
         new Promise((res, rej) => {
           const im = new Image()
           im.decoding = 'async'
-          im.onload = () => res(im)
+          // Safari: vẽ lên canvas ngay lúc 'load' có khi ra khung TRỐNG (ảnh chưa giải mã xong) -> 4 ảnh
+          // hero trắng. Chờ decode() xong hẵng trả ảnh (lỗi decode thì vẫn trả, như cũ).
+          im.onload = () => (im.decode ? im.decode().catch(() => {}) : Promise.resolve()).then(() => res(im))
           im.onerror = rej
           im.src = src
         }),
@@ -328,19 +330,25 @@
     })
 
     // Ảnh chân dung: thay <img> bằng canvas đã dither (img giữ lại làm dự phòng).
-    slots.forEach((slot, i) => {
+    // Xong cả 4 (hoặc hỏng -> giữ <img>, chờ nó giải mã) thì báo 'chande-hero:ready' — màn loading trên
+    // Safari đợi tín hiệu này mới mở (chande-loading.js), không lộ 4 khung trắng.
+    const portraits = slots.map((slot, i) => {
       const box = slot.querySelector('.hero-card__media')
       const person = people[i % people.length]
       slot.dataset.idx = i % people.length
+      slot.setAttribute('aria-label', `${person.num} ${person.name}`)
       const c = document.createElement('canvas')
       c.setAttribute('aria-hidden', 'true')
-      renderPortrait(c, box, person, +slot.dataset.levels || 4)
+      return renderPortrait(c, box, person, +slot.dataset.levels || 4)
         .then(() => {
           if (!state.alive) return
           box.replaceChildren(c)
         })
-        .catch(() => {})
-      slot.setAttribute('aria-label', `${person.num} ${person.name}`)
+        .catch(() => box.querySelector('img')?.decode?.().catch(() => {}))
+    })
+    Promise.allSettled(portraits).then(() => {
+      window.CHANDE_HERO_READY = true
+      document.dispatchEvent(new Event('chande-hero:ready'))
     })
 
     // Đổi cỡ: vẽ lại dither theo cỡ mới (khung đổi theo bề rộng màn).

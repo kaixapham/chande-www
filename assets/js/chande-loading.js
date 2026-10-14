@@ -147,6 +147,9 @@ if (/^((?!chrome|chromium|crios|fxios|edgios|android).)*safari/i.test(navigator.
     waitForLoad: true,
     gateAt: 0.92,
     gateMaxWait: 3500, // không bắt người xem chờ tải hết ảnh dưới trang
+    // Safari (iPhone hay lỗi 4 ảnh hero trắng nếu mở màn sớm): chờ thêm tới khi 4 ảnh hero đã vẽ xong
+    // ('chande-hero:ready' của chande-hero.js), tối đa chừng này ms
+    gateMaxWaitSafari: 9000,
 
     // Đường cong tiến trình [t, p] — có các đoạn chững cho giống loading thật,
     // và đi qua đúng hai mốc 15% / 50% của Figma.
@@ -922,6 +925,9 @@ html.menu-open .cl__menu .cl__x circle, html.menu-open .cl.is-done .cl__menu:hov
   let pageLoaded = document.readyState === 'complete'
   let gateWaited = 0
   if (!pageLoaded) addEventListener('load', () => (pageLoaded = true), { once: true })
+  // Safari: còn phải đợi 4 ảnh hero (trang có hero) — xem gateMaxWaitSafari
+  const safariGate = document.documentElement.classList.contains('is-safari')
+  const heroReady = () => !safariGate || window.CHANDE_HERO_READY === true || !document.querySelector('[data-hero]')
 
   function curveAt(t) {
     const c = S.curve
@@ -1012,8 +1018,8 @@ html.menu-open .cl__menu .cl__x circle, html.menu-open .cl.is-done .cl__menu:hov
 
     // cổng chờ trang tải thật — chỉ chặn khi đang play
     const gated =
-      S.waitForLoad && !pageLoaded && gateWaited < S.gateMaxWait &&
-      progressAt(state.time + dt) >= S.gateAt && state.time < M.loadEnd
+      S.waitForLoad && progressAt(state.time + dt) >= S.gateAt && state.time < M.loadEnd &&
+      ((!pageLoaded && gateWaited < S.gateMaxWait) || (!heroReady() && gateWaited < (safariGate ? S.gateMaxWaitSafari : S.gateMaxWait)))
     if (gated) {
       gateWaited += dt
       apply(Math.min(state.time, timeAtProgress(S.gateAt)))

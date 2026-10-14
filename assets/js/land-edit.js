@@ -4,7 +4,8 @@
  * 3 món dán lên ảnh nền (tờ hoá đơn, tem vịt, cụm sticker) — mỗi món là một
  * <div class="hs-land__piece" data-land-key> trong index.html, vị trí / cỡ / góc ghi ở style:
  *   --x --y --w --r      khổ desktop 1920 × 1028 (đơn vị --u)
- *   --mx --my --mw --mr  khổ mobile 375 × 748 (đơn vị --s, khung giữa màn)
+ *   --mx --my --mw --mr  khổ mobile 375 × 580 = tỉ lệ vùng thấy được dưới header của iPhone thật (Safari ~375 × 570–600;
+ *                         Figma 748 cao hơn màn thật -> khung 748 bị thu nhỏ, hở 2 bên) — đơn vị --s, khung giữa màn
  * x, y = góc trên trái ảnh chưa xoay, w = bề rộng (cao theo tỉ lệ ảnh), r = độ xoay quanh tâm.
  *   • kéo món = dời · Shift + kéo = xoay · góc = đổi cỡ (giữ tâm) · nút tròn = xoay (Shift: bước 15°)
  *   • lăn chuột trên món = đổi cỡ · mũi tên nhích 1 (Shift 10) · ⌘Z hoàn tác
@@ -16,7 +17,7 @@
   const $ = (s, r = document) => r.querySelector(s)
   const MODES = {
     desktop: { W: 1920, H: 1028, keys: ['x', 'y', 'w', 'r'] },
-    mobile: { W: 375, H: 748, keys: ['mx', 'my', 'mw', 'mr'] },
+    mobile: { W: 375, H: 580, keys: ['mx', 'my', 'mw', 'mr'] },
   }
   const board = $('[data-board]')
   const view = $('[data-view]')

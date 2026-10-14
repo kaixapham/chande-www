@@ -638,9 +638,10 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-scheme .scheme > i{height:calc(400 / 9 * 100vw / 375)}
 
   /* 4–5. Strip + Land — Figma mobile (628:46260, khổ 375). Strip: mảng gạch neon 94 trên, hàng viên
-     thuốc 108 × 42 (nền tối, cao 72) dưới. Land: khung 748 ngay dưới header (cao = màn − header), 3 món
-     dán theo số đo Figma; --s = 1px khổ 375 nhưng không quá khung cao 748 (màn thấp thì cả cụm thu lại,
-     canh giữa ngang). Hiệu ứng dán từng món khi cuộn giữ nguyên (chande-home.js). */
+     thuốc 108 × 42 (nền tối, cao 72) dưới. Land: khung ngay dưới header (cao = màn − header), 3 món dán
+     theo land-edit.html (chế độ Mobile, khung 375 × 580 = tỉ lệ vùng thấy được của iPhone thật — khung
+     748 của Figma cao hơn màn thật nên bị thu nhỏ, hở 2 bên); --s = 1px khổ 375 nhưng không quá khung cao
+     580 (màn thấp hơn thì cả cụm thu lại, canh giữa ngang). Hiệu ứng dán từng món khi cuộn giữ nguyên. */
   .hs-strip{--q:calc(100vw / 375); height:calc(72 * var(--q)); overflow:visible}
   .strip{flex-direction:column; height:auto}
   .strip__field{width:100%; height:calc(94 * var(--q))}
@@ -649,7 +650,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .strip__run .pillrun{left:0; right:0; width:auto; top:calc(15 * var(--q)); height:calc(42 * var(--q))}
   .strip__run .pillrun__track{gap:calc(1.5 * var(--q)); animation-name:hs-pills-m}
   .strip__run .pillrun__track > i{width:calc(108 * var(--q)); height:calc(42 * var(--q))}
-  .hs-land.is-staged .hs-land__frame{--s:min(calc(100vw / 375), calc((var(--vp) - var(--bar)) / 748)); inset:var(--bar) 0 0; top:var(--bar); height:auto;
+  .hs-land.is-staged .hs-land__frame{--s:min(calc(100vw / 375), calc((var(--vp) - var(--bar)) / 580)); inset:var(--bar) 0 0; top:var(--bar); height:auto;
     transform:none; overflow:hidden}
   .hs-land .hs-land__bg--m{display:block}
   .hs-land .hs-land__bg:not(.hs-land__bg--m){display:none}
@@ -657,18 +658,18 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-land__piece > img{rotate:calc(var(--mr) * 1deg)}
 
   /* 7. Poster — bản mobile TĨNH (chande-poster.js không dựng chồng giấy 3D dưới 900px): các tờ là ảnh
-     đặt theo khung 375 × 748·n (n = data-m-screens, mặc định 2 màn), co theo --s như các khung "một
-     màn" (mỗi 748 = đúng một màn thấy được dưới header; màn rộng thì cả khung canh giữa ngang).
+     đặt theo khung 375 × 748·n (n = data-m-screens, mặc định 2), co theo BỀ NGANG (--mq = 1px khổ 375) để
+     sát mép y như trình sửa — màn thật thấp hơn 748 nên section dài hơn n màn một chút.
      Sửa ở poster-edit.html, chế độ Mobile. */
-  .hs-poster{--n:2; height:calc(748 * var(--n) * var(--s)); overflow:hidden; background:#fffef8 var(--poster-bg, none) 50% 50% / cover no-repeat}
+  .hs-poster{--n:2; --mq:calc(100vw / 375); height:calc(748 * var(--n) * var(--mq)); overflow:hidden; background:#fffef8 var(--poster-bg, none) 50% 50% / cover no-repeat}
   .hs-poster[data-m-screens="3"]{--n:3}
   .hs-poster .hs-poster__pin{display:none}
   .hs-poster__m{position:absolute; inset:0}
-  .hs-poster img.poster__m{position:absolute; display:block; left:calc(50% + (var(--mx) - 187.5) * var(--s)); top:calc(var(--my) * var(--s));
-    width:calc(var(--mw) * var(--s)); height:auto; max-width:none; object-fit:fill; rotate:calc(var(--mr) * 1deg);
-    filter:drop-shadow(0 calc(3 * var(--s)) calc(6 * var(--s)) rgba(40,30,10,.16))}
+  .hs-poster img.poster__m{position:absolute; display:block; left:calc(var(--mx) * var(--mq)); top:calc(var(--my) * var(--mq));
+    width:calc(var(--mw) * var(--mq)); height:auto; max-width:none; object-fit:fill; rotate:calc(var(--mr) * 1deg);
+    filter:drop-shadow(0 calc(3 * var(--mq)) calc(6 * var(--mq)) rgba(40,30,10,.16))}
   /* Agenda vẫn trồi lên phủ: poster dính khi đáy chạm đáy vùng thấy được */
-  .stack-over > .hs-poster{top:calc(var(--vp) - 748 * var(--n) * var(--s) + 1px)}
+  .stack-over > .hs-poster{top:calc(var(--vp) - 748 * var(--n) * var(--mq) + 1px)}
 
   /* 8. Agenda — Figma mobile 695:53878 (khổ 375, --q = 1px khổ 375): một cột 351 giữa, mỗi ngày =
      nhãn "Day 0x / giờ" (52) · cách 48 · danh sách (52) · cách 32 · ảnh. Nút Agenda | Bootcamp 144 × 56
@@ -701,17 +702,15 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .agenda__night > .field{height:calc(96 * var(--q))}
 
   /* 9. Kỷ niệm (wall) — bản mobile TĨNH, không kéo thả (wall-edit.html, chế độ Mobile). Khung 375 × 748·n
-     (n = data-m-screens, 2 hoặc 3 màn): dải chấm 96 trên cùng và dải đáy 166 (gạch neon 94 + viên thuốc 72,
-     như dải Strip mobile) tràn ngang theo --q (khớp Figma 695:53878: Agenda kết thúc ngay trên dải chấm);
-     phần giữa co theo --s như các khung "một màn" (canh giữa ngang) — mảnh đặt theo mx / my / mw / mr, my
-     tính từ mép dưới dải chấm nên vị trí so với dải luôn đúng như trình sửa. */
-  .hs-wall{--q:calc(100vw / 375); --n:2; height:calc(262 * var(--q) + (748 * var(--n) - 262) * var(--s)); overflow:hidden}
+     (n = data-m-screens, 2 hoặc 3), co theo BỀ NGANG (--q) để sát mép y như trình sửa: dải chấm 96 trên cùng
+     (Agenda kết thúc ngay trên nó — Figma 695:53878), lưới 8 cột, dải đáy 166 (gạch neon 94 + viên thuốc 72
+     như dải Strip mobile); mảnh đặt theo mx / my / mw / mr. */
+  .hs-wall{--q:calc(100vw / 375); --n:2; height:calc(748 * var(--n) * var(--q)); overflow:hidden}
   .hs-wall[data-m-screens="3"]{--n:3}
   .hs-wall .dotrun{--u:calc(66 * var(--q) / 164); height:calc(96 * var(--q))}
-  .hs-wall__grid{top:calc(96 * var(--q)); bottom:calc(166 * var(--q)); background-size:calc(375 / 8 * var(--s)) calc(375 / 8 * var(--s));
-    background-position:calc(50% - 187.5 * var(--s)) 0}
+  .hs-wall__grid{top:calc(96 * var(--q)); bottom:calc(166 * var(--q)); background-size:calc(375 / 8 * var(--q)) calc(375 / 8 * var(--q)); background-position:0 0}
   .hs-wall .strip{top:auto; bottom:0}
-  .hs-wall .wall__piece{left:calc(50% + (var(--mx) - 187.5) * var(--s)); top:calc(96 * var(--q) + (var(--my) - 96) * var(--s)); width:calc(var(--mw) * var(--s));
+  .hs-wall .wall__piece{left:calc(var(--mx) * var(--q)); top:calc(var(--my) * var(--q)); width:calc(var(--mw) * var(--q));
     rotate:calc(var(--mr) * 1deg); transition:none; cursor:auto}
   .hs-wall .wall__piece[data-nom]{display:none}
 
