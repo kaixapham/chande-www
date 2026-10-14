@@ -1213,7 +1213,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
    chande-steps.js) · tiêu đề "What we have achieved (together)" · danh sách 7 sự kiện (20, kẻ đứt) · sọc 4 màu ·
    vòng Key members 350 · sọc · (Vision & Mission) + đoạn chữ 32 · [2020-2026] [an exciting journey] + dải ảnh 224 × 168 ·
    câu lớn 48 · tem 176 + nút Become a partner · dải màu 400 · dải chấm · "Always a community." · gạch neon 96 · 2 ảnh 422. */
-.ab-vision__title{display:none}
+.ab-vision__title, .ab-vision__m, .ab-journey__cap .only-m{display:none}
 @media (min-width:900px){ .ab-aim br.m{display:none} } /* xuống dòng chỉ ở mobile */
 @media (max-width:899px){
   .ab-events{gap:0; padding:0 calc(12 * var(--q)) calc(16 * var(--q))}
@@ -1339,6 +1339,26 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-events__logo{left:calc(12 * var(--q)); top:calc(12 * var(--q)); width:calc(59 * var(--q))}
   .ab-events__t{left:calc(12 * var(--q)); top:calc(116 * var(--q)); bottom:auto; font-size:calc(48 * var(--q)); line-height:.78; letter-spacing:-.04em}
   .ab-events .ab-events__field{height:calc(96 * var(--q))}
+}
+
+/* About mobile — Vision & Mission → nút partner (Figma 697:54406): sọc · (Vision & Mission) 24 · 120 · khối chữ 24 rộng 293 ·
+   khối chữ 24 rộng 234 lệch phải (x 129) · 68 · [ 2020-2026 - An exciting journey ] · dải ảnh 224 × 168 · 16 · câu lớn 36 ·
+   tem 117 · 12 · nút Become a partner tràn ngang 56 (hết section, không chừa đáy) */
+@media (max-width:899px){
+  .ab-events{padding-bottom:0}
+  .ab-vision__title{font-size:calc(24 * var(--q))}
+  .ab-vision__box{display:none}
+  .ab-vision__m{display:block; margin-top:calc(120 * var(--q)); color:#0e1813; font-weight:700; font-size:calc(24 * var(--q)); line-height:.78;
+    letter-spacing:-.02em; text-transform:uppercase}
+  .ab-vision__m p{margin:0; text-box:trim-both cap alphabetic; --tb:1}
+  .ab-vision__m1{width:calc(293 * var(--q))}
+  .ab-vision__m2{width:calc(234 * var(--q)); margin:calc(31 * var(--q)) 0 0 calc(117 * var(--q)) !important}
+  .ab-journey__cap .only-d{display:none} .ab-journey__cap .only-m{display:inline}
+  .ab-events .ab-journey{margin-top:calc(64 * var(--q))}
+  .ab-events .ab-aim{margin-top:calc(16 * var(--q)); font-size:calc(36 * var(--q)); line-height:.8; letter-spacing:-.04em}
+  .ab-events .ab-stamp{margin-top:calc(48 * var(--q)); width:calc(117 * var(--q))}
+  .ab-events .ab-events__cta{margin:calc(12 * var(--q)) calc(-12 * var(--q)) 0; width:auto}
+  .ab-events__cta .pill--green{width:100%; height:calc(56 * var(--q)); border-radius:0; justify-content:center; font-size:14px}
 }
 
 /* About · iPad / tablet ngang (900–1365): chữ nhỏ không dưới 14px (đặt cuối file để đè các cỡ

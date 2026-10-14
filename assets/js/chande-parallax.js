@@ -170,6 +170,8 @@
     const follow = [...scope.querySelectorAll('[data-parallax-follow]')]
     items = [...scope.querySelectorAll(CONFIG.selector)]
       .filter((el) => !el.matches(CONFIG.exclude) && !el.hasAttribute('data-parallax-follow'))
+      // data-parallax-nomobile: chỉ trôi trên desktop (vd. ảnh nhỏ trong khối tối hero About bản mobile)
+      .filter((el) => !(el.hasAttribute('data-parallax-nomobile') && matchMedia('(max-width: 899px)').matches))
       .map((el) => ({
         el,
         k: el.dataset.parallax ? +el.dataset.parallax / CONFIG.speed || 1 : 1,
