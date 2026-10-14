@@ -848,7 +848,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-foot__end{flex-direction:column-reverse; justify-content:flex-start; gap:calc(16 * var(--q)); align-self:stretch}
   .hs-foot__end .hs-foot__credit{white-space:normal; font-size:max(9px, calc(10 * var(--q))); line-height:1.4; text-box:none} /* ghi công model 3D (CC BY 4.0) */
   .hs-foot__end .hs-foot__credit a{font-size:inherit}
-  .hs-foot__logo{grid-row:6; justify-self:center; width:min(calc(100% - 24px), calc(351 * var(--s))); max-width:none; height:auto; margin:calc(12 * var(--s)) 12px 0}
+  .hs-foot__logo{grid-row:6; justify-self:center; width:calc(100% - 24px); max-width:none; height:auto; margin:calc(12 * var(--q)) 12px 0} /* logo luôn đủ bề ngang (trước co theo chiều cao màn để cả cụm vừa một màn -> iPhone thấp thì logo hẹp) */
   .names{width:auto; gap:calc(4 * var(--s)); font-size:max(9px, calc(14 * var(--s))); line-height:.9; letter-spacing:-.02em; white-space:nowrap; color:#838b89}
   .hs-foot__n1{grid-row:7; margin:calc(16 * var(--s)) 12px 0}
   .hs-foot__n2, .hs-foot__col > .hs-foot__n2{grid-row:8; margin:calc(32 * var(--s)) 12px 0; gap:calc(16 * var(--s))}
@@ -921,24 +921,36 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .ab-hero__year{right:calc(24 * var(--u)); white-space:nowrap}
 .ab-hero__year span{font-family:'Google Sans Flex','Phudu',sans-serif; font-size:.645em; letter-spacing:0; vertical-align:.37em}
 
-/* Màn hẹp: xếp dọc — ảnh, chữ giới thiệu, tiêu đề, gạch neon */
+@media (min-width:900px){ .ab-hero__title br.m{display:none} } /* xuống dòng chỉ ở mobile */
+/* Màn hẹp — Figma About mobile 659:42992 (khổ 375, --q = 1px khổ 375), cả cụm = một màn thấy được dưới header:
+   mảng trắng (tiêu đề 4 dòng cỡ 56 sát trên, (©26) góc dưới phải, thanh tối 48 + dải viên 72 × 28 ở đáy) co giãn
+   theo chiều cao màn · khối tối 266 (ảnh 176 × 96 góc trên trái, 2 cụm chữ + "2020 – 2026" sát đáy) · gạch neon 32. */
 @media (max-width:899px){
-  .ab-hero__stage{height:auto; display:flex; flex-direction:column}
+  .ab-hero{background:#fff}
+  .ab-hero__stage{--q:calc(100vw / 375); height:auto; min-height:calc(var(--vp, 100svh) - var(--bar)); display:flex; flex-direction:column}
   .ab-hero__photo, .ab-hero__dark, .ab-hero__cream, .ab-hero__field{position:relative; left:auto; right:auto; top:auto; width:auto}
-  .ab-hero__photo{height:auto; aspect-ratio:960 / 500}
-  /* mảng kem full ngang = 960 của thiết kế; thanh vào luồng, sát mép trên */
-  .ab-hero__bar{--u:calc(100cqw / 960); position:relative; align-self:stretch; margin:-3rem -1.25rem 1.5rem}
-  .ab-hero__dark{height:auto; padding:2rem 1.25rem}
-  .ab-hero__intro{position:static; width:auto}
-  .ab-hero__years{position:static; margin-top:1.5rem}
-  .ab-hero__scroll{display:none}
-  /* tiêu đề giữ 3 dòng: cỡ chữ co theo bề ngang để dòng dài nhất ("COMMUNITY THAT"
-     ≈ 6.5 lần cỡ chữ) vừa khít; (©26) xuống dưới, căn phải */
-  .ab-hero__cream{height:auto; padding:3rem 1.25rem 1.5rem; display:flex; flex-direction:column; align-items:flex-start; gap:1rem}
-  .ab-hero__title, .ab-hero__year{position:static; font-size:min(5rem, calc((100vw - 2.5rem) / 6.6))}
-  .ab-hero__year{align-self:flex-end}
+  .ab-hero__cream{order:1; flex:1 0 auto; height:auto; display:flex; flex-direction:column; gap:0;
+    padding:calc(12 * var(--q)) calc(12 * var(--q)) 0; background:#fff !important} /* Figma: nền trắng, không dither kem */
+  .ab-hero__title{order:1}
+  .ab-hero__year{order:2; margin:auto 0 calc(11 * var(--q)); padding-top:calc(8 * var(--q))}
+  /* thanh tối + dải viên chạy ở đáy mảng trắng, ngay trên khối tối (Figma 697:54815, như ảnh ngày 2 Agenda) */
+  .ab-hero__bar{order:3; position:relative; flex:none; align-self:auto; margin:0 calc(-12 * var(--q)); height:calc(48 * var(--q)); overflow:hidden}
+  .ab-hero__bar .pillrun{left:0; right:0; top:calc(10 * var(--q)); height:calc(28 * var(--q))}
+  .ab-hero__bar .pillrun__track{gap:1px; animation-name:hs-pills-ag}
+  .ab-hero__bar .pillrun__track > i, .ab-hero__bar .pillrun--sm .pillrun__track > i{width:calc(72 * var(--q)); height:calc(28 * var(--q))}
+  .ab-hero__title, .ab-hero__year{position:static; font-size:calc(56 * var(--q))}
   .ab-hero__title{width:auto}
-  .ab-hero__field{height:auto; aspect-ratio:960 / 500}
+  .ab-hero__title br.d{display:none}
+  .ab-hero__year{align-self:flex-end}
+  /* ảnh nằm TRONG khối tối: vào luồng trước khối tối, khối tối kéo lên phủ phía sau (12 + 96) */
+  .ab-hero__photo{order:2; z-index:1; width:calc(176 * var(--q)); height:calc(96 * var(--q)); margin:calc(12 * var(--q)) 0 0 calc(12 * var(--q))}
+  .ab-hero__dark{order:3; height:calc(266 * var(--q)); margin-top:calc(-108 * var(--q)); padding:0 calc(12 * var(--q)) calc(13 * var(--q));
+    display:flex; flex-direction:column; justify-content:flex-end}
+  .ab-hero__intro{position:static; width:auto; gap:calc(24 * var(--q)); font-size:calc(16 * var(--q))}
+  .ab-hero__intro p{text-box:none}
+  .ab-hero__years{position:absolute; right:calc(12 * var(--q)); bottom:calc(13 * var(--q)); font-size:calc(16 * var(--q)); text-box:none}
+  .ab-hero__scroll{display:none}
+  .ab-hero__field{order:4; height:calc(32 * var(--q))}
 }
 
 /* =============================================================================
@@ -1189,6 +1201,73 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-comm__band h2{width:auto; padding:0 12px; font-size:calc(48 * var(--q))}
   .ab-pics{--q:calc(100vw / 375); height:auto; display:flex; flex-direction:column}
   .ab-pics img{position:relative; width:100%; height:auto; aspect-ratio:960 / 1080}
+}
+
+/* About mobile — phần sự kiện → hết trang (Figma 697:54814 "Update about mobile", khổ 375, --q = 1px khổ 375).
+   Màn sự kiện: chữ mono "Every year…" sát trên · tiêu đề "What we have achieved (together)" + [năm] [tên] + ảnh vuông 351
+   dồn xuống đáy màn (ảnh tự đổi lần lượt 7 sự kiện — chande-steps.js) · danh sách 7 sự kiện (32, kẻ đứt) · sọc 4 màu ·
+   vòng Key members 350 · sọc · (Vision & Mission) + đoạn chữ 32 · [2020-2026] [an exciting journey] + dải ảnh 224 × 168 ·
+   câu lớn 48 · tem 176 + nút Become a partner · dải màu 400 · dải chấm · "Always a community." · gạch neon 96 · 2 ảnh 422. */
+.ab-vision__title{display:none}
+@media (min-width:900px){ .ab-aim br.m{display:none} } /* xuống dòng chỉ ở mobile */
+@media (max-width:899px){
+  .ab-events{gap:0; padding:0 calc(12 * var(--q)) calc(16 * var(--q))}
+  .ab-events .ab-events__dark{order:1} .ab-events .ab-events__field{order:2}
+  .ab-events .ab-events__notepin{order:3; margin-top:calc(16 * var(--q))}
+  .ab-events .ab-events__ach{order:4} .ab-events .ab-events__pin{order:5} .ab-events .ab-events__listbox{order:6}
+  .ab-events .ab-member{order:7} .ab-events .ab-vision{order:8} .ab-events .ab-journey{order:9}
+  .ab-events .ab-aim{order:10} .ab-events .ab-stamp{order:11} .ab-events .ab-events__cta{order:12}
+  .ab-events .ab-events__hr{display:none}
+  /* chữ mono đầu màn: 16, rộng 263, nhãn (Chande) nối cuối dòng cuối */
+  .ab-events__note{width:calc(263 * var(--q)); font:500 calc(16 * var(--q))/.96 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase}
+  .ab-events__note p:first-of-type{margin-bottom:.96em} /* dòng trống sau "Every year," (đoạn sau nằm inline nên không nhận margin) */
+  .ab-events__note p:nth-of-type(2){display:inline}
+  .ab-events__note .ab-events__chande{position:static; display:inline; margin-left:.6em; white-space:nowrap}
+  /* tiêu đề: đỉnh cách đỉnh chữ mono 347 (Figma 16 → 363) */
+  .ab-events .ab-events__ach{margin-top:calc(243 * var(--q));
+    font-size:calc(32 * var(--q)); line-height:.78; letter-spacing:-.02em}
+  .ab-events .ab-events__pin{margin-top:calc(16 * var(--q))}
+  .ab-events .ab-events__stick{gap:calc(12 * var(--q))}
+  .ab-events .ab-events__cap{font:500 calc(16 * var(--q))/.96 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase}
+  /* danh sách: tên rộng 263 trái, năm phải (chân chữ thẳng dòng cuối), kẻ đứt mảnh giữa các dòng, cách 12 */
+  .ab-events .ab-events__listbox{margin-top:calc(28 * var(--q)); gap:calc(12 * var(--q))}
+  .ab-events .ab-events__list{gap:0; font-size:calc(32 * var(--q)); line-height:.78; letter-spacing:-.02em}
+  .ab-events .ab-events__list li{display:grid; grid-template-columns:calc(263 * var(--q)) 1fr; align-items:end; padding:calc(12 * var(--q)) 0;
+    border-top:1px dashed rgba(0,0,0,.08)}
+  .ab-events .ab-events__list li:first-child{padding-top:0; border-top:0}
+  .ab-events .ab-events__list li:last-child{padding-bottom:0}
+  .ab-events .ab-events__list li span{position:static; justify-self:end}
+  .ab-events .ab-stripes--thin i{height:calc(8 * var(--q))}
+  .ab-events .ab-stripes--rev{flex-direction:column} /* Figma mobile: cả 2 dải sọc cùng chiều (neon trên cùng) */
+  .ab-events .ab-member{margin-top:calc(8 * var(--q)); width:calc(350 * var(--q))}
+  /* Vision & Mission: sọc · tiêu đề 32 · cách 120 · đoạn chữ 32 */
+  .ab-events .ab-vision{margin-top:calc(12 * var(--q)); gap:0}
+  .ab-vision__title{display:block; margin:calc(12 * var(--q)) 0 0; font-weight:700; font-size:calc(32 * var(--q)); line-height:.78; letter-spacing:-.02em;
+    text-transform:uppercase; color:#0e1813; text-box:trim-both cap alphabetic; --tb:1}
+  .ab-vision__box{margin-top:calc(120 * var(--q)); font-size:calc(32 * var(--q)); line-height:.78; letter-spacing:-.02em; gap:0}
+  .ab-vision__text p + p{margin-top:.78em}
+  .ab-vision__tag{display:none}
+  /* hành trình: chú thích mono 16 · dải ảnh 224 × 168 */
+  .ab-events .ab-journey{margin-top:calc(120 * var(--q))}
+  .ab-journey__cap{margin:0 calc(12 * var(--q)); font:500 calc(16 * var(--q))/.96 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase}
+  .ab-journey__run{margin-top:calc(12 * var(--q))}
+  .ab-journey__track img{width:calc(224 * var(--q)); height:calc(168 * var(--q))}
+  .ab-events .ab-aim{margin-top:calc(12 * var(--q)); width:auto; font-size:calc(48 * var(--q)); line-height:.8; letter-spacing:-.04em}
+  .ab-events .ab-stamp{margin-top:calc(117 * var(--q)); width:calc(176 * var(--q)); align-self:flex-start}
+  .ab-events .ab-events__cta{margin-top:calc(12 * var(--q))}
+  .ab-events__cta .pill--lime{display:none} /* Figma mobile chỉ có Become a partner */
+  .ab-events__cta .pill--green{width:calc(219 * var(--q)); height:calc(56 * var(--q)); min-height:0; padding:0; justify-content:center; background:#236c3c; color:#f5f0e3}
+  /* Always a community: dải màu 400 · dải chấm neon 96 · tiêu đề 56 giữa trên nền tối · gạch neon 96 (bỏ ảnh giữa) */
+  .ab-comm{display:flex; flex-direction:column}
+  .ab-comm .ab-comm__scheme{order:1}
+  .ab-comm .ab-comm__scheme > i{height:calc(400 / 9 * var(--q))}
+  .ab-comm .ab-comm__band{order:2; gap:0; padding:0}
+  .ab-comm__band h2{padding:calc(32 * var(--q)); font-size:calc(56 * var(--q)); line-height:.78; letter-spacing:-.04em; text-align:center}
+  .ab-comm .ab-comm__field{order:3}
+  .ab-comm .ab-comm__img{display:none}
+  .ab-pics > .abs{position:relative} /* .hs .abs (absolute) thắng .ab-pics img -> 2 ảnh từng chồng lên nhau, section cao 0 */
+  .ab-pics img{aspect-ratio:auto; height:calc(422 * var(--q))}
+  .ab-pics .ab-pics__r{object-position:50% 97%}
 }
 
 /* About · iPad / tablet ngang (900–1365): chữ nhỏ không dưới 14px (đặt cuối file để đè các cỡ

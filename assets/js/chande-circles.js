@@ -178,6 +178,7 @@
     }
     const ptr = { x: -1e4, y: -1e4 }
     const onMove = (e) => {
+      if (e.pointerType !== 'mouse') return // ngón tay vuốt không phải "chuột ở gần vòng" (trước làm giọt hiện trên iPhone)
       ptr.x = e.clientX
       ptr.y = e.clientY
     }

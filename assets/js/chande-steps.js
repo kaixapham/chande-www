@@ -103,19 +103,33 @@
       go() // trong lúc chạy đã cuộn sang nấc khác
     }
 
+    const travelOf = () => box.getBoundingClientRect().height - stick.offsetHeight
     const check = () => {
       raf = 0
-      const travel = box.getBoundingClientRect().height - stick.offsetHeight
-      let i = 0
-      if (travel > 1) {
-        // không ghim (màn hẹp) -> ảnh đầu
-        const y = stick.getBoundingClientRect().top - box.getBoundingClientRect().top
-        i = Math.floor(Math.min(0.9999, Math.max(0, y / travel)) * imgs.length)
-      }
+      const travel = travelOf()
+      if (travel <= 1) return // không ghim (bản mobile xếp dọc): ảnh tự đổi theo hẹn giờ bên dưới
+      const y = stick.getBoundingClientRect().top - box.getBoundingClientRect().top
+      const i = Math.floor(Math.min(0.9999, Math.max(0, y / travel)) * imgs.length)
       if (i !== want) caption(i)
       want = i
       go()
     }
+    // Không ghim: khung ảnh trong màn thì tự sang sự kiện kế tiếp mỗi AUTO ms (chú thích + ảnh), ra khỏi màn thì dừng
+    const AUTO = 2800
+    let auto = 0
+    const io = new IntersectionObserver(([e]) => {
+      clearInterval(auto)
+      auto = 0
+      if (!e.isIntersecting || reduced) return
+      auto = setInterval(() => {
+        if (travelOf() > 1 || busy) return
+        const i = (want + 1) % imgs.length
+        caption(i)
+        want = i
+        go()
+      }, AUTO)
+    }, { threshold: 0.4 })
+    io.observe(media)
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(check)
     }
@@ -124,6 +138,8 @@
     check()
     stop = () => {
       alive = false
+      clearInterval(auto)
+      io.disconnect()
       removeEventListener('scroll', onScroll)
       removeEventListener('resize', onScroll)
       cancelAnimationFrame(raf)

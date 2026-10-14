@@ -1038,7 +1038,8 @@ void main () {
         targetX = lu.x
         targetY = lu.y
       }
-      presenceTarget = lu.hide ? 0 : 1
+      // hút chỉ-đổi-cỡ (không x / y) mà không có chuột thật (máy cảm ứng) thì không làm giọt hiện ra
+      presenceTarget = lu.hide || (lu.x == null && !hasPointer) ? 0 : 1
       mulTarget = Math.max(0.02, lu.r / Math.max(1, pooledRadius(1)))
       luring = true
     } else if (luring) {
@@ -1048,7 +1049,7 @@ void main () {
       if (hasPointer) {
         aim()
         presenceTarget = 1
-      }
+      } else if (!leader) presenceTarget = 0 // Safari iPhone: thả ra mà không có chuột -> giọt tan (trước giữ nguyên, nằm trên màn tới cuối trang)
     }
     headX += (targetX - headX) * kHead
     // Đẩy: con trỏ gần / lao vào giọt -> lực hất ra xa con trỏ; lò xo kéo về.
