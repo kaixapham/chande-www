@@ -33,15 +33,28 @@ function limited(ip) {
   return false
 }
 
+// Link Web app của Apps Script trong biến SHEET_WEBHOOK_URL — chịu được kiểu dán lệch hay gặp: thừa dấu cách /
+// xuống dòng, bọc trong ngoặc kép, hay dán nhầm ID triển khai (AKfy…) thay vì cả đường link
+function sheetUrl() {
+  let v = String(process.env.SHEET_WEBHOOK_URL || '')
+    .trim()
+    .replace(/^['"]+|['"]+$/g, '')
+    .trim()
+  if (v && !/^https?:\/\//i.test(v) && /^AKfy[\w-]+$/.test(v)) v = `https://script.google.com/macros/s/${v}/exec`
+  return v
+}
+// lý do lỗi gửi kèm cho dễ dò — không bao giờ chứa đường link (lỗi URL của fetch có in nguyên link ra)
+const reason = (e) => (e instanceof TypeError ? `fetch: ${e.cause?.code || 'bad url or network'}` : String(e?.message || e).slice(0, 80))
+
 async function sheetGet(sheet, params) {
-  const r = await fetch(`${sheet}?${new URLSearchParams(params)}`, { redirect: 'follow' })
+  const r = await fetch(`${sheet}?${new URLSearchParams(params)}`, { redirect: 'follow', signal: AbortSignal.timeout(9000) })
   const j = await r.json().catch(() => null)
-  if (!r.ok || !j?.ok) throw new Error(j?.error || `sheet ${r.status}`)
+  if (!r.ok || !j?.ok) throw new Error(j?.error || `sheet ${r.status}${j ? '' : ' (not json)'}`)
   return j
 }
 
 module.exports = async function handler(req, res) {
-  const sheet = process.env.SHEET_WEBHOOK_URL
+  const sheet = sheetUrl()
   if (!sheet) return res.status(503).json({ ok: false, error: 'messages are not configured' })
 
   if (req.method === 'GET') {
@@ -57,8 +70,8 @@ module.exports = async function handler(req, res) {
       res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=60')
       return res.status(200).json({ ok: true, messages: Array.isArray(j.messages) ? j.messages : [] })
     } catch (e) {
-      console.error('[messages] GET', e)
-      return res.status(502).json({ ok: false, error: 'messages unavailable' })
+      console.error('[messages] GET', reason(e))
+      return res.status(502).json({ ok: false, error: 'messages unavailable', reason: reason(e) })
     }
   }
 
@@ -91,12 +104,13 @@ module.exports = async function handler(req, res) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ kind: 'message', image, name, text, avatar }),
       redirect: 'follow',
+      signal: AbortSignal.timeout(9000),
     })
     const j = await r.json().catch(() => null)
-    if (!r.ok || !j?.ok) throw new Error(j?.error || `sheet ${r.status}`)
+    if (!r.ok || !j?.ok) throw new Error(j?.error || `sheet ${r.status}${j ? '' : ' (not json)'}`)
     return res.status(200).json({ ok: true })
   } catch (e) {
-    console.error('[messages] POST', e)
-    return res.status(502).json({ ok: false, error: 'could not save' })
+    console.error('[messages] POST', reason(e))
+    return res.status(502).json({ ok: false, error: 'could not save', reason: reason(e) })
   }
 }

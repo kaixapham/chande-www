@@ -61,7 +61,8 @@ module.exports = async function handler(req, res) {
   if (!entries.length) return res.status(400).json({ ok: false, error: 'Empty form' })
 
   const key = process.env.RESEND_API_KEY
-  const sheet = process.env.SHEET_WEBHOOK_URL
+  // link Web app của Apps Script — bỏ dấu cách / ngoặc kép thừa nếu lỡ dán vào Vercel
+  const sheet = String(process.env.SHEET_WEBHOOK_URL || '').trim().replace(/^['"]+|['"]+$/g, '').trim()
   if (!key && !sheet) return res.status(500).json({ ok: false, error: 'Mail is not configured' })
   const to = (process.env.FORM_TO || TO_DEFAULT.join(','))
     .split(',')
