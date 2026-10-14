@@ -849,14 +849,15 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-foot__end .hs-foot__credit{white-space:normal; font-size:max(9px, calc(10 * var(--q))); line-height:1.4; text-box:none} /* ghi công model 3D (CC BY 4.0) */
   .hs-foot__end .hs-foot__credit a{font-size:inherit}
   .hs-foot__logo{grid-row:6; justify-self:center; width:calc(100% - 24px); max-width:none; height:auto; margin:calc(12 * var(--q)) 12px 0} /* logo luôn đủ bề ngang (trước co theo chiều cao màn để cả cụm vừa một màn -> iPhone thấp thì logo hẹp) */
-  .names{width:auto; gap:calc(4 * var(--s)); font-size:max(14px, calc(14 * var(--s))); line-height:.9; letter-spacing:-.02em; white-space:nowrap; color:#838b89} /* tên ở footer không dưới 14px trên mọi máy */
-  .hs-foot__n1{grid-row:7; margin:calc(16 * var(--s)) 12px 0}
-  .hs-foot__n2, .hs-foot__col > .hs-foot__n2{grid-row:8; margin:calc(32 * var(--s)) 12px 0; gap:calc(16 * var(--s))}
-  .hs-foot__n2 .pair{width:calc(237.6 * var(--s)); justify-content:space-between}
-  .hs-foot__n2 > div{gap:calc(4 * var(--s))}
+  /* tên co theo BỀ NGANG (--q) như logo -> dòng dài nhất dài đúng bằng logo ở mọi máy; không dưới 14px */
+  .names{width:auto; gap:calc(4 * var(--q)); font-size:max(14px, calc(14 * var(--q))); line-height:.9; letter-spacing:-.02em; white-space:nowrap; color:#838b89}
+  .hs-foot__n1{grid-row:7; margin:calc(16 * var(--q)) 12px 0}
+  .hs-foot__n2, .hs-foot__col > .hs-foot__n2{grid-row:8; margin:calc(32 * var(--q)) 12px 0; gap:calc(16 * var(--q))}
+  .hs-foot__n2 .pair{width:calc(237.6 * var(--q)); justify-content:space-between}
+  .hs-foot__n2 > div{gap:calc(4 * var(--q))}
   .hs-foot__col > .hs-foot__face{grid-row:10; justify-self:start; width:calc(117 * var(--s)); height:calc(135 * var(--s)); max-height:none; aspect-ratio:auto; flex:none;
     margin:0 12px !important; clip-path:none} /* !important: thẻ có style="margin:0" */
-  .hs-foot__n3{grid-row:11; margin:calc(12 * var(--s)) 12px 0}
+  .hs-foot__n3{grid-row:11; margin:calc(12 * var(--q)) 12px 0}
   .hs-foot__legal{grid-row:12; position:relative; z-index:1; width:auto; margin:calc(12 * var(--s)) 0 0; padding:calc(20 * var(--s)) 12px;
     border-top:1px solid rgba(255,255,255,.08); font-size:calc(14 * var(--q))}
   .hs-foot__legal > p:not(:first-child){display:none} /* Figma mobile: chỉ dòng bản quyền (credit Lumen ở khối Social) */
@@ -1208,8 +1209,8 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 }
 
 /* About mobile — phần sự kiện → hết trang (Figma 697:54814 "Update about mobile", khổ 375, --q = 1px khổ 375).
-   Màn sự kiện: chữ mono "Every year…" sát trên · tiêu đề "What we have achieved (together)" + [năm] [tên] + ảnh vuông 351
-   dồn xuống đáy màn (ảnh tự đổi lần lượt 7 sự kiện — chande-steps.js) · danh sách 7 sự kiện (32, kẻ đứt) · sọc 4 màu ·
+   Màn sự kiện (cập nhật theo 697:55017): chữ mono "Every year…" · [năm] [tên] + ảnh vuông 351 (tự đổi lần lượt 7 sự kiện —
+   chande-steps.js) · tiêu đề "What we have achieved (together)" · danh sách 7 sự kiện (20, kẻ đứt) · sọc 4 màu ·
    vòng Key members 350 · sọc · (Vision & Mission) + đoạn chữ 32 · [2020-2026] [an exciting journey] + dải ảnh 224 × 168 ·
    câu lớn 48 · tem 176 + nút Become a partner · dải màu 400 · dải chấm · "Always a community." · gạch neon 96 · 2 ảnh 422. */
 .ab-vision__title{display:none}
@@ -1217,32 +1218,26 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 @media (max-width:899px){
   .ab-events{gap:0; padding:0 calc(12 * var(--q)) calc(16 * var(--q))}
   .ab-events .ab-events__dark{order:1} .ab-events .ab-events__field{order:2}
-  /* Màn sự kiện = đúng MỘT màn thấy được dưới header: 16 · chữ mono · (khoảng co giãn) · tiêu đề 48 · 16 · chú thích 11 · 12 ·
-     ảnh · 12. Khoảng co giãn = min-height của khối chữ mono; ảnh vuông 351, màn quá thấp thì thấp lại (vẫn đủ bề ngang). */
-  .ab-events{--ev-img:min(calc(351 * var(--q)), calc(var(--vp, 100svh) - var(--bar) - 231 * var(--q)))}
-  .ab-events .ab-events__notepin{order:3; margin-top:calc(16 * var(--q)); min-height:calc(var(--vp, 100svh) - var(--bar) - 115 * var(--q) - var(--ev-img))}
-  .ab-events .ab-events__ach{order:4} .ab-events .ab-events__pin{order:5} .ab-events .ab-events__listbox{order:6}
+  /* Màn sự kiện (Figma 697:55017, không ép vừa một màn): 16 · chữ mono 14 (rộng 234, "(Chande)" cuối dòng chót, mép phải 293) ·
+     120 · [năm] [tên] · 12 · ảnh vuông 351 (tự đổi lần lượt — chande-steps.js) · 16 · tiêu đề 32 · 120 · danh sách 20 kẻ đứt */
+  .ab-events .ab-events__notepin{order:3; margin-top:calc(16 * var(--q)); min-height:calc(101 * var(--q))} /* Figma: khối chữ cao 101 */
+  .ab-events .ab-events__pin{order:4} .ab-events .ab-events__ach{order:5} .ab-events .ab-events__listbox{order:6}
   .ab-events .ab-member{order:7} .ab-events .ab-vision{order:8} .ab-events .ab-journey{order:9}
   .ab-events .ab-aim{order:10} .ab-events .ab-stamp{order:11} .ab-events .ab-events__cta{order:12}
   .ab-events .ab-events__hr{display:none}
-  /* chữ mono đầu màn: 16, rộng 263, nhãn (Chande) nối cuối dòng cuối */
-  .ab-events__note{width:calc(263 * var(--q)); font:500 calc(16 * var(--q))/.96 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase}
-  .ab-events__note p:first-of-type{margin-bottom:.96em} /* dòng trống sau "Every year," (đoạn sau nằm inline nên không nhận margin) */
-  .ab-events__note p:nth-of-type(2){display:inline}
-  .ab-events__note .ab-events__chande{position:static; display:inline; margin-left:.6em; white-space:nowrap}
-  .ab-events .ab-events__ach{margin-top:0;
-    font-size:calc(32 * var(--q)); line-height:.78; letter-spacing:-.02em}
-  .ab-events .ab-events__pin{margin-top:calc(16 * var(--q))}
+  .ab-events__note{position:relative; top:auto; width:calc(234 * var(--q)); font:500 calc(14 * var(--q))/.96 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase}
+  .ab-events__note p:first-of-type{margin-bottom:.96em} /* dòng trống sau "Every year," */
+  .ab-events__note .ab-events__chande{position:absolute; left:auto; right:calc(-59 * var(--q)); bottom:0; white-space:nowrap; text-box:trim-both cap alphabetic}
+  .ab-events .ab-events__pin{margin-top:calc(120 * var(--q))}
   .ab-events .ab-events__stick{gap:calc(12 * var(--q))}
-  .ab-events .ab-events__img{aspect-ratio:auto; height:var(--ev-img)}
-  .ab-events .ab-events__cap{font:500 calc(16 * var(--q))/.96 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase}
-  /* danh sách: tên rộng 263 trái, năm phải (chân chữ thẳng dòng cuối), kẻ đứt mảnh giữa các dòng, cách 12 */
-  .ab-events .ab-events__listbox{margin-top:calc(28 * var(--q)); gap:calc(12 * var(--q))}
-  .ab-events .ab-events__list{gap:0; font-size:calc(32 * var(--q)); line-height:.78; letter-spacing:-.02em}
-  .ab-events .ab-events__list li{display:grid; grid-template-columns:calc(263 * var(--q)) 1fr; align-items:end; padding:calc(12 * var(--q)) 0;
+  .ab-events .ab-events__img{height:auto; aspect-ratio:1 / 1}
+  .ab-events .ab-events__cap{font:500 calc(14 * var(--q))/.96 'Geist Mono',ui-monospace,monospace; letter-spacing:-.02em; text-transform:uppercase}
+  .ab-events .ab-events__ach{margin-top:calc(16 * var(--q)); font-size:calc(32 * var(--q)); line-height:.78; letter-spacing:-.02em}
+  /* danh sách: chữ 20, tên rộng 263 trái · năm phải, kẻ đứt trên mỗi dòng + dưới dòng cuối, cách chữ 16 */
+  .ab-events .ab-events__listbox{margin-top:calc(120 * var(--q)); gap:calc(16 * var(--q))}
+  .ab-events .ab-events__list{gap:0; font-size:calc(20 * var(--q)); line-height:.78; letter-spacing:-.02em; border-bottom:1px dashed rgba(0,0,0,.08)}
+  .ab-events .ab-events__list li{display:grid; grid-template-columns:calc(263 * var(--q)) 1fr; align-items:end; padding:calc(16 * var(--q)) 0;
     border-top:1px dashed rgba(0,0,0,.08)}
-  .ab-events .ab-events__list li:first-child{padding-top:0; border-top:0}
-  .ab-events .ab-events__list li:last-child{padding-bottom:0}
   .ab-events .ab-events__list li span{position:static; justify-self:end}
   .ab-events .ab-stripes--thin i{height:calc(8 * var(--q))}
   .ab-events .ab-stripes--rev{flex-direction:column} /* Figma mobile: cả 2 dải sọc cùng chiều (neon trên cùng) */
@@ -1275,6 +1270,65 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-pics > .abs{position:relative} /* .hs .abs (absolute) thắng .ab-pics img -> 2 ảnh từng chồng lên nhau, section cao 0 */
   .ab-pics img{aspect-ratio:auto; height:calc(422 * var(--q))}
   .ab-pics .ab-pics__r{object-position:50% 97%}
+}
+
+/* About mobile — CÂU CHUYỆN (Figma 659:43221, khổ 375, --q = 1px khổ 375). Lưới một cột (.ab-cols / .ab-col display: contents
+   để từng khối vào thẳng lưới): dải chấm 96 · đoạn chữ 1 (32, dòng 2 thụt 3.05em) · đoạn chữ 2 (rộng 293) · ảnh người sáng lập
+   117 × 162 + ghi chú (Talent) 14 cùng hàng (chân thẳng nhau) · 2 vòng 176 có chữ Visual / Effort · sọc 4 màu · khung "06 years"
+   345 · thanh viên thuốc 48 · gạch neon 96 · khung "Sharing & learning" 375 · ảnh cả nhóm 320 · dải màu 400. Rồi khung tối
+   "Memorable events (07)" 199 + gạch neon 96 (section Sự kiện). */
+.ab-panel__t .only-m{display:none}
+@media (min-width:900px){ .ab-panel__t br.m{display:none} }
+@media (max-width:899px){
+  .ab-story{display:grid; grid-template-columns:minmax(0, 1fr); gap:0; padding:0 calc(12 * var(--q))}
+  .ab-story .ab-cols, .ab-story .ab-col{display:contents}
+  .ab-story > *, .ab-story .ab-col > *{min-width:0; grid-column:1} /* cột cố định: 2 khối cùng hàng (ảnh + ghi chú) chồng vào một ô, không đẻ thêm cột */
+  .ab-story > .dotrun{grid-row:1; margin:0 calc(-12 * var(--q))}
+  .ab-say{margin:0; font-size:calc(32 * var(--q)); line-height:.78; letter-spacing:-.04em}
+  .ab-story .ab-say--1{grid-row:2; margin-top:calc(16 * var(--q)); width:calc(333 * var(--q))}
+  .ab-say--1 .ab-say__in{padding-left:3.05em}
+  .ab-story .ab-say--2{grid-row:3; margin-top:calc(64 * var(--q)); width:calc(293 * var(--q))}
+  /* ảnh + ghi chú cùng một ô lưới: ảnh trái, ghi chú phải, chân thẳng nhau */
+  .ab-story .ab-founder__pin{grid-row:4; justify-self:start; width:calc(117 * var(--q)); height:auto; margin-top:calc(64 * var(--q))}
+  .ab-story .ab-founder{position:static; width:100%; height:calc(162 * var(--q)); aspect-ratio:auto}
+  .ab-story .ab-note{grid-row:4; justify-self:end; align-self:end; z-index:2; width:calc(175 * var(--q)); flex-direction:row; justify-content:space-between;
+    align-items:flex-end; gap:0; font-weight:500; font-size:max(12px, calc(14 * var(--q))); line-height:.98; letter-spacing:-.02em; text-transform:uppercase;
+    color:#fff; white-space:nowrap}
+  .ab-note__in{padding-left:0}
+  .ab-story .ab-circles{grid-row:5; display:flex; justify-content:space-between; width:calc(352 * var(--q)); margin-top:calc(72 * var(--q))}
+  .ab-circles .circle{width:calc(176 * var(--q)); height:calc(176 * var(--q)); aspect-ratio:auto}
+  .ab-circles .circle__t{position:absolute; inset:0; display:grid; place-items:center; font-family:'Geist Mono',ui-monospace,monospace; font-weight:500;
+    font-size:13px; line-height:1; letter-spacing:-.02em; text-transform:uppercase; pointer-events:none}
+  .ab-circles .circle[data-creature="bird"] .circle__t{color:var(--lime)}
+  .ab-circles .circle[data-creature="flower"] .circle__t{color:#3f6b4c}
+  /* sọc · khung 06 years · thanh viên · gạch neon · khung Sharing & learning: tràn ngang */
+  .ab-story .ab-stripes, .ab-story .ab-panel, .ab-story .ab-run, .ab-story .ab-field, .ab-story .ab-group, .ab-story .ab-scheme{margin:0 calc(-12 * var(--q))}
+  .ab-story .ab-col:first-child > .ab-stripes{grid-row:6; margin-top:calc(12 * var(--q))}
+  .ab-story .ab-stripes i{height:calc(8 * var(--q))}
+  .ab-story .ab-panel--a{grid-row:7; height:calc(345 * var(--q))}
+  .ab-story .ab-col:first-child > .ab-field{display:none}
+  .ab-story .ab-run{grid-row:8; height:calc(48 * var(--q))}
+  .ab-story .ab-run .pillrun{left:0; right:0; top:calc(10 * var(--q)); height:calc(28 * var(--q))}
+  .ab-story .ab-run .pillrun__track{gap:1px; animation-name:hs-pills-ag}
+  .ab-story .ab-run .pillrun__track > i{width:calc(72 * var(--q)); height:calc(28 * var(--q))}
+  .ab-story .ab-col:last-child > .ab-field{grid-row:9; height:calc(96 * var(--q))}
+  .ab-story .ab-panel--b{grid-row:10; height:calc(375 * var(--q))}
+  .ab-story .ab-panel{display:block; padding:0}
+  .ab-story .ab-panel__t{position:absolute; left:calc(12 * var(--q)); top:calc(20 * var(--q)); font-size:calc(40 * var(--q)); line-height:.78; letter-spacing:-.02em}
+  .ab-panel__t .only-d{display:none} .ab-panel__t .only-m{display:inline}
+  .ab-story .ab-panel__text{position:absolute; left:calc(12 * var(--q)); top:calc(199 * var(--q)); width:calc(292 * var(--q)); gap:calc(24 * var(--q))}
+  .ab-story .ab-panel--b .ab-panel__text{top:calc(229 * var(--q)); width:calc(293 * var(--q))}
+  .ab-story .ab-panel__text p{font-size:max(12px, calc(14 * var(--q))); line-height:.96; text-transform:uppercase}
+  .ab-story .ab-panel__text p:last-child{width:calc(326 * var(--q)); max-width:calc(100vw - 24 * var(--q))}
+  .ab-story .ab-panel--b .ab-panel__text p:last-child{width:auto}
+  .ab-story .ab-group{grid-row:11; width:calc(100% + 24 * var(--q)); max-width:none; height:calc(320 * var(--q))}
+  .ab-story .ab-scheme{grid-row:12; width:auto}
+  .ab-story .ab-scheme .scheme > i{height:calc(400 / 9 * var(--q))}
+  /* khung tối Memorable events (07): 199, logo 59 × 40, cách 64, tiêu đề 48 */
+  .ab-events .ab-events__dark{height:calc(199 * var(--q))}
+  .ab-events__logo{left:calc(12 * var(--q)); top:calc(12 * var(--q)); width:calc(59 * var(--q))}
+  .ab-events__t{left:calc(12 * var(--q)); top:calc(116 * var(--q)); bottom:auto; font-size:calc(48 * var(--q)); line-height:.78; letter-spacing:-.04em}
+  .ab-events .ab-events__field{height:calc(96 * var(--q))}
 }
 
 /* About · iPad / tablet ngang (900–1365): chữ nhỏ không dưới 14px (đặt cuối file để đè các cỡ
