@@ -15,6 +15,10 @@
  *   • vị trí tờ -> JSON <script data-poster-sheets> trong index.html (giữ ảnh / tên);
  *   • local (node serve.mjs): ghi thẳng file; GitHub Pages: commit bằng token chung
  *     với CMS ('chande-cms-gh').
+ *
+ * Chế độ Mobile (nút trên thanh khung): bản điện thoại là ẢNH TĨNH, không chồng giấy 3D —
+ * khung 375 × 748·n (n = 2 hoặc 3 màn, lưu thành data-m-screens của section), mỗi tờ có
+ * mx / my (góc trên trái) / mw (bề rộng) / mr (độ xoay), cùng đơn vị px Figma khổ 375.
  * ========================================================================== */
 import { mount, RUNTIME_DEFAULTS } from './paper-stack.js'
 import './chande-poster.js' // chỉ để lấy CONFIG (code + đã lưu); trang này không có section poster
@@ -92,6 +96,9 @@ let api = null
 let selected = -1
 let cw = 1920
 let ch = 1000
+let mode = 'desktop'
+let screens = 2 // số màn của bản mobile (data-m-screens)
+let screensSaved = 2
 
 // Ảnh mới chưa lưu: đường dẫn sẽ ghi -> blob (để lưu) + objectURL (để xem trước)
 const pending = new Map() // path -> { blob, url }
@@ -121,6 +128,7 @@ async function useImage(i, file) {
   const path = `assets/img/cms/index/poster-stack-${i + 1}-${Date.now().toString(36)}.${img.ext}`
   pending.set(path, { blob: img.blob, url: URL.createObjectURL(img.blob) })
   sheets[i].img = path
+  delete sheets[i].mimg // bản nhẹ cho mobile của ảnh cũ
   await resetSheets()
   build()
   markDirty()
@@ -165,6 +173,8 @@ const msg = (t, kind = '') => {
 const SHEETS_RE = /(<script\b[^>]*data-poster-sheets[^>]*>)([\s\S]*?)(<\/script>)/
 async function loadSheets() {
   const html = await fetch(`index.html?t=${Date.now()}`, { cache: 'no-store' }).then((r) => r.text())
+  screens = screensSaved = +(html.match(/<section\b[^>]*\bdata-poster-stack\b[^>]*>/)?.[0].match(/data-m-screens="(\d)"/)?.[1] || 2)
+  $('[data-screens]').value = screens
   const m = html.match(SHEETS_RE)
   const list = m ? JSON.parse(m[2]) : []
   return list.filter((s) => s && s.img)
@@ -275,19 +285,22 @@ function control(g, k, spec) {
 
 function sheetRow(s, i) {
   const f = (k, step) => `<label>${k}<input type="number" step="${step}" value="${s[k] ?? ''}" data-si="${i}" data-sk="${k}" ${k === 'from' ? 'placeholder="mặc định"' : ''}></label>`
+  const m = mode === 'mobile'
   return `<div class="sheet${i === selected ? ' is-sel' : ''}" data-sheet="${i}">
     <div class="sheet__ph" data-pick="${i}" title="Bấm hoặc thả ảnh vào để thay" style="background-image:url('${shown(s.img)}')"><em>Thay ảnh</em></div>
-    <div class="sheet__fields">
+    <div class="sheet__fields${m ? ' sheet__fields--m' : ''}">
       <div class="sheet__name"><span>${i + 1}. ${s.name || ''} · ${turnOf(i) === 0 && cur.params.stack.startLaid ? 'nằm sẵn' : `lượt ${turnOf(i) + 1}`}</span><span class="sheet__ops"><button type="button" data-addwith="${i}" title="Thêm ảnh rơi cùng lượt, ngay sau tờ này" style="width:auto; padding:0 5px">+ ảnh cùng lượt</button><button type="button" data-mv="-1" data-i="${i}" title="Lên">↑</button><button type="button" data-mv="1" data-i="${i}" title="Xuống">↓</button><button type="button" data-del="${i}" title="Xoá tờ này">✕</button></span></div>
-      ${f('x', 0.005)}${f('y', 0.005)}${f('rot', 0.5)}${f('scale', 0.01)}${f('from', 1)}
-      ${i > 0 ? `<label class="sheet__with"><input type="checkbox" data-together="${i}" ${s.together ? 'checked' : ''}> cùng lượt với tờ trên</label>` : ''}
+      ${m ? `${f('mx', 1)}${f('my', 1)}${f('mw', 1)}${f('mr', 0.5)}` : `${f('x', 0.005)}${f('y', 0.005)}${f('rot', 0.5)}${f('scale', 0.01)}${f('from', 1)}`}
+      ${i > 0 && !m ? `<label class="sheet__with"><input type="checkbox" data-together="${i}" ${s.together ? 'checked' : ''}> cùng lượt với tờ trên</label>` : ''}
     </div>
   </div>`
 }
 
 function build() {
-  let h = `<details open><summary>Các tờ (${sheets.length})</summary><div class="sheets" data-sheets>${sheets.map(sheetRow).join('')}<button class="btn" type="button" data-add>+ Thêm tờ (chọn ảnh)</button></div>
-    <div style="padding:0 12px 12px; color:var(--dim); font-size:12px">x / y: vị trí theo phần khung (−0.5 … 0.5) · rot: độ · scale: cỡ · from: hướng bay tới (trống = theo "Bay vào"). Bấm / thả ảnh vào ô ảnh để thay; tờ trên rơi trước.</div></details>`
+  let h = `<details class="d-sheets" open><summary>Các tờ (${sheets.length})</summary><div class="sheets" data-sheets>${sheets.map(sheetRow).join('')}<button class="btn" type="button" data-add>+ Thêm tờ (chọn ảnh)</button></div>
+    <div style="padding:0 12px 12px; color:var(--dim); font-size:12px">${mode === 'mobile'
+      ? 'Mobile: mx / my = góc trên trái, mw = bề rộng (px khung 375), mr = độ xoay. Tờ dưới danh sách nằm trên.'
+      : 'x / y: vị trí theo phần khung (−0.5 … 0.5) · rot: độ · scale: cỡ · from: hướng bay tới (trống = theo "Bay vào"). Bấm / thả ảnh vào ô ảnh để thay; tờ trên rơi trước.'}</div></details>`
   for (const [g, [title, fields]] of Object.entries(GROUPS)) {
     const rows = Object.entries(fields)
       .filter(([k]) => !HIDDEN.has(`${g}.${k}`))
@@ -296,6 +309,7 @@ function build() {
   }
   $('[data-body]').innerHTML = h
   markDirty()
+  if (mode === 'mobile') drawM()
 }
 function fillSheet(i) {
   document.querySelectorAll(`[data-si="${i}"]`).forEach((inp) => {
@@ -308,6 +322,7 @@ function select(i) {
   api?.setSelected(i)
   document.querySelectorAll('[data-sheet]').forEach((el) => el.classList.toggle('is-sel', +el.dataset.sheet === i))
   if (i >= 0) document.querySelector(`[data-sheet="${i}"]`)?.scrollIntoView({ block: 'nearest' })
+  if (mode === 'mobile') placeHdl()
 }
 
 function markDirty() {
@@ -315,7 +330,7 @@ function markDirty() {
     const [g, k] = l.dataset.l.split('.')
     l.classList.toggle('is-changed', !same(getVal(g, k), savedVal(g, k)))
   })
-  const dirty = !same(cur, saved) || !same(sheets, sheetsSaved)
+  const dirty = !same(cur, saved) || !same(sheets, sheetsSaved) || screens !== screensSaved
   $('[data-save]').textContent = dirty ? 'Lưu •' : 'Lưu'
 }
 
@@ -345,7 +360,8 @@ document.addEventListener('input', (e) => {
     const v = t.value === '' ? (k === 'from' ? null : 0) : +t.value
     if (k === 'from' && v === null) delete sheets[i].from
     else sheets[i][k] = v
-    api?.updateSheet(i, { [k]: v })
+    if (/^m[xywr]$/.test(k)) placeM(i)
+    else api?.updateSheet(i, { [k]: v })
     return markDirty()
   }
   if (t.dataset.ci != null) {
@@ -409,14 +425,14 @@ document.addEventListener('click', async (e) => {
   if (aw)
     return pick(async (f) => {
       const at = +aw.dataset.addwith + 1
-      sheets.splice(at, 0, { num: String(at + 1).padStart(2, '0'), name: `Poster ${at + 1}`, img: '', x: 0, y: 0, rot: 0, together: true })
+      sheets.splice(at, 0, ensureM({ num: String(at + 1).padStart(2, '0'), name: `Poster ${at + 1}`, img: '', x: 0, y: 0, rot: 0, together: true }))
       await useImage(at, f)
       select(at)
     })
   if (e.target.closest('[data-add]'))
     return pick(async (f) => {
       const n = sheets.length
-      sheets.push({ num: String(n + 1).padStart(2, '0'), name: `Poster ${n + 1}`, img: '', x: 0, y: 0, rot: 0 })
+      sheets.push(ensureM({ num: String(n + 1).padStart(2, '0'), name: `Poster ${n + 1}`, img: '', x: 0, y: 0, rot: 0 }))
       await useImage(n, f)
       select(n)
     })
@@ -449,6 +465,194 @@ document.addEventListener('drop', (e) => {
   e.preventDefault()
   const f = [...(e.dataTransfer?.files || [])].find((x) => x.type.startsWith('image/'))
   if (f) useImage(+ph.dataset.pick, f)
+})
+
+/* ------------------------------------------------------------ bản mobile --- */
+const MB = $('[data-mboard]')
+const MG = 60 // vùng dư mỗi bên vẽ thêm (đơn vị khung 375)
+let mu = 1 // px màn / đơn vị khung
+const rnd = (v) => Math.round(v * 10) / 10
+// tờ chưa có vị trí mobile (tờ mới): giữa màn 1, xếp chéo
+function ensureM(s, n = 0) {
+  if (!Number.isFinite(s.mx)) Object.assign(s, { mx: rnd(102.5 + n * 16), my: rnd(254 + n * 16), mw: 170, mr: s.rot || 0 })
+  return s
+}
+function sizeM() {
+  const view = $('.stage__view')
+  mu = Math.max(0.3, Math.min(1.25, (view.clientWidth - 40) / (375 + 2 * MG)))
+  MB.style.setProperty('--u', `${mu}px`)
+  MB.style.width = `${375 * mu}px`
+  MB.style.height = `${748 * screens * mu}px`
+  MB.style.marginTop = '0'
+  const bg = cur.params.frame.bgImage
+  MB.style.setProperty('--bg', bg ? `url("${new URL(shown(bg), location.href).href}")` : 'none')
+  MB.style.backgroundColor = cur.params.frame.bg || '#fffef8'
+  MB.querySelector('.mb__screen--3').hidden = screens < 3
+}
+const pmEl = (i) => MB.querySelector(`.pm[data-i="${i}"]`)
+function placeM(i) {
+  const el = pmEl(i)
+  if (el) for (const k of ['mx', 'my', 'mw', 'mr']) el.style.setProperty(`--${k}`, +sheets[i][k] || 0)
+  if (i === selected) placeHdl()
+}
+function drawM() {
+  MB.querySelectorAll('.pm').forEach((e) => e.remove())
+  sheets.forEach((s, i) => {
+    if (!s.img) return
+    const im = new Image()
+    im.className = 'pm'
+    im.src = shown(P.mobileSrc ? P.mobileSrc(s) : s.img)
+    im.dataset.i = i
+    im.draggable = false
+    im.addEventListener('load', () => i === selected && placeHdl(), { once: true })
+    MB.append(im)
+    placeM(i)
+  })
+  placeHdl()
+}
+// khung tay cầm: 4 góc = đổi cỡ (giữ tâm), nút tròn = xoay
+const hdl = document.createElement('div')
+hdl.className = 'hdl'
+hdl.hidden = true
+hdl.innerHTML = '<i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i><i data-h="rot"></i><b></b>'
+function placeHdl() {
+  const el = mode === 'mobile' && selected >= 0 && pmEl(selected)
+  if (!el) return void (hdl.hidden = true)
+  if (!hdl.isConnected) MB.append(hdl)
+  const s = sheets[selected]
+  hdl.hidden = false
+  hdl.style.left = `${s.mx * mu}px`
+  hdl.style.top = `${s.my * mu}px`
+  hdl.style.width = `${el.offsetWidth}px`
+  hdl.style.height = `${el.offsetHeight}px`
+  hdl.style.rotate = `${s.mr || 0}deg`
+  hdl.querySelector('b').textContent = `${Math.round(s.mw)} px · ${rnd(s.mr || 0)}°`
+}
+const changedM = (i) => (placeM(i), fillSheet(i), markDirty())
+hdl.addEventListener('pointerdown', (e) => {
+  const h = e.target.dataset.h
+  if (!h || selected < 0) return
+  e.preventDefault()
+  e.stopPropagation()
+  const i = selected
+  const s = sheets[i]
+  const el = pmEl(i)
+  const r = el.getBoundingClientRect()
+  const cx = r.left + r.width / 2
+  const cy = r.top + r.height / 2
+  const aspect = el.offsetHeight / el.offsetWidth
+  const st = { w: s.mw, rot: s.mr || 0, d: Math.hypot(e.clientX - cx, e.clientY - cy), a: Math.atan2(e.clientY - cy, e.clientX - cx), cx: s.mx + s.mw / 2, cy: s.my + (s.mw * aspect) / 2 }
+  e.target.setPointerCapture(e.pointerId)
+  const move = (ev) => {
+    if (h === 'rot') {
+      let deg = st.rot + ((Math.atan2(ev.clientY - cy, ev.clientX - cx) - st.a) * 180) / Math.PI
+      if (ev.shiftKey) deg = Math.round(deg / 15) * 15
+      s.mr = rnd(((deg + 540) % 360) - 180)
+    } else {
+      s.mw = rnd(Math.max(30, Math.min(600, st.w * (Math.hypot(ev.clientX - cx, ev.clientY - cy) / Math.max(1, st.d)))))
+      s.mx = rnd(st.cx - s.mw / 2)
+      s.my = rnd(st.cy - (s.mw * aspect) / 2)
+    }
+    changedM(i)
+  }
+  const up = () => {
+    e.target.removeEventListener('pointermove', move)
+    e.target.removeEventListener('pointerup', up)
+  }
+  e.target.addEventListener('pointermove', move)
+  e.target.addEventListener('pointerup', up)
+})
+MB.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('.hdl')) return
+  const el = e.target.closest('.pm')
+  if (!el) return select(-1)
+  e.preventDefault()
+  const i = +el.dataset.i
+  select(i)
+  const s = sheets[i]
+  el.setPointerCapture(e.pointerId)
+  el.classList.add('is-drag')
+  const r = el.getBoundingClientRect()
+  const cx = r.left + r.width / 2
+  const cy = r.top + r.height / 2
+  const st = { x: e.clientX, y: e.clientY, mx: s.mx, my: s.my, rot: s.mr || 0, a: Math.atan2(e.clientY - cy, e.clientX - cx) }
+  const rotate = e.shiftKey
+  const move = (ev) => {
+    if (rotate) {
+      let deg = st.rot + ((Math.atan2(ev.clientY - cy, ev.clientX - cx) - st.a) * 180) / Math.PI
+      if (ev.altKey) deg = Math.round(deg / 15) * 15
+      s.mr = rnd(deg)
+    } else {
+      s.mx = rnd(st.mx + (ev.clientX - st.x) / mu)
+      s.my = rnd(st.my + (ev.clientY - st.y) / mu)
+    }
+    changedM(i)
+  }
+  const up = () => {
+    el.classList.remove('is-drag')
+    el.removeEventListener('pointermove', move)
+    el.removeEventListener('pointerup', up)
+  }
+  el.addEventListener('pointermove', move)
+  el.addEventListener('pointerup', up)
+})
+MB.addEventListener(
+  'wheel',
+  (e) => {
+    const el = e.target.closest('.pm')
+    if (!el) return
+    e.preventDefault()
+    const i = +el.dataset.i
+    select(i)
+    const s = sheets[i]
+    const w0 = s.mw
+    const h0 = el.offsetHeight / mu
+    s.mw = rnd(Math.max(30, Math.min(600, w0 * Math.exp(-e.deltaY * 0.0015))))
+    s.mx = rnd(s.mx + (w0 - s.mw) / 2) // giữ tâm
+    s.my = rnd(s.my + (h0 - (h0 * s.mw) / w0) / 2)
+    changedM(i)
+  },
+  { passive: false },
+)
+addEventListener('keydown', (e) => {
+  if (mode !== 'mobile' || selected < 0 || e.target.closest('input, textarea, select')) return
+  const k = e.shiftKey ? 10 : 1
+  const d = { ArrowLeft: [-k, 0], ArrowRight: [k, 0], ArrowUp: [0, -k], ArrowDown: [0, k] }[e.key]
+  if (!d) return
+  e.preventDefault()
+  const s = sheets[selected]
+  s.mx = rnd(s.mx + d[0])
+  s.my = rnd(s.my + d[1])
+  changedM(selected)
+})
+function setMode(m) {
+  mode = m
+  const mob = m === 'mobile'
+  document.querySelector('.app').classList.toggle('is-m', mob)
+  document.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('is-on', b.dataset.mode === m))
+  $('[data-screens]').hidden = !mob
+  MB.hidden = !mob
+  document.querySelectorAll('[data-d-only]').forEach((el) => (el.hidden = mob))
+  document.querySelectorAll('[data-m-only]').forEach((el) => (el.hidden = !mob))
+  if (mob) {
+    stopPlay()
+    api?.dispose() // chồng giấy WebGL không cần lúc sửa bản mobile
+    api = null
+    sheets.forEach((s, n) => ensureM(s, n))
+    sizeM()
+    build()
+  } else {
+    hdl.hidden = true
+    build()
+    pickAspect()
+    remount()
+  }
+}
+document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => b.dataset.mode !== mode && setMode(b.dataset.mode)))
+$('[data-screens]').addEventListener('change', (e) => {
+  screens = +e.target.value || 2
+  sizeM()
+  markDirty()
 })
 
 /* --------------------------------------------------------------- tua / chạy - */
@@ -489,15 +693,18 @@ $('[data-play]').addEventListener('click', () => {
 $('[data-reset]').addEventListener('click', () => {
   cur = clone(saved)
   sheets = clone(sheetsSaved)
+  screens = screensSaved
+  $('[data-screens]').value = screens
   pending.clear()
   build()
-  remount()
+  if (mode === 'desktop') remount()
+  else sizeM()
   msg('Đã về bản đang lưu.')
 })
 $('[data-defaults]').addEventListener('click', () => {
   cur = clone(code)
   build()
-  remount()
+  if (mode === 'desktop') remount()
   msg('Đã về mặc định trong code (vị trí tờ giữ nguyên) — bấm Lưu để áp lên site.')
 })
 
@@ -524,10 +731,14 @@ function settingsText(values, src) {
   if (!re.test(src)) throw new Error('Không nhận ra cấu trúc chande-settings.js')
   return src.replace(re, () => `window.CHANDE_SETTINGS = ${body}\n`)
 }
+const SECTION_RE = /<section\b[^>]*\bdata-poster-stack\b[^>]*>/
 function indexText(html) {
   if (!SHEETS_RE.test(html)) throw new Error('Không thấy danh sách tờ trong index.html')
+  if (!SECTION_RE.test(html)) throw new Error('Không thấy section poster (data-poster-stack) trong index.html')
   const json = `[\n${sheets.map((s) => `        ${JSON.stringify(s)}`).join(',\n')}\n      ]`
-  return html.replace(SHEETS_RE, (_, a, __, c) => `${a}\n      ${json}\n      ${c}`)
+  return html
+    .replace(SHEETS_RE, (_, a, __, c) => `${a}\n      ${json}\n      ${c}`)
+    .replace(SECTION_RE, (tag) => tag.replace(/\sdata-m-screens="[^"]*"/, '').replace(/>$/, ` data-m-screens="${screens}">`))
 }
 
 // ảnh chờ lưu mà danh sách tờ còn dùng
@@ -617,6 +828,7 @@ async function save() {
     window.CHANDE_SETTINGS = values
     Object.assign(saved, clone(cur))
     sheetsSaved = clone(sheets)
+    screensSaved = screens
     markDirty()
     msg(done, 'ok')
   } catch (e) {
@@ -641,21 +853,24 @@ $('[data-gh]').addEventListener('submit', (e) => {
   save()
 })
 addEventListener('beforeunload', (e) => {
-  if (!same(cur, saved) || !same(sheets, sheetsSaved) || usedImages().length) e.preventDefault()
+  if (!same(cur, saved) || !same(sheets, sheetsSaved) || screens !== screensSaved || usedImages().length) e.preventDefault()
 })
 
 /* -------------------------------------------------------------------- khởi động */
 $('[data-aspect]').addEventListener('change', () => (pickAspect(), remount()))
 $('[data-cw]').addEventListener('change', () => (pickAspect(), remount()))
 $('[data-ch]').addEventListener('change', () => (pickAspect(), remount()))
-addEventListener('resize', sizeFrame)
+addEventListener('resize', () => (mode === 'mobile' ? (sizeM(), placeHdl()) : sizeFrame()))
 
 try {
   sheetsSaved = await loadSheets()
   sheets = clone(sheetsSaved)
   pickAspect()
-  build()
-  remount()
+  if (new URLSearchParams(location.search).get('mode') === 'mobile') setMode('mobile')
+  else {
+    build()
+    remount()
+  }
   msg(`${sheets.length} tờ · kéo tờ trên khung để dời, Shift + kéo để xoay. Số vàng = khác bản đang lưu.`)
 } catch (e) {
   msg(`Không nạp được: ${e.message || e}`, 'bad')

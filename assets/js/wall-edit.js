@@ -7,14 +7,17 @@
  *   • phím: mũi tên nhích 1 (Shift 10) · Delete xoá · [ ] đưa xuống / lên một lớp
  *   • "+ Thêm ảnh" / thả file vào khung: ảnh giữ nguyên file gốc (PNG / WebP trong suốt);
  *     ảnh quá lớn (> 2400 px) mới thu về 2400 px WebP
+ * Hai chế độ (nút Desktop / Mobile trên thanh khung):
+ *   • Desktop: khung 1920 × 1556, toạ độ x / y / w / rot;
+ *   • Mobile: bản ảnh tĩnh riêng cho màn ≤ 899px — khung 375 × 748·n (n = 2 hoặc 3 màn, lưu thành
+ *     data-m-screens của section), toạ độ mx / my / mw / mr. Vùng tối hai bên = phần dư trên máy
+ *     rộng hơn khung (khung co theo chiều cao màn, canh giữa).
  * Lưu: trên máy (node serve.mjs) POST /__cms/save; trên site dùng token GitHub (như CMS).
  * ========================================================================== */
 ;(() => {
   'use strict'
   const $ = (s, r = document) => r.querySelector(s)
   const W = window.CHANDE_WALL
-  const BOARD_W = 1920
-  const BOARD_H = 1556
   const board = $('[data-board]')
   const view = $('[data-view]')
   const list = $('[data-list]')
@@ -23,9 +26,30 @@
   let pieces = []
   let saved = []
   let sel = -1
+  let screens = 2 // số màn của bản mobile (data-m-screens)
+  let screensSaved = 2
   const history = []
   const pending = new Map() // đường dẫn sẽ ghi -> { blob, url } (ảnh mới chưa lưu)
   const shown = (src) => pending.get(src)?.url || src
+
+  /* --------------------------------------------------------------- chế độ --- */
+  const MODES = {
+    desktop: { W: 1920, H: () => 1556, x: 'x', y: 'y', w: 'w', r: 'rot', maxW: 2400 },
+    mobile: { W: 375, H: () => 748 * screens, x: 'mx', y: 'my', w: 'mw', r: 'mr', maxW: 600 },
+  }
+  let mode = 'desktop'
+  let M = MODES.desktop
+  const BAND = 96 // mobile: dải chấm trên cùng
+  const STRIP = 166 // mobile: gạch neon 94 + viên thuốc 72 ở đáy
+  // Vị trí mobile mặc định cho mảnh chưa có (mảnh mới / thêm ở chế độ desktop): giữa màn 1, xếp chéo
+  function ensureMobile(p, n = 0, at) {
+    if (Number.isFinite(p.mx)) return
+    p.mw = round(Math.min(220, Math.max(90, (p.w || 300) * 0.42)))
+    const c = at || { x: 187.5, y: 748 / 2 }
+    p.mx = round(c.x - p.mw / 2 + n * 16)
+    p.my = round(c.y - p.mw / 2 + n * 16)
+    p.mr = p.rot || 0
+  }
 
   const msg = (t, kind = '') => {
     const m = $('[data-msg]')
@@ -36,22 +60,29 @@
     history.push(JSON.stringify(pieces))
     if (history.length > 80) history.shift()
   }
-  const dirty = () => JSON.stringify(pieces) !== JSON.stringify(saved) || [...pending.keys()].some(used)
+  const dirty = () => JSON.stringify(pieces) !== JSON.stringify(saved) || screens !== screensSaved || [...pending.keys()].some(used)
   const used = (p) => pieces.some((x) => x.img === p || x.orig === p)
   const markDirty = () => ($('[data-save]').textContent = dirty() ? 'Lưu •' : 'Lưu')
   const round = (v, d = 1) => Math.round(v * 10 ** d) / 10 ** d
 
   /* ------------------------------------------------------------------ khung --- */
   let u = 0.5
+  const GUT = 60 // mobile: vùng dư mỗi bên (đơn vị khung 375) vẽ thêm cho thấy
   function size() {
-    // vừa trọn khung (cả bề rộng lẫn bề cao) để thấy hết section
-    u = Math.max(0.15, Math.min((view.clientWidth - 40) / BOARD_W, (view.clientHeight - 40) / BOARD_H))
+    // desktop: vừa trọn khung (cả bề rộng lẫn bề cao) để thấy hết section; mobile: khung cao 2–3 màn ->
+    // vừa bề cao nếu được, nhưng không nhỏ hơn ~1 px / đơn vị (cuộn khung để xem phần dưới)
+    const pad = mode === 'mobile' ? 40 + 2 * GUT * 0.6 : 40
+    u = Math.max(0.15, Math.min((view.clientWidth - pad) / (M.W + (mode === 'mobile' ? 2 * GUT : 0)), (view.clientHeight - 40) / M.H()))
+    if (mode === 'mobile') u = Math.max(u, Math.min(1.1, (view.clientWidth - 40) / (M.W + 2 * GUT)))
     board.style.setProperty('--u', `${u}px`)
-    board.style.width = `${BOARD_W * u}px`
-    board.style.height = `${BOARD_H * u}px`
+    board.style.setProperty('--n', screens)
+    board.style.width = `${M.W * u}px`
+    board.style.height = `${M.H() * u}px`
+    board.classList.toggle('is-m', mode === 'mobile')
+    board.querySelector('.board__screen--3').hidden = screens < 3
   }
   function draw() {
-    W.render(board, pieces, { src: shown, eager: true })
+    W.render(board, pieces, { src: shown, eager: true, mobile: mode === 'mobile' })
     board.querySelectorAll('.wall__piece').forEach((el) => {
       el.classList.toggle('is-sel', +el.dataset.i === sel)
       if (!el.complete) el.addEventListener('load', placeHandles, { once: true })
@@ -71,12 +102,12 @@
     if (!hdl.isConnected) board.append(hdl) // gắn một lần (gắn lại giữa lúc kéo sẽ mất pointer capture)
     hdl.hidden = false
     const p = pieces[sel]
-    hdl.style.left = `${p.x * u}px`
-    hdl.style.top = `${p.y * u}px`
+    hdl.style.left = `${p[M.x] * u}px`
+    hdl.style.top = `${p[M.y] * u}px`
     hdl.style.width = `${el.offsetWidth}px`
     hdl.style.height = `${el.offsetHeight}px`
-    hdl.style.rotate = `${p.rot || 0}deg`
-    hdl.querySelector('b').textContent = `${Math.round(p.w)} px · ${round(p.rot || 0)}°`
+    hdl.style.rotate = `${p[M.r] || 0}deg`
+    hdl.querySelector('b').textContent = `${Math.round(p[M.w])} px · ${round(p[M.r] || 0)}°`
   }
   hdl.addEventListener('pointerdown', (e) => {
     const h = e.target.dataset.h
@@ -91,18 +122,19 @@
     const cx = r.left + r.width / 2
     const cy = r.top + r.height / 2
     const aspect = el.offsetHeight / el.offsetWidth
-    const start = { w: p.w, rot: p.rot || 0, d: Math.hypot(e.clientX - cx, e.clientY - cy), a: Math.atan2(e.clientY - cy, e.clientX - cx), mx: p.x + p.w / 2, my: p.y + (p.w * aspect) / 2 }
+    const { x: X, y: Y, w: Wk, r: R } = M
+    const start = { w: p[Wk], rot: p[R] || 0, d: Math.hypot(e.clientX - cx, e.clientY - cy), a: Math.atan2(e.clientY - cy, e.clientX - cx), mx: p[X] + p[Wk] / 2, my: p[Y] + (p[Wk] * aspect) / 2 }
     e.target.setPointerCapture(e.pointerId)
     const move = (ev) => {
       if (h === 'rot') {
         let deg = start.rot + ((Math.atan2(ev.clientY - cy, ev.clientX - cx) - start.a) * 180) / Math.PI
         if (ev.shiftKey) deg = Math.round(deg / 15) * 15
-        p.rot = round(((deg + 540) % 360) - 180)
+        p[R] = round(((deg + 540) % 360) - 180)
       } else {
         const k = Math.hypot(ev.clientX - cx, ev.clientY - cy) / Math.max(1, start.d)
-        p.w = round(Math.max(20, Math.min(2400, start.w * k)))
-        p.x = round(start.mx - p.w / 2) // giữ tâm đứng yên
-        p.y = round(start.my - (p.w * aspect) / 2)
+        p[Wk] = round(Math.max(mode === 'mobile' ? 8 : 20, Math.min(M.maxW, start.w * k)))
+        p[X] = round(start.mx - p[Wk] / 2) // giữ tâm đứng yên
+        p[Y] = round(start.my - (p[Wk] * aspect) / 2)
       }
       update(i)
     }
@@ -124,7 +156,7 @@
         <img src="${shown(p.img)}" alt="">
         <div>
           <div class="piece__top"><b>${String(i + 1).padStart(2, '0')}</b><input data-k="name" value="${(p.name || '').replace(/"/g, '&quot;')}" placeholder="Tên"></div>
-          <div class="piece__nums">${field('x', round(p.x))}${field('y', round(p.y))}${field('w', round(p.w))}${field('rot', round(p.rot || 0), 0.5)}</div>
+          <div class="piece__nums">${field(M.x, round(p[M.x] || 0))}${field(M.y, round(p[M.y] || 0))}${field(M.w, round(p[M.w] || 0))}${field(M.r, round(p[M.r] || 0), 0.5)}</div>
           <div class="piece__acts">
             <button class="btn btn--sm" type="button" data-act="down" title="Xuống một lớp">↓ lớp</button>
             <button class="btn btn--sm" type="button" data-act="up" title="Lên một lớp">↑ lớp</button>
@@ -150,7 +182,7 @@
     const el = pieceEl(i)
     if (el) W.place(el, pieces[i])
     const row = list.querySelector(`[data-row="${i}"]`)
-    if (row) for (const k of ['x', 'y', 'w', 'rot']) row.querySelector(`[data-k="${k}"]`).value = round(pieces[i][k] || 0)
+    if (row) for (const k of [M.x, M.y, M.w, M.r]) row.querySelector(`[data-k="${k}"]`).value = round(pieces[i][k] || 0)
     if (i === sel) placeHandles()
     markDirty()
   }
@@ -214,7 +246,8 @@
     el.setPointerCapture(e.pointerId)
     el.classList.add('is-drag')
     const p = pieces[i]
-    const start = { x: e.clientX, y: e.clientY, px: p.x, py: p.y, rot: p.rot || 0 }
+    const { x: X, y: Y, r: R } = M
+    const start = { x: e.clientX, y: e.clientY, px: p[X], py: p[Y], rot: p[R] || 0 }
     const r = el.getBoundingClientRect()
     const cx = r.left + r.width / 2
     const cy = r.top + r.height / 2
@@ -227,10 +260,10 @@
         const a = Math.atan2(ev.clientY - cy, ev.clientX - cx)
         let deg = start.rot + ((a - a0) * 180) / Math.PI
         if (ev.altKey) deg = Math.round(deg / 15) * 15
-        p.rot = round(deg)
+        p[R] = round(deg)
       } else {
-        p.x = round(start.px + (ev.clientX - start.x) / u)
-        p.y = round(start.py + (ev.clientY - start.y) / u)
+        p[X] = round(start.px + (ev.clientX - start.x) / u)
+        p[Y] = round(start.py + (ev.clientY - start.y) / u)
       }
       update(i)
     }
@@ -252,13 +285,14 @@
       const i = +el.dataset.i
       select(i, true)
       const p = pieces[i]
+      const { x: X, y: Y, w: Wk } = M
       const k = Math.exp(-e.deltaY * 0.0015)
-      const w0 = p.w
-      p.w = round(Math.max(20, Math.min(1920, w0 * k)))
+      const w0 = p[Wk]
+      p[Wk] = round(Math.max(mode === 'mobile' ? 8 : 20, Math.min(M.maxW, w0 * k)))
       // giữ tâm đứng yên khi đổi cỡ
       const h0 = el.offsetHeight / u
-      p.x = round(p.x + (w0 - p.w) / 2)
-      p.y = round(p.y + (h0 - (h0 * p.w) / w0) / 2)
+      p[X] = round(p[X] + (w0 - p[Wk]) / 2)
+      p[Y] = round(p[Y] + (h0 - (h0 * p[Wk]) / w0) / 2)
       update(i)
     },
     { passive: false },
@@ -273,8 +307,8 @@
     if (nudge) {
       e.preventDefault()
       snap()
-      p.x = round(p.x + nudge[0])
-      p.y = round(p.y + nudge[1])
+      p[M.x] = round(p[M.x] + nudge[0])
+      p[M.y] = round(p[M.y] + nudge[1])
       return update(sel)
     }
     if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -371,8 +405,11 @@
     for (const [n, f] of files.entries()) {
       const { path, w } = await stash(f)
       const pw = Math.min(480, Math.round(w / 2)) // file 2× -> hiện bằng nửa
-      const base = at || { x: BOARD_W / 2, y: BOARD_H / 2 }
-      pieces.push({ num: '', name: f.name.replace(/\.[^.]+$/, ''), img: path, x: round(base.x - pw / 2 + n * 30), y: round(base.y - pw / 2 + n * 30), w: pw, rot: 0 })
+      // thả ở chế độ nào thì đặt đúng chỗ thả ở chế độ đó; chế độ kia lấy vị trí mặc định
+      const dAt = mode === 'desktop' && at ? at : { x: 960, y: 778 }
+      const p = { num: '', name: f.name.replace(/\.[^.]+$/, ''), img: path, x: round(dAt.x - pw / 2 + n * 30), y: round(dAt.y - pw / 2 + n * 30), w: pw, rot: 0 }
+      ensureMobile(p, n, mode === 'mobile' ? at : null)
+      pieces.push(p)
     }
     renum()
     sel = pieces.length - 1
@@ -385,6 +422,7 @@
     const { path } = await stash(file)
     pieces[i].img = path
     delete pieces[i].orig
+    delete pieces[i].mimg
     all()
     msg(`Đã đổi ảnh mảnh ${i + 1} (chưa lưu).`)
   }
@@ -401,12 +439,17 @@
         return msg('Ảnh này không có viền trong suốt thừa.')
       }
       snap()
-      const k = p.w / crop.W0
       p.img = path
       delete p.orig // ảnh vừa cắt thành gốc mới (lúc lưu tạo lại bản nhẹ)
-      p.x = round(p.x + crop.cx * k)
-      p.y = round(p.y + crop.cy * k)
-      p.w = round(crop.cw * k)
+      delete p.mimg
+      // giữ hình đứng nguyên chỗ ở cả hai bản (desktop + mobile)
+      for (const m of Object.values(MODES)) {
+        if (!Number.isFinite(p[m.w])) continue
+        const k = p[m.w] / crop.W0
+        p[m.x] = round(p[m.x] + crop.cx * k)
+        p[m.y] = round(p[m.y] + crop.cy * k)
+        p[m.w] = round(crop.cw * k)
+      }
       all()
       msg(`Đã cắt viền mảnh ${i + 1} (chưa lưu).`)
     } catch (e) {
@@ -434,12 +477,35 @@
     addImages(e.dataTransfer.files, { x: (e.clientX - r.left) / u, y: (e.clientY - r.top) / u })
   })
 
+  /* --------------------------------------------------- desktop / mobile --- */
+  function setMode(m) {
+    mode = m
+    M = MODES[m]
+    if (m === 'mobile') pieces.forEach((p, n) => ensureMobile(p, n))
+    document.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('is-on', b.dataset.mode === m))
+    $('[data-screens]').hidden = m !== 'mobile'
+    $('[data-hint-d]').hidden = m === 'mobile'
+    $('[data-hint-m]').hidden = m !== 'mobile'
+    size()
+    all()
+  }
+  document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)))
+  $('[data-screens]').addEventListener('change', (e) => {
+    screens = +e.target.value || 2
+    size()
+    all()
+  })
+
   /* ------------------------------------------------------------------ lưu --- */
   const PIECES_RE = /(<script\b[^>]*data-wall-pieces[^>]*>)([\s\S]*?)(<\/script>)/
+  const SECTION_RE = /<section\b[^>]*\bhs-wall\b[^>]*>/
   function indexText(html) {
     if (!PIECES_RE.test(html)) throw new Error('Không thấy danh sách mảnh (data-wall-pieces) trong index.html')
+    if (!SECTION_RE.test(html)) throw new Error('Không thấy section hs-wall trong index.html')
     const json = `[\n${pieces.map((p) => `        ${JSON.stringify(p)}`).join(',\n')}\n      ]`
-    return html.replace(PIECES_RE, (_, a, __, c) => `${a}\n      ${json}\n      ${c}`)
+    return html
+      .replace(PIECES_RE, (_, a, __, c) => `${a}\n      ${json}\n      ${c}`)
+      .replace(SECTION_RE, (tag) => tag.replace(/\sdata-m-screens="[^"]*"/, '').replace(/>$/, ` data-m-screens="${screens}">`))
   }
   async function imageFiles() {
     const out = []
@@ -544,6 +610,7 @@
       }
       ;[...pending.keys()].filter(used).forEach((p) => pending.delete(p))
       saved = clone(pieces)
+      screensSaved = screens
       markDirty()
       msg(done, 'ok')
     } catch (e) {
@@ -577,8 +644,9 @@
       const m = html.match(PIECES_RE)
       saved = m ? JSON.parse(m[2]).filter((p) => p && p.img) : []
       pieces = clone(saved)
-      size()
-      all()
+      screens = screensSaved = +(html.match(SECTION_RE)?.[0].match(/data-m-screens="(\d)"/)?.[1] || 2)
+      $('[data-screens]').value = screens
+      setMode(new URLSearchParams(location.search).get('mode') === 'mobile' ? 'mobile' : 'desktop')
       msg(`${pieces.length} mảnh. Kéo để dời, Shift + kéo để xoay (giữ thêm Alt: bước 15°), lăn chuột trên mảnh để đổi cỡ.`)
     } catch (e) {
       msg(`Không nạp được index.html: ${e.message || e}`, 'bad')

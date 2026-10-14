@@ -75,6 +75,32 @@ input[type=color]{width:100%; height:26px; padding:0; border:1px solid var(--lin
 .gh[hidden]{display:none}
 .gh input[type=password],.gh input[type=text]{width:100%}
 kbd{font:11px 'Geist Mono',monospace; padding:1px 4px; border:1px solid var(--line-2); border-radius:4px}
+/* chế độ Desktop / Mobile */
+.seg{display:inline-flex; border:1px solid var(--line-2); border-radius:6px; overflow:hidden}
+.seg button{height:26px; padding:0 10px; border:0; background:none; color:var(--dim); cursor:pointer}
+.seg button.is-on{background:var(--lime); color:#0b0b0b; font-weight:600}
+[hidden]{display:none !important}
+.app.is-m .stage__view{display:block; overflow:auto}
+.app.is-m [data-frame], .app.is-m .scrub, .app.is-m .side__body details:not(.d-sheets){display:none}
+/* khung mobile: 375 × 748·n (đơn vị = px Figma khổ 375, --u = px màn / đơn vị), ảnh tĩnh như trên điện thoại */
+.mboard{position:relative; margin:0 auto; background:#fffef8 var(--bg, none) 50% 50% / cover no-repeat; box-shadow:0 0 0 1px var(--line-2), 0 20px 60px rgba(0,0,0,.5)}
+.mboard .pm{position:absolute; display:block; max-width:none; height:auto; cursor:grab; user-select:none; -webkit-user-drag:none;
+  left:calc(var(--mx) * var(--u)); top:calc(var(--my) * var(--u)); width:calc(var(--mw) * var(--u)); rotate:calc(var(--mr) * 1deg);
+  filter:drop-shadow(0 calc(3 * var(--u)) calc(6 * var(--u)) rgba(40,30,10,.16))}
+.mboard .pm.is-drag{cursor:grabbing}
+.mb__gut{position:absolute; top:0; bottom:0; width:calc(60 * var(--u)); z-index:9000; pointer-events:none; background:rgba(14,14,14,.45);
+  background-image:repeating-linear-gradient(135deg, rgba(255,255,255,.08) 0 1px, transparent 1px 8px)}
+.mb__gut--l{right:100%; border-right:1px dashed rgba(0,0,0,.35)} .mb__gut--r{left:100%; border-left:1px dashed rgba(0,0,0,.35)}
+.mb__screen{position:absolute; left:calc(-60 * var(--u)); right:calc(-60 * var(--u)); height:0; border-top:1px dashed #d9822b; z-index:9001; pointer-events:none}
+.mb__screen span{position:absolute; right:0; top:2px; font:10px 'Geist Mono',monospace; color:#d9822b}
+.hdl{position:absolute; pointer-events:none; outline:1.5px solid var(--lime); transform-origin:50% 50%; z-index:9999}
+.hdl i{position:absolute; width:12px; height:12px; margin:-6px 0 0 -6px; background:#fff; border:1.5px solid var(--lime); pointer-events:auto}
+.hdl i[data-h=nw]{left:0; top:0; cursor:nwse-resize} .hdl i[data-h=ne]{left:100%; top:0; cursor:nesw-resize}
+.hdl i[data-h=sw]{left:0; top:100%; cursor:nesw-resize} .hdl i[data-h=se]{left:100%; top:100%; cursor:nwse-resize}
+.hdl i[data-h=rot]{left:50%; top:-34px; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:var(--lime); cursor:grab}
+.hdl::before{content:''; position:absolute; left:50%; top:-26px; height:26px; border-left:1.5px solid var(--lime)}
+.hdl b{position:absolute; left:50%; bottom:-26px; transform:translateX(-50%); font:500 10px 'Geist Mono',monospace; color:#0f1513; background:var(--lime); padding:2px 5px; border-radius:4px; white-space:nowrap}
+.sheet__fields--m{grid-template-columns:repeat(4,1fr)}
 </style>
 </head>
 <body>
@@ -82,8 +108,10 @@ kbd{font:11px 'Geist Mono',monospace; padding:1px 4px; border:1px solid var(--li
   <section class="stage">
     <div class="stage__bar">
       <b>Poster Editor</b>
-      <span style="color:var(--dim)">Khung xem</span>
-      <select data-aspect>
+      <span class="seg"><button type="button" data-mode="desktop" class="is-on">Desktop</button><button type="button" data-mode="mobile">Mobile</button></span>
+      <select data-screens hidden title="Chiều cao bản mobile"><option value="2">2 màn</option><option value="3">3 màn</option></select>
+      <span style="color:var(--dim)" data-d-only>Khung xem</span>
+      <select data-aspect data-d-only>
         <option value="screen">Màn hiện tại − menu</option>
         <option value="1920x1000">1920 × 1000 (FHD − menu)</option>
         <option value="1440x820">1440 × 820 (MacBook 14)</option>
@@ -93,9 +121,16 @@ kbd{font:11px 'Geist Mono',monospace; padding:1px 4px; border:1px solid var(--li
       </select>
       <input type="number" data-cw value="1920" style="width:70px" hidden> <input type="number" data-ch value="1000" style="width:70px" hidden>
       <span style="flex:1"></span>
-      <span style="color:var(--dim)">Kéo tờ để dời · <kbd>Shift</kbd>+kéo để xoay · cuộn chuột trên khung = cuộn trang</span>
+      <span style="color:var(--dim)" data-d-only>Kéo tờ để dời · <kbd>Shift</kbd>+kéo để xoay · cuộn chuột trên khung = cuộn trang</span>
+      <span style="color:var(--dim)" data-m-only hidden>Mobile = ảnh tĩnh, không hiệu ứng. Kéo để dời · kéo góc / lăn chuột đổi cỡ · nút tròn hoặc <kbd>Shift</kbd>+kéo để xoay · mũi tên nhích (<kbd>Shift</kbd> ×10). Vạch cam = hết một màn; vùng sọc 2 bên chỉ hiện trên máy rộng.</span>
     </div>
-    <div class="stage__view"><div class="stage__frame" data-frame><span class="stage__hint" data-hint></span></div></div>
+    <div class="stage__view"><div class="stage__frame" data-frame><span class="stage__hint" data-hint></span></div>
+      <div class="mboard" data-mboard hidden>
+        <i class="mb__gut mb__gut--l"></i><i class="mb__gut mb__gut--r"></i>
+        <i class="mb__screen" style="top:calc(748 * var(--u))"><span>màn 2</span></i>
+        <i class="mb__screen mb__screen--3" style="top:calc(1496 * var(--u))"><span>màn 3</span></i>
+      </div>
+    </div>
     <div class="scrub">
       <button class="btn" type="button" data-prev title="Tờ trước">‹</button>
       <button class="btn" type="button" data-next title="Tờ sau">›</button>
@@ -126,7 +161,7 @@ kbd{font:11px 'Geist Mono',monospace; padding:1px 4px; border:1px solid var(--li
 </div>
 
 <!-- Thông số đã lưu (nút Lưu ở trang này ghi vào đây, khoá "poster.…") -->
-<script src="assets/js/chande-settings.js?v=202610141401"></script>
-<script type="module" src="assets/js/poster-edit.js?v=202610141401"></script>
+<script src="assets/js/chande-settings.js?v=202610141524"></script>
+<script type="module" src="assets/js/poster-edit.js?v=202610141524"></script>
 </body>
 </html>

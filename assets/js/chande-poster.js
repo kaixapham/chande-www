@@ -21,6 +21,11 @@
  * màu nền làm outro / khung / stack về mặc định). Luôn gửi đủ qua params() bên dưới.
  *
  * Không có WebGL hoặc danh sách rỗng thì section giữ nguyên ảnh tĩnh `poster.webp`.
+ *
+ * MOBILE (≤ 899px): KHÔNG dựng chồng giấy 3D — các tờ thành ảnh tĩnh đặt theo khung 375 × 748·n
+ * (n = data-m-screens của section, 2 hoặc 3 màn): mỗi tờ có mx, my (góc trên trái), mw (bề rộng),
+ * mr (độ xoay) — sửa ở poster-edit.html, chế độ Mobile; CSS co theo --s (home.css). mimg = bản ảnh nhẹ
+ * cho mobile (scripts/wall-optimize.py tạo, đuôi -m<bề rộng>.webp), chỉ dùng khi khớp ảnh và đủ nét.
  */
 import { mount as mountStack, easeCurve, RUNTIME_DEFAULTS } from './paper-stack.js'
 
@@ -51,6 +56,48 @@ const CODE = structuredClone(CONFIG) // mặc định trong code (trang chỉnh 
 window.CHANDE_SETTINGS_APPLY?.('poster', CONFIG)
 
 let live = null
+const mobileMQ = matchMedia('(max-width: 899px)')
+
+/* ------------------------------------------------------------ bản mobile tĩnh -- */
+const stem = (path) => String(path || '').replace(/\.(png|webp|jpe?g)$/i, '')
+function mobileSrc(s) {
+  const m = /-m(\d+)\.webp$/.exec(s.mimg || '')
+  return m && s.mimg.startsWith(`${stem(s.img)}-m`) && +m[1] >= 2.4 * (+s.mw || 0) ? s.mimg : s.img
+}
+function rawSheets(section) {
+  try {
+    return JSON.parse(section.querySelector('[data-poster-sheets]')?.textContent || '[]').filter((s) => s && s.img)
+  } catch {
+    return []
+  }
+}
+function renderMobile(section) {
+  if (section._m) return
+  const box = document.createElement('div')
+  box.className = 'hs-poster__m'
+  for (const s of rawSheets(section)) {
+    if (!Number.isFinite(+s.mx) || s.mx === null || s.mx === '') continue // chưa dàn cho mobile
+    const im = document.createElement('img')
+    im.className = 'poster__m'
+    im.src = mobileSrc(s)
+    im.alt = s.name || ''
+    im.loading = 'lazy'
+    im.decoding = 'async'
+    for (const [k, v] of Object.entries({ mx: s.mx, my: s.my, mw: s.mw || 160, mr: s.mr || 0 })) im.style.setProperty(`--${k}`, +v || 0)
+    box.append(im)
+  }
+  const bg = CONFIG.params.frame?.bgImage
+  // đường dẫn tuyệt đối: url() trong biến CSS được hiểu theo file CSS dùng nó (assets/css/), không theo trang
+  if (bg) section.style.setProperty('--poster-bg', `url("${new URL(bg, document.baseURI).href}")`)
+  section.append(box)
+  section._m = box
+  section.classList.add('is-m')
+}
+function clearMobile(section) {
+  section._m?.remove()
+  section._m = null
+  section.classList.remove('is-m')
+}
 
 // Có WebGL VÀ chạy bằng GPU thật. Máy không có / bị chặn GPU (và máy chấm điểm như
 // PageSpeed) vẽ WebGL bằng phần mềm (SwiftShader, llvmpipe…): chồng poster 3D làm đứng
@@ -111,7 +158,10 @@ function presize(section, sheets) {
 
 function mount(scope = document) {
   const section = scope.querySelector('[data-poster-stack]')
-  if (!section || live?.section === section) return
+  if (!section) return
+  if (mobileMQ.matches) return renderMobile(section)
+  clearMobile(section)
+  if (live?.section === section) return
   const sheets = readSheets(section)
   // ảnh poster tĩnh chỉ dùng khi KHÔNG dựng được chồng poster (CSS ẩn sẵn, không lộ lúc chờ nạp)
   if (!sheets.length || !hasWebGL()) return void section.classList.add('is-fallback')
@@ -249,29 +299,47 @@ function destroy() {
 // dựng cảnh): chỉ dựng khi người xem cuộn tới gần (cách ~1.5 màn) — dựng ngay lúc tải
 // trang làm đứng trang cả giây trên máy yếu. Chưa dựng xong thì ảnh poster tĩnh đứng chỗ.
 // Chiều cao thì chốt ngay (presize) để bố cục trang không đổi lúc dựng xong.
+function bootDesktop(sec) {
+  if (!hasWebGL()) return
+  const sh = readSheets(sec)
+  if (sh.length) presize(sec, sh)
+  let built = false
+  const build = () => {
+    if (built) return
+    built = true
+    io.disconnect()
+    if (!mobileMQ.matches && sec.isConnected) mount(document)
+  }
+  const io = new IntersectionObserver((es) => es.some((e) => e.isIntersecting) && build(), { rootMargin: '150% 0px' })
+  io.observe(sec)
+  // Desktop: dựng sẵn lúc trang rảnh (~3 s sau khi tải xong, người xem còn ở đầu trang) — dựng lúc cuộn
+  // tới thì đúng lúc đang lướt qua cụm vòng tròn, Safari giật rõ. Máy cảm ứng giữ cách cũ (đỡ bộ nhớ).
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    const idle = window.requestIdleCallback || ((f) => setTimeout(f, 50))
+    const later = () => setTimeout(() => idle(build, { timeout: 2000 }), 3000)
+    if (document.readyState === 'complete') later()
+    else addEventListener('load', later, { once: true })
+  }
+}
 {
   const sec = document.querySelector('[data-poster-stack]')
-  if (sec && hasWebGL()) {
-    const sh = readSheets(sec)
-    if (sh.length) presize(sec, sh)
-    let built = false
-    const build = () => {
-      if (built) return
-      built = true
-      io.disconnect()
-      mount(document)
-    }
-    const io = new IntersectionObserver((es) => es.some((e) => e.isIntersecting) && build(), { rootMargin: '150% 0px' })
-    io.observe(sec)
-    // Desktop: dựng sẵn lúc trang rảnh (~3 s sau khi tải xong, người xem còn ở đầu trang) — dựng lúc cuộn
-    // tới thì đúng lúc đang lướt qua cụm vòng tròn, Safari giật rõ. Máy cảm ứng giữ cách cũ (đỡ bộ nhớ).
-    if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
-      const idle = window.requestIdleCallback || ((f) => setTimeout(f, 50))
-      const later = () => setTimeout(() => idle(build, { timeout: 2000 }), 3000)
-      if (document.readyState === 'complete') later()
-      else addEventListener('load', later, { once: true })
-    }
+  if (sec) {
+    if (mobileMQ.matches) renderMobile(sec)
+    else bootDesktop(sec)
   }
+  // qua lại mốc 900px (xoay iPad, kéo cửa sổ): đổi giữa ảnh tĩnh và chồng giấy 3D
+  mobileMQ.addEventListener?.('change', () => {
+    const s = document.querySelector('[data-poster-stack]')
+    if (!s) return
+    if (mobileMQ.matches) {
+      destroy()
+      s.classList.remove('is-sized')
+      renderMobile(s)
+    } else {
+      clearMobile(s)
+      bootDesktop(s)
+    }
+  })
 }
 
 if (window.barba?.hooks) {
@@ -292,6 +360,7 @@ window.CHANDE_POSTER = {
   config: CONFIG,
   defaults: CODE,
   readSheets,
+  mobileSrc,
   mount,
   destroy,
   get api() {

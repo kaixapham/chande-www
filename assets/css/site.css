@@ -406,7 +406,7 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
      chữ giới thiệu + video recap dồn đáy màn */
   .travel__col{position:static; width:auto; min-height:calc(var(--vp) - var(--bar) - 168 * var(--s)); padding:calc(16 * var(--s)) 12px calc(12 * var(--s)); background:#182220}
   .travel__intro{position:static; flex:1; gap:calc(24 * var(--s))}
-  .hero__org{display:block; margin:0 0 auto; padding-bottom:calc(24 * var(--s)); color:#d9cfd0; font-weight:500; font-size:max(11px, calc(16 * var(--s))); line-height:.98; letter-spacing:-.02em;
+  .hero__org{display:block; margin:0 0 auto; padding-bottom:calc(24 * var(--s)); color:#f4f3eb; font-weight:500; font-size:max(11px, calc(16 * var(--s))); line-height:.98; letter-spacing:-.02em;
     text-transform:uppercase; text-box:trim-both cap alphabetic; --tb:1}
   .hero__intro-text{font-size:max(11px, calc(16 * var(--s))); gap:calc(24 * var(--s)); color:#f4f3eb}
   .hero__intro-text p{text-box:none; --tb:0} /* Figma không cắt sát chữ ở khối này */

@@ -766,7 +766,8 @@ void main() {
       // đang chuyển trang: đợi xong (Safari không có requestIdleCallback — hẹn giờ rơi đúng lúc trang trượt)
       const T = window.CHANDE_TRANSITION
       if (T?.moving) return T.afterMove(() => (warmT = idle(step, { timeout: 4000 })))
-      const g = [...groups].find((x) => !x.r && !x.failed && x.root.isConnected)
+      // bỏ qua vùng đang ẩn (display:none — phần chỉ có ở desktop / chỉ có ở mobile): không tốn context WebGL
+      const g = [...groups].find((x) => !x.r && !x.failed && x.root.isConnected && x.root.getClientRects().length)
       if (!g) return
       ensureRenderer(g)
       if (g.r) {

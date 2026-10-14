@@ -27,7 +27,27 @@ html,body{margin:0; height:100%; background:var(--bg); color:var(--fg); font:13p
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cpath d='M0 .5H96M.5 0V96' stroke='%23333' stroke-dasharray='4 4'/%3E%3C/svg%3E") 0 0 / calc(96 * var(--u)) calc(96 * var(--u))}
 .board__strip{position:absolute; left:0; right:0; top:calc(1460 * var(--u)); bottom:0; background:#1b2524; opacity:.6}
 .board__label{position:absolute; left:8px; font:10px 'Geist Mono',monospace; color:rgba(255,255,255,.35); pointer-events:none}
-.wall__piece{position:absolute; display:block; height:auto; max-width:none; transform-origin:50% 50%; cursor:grab; user-select:none; -webkit-user-drag:none}
+.wall__piece{position:absolute; display:block; height:auto; max-width:none; transform-origin:50% 50%; cursor:grab; user-select:none; -webkit-user-drag:none;
+  left:calc(var(--x) * var(--u)); top:calc(var(--y) * var(--u)); width:calc(var(--w) * var(--u)); rotate:calc(var(--r) * 1deg)}
+/* chế độ Mobile: khung 375 × 748·n, mảnh theo mx / my / mw / mr; vùng tối 2 bên = phần dư trên máy rộng */
+.board.is-m{overflow:visible}
+.board.is-m .wall__piece{left:calc(var(--mx) * var(--u)); top:calc(var(--my) * var(--u)); width:calc(var(--mw) * var(--u)); rotate:calc(var(--mr) * 1deg)}
+.board.is-m .wall__piece[data-nom]{display:none}
+.board .m-only{display:none} .board.is-m .m-only{display:block} .board.is-m .d-only{display:none}
+.board__gut{position:absolute; top:0; bottom:0; width:calc(60 * var(--u)); background:rgba(14,14,14,.55); z-index:9000; pointer-events:none;
+  background-image:repeating-linear-gradient(135deg, rgba(255,255,255,.06) 0 1px, transparent 1px 8px)}
+.board__gut--l{right:100%; border-right:1px dashed rgba(255,255,255,.35)} .board__gut--r{left:100%; border-left:1px dashed rgba(255,255,255,.35)}
+.board.is-m .board__band{height:calc(96 * var(--u))}
+.board.is-m .board__grid{top:calc(96 * var(--u)); bottom:calc(166 * var(--u)); background-size:calc(375 / 8 * var(--u)) calc(375 / 8 * var(--u))}
+.board.is-m .board__strip{top:auto; height:calc(166 * var(--u))}
+.board__screen{position:absolute; left:calc(-60 * var(--u)); right:calc(-60 * var(--u)); height:0; border-top:1px dashed var(--warn); z-index:9001; pointer-events:none}
+.board__screen span{position:absolute; right:0; top:2px; font:10px 'Geist Mono',monospace; color:var(--warn)}
+.board .board__screen[hidden]{display:none}
+.seg{display:inline-flex; border:1px solid var(--line-2); border-radius:8px; overflow:hidden}
+.seg button{height:24px; padding:0 10px; border:0; background:none; color:var(--dim); font:inherit; font-size:12px; cursor:pointer}
+.seg button.is-on{background:var(--lime); color:#0f1513; font-weight:600}
+.stage__bar select{height:24px; background:var(--panel-2); color:var(--fg); border:1px solid var(--line-2); border-radius:6px; font:inherit; font-size:12px}
+.stage__bar select[hidden], .stage__bar .hint[hidden]{display:none}
 .wall__piece.is-drag{cursor:grabbing}
 .hdl{position:absolute; pointer-events:none; outline:1.5px solid var(--lime); transform-origin:50% 50%; z-index:9999}
 .hdl[hidden]{display:none}
@@ -68,14 +88,22 @@ html,body{margin:0; height:100%; background:var(--bg); color:var(--fg); font:13p
     <div class="stage__bar">
       <a class="btn btn--sm" href="cms.html">← CMS</a>
       <b>Collage — section "Kỷ niệm"</b>
-      <span class="hint">Kéo để dời · kéo góc để đổi cỡ · kéo nút tròn để xoay (Shift: bước 15°) · lăn chuột trên mảnh cũng đổi cỡ · phím mũi tên nhích (Shift ×10) · Delete xoá · [ ] đưa xuống / lên · thả file ảnh vào khung để thêm</span>
+      <span class="seg"><button type="button" data-mode="desktop">Desktop</button><button type="button" data-mode="mobile">Mobile</button></span>
+      <select data-screens hidden title="Chiều cao bản mobile"><option value="2">2 màn</option><option value="3">3 màn</option></select>
+      <span class="hint" data-hint-m hidden>Mobile: ảnh tĩnh, khung 375 × 748/màn (vạch vàng = hết một màn). Vùng sọc 2 bên chỉ hiện trên máy rộng — đừng để nội dung chính ở đó.</span>
+      <span class="hint" data-hint-d>Kéo để dời · kéo góc để đổi cỡ · kéo nút tròn để xoay (Shift: bước 15°) · lăn chuột trên mảnh cũng đổi cỡ · phím mũi tên nhích (Shift ×10) · Delete xoá · [ ] đưa xuống / lên · thả file ảnh vào khung để thêm</span>
     </div>
     <div class="stage__view" data-view>
       <div class="board" data-board>
         <i class="board__band"></i><i class="board__grid"></i><i class="board__strip"></i>
-        <span class="board__label" style="top:4px">dải chấm xanh (0–240)</span>
-        <span class="board__label" style="top:calc(326 * var(--u))">lưới</span>
-        <span class="board__label" style="top:calc(1464 * var(--u))">dải ảnh cuối section</span>
+        <span class="board__label d-only" style="top:4px">dải chấm xanh (0–240)</span>
+        <span class="board__label d-only" style="top:calc(326 * var(--u))">lưới</span>
+        <span class="board__label d-only" style="top:calc(1464 * var(--u))">dải ảnh cuối section</span>
+        <span class="board__label m-only" style="top:4px">dải chấm (96)</span>
+        <span class="board__label m-only" style="top:auto; bottom:calc(150 * var(--u))">gạch neon + viên thuốc (166)</span>
+        <i class="board__gut board__gut--l m-only"></i><i class="board__gut board__gut--r m-only"></i>
+        <i class="board__screen m-only" style="top:calc(748 * var(--u))"><span>màn 2</span></i>
+        <i class="board__screen board__screen--3 m-only" style="top:calc(1496 * var(--u))"><span>màn 3</span></i>
       </div>
     </div>
   </section>
@@ -97,7 +125,7 @@ html,body{margin:0; height:100%; background:var(--bg); color:var(--fg); font:13p
     <div class="side__msg" data-msg></div>
   </aside>
 </div>
-<script src="assets/js/chande-wall.js?v=202610141401"></script>
-<script src="assets/js/wall-edit.js?v=202610141401"></script>
+<script src="assets/js/chande-wall.js?v=202610141524"></script>
+<script src="assets/js/wall-edit.js?v=202610141524"></script>
 </body>
 </html>

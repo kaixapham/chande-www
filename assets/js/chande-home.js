@@ -238,8 +238,9 @@
       let darkOn = null
       if (shots.length && dateTop)
         jobs.push(() => {
-          const y = dateTop.getBoundingClientRect().top
-          const on = shots.some((s) => {
+          // mobile (≤ 899px) ẩn cụm ngày dính -> không có nền tối (Figma mobile giữ nền trắng)
+          const y = dateTop.offsetParent ? dateTop.getBoundingClientRect().top : null
+          const on = y !== null && shots.some((s) => {
             const r = s.getBoundingClientRect()
             return r.top <= y + 0.5
           })
@@ -299,6 +300,7 @@
       }
       if (heads.length) {
         jobs.push(() => {
+          if (dates && !dates.offsetParent) return // cụm ngày đang ẩn (mobile)
           const line = innerHeight * 0.6
           let i = 0
           heads.forEach((h, k) => h.getBoundingClientRect().top < line && (i = k))

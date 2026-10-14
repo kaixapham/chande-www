@@ -49,6 +49,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .pillrun--sm .pillrun__track{animation-name:hs-pills-sm}
 @keyframes hs-pills-m{from{transform:translateX(calc(-219 * 100vw / 375))} to{transform:none}} /* mobile: 2 viên × (108 + 1.5) */
 @keyframes hs-pills-sm{from{transform:translateX(calc(-173.38 * var(--u)))} to{transform:none}}
+@keyframes hs-pills-ag{from{transform:translateX(calc(-146 * 100vw / 375))} to{transform:none}} /* agenda mobile: 2 viên × (72 + 1) */
 
 /* Dải tròn đen/trắng chạy ngang — chu kỳ 2 hình tròn = 332 */
 .dotrun{overflow:hidden}
@@ -270,8 +271,11 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .agenda__head{margin:0; text-align:center; white-space:nowrap}
 .agenda__head span{display:block}
 .agenda__head .hot{color:var(--lime)}
+/* phần chỉ có ở bản mobile (Figma 695:53878): nhãn ngày, dòng tách khác, ảnh đêm ngày 3 */
+.agenda__day, .agenda__night, .agenda__head .only-m{display:none}
 .agenda__head--wrap{white-space:normal; width:calc(723 * var(--u))}
-.agenda__shot{position:relative; width:calc(685 * var(--u))}
+.agenda__shot{position:relative; width:calc(685 * var(--u)); margin:0}
+.agenda__night{margin:0}
 .agenda__shot > img:first-child{width:100%; height:calc(576 * var(--u)); object-fit:cover}
 .agenda__shot > .field{height:calc(136 * var(--u))}
 /* thanh process tự đổi ảnh ngày 1 (chande-home.js): vạch neon mép trên ảnh */
@@ -329,6 +333,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 /* bảng collage kéo thả (chande-wall.js): toạ độ mảnh theo px bản 1920 (× --u) tính từ đỉnh section */
 .hs-wall__board{inset:0; z-index:1}
 .wall__piece{position:absolute; display:block; height:auto; max-width:none; transform-origin:50% 50%; user-select:none; -webkit-user-drag:none;
+  left:calc(var(--x) * var(--u)); top:calc(var(--y) * var(--u)); width:calc(var(--w) * var(--u)); rotate:calc(var(--r) * 1deg);
   transition:scale .2s cubic-bezier(.2,.7,.2,1), filter .2s ease}
 @media (hover:hover) and (pointer:fine){ .wall__piece{cursor:grab} }
 .wall__piece.is-drag{cursor:grabbing; scale:1.04; filter:drop-shadow(0 18px 28px rgba(0,0,0,.55))}
@@ -594,7 +599,8 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-intro .chip--orange{left:12px}
   .hs-intro .chip--yellow{left:calc(12px + 50 * var(--q))}
   .hs-intro .chip--green{left:calc(12px + 100 * var(--q))}
-  .hs-intro .chip__icon{display:none} /* sóng / miệng là trò nền tối của desktop; mobile chỉ con mắt như Figma */
+  /* icon trong viên (sóng ở viên vàng, miệng ở viên xanh — chande-chips.js) hiện luôn như trang chủ desktop, vừa lòng viên */
+  .hs-intro .chip .chip__icon{display:block; opacity:1; left:calc(4 * var(--q)); top:calc(4 * var(--q)); width:calc(100% - 8 * var(--q)); height:calc(100% - 8 * var(--q))}
   .hs-intro > .hs-intro__eye{position:absolute; display:block; left:calc(12px + 11 * var(--q)); top:calc(247 * var(--q)); width:calc(27 * var(--q)); height:calc(16 * var(--q))}
   .hs-intro > .hs-intro__eye .hs-eye{opacity:1} /* thắng style chande-chips.js chèn sau (ẩn mắt khi chưa vào nền tối) */
 
@@ -649,6 +655,65 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-land .hs-land__bg:not(.hs-land__bg--m){display:none}
   .hs-land__piece{left:calc(50% + (var(--mx) - 187.5) * var(--s)); top:calc(var(--my) * var(--s)); width:calc(var(--mw) * var(--s))}
   .hs-land__piece > img{rotate:calc(var(--mr) * 1deg)}
+
+  /* 7. Poster — bản mobile TĨNH (chande-poster.js không dựng chồng giấy 3D dưới 900px): các tờ là ảnh
+     đặt theo khung 375 × 748·n (n = data-m-screens, mặc định 2 màn), co theo --s như các khung "một
+     màn" (mỗi 748 = đúng một màn thấy được dưới header; màn rộng thì cả khung canh giữa ngang).
+     Sửa ở poster-edit.html, chế độ Mobile. */
+  .hs-poster{--n:2; height:calc(748 * var(--n) * var(--s)); overflow:hidden; background:#fffef8 var(--poster-bg, none) 50% 50% / cover no-repeat}
+  .hs-poster[data-m-screens="3"]{--n:3}
+  .hs-poster .hs-poster__pin{display:none}
+  .hs-poster__m{position:absolute; inset:0}
+  .hs-poster img.poster__m{position:absolute; display:block; left:calc(50% + (var(--mx) - 187.5) * var(--s)); top:calc(var(--my) * var(--s));
+    width:calc(var(--mw) * var(--s)); height:auto; max-width:none; object-fit:fill; rotate:calc(var(--mr) * 1deg);
+    filter:drop-shadow(0 calc(3 * var(--s)) calc(6 * var(--s)) rgba(40,30,10,.16))}
+  /* Agenda vẫn trồi lên phủ: poster dính khi đáy chạm đáy vùng thấy được */
+  .stack-over > .hs-poster{top:calc(var(--vp) - 748 * var(--n) * var(--s) + 1px)}
+
+  /* 8. Agenda — Figma mobile 695:53878 (khổ 375, --q = 1px khổ 375): một cột 351 giữa, mỗi ngày =
+     nhãn "Day 0x / giờ" (52) · cách 48 · danh sách (52) · cách 32 · ảnh. Nút Agenda | Bootcamp 144 × 56
+     cách đầu section 96. Ngày 1: ảnh tự đổi + dải effect (như desktop); ngày 2: chỉ ảnh phải của cặp
+     (351 × 403) + thanh tối 48 có dải viên 72 × 28; ngày 3: ảnh đêm tràn ngang + dải effect 96.
+     Bỏ cụm ngày dính, nút ‹ ›, con tem, ảnh trái của cặp, nền tối khi cuộn (chande-home.js). */
+  .hs-agenda{--q:calc(100vw / 375); height:auto; padding-top:calc(96 * var(--q))}
+  .hs-agenda .agenda__dates{display:none}
+  .hs-agenda .agenda{gap:0; padding-top:0}
+  .agenda .pills .pill{width:calc(144 * var(--q)); height:calc(56 * var(--q)); min-width:0; min-height:0; font-size:calc(14 * var(--q)); letter-spacing:-.02em}
+  .hs-agenda .agenda__day{display:block; margin:calc(32 * var(--q)) 0 0; font-size:calc(52 * var(--q)); text-align:center; white-space:nowrap}
+  .hs-agenda .pills + .agenda__day{margin-top:calc(16 * var(--q))}
+  .agenda__day span{display:block}
+  .hs-agenda .agenda__head, .hs-agenda .agenda__head--wrap{width:calc(351 * var(--q)); margin-top:calc(48 * var(--q)); font-size:calc(52 * var(--q)); white-space:normal}
+  .agenda__head .only-d{display:none}
+  .agenda__head .only-m{display:block}
+  .hs-agenda .agenda__shot{width:calc(351 * var(--q)); margin-top:calc(32 * var(--q))}
+  .hs-agenda .agenda__shot > img:first-child{height:auto; aspect-ratio:1709 / 1436}
+  .hs-agenda .agenda__shot > .field{height:auto; aspect-ratio:685 / 136}
+  .hs-agenda .agenda__pair{width:calc(351 * var(--q)); margin-top:calc(32 * var(--q)); display:block}
+  .agenda__pair > .agenda__shot, .agenda__pair > .agenda__stamp, .agenda__pair > .agenda__nav{display:none}
+  .hs-agenda .agenda__house{width:100%; height:auto}
+  .hs-agenda .agenda__house > img{height:calc(403 * var(--q)); object-position:50% 50%}
+  .agenda__house .bar{position:relative; height:calc(48 * var(--q)); background:#1b2524}
+  .hs-agenda .agenda__house .pillrun{left:0; right:0; width:auto; top:calc(413 * var(--q)); height:calc(28 * var(--q))}
+  .agenda__house .pillrun__track{gap:1px; animation-name:hs-pills-ag}
+  .agenda__house .pillrun--sm .pillrun__track > i, .agenda__house .pillrun__track > i{width:calc(72 * var(--q)); height:calc(28 * var(--q))}
+  .hs-agenda .agenda__night{display:block; width:100%; margin-top:calc(32 * var(--q))}
+  .agenda__night > img{width:100%; height:auto; aspect-ratio:375 / 316; object-fit:cover}
+  .agenda__night > .field{height:calc(96 * var(--q))}
+
+  /* 9. Kỷ niệm (wall) — bản mobile TĨNH, không kéo thả (wall-edit.html, chế độ Mobile). Khung 375 × 748·n
+     (n = data-m-screens, 2 hoặc 3 màn): dải chấm 96 trên cùng và dải đáy 166 (gạch neon 94 + viên thuốc 72,
+     như dải Strip mobile) tràn ngang theo --q (khớp Figma 695:53878: Agenda kết thúc ngay trên dải chấm);
+     phần giữa co theo --s như các khung "một màn" (canh giữa ngang) — mảnh đặt theo mx / my / mw / mr, my
+     tính từ mép dưới dải chấm nên vị trí so với dải luôn đúng như trình sửa. */
+  .hs-wall{--q:calc(100vw / 375); --n:2; height:calc(262 * var(--q) + (748 * var(--n) - 262) * var(--s)); overflow:hidden}
+  .hs-wall[data-m-screens="3"]{--n:3}
+  .hs-wall .dotrun{--u:calc(66 * var(--q) / 164); height:calc(96 * var(--q))}
+  .hs-wall__grid{top:calc(96 * var(--q)); bottom:calc(166 * var(--q)); background-size:calc(375 / 8 * var(--s)) calc(375 / 8 * var(--s));
+    background-position:calc(50% - 187.5 * var(--s)) 0}
+  .hs-wall .strip{top:auto; bottom:0}
+  .hs-wall .wall__piece{left:calc(50% + (var(--mx) - 187.5) * var(--s)); top:calc(96 * var(--q) + (var(--my) - 96) * var(--s)); width:calc(var(--mw) * var(--s));
+    rotate:calc(var(--mr) * 1deg); transition:none; cursor:auto}
+  .hs-wall .wall__piece[data-nom]{display:none}
 
   /* 6. About — Figma Section-Poster mobile (628:610, khổ 375; --q = 1px khổ 375, co theo bề ngang).
      Một cột giữa, xếp lại thứ tự bằng `order` (các khối vẫn là con trực tiếp; .circles / nav pills
