@@ -849,7 +849,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-foot__end .hs-foot__credit{white-space:normal; font-size:max(9px, calc(10 * var(--q))); line-height:1.4; text-box:none} /* ghi công model 3D (CC BY 4.0) */
   .hs-foot__end .hs-foot__credit a{font-size:inherit}
   .hs-foot__logo{grid-row:6; justify-self:center; width:calc(100% - 24px); max-width:none; height:auto; margin:calc(12 * var(--q)) 12px 0} /* logo luôn đủ bề ngang (trước co theo chiều cao màn để cả cụm vừa một màn -> iPhone thấp thì logo hẹp) */
-  .names{width:auto; gap:calc(4 * var(--s)); font-size:max(9px, calc(14 * var(--s))); line-height:.9; letter-spacing:-.02em; white-space:nowrap; color:#838b89}
+  .names{width:auto; gap:calc(4 * var(--s)); font-size:max(14px, calc(14 * var(--s))); line-height:.9; letter-spacing:-.02em; white-space:nowrap; color:#838b89} /* tên ở footer không dưới 14px trên mọi máy */
   .hs-foot__n1{grid-row:7; margin:calc(16 * var(--s)) 12px 0}
   .hs-foot__n2, .hs-foot__col > .hs-foot__n2{grid-row:8; margin:calc(32 * var(--s)) 12px 0; gap:calc(16 * var(--s))}
   .hs-foot__n2 .pair{width:calc(237.6 * var(--s)); justify-content:space-between}
@@ -860,6 +860,8 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-foot__legal{grid-row:12; position:relative; z-index:1; width:auto; margin:calc(12 * var(--s)) 0 0; padding:calc(20 * var(--s)) 12px;
     border-top:1px solid rgba(255,255,255,.08); font-size:calc(14 * var(--q))}
   .hs-foot__legal > p:not(:first-child){display:none} /* Figma mobile: chỉ dòng bản quyền (credit Lumen ở khối Social) */
+  /* màn rất hẹp (< 360, vd. iPhone SE đời đầu): 14px thì vài dòng tên dài hơn màn -> cho xuống dòng ở chỗ " / " */
+  @media (max-width:359px){ .hs-foot .names, .hs-foot .names span{white-space:normal} }
 }
 @media (prefers-reduced-motion:reduce){
   .pillrun__track, .dotrun__track, .hs-quote__bar span{animation:none}
@@ -927,30 +929,32 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
    theo chiều cao màn · khối tối 266 (ảnh 176 × 96 góc trên trái, 2 cụm chữ + "2020 – 2026" sát đáy) · gạch neon 32. */
 @media (max-width:899px){
   .ab-hero{background:#fff}
-  .ab-hero__stage{--q:calc(100vw / 375); height:auto; min-height:calc(var(--vp, 100svh) - var(--bar)); display:flex; flex-direction:column}
+  /* --hq = 1px khổ 375 nhưng không quá (màn thấy được − header) / 577 (577 = phần tối thiểu: tiêu đề + (©26) + thanh 48 +
+     khối tối 266 + gạch neon 32) -> màn thấp (iPhone 11 Safari ~540) thì cả cụm nhỏ lại chút cho vừa đúng một màn */
+  .ab-hero__stage{--hq:min(calc(100vw / 375), calc((var(--vp, 100svh) - var(--bar)) / 577)); height:auto; min-height:calc(var(--vp, 100svh) - var(--bar)); display:flex; flex-direction:column}
   .ab-hero__photo, .ab-hero__dark, .ab-hero__cream, .ab-hero__field{position:relative; left:auto; right:auto; top:auto; width:auto}
   .ab-hero__cream{order:1; flex:1 0 auto; height:auto; display:flex; flex-direction:column; gap:0;
-    padding:calc(12 * var(--q)) calc(12 * var(--q)) 0; background:#fff !important} /* Figma: nền trắng, không dither kem */
+    padding:calc(12 * var(--hq)) calc(12 * var(--hq)) 0; background:#fff !important} /* Figma: nền trắng, không dither kem */
   .ab-hero__title{order:1}
-  .ab-hero__year{order:2; margin:auto 0 calc(11 * var(--q)); padding-top:calc(8 * var(--q))}
+  .ab-hero__year{order:2; margin:auto 0 calc(11 * var(--hq)); padding-top:calc(8 * var(--hq))}
   /* thanh tối + dải viên chạy ở đáy mảng trắng, ngay trên khối tối (Figma 697:54815, như ảnh ngày 2 Agenda) */
-  .ab-hero__bar{order:3; position:relative; flex:none; align-self:auto; margin:0 calc(-12 * var(--q)); height:calc(48 * var(--q)); overflow:hidden}
-  .ab-hero__bar .pillrun{left:0; right:0; top:calc(10 * var(--q)); height:calc(28 * var(--q))}
+  .ab-hero__bar{order:3; position:relative; flex:none; align-self:auto; margin:0 calc(-12 * var(--hq)); height:calc(48 * var(--hq)); overflow:hidden}
+  .ab-hero__bar .pillrun{left:0; right:0; top:calc(10 * var(--hq)); height:calc(28 * var(--hq))}
   .ab-hero__bar .pillrun__track{gap:1px; animation-name:hs-pills-ag}
-  .ab-hero__bar .pillrun__track > i, .ab-hero__bar .pillrun--sm .pillrun__track > i{width:calc(72 * var(--q)); height:calc(28 * var(--q))}
-  .ab-hero__title, .ab-hero__year{position:static; font-size:calc(56 * var(--q))}
+  .ab-hero__bar .pillrun__track > i, .ab-hero__bar .pillrun--sm .pillrun__track > i{width:calc(72 * var(--hq)); height:calc(28 * var(--hq))}
+  .ab-hero__title, .ab-hero__year{position:static; font-size:calc(56 * var(--hq))}
   .ab-hero__title{width:auto}
   .ab-hero__title br.d{display:none}
   .ab-hero__year{align-self:flex-end}
   /* ảnh nằm TRONG khối tối: vào luồng trước khối tối, khối tối kéo lên phủ phía sau (12 + 96) */
-  .ab-hero__photo{order:2; z-index:1; width:calc(176 * var(--q)); height:calc(96 * var(--q)); margin:calc(12 * var(--q)) 0 0 calc(12 * var(--q))}
-  .ab-hero__dark{order:3; height:calc(266 * var(--q)); margin-top:calc(-108 * var(--q)); padding:0 calc(12 * var(--q)) calc(13 * var(--q));
+  .ab-hero__photo{order:2; z-index:1; width:calc(176 * var(--hq)); height:calc(96 * var(--hq)); margin:calc(12 * var(--hq)) 0 0 calc(12 * var(--hq))}
+  .ab-hero__dark{order:3; height:calc(266 * var(--hq)); margin-top:calc(-108 * var(--hq)); padding:0 calc(12 * var(--hq)) calc(13 * var(--hq));
     display:flex; flex-direction:column; justify-content:flex-end}
-  .ab-hero__intro{position:static; width:auto; gap:calc(24 * var(--q)); font-size:calc(16 * var(--q))}
+  .ab-hero__intro{position:static; width:auto; gap:calc(24 * var(--hq)); font-size:calc(16 * var(--hq))}
   .ab-hero__intro p{text-box:none}
-  .ab-hero__years{position:absolute; right:calc(12 * var(--q)); bottom:calc(13 * var(--q)); font-size:calc(16 * var(--q)); text-box:none}
+  .ab-hero__years{position:absolute; right:calc(12 * var(--hq)); bottom:calc(13 * var(--hq)); font-size:calc(16 * var(--hq)); text-box:none}
   .ab-hero__scroll{display:none}
-  .ab-hero__field{order:4; height:calc(32 * var(--q))}
+  .ab-hero__field{order:4; height:calc(32 * var(--hq))}
 }
 
 /* =============================================================================
