@@ -1270,11 +1270,12 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-comm .ab-comm__scheme > i{height:calc(400 / 9 * var(--q))}
   .ab-comm .ab-comm__band{order:2; gap:0; padding:0}
   .ab-comm__band h2{padding:calc(32 * var(--q)); font-size:calc(56 * var(--q)); line-height:.78; letter-spacing:-.04em; text-align:center}
-  .ab-comm .ab-comm__field{order:3}
+  .ab-comm .ab-comm__field{display:none} /* Figma 697:55254: gạch neon nằm GIỮA 2 ảnh lớn (.ab-pics__field) */
   .ab-comm .ab-comm__img{display:none}
   .ab-pics > .abs{position:relative} /* .hs .abs (absolute) thắng .ab-pics img -> 2 ảnh từng chồng lên nhau, section cao 0 */
   .ab-pics img{aspect-ratio:auto; height:calc(422 * var(--q))}
   .ab-pics .ab-pics__r{object-position:50% 97%}
+  .ab-pics .ab-pics__field{display:block; position:relative; height:calc(96 * var(--q))}
 }
 
 /* About mobile — CÂU CHUYỆN (Figma 659:43221, khổ 375, --q = 1px khổ 375). Lưới một cột (.ab-cols / .ab-col display: contents
@@ -1282,7 +1283,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
    117 × 162 + ghi chú (Talent) 14 cùng hàng (chân thẳng nhau) · 2 vòng 176 có chữ Visual / Effort · sọc 4 màu · khung "06 years"
    345 · thanh viên thuốc 48 · gạch neon 96 · khung "Sharing & learning" 375 · ảnh cả nhóm 320 · dải màu 400. Rồi khung tối
    "Memorable events (07)" 199 + gạch neon 96 (section Sự kiện). */
-.ab-panel__t .only-m{display:none}
+.ab-panel__t .only-m, .ab-panel__text .only-m, .ab-pics__field{display:none}
 @media (min-width:900px){ .ab-panel__t br.m{display:none} }
 @media (max-width:899px){
   .ab-story{display:grid; grid-template-columns:minmax(0, 1fr); gap:0; padding:0 calc(12 * var(--q))}
@@ -1324,11 +1325,11 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-story .ab-panel--b{grid-row:10; height:calc(375 * var(--q))}
   .ab-story .ab-panel{display:block; padding:0}
   .ab-story .ab-panel__t{position:absolute; left:calc(12 * var(--q)); top:calc(20 * var(--q)); font-size:calc(40 * var(--q)); line-height:.78; letter-spacing:-.02em}
-  .ab-panel__t .only-d{display:none} .ab-panel__t .only-m{display:inline}
-  .ab-story .ab-panel__text{position:absolute; left:calc(12 * var(--q)); top:calc(199 * var(--q)); width:calc(292 * var(--q)); gap:calc(24 * var(--q))}
-  .ab-story .ab-panel--b .ab-panel__text{top:calc(229 * var(--q)); width:calc(293 * var(--q))}
+  .ab-panel__t .only-d, .ab-panel__text .only-d{display:none} .ab-panel__t .only-m, .ab-panel__text .only-m{display:inline}
+  .ab-story .ab-panel__text{position:absolute; left:calc(12 * var(--q)); top:calc(191 * var(--q)); width:calc(292 * var(--q)); gap:calc(24 * var(--q))} /* Figma 697:55166 */
+  .ab-story .ab-panel--b .ab-panel__text{top:calc(221 * var(--q)); width:calc(293 * var(--q))}
   .ab-story .ab-panel__text p{font-size:max(12px, calc(14 * var(--q))); line-height:.96; text-transform:uppercase}
-  .ab-story .ab-panel__text p:last-child{width:calc(326 * var(--q)); max-width:calc(100vw - 24 * var(--q))}
+  .ab-story .ab-panel__text p:last-child{width:100%}
   .ab-story .ab-panel--b .ab-panel__text p:last-child{width:auto}
   .ab-story .ab-group{grid-row:11; width:calc(100% + 24 * var(--q)); max-width:none; height:calc(320 * var(--q))}
   .ab-story .ab-scheme{grid-row:12; width:auto}
