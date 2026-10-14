@@ -491,6 +491,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 /* cột phải: Back to top ở trên, dòng ghi công model 3D (CC BY 4.0) dồn xuống đáy, thẳng hàng CONTACT */
 .hs-foot__end{display:flex; flex-direction:column; justify-content:space-between; align-items:flex-end; text-align:right}
 .hs-foot__credit{line-height:1.5}
+.hs-foot__credits{display:none} /* khối ghi công riêng — chỉ bản mobile */
 .hs-foot__lumen{display:none} /* chỉ bản mobile (Figma 688:53584) */
 .hs-foot__hr{left:calc(726 * var(--u)); right:0; top:calc(1021 * var(--u)); height:1px; background:rgba(255,255,255,.08)}
 .hs-foot__vr{left:calc(1323 * var(--u)); top:calc(752 * var(--u)); width:1px; height:calc(269 * var(--u)); background:rgba(255,255,255,.08)}
@@ -822,7 +823,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
      Phần trên Figma cao 628 -> min-height = 628q + V để phần dưới tròn một màn. */
   .hs-foot{--q:calc(100vw / 375); --V:calc(var(--vp) - var(--bar)); display:grid; grid-template-columns:100%; gap:0; padding:0;
     min-height:calc(var(--foot-top, calc(628 * var(--q))) + var(--V)); /* --foot-top: đỉnh hàng logo, chande-home.js đo -> cuộn hết trang thì logo cách header đúng 12px */
-    grid-template-rows:calc(96 * var(--q)) calc(64 * var(--q)) calc(64 * var(--q)) auto auto auto auto auto minmax(calc(12 * var(--s)), 1fr) auto auto auto}
+    grid-template-rows:calc(96 * var(--q)) calc(64 * var(--q)) calc(64 * var(--q)) auto auto auto auto auto auto minmax(calc(12 * var(--s)), 1fr) auto auto auto}
   .hs-foot__col{display:contents}
   .hs-foot > *, .hs-foot__col > *{margin:0; grid-column:1}
   .hs-foot__field{grid-row:1; width:100%; height:100%}
@@ -833,7 +834,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   /* ô chấm: 7 chấm mũi tên dồn thành 4 chấm 2 × 2 như Figma (rê / chạm thì vẫn bay mũi tên như desktop) */
   .hs-foot__cta1{grid-row:2}
   .hs-foot__cta2{grid-row:3; flex-direction:row-reverse; justify-content:space-between}
-  .hs-foot__panel{grid-row:4 / 6; width:100%; height:auto; background:none; border-bottom:1px solid rgba(255,255,255,.08)}
+  .hs-foot__panel{grid-row:5 / 7; width:100%; height:auto; background:none; border-bottom:1px solid rgba(255,255,255,.08)}
   .hs-foot__hr, .hs-foot__vr{display:none}
   .links{width:auto; justify-content:space-between; align-items:flex-end; gap:1rem}
   .links ul{margin-top:calc(24 * var(--q)); gap:calc(8 * var(--q)); font-size:calc(14 * var(--q)); line-height:.98} /* mỗi dòng 14 như Figma */
@@ -841,25 +842,33 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .links ul a{margin-bottom:-2px} /* bù 2px đệm gạch chân của [data-scramble] -> mỗi dòng đúng 14 như Figma */
   .links .mono{font-size:calc(14 * var(--q)); line-height:.96; text-box:trim-both cap alphabetic} /* cắt như Figma: [ Social ] cao đúng chữ hoa */
   .hs-foot__social, .hs-foot__index{position:relative; z-index:1; margin:0 12px}
-  .hs-foot__social{grid-row:4; padding:calc(32 * var(--q)) 0 calc(48 * var(--q))}
+  /* Figma 697:55460: khối ghi công (nền xám mờ, 3 dòng mono) ngay dưới 2 nút · Social: (Made by Lumen) cùng hàng tiêu đề, canh phải ·
+     Site index: [ Back to top ][ → ] cùng hàng tiêu đề, canh phải */
+  .hs-foot .hs-foot__credits{grid-row:4; display:flex; flex-direction:column; gap:4px; position:relative; z-index:1; margin:0; padding:32px 12px;
+    background:rgba(217,217,217,.12); font-size:14px; line-height:.96; letter-spacing:-.02em; text-transform:uppercase; white-space:nowrap}
+  .hs-foot__credits p{margin:0; text-box:trim-both cap alphabetic; --tb:1}
+  .hs-foot__credits a{color:rgba(255,255,255,.3); text-decoration:none}
+  .hs-foot__end .hs-foot__credit{display:none}
+  .hs-foot__social, .hs-foot__index{align-items:flex-start}
+  .hs-foot__social{grid-row:5; padding:calc(32 * var(--q)) 0 calc(48 * var(--q))}
   .hs-foot__social > p:not(.hs-foot__lumen){display:none} /* Figma mobile: bên phải là credit Lumen thay Patreon */
   .hs-foot__lumen{display:block !important; margin:0; white-space:nowrap}
-  .hs-foot__index{grid-row:5; padding:calc(32 * var(--q)) 0 calc(64 * var(--q)); border-top:1px solid rgba(255,255,255,.08)}
-  .hs-foot__end{flex-direction:column-reverse; justify-content:flex-start; gap:calc(16 * var(--q)); align-self:stretch}
+  .hs-foot__index{grid-row:6; padding:calc(32 * var(--q)) 0 calc(64 * var(--q)); border-top:1px solid rgba(255,255,255,.08)}
+  .hs-foot__end{flex-direction:column; justify-content:flex-start; gap:calc(16 * var(--q)); align-self:flex-start} /* [ Back to top ] cùng hàng tiêu đề (Figma 697:55460) */
   .hs-foot__end .hs-foot__credit{white-space:normal; font-size:max(9px, calc(10 * var(--q))); line-height:1.4; text-box:none} /* ghi công model 3D (CC BY 4.0) */
   .hs-foot__end .hs-foot__credit a{font-size:inherit}
-  .hs-foot__logo{grid-row:6; justify-self:center; width:calc(100% - 24px); max-width:none; height:auto; margin:12px 12px 0} /* logo luôn đủ bề ngang (trước co theo chiều cao màn để cả cụm vừa một màn -> iPhone thấp thì logo hẹp) */
+  .hs-foot__logo{grid-row:7; justify-self:center; width:calc(100% - 24px); max-width:none; height:auto; margin:12px 12px 0} /* logo luôn đủ bề ngang (trước co theo chiều cao màn để cả cụm vừa một màn -> iPhone thấp thì logo hẹp) */
   /* tên co theo BỀ NGANG (--q) như logo -> dòng dài nhất dài đúng bằng logo ở mọi máy; không dưới 14px */
-  .names{width:auto; gap:calc(4 * var(--q)); font-size:max(14px, calc(14 * var(--q))); line-height:.9; letter-spacing:-.02em; white-space:nowrap; color:#838b89}
-  .hs-foot__n1{grid-row:7; margin:calc(16 * var(--q)) 12px 0}
-  .hs-foot__n2, .hs-foot__col > .hs-foot__n2{grid-row:8; margin:calc(32 * var(--q)) 12px 0; gap:calc(16 * var(--q))}
+  .names{width:auto; gap:calc(4 * var(--q)); font-size:12px; line-height:.9; letter-spacing:-.02em; white-space:nowrap; color:#838b89} /* Kaixa: tên 12px */
+  .hs-foot__n1{grid-row:8; margin:calc(16 * var(--q)) 12px 0}
+  .hs-foot__n2, .hs-foot__col > .hs-foot__n2{grid-row:9; margin:calc(32 * var(--q)) 12px 0; gap:calc(16 * var(--q))}
   .hs-foot__n2 .pair{width:calc(237.6 * var(--q)); justify-content:space-between}
   .hs-foot__n2 > div{gap:calc(4 * var(--q))}
-  .hs-foot__col > .hs-foot__face{grid-row:10; justify-self:start; width:calc(117 * var(--s)); height:calc(135 * var(--s)); max-height:none; aspect-ratio:auto; flex:none;
+  .hs-foot__col > .hs-foot__face{grid-row:11; justify-self:start; width:calc(117 * var(--s)); height:calc(135 * var(--s)); max-height:none; aspect-ratio:auto; flex:none;
     margin:0 12px !important; clip-path:none} /* !important: thẻ có style="margin:0" */
-  .hs-foot__n3{grid-row:11; margin:calc(12 * var(--q)) 12px 0}
-  .hs-foot__legal{grid-row:12; position:relative; z-index:1; width:auto; margin:calc(12 * var(--s)) 0 0; padding:calc(20 * var(--s)) 12px;
-    border-top:1px solid rgba(255,255,255,.08); font-size:calc(14 * var(--q))}
+  .hs-foot__n3{grid-row:12; margin:calc(12 * var(--q)) 12px 0}
+  .hs-foot__legal{grid-row:13; position:relative; z-index:1; width:auto; margin:12px 0 0; padding:20px 12px;
+    border-top:1px solid rgba(255,255,255,.08); font-size:12px} /* Kaixa: dòng bản quyền 12px */
   .hs-foot__legal > p:not(:first-child){display:none} /* Figma mobile: chỉ dòng bản quyền (credit Lumen ở khối Social) */
   /* màn rất hẹp (< 360, vd. iPhone SE đời đầu): 14px thì vài dòng tên dài hơn màn -> cho xuống dòng ở chỗ " / " */
   @media (max-width:359px){ .hs-foot .names, .hs-foot .names span{white-space:normal} }
