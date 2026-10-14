@@ -42,9 +42,9 @@
 // khi cuộn cũng bắn resize, đo lại lúc đó là các section nhảy cỡ.
 //   • Chrome Android / Chrome iOS / Safari iOS ≤ 18: thanh địa chỉ + thanh công cụ là vùng riêng,
 //     innerHeight lúc mở trang (thanh đang hiện) đã là vùng thấy được.
-//   • Safari iOS 26+ (thanh nổi "Liquid Glass"): trang vẽ cả xuống DƯỚI thanh địa chỉ nổi ở đáy ->
-//     innerHeight tính luôn phần bị thanh che. Trừ thêm phần thanh che khi đang cuộn (thanh thu
-//     gọn, ~IOS_BAR px) để mỗi khối "một màn" của design hiện đủ, không bị thanh đè.
+//   • Safari iOS 26+ (thanh nổi "Liquid Glass"): lúc MỞ TRANG thanh công cụ hiện đầy đủ và innerHeight cũng đã
+//     là vùng thấy được (đo trên iPhone 11 thật 2026-10-15) -> không trừ gì. Trước đây trừ IOS_BAR (56) làm mọi
+//     khối "một màn" ngắn hơn vùng thấy 56 px. Thanh chỉ vẽ đè trang khi đã thu gọn lúc cuộn (menu tự đo lúc mở).
 // Safari thật (không phải Chrome / Firefox / Edge trên iPhone — cùng lõi WebKit nhưng UA khác):
 // đánh dấu html.is-safari cho vài chỉnh riêng (vd. dòng tiêu đề hero mobile thoáng hơn)
 if (/^((?!chrome|chromium|crios|fxios|edgios|android).)*safari/i.test(navigator.userAgent)) document.documentElement.classList.add('is-safari')
@@ -59,7 +59,10 @@ if (/^((?!chrome|chromium|crios|fxios|edgios|android).)*safari/i.test(navigator.
   const set = () => {
     if (innerWidth === w) return
     w = innerWidth
-    root.style.setProperty('--ih', `${innerHeight - (iosSafari26 ? IOS_BAR : 0)}px`)
+    // Lúc mở trang Safari iOS 26 đang hiện thanh công cụ ĐẦY ĐỦ, innerHeight đã KHÔNG tính phần thanh -> không trừ nữa
+    // (Kaixa đo trên iPhone 11 2026-10-15: trừ 56 làm hero / khối "một màn" ngắn hơn vùng thấy đúng 56, lộ section sau).
+    // Thanh chỉ đè trang khi đã thu gọn lúc cuộn (menu xử lý riêng — chande-menu.js fitHeight).
+    root.style.setProperty('--ih', `${innerHeight}px`)
   }
   set()
   addEventListener('resize', set)

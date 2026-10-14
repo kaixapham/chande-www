@@ -1135,7 +1135,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 @media (max-width:899px){
   .ab-story, .ab-events{--q:calc(100vw / 375); height:auto; display:flex; flex-direction:column; gap:calc(24 * var(--q)); padding:0 12px calc(24 * var(--q))}
   .ab-story > .abs, .ab-events > .abs{position:relative; left:auto; right:auto; top:auto; bottom:auto; width:auto}
-  .ab-story > .dotrun{position:relative; margin:0 -12px; height:calc(96 * var(--q))}
+  .ab-story > .dotrun{position:relative; margin:0 calc(-12 * var(--q)); height:calc(96 * var(--q))}
   .ab-story > .dotrun .dotrun__track{--u:calc(66 * var(--q) / 164); left:0; top:calc(15 * var(--q))}
   .ab-say{font-size:calc(32 * var(--q)); margin-top:calc(24 * var(--q))}
   .ab-say__in{padding-left:0}
@@ -1162,10 +1162,10 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-story .ab-scheme{margin:0 -12px; width:100vw}
   .ab-scheme .scheme > i{height:calc(40 * var(--q))}
   .ab-events{gap:24px}
-  .ab-events .ab-events__dark{margin:0 -12px; width:100vw; height:calc(320 * var(--q))}
+  .ab-events .ab-events__dark{margin:0 calc(-12 * var(--q)); width:auto; height:calc(320 * var(--q))} /* lề = đúng padding section (12q, không phải 12px) -> hết hở 1px mép trái ở màn rộng */
   .ab-events__logo{width:calc(46 * var(--q))}
   .ab-events__t{left:12px; top:auto; bottom:16px; font-size:calc(48 * var(--q))}
-  .ab-events .ab-events__field{margin:0 -12px; width:100vw; height:calc(160 * var(--q))}
+  .ab-events .ab-events__field{margin:0 calc(-12 * var(--q)); width:auto; height:calc(160 * var(--q))}
   .ab-events .ab-events__notepin{height:auto; min-width:0}
   .ab-events__note{position:static; font-size:13px}
   .ab-events .ab-events__pin{height:auto; display:block}
@@ -1185,7 +1185,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-vision__text, .ab-vision__text p:first-child{width:auto; max-width:none}
   .ab-vision__tag{position:static}
   .ab-events .ab-events__hr{width:auto; height:1px}
-  .ab-events .ab-journey{margin:0 -12px; width:100vw}
+  .ab-events .ab-journey{margin:0 calc(-12 * var(--q)); width:auto}
   .ab-journey__cap{width:auto; margin:0 12px; font-size:12px}
   .ab-journey__run{margin-top:12px}
   .ab-journey__track img{width:calc(117 * var(--q)); height:calc(88 * var(--q))}

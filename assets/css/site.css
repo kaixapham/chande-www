@@ -404,7 +404,7 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
   .hero__field--c{grid-column:1 / -1; order:3; height:calc(168 * var(--s))}
   /* Section 2 = đúng một màn DƯỚI thanh header dính (header che 64 trên cùng): dải neon 168 + phần còn lại; dòng "Special event…" sát dưới dải,
      chữ giới thiệu + video recap dồn đáy màn */
-  .travel__col{position:static; width:auto; min-height:calc(var(--vp) - var(--bar) - 168 * var(--s)); padding:calc(16 * var(--s)) 12px calc(12 * var(--s)); background:#182220}
+  .travel__col{position:static; width:auto; min-height:calc(var(--vp) - var(--bar) - 168 * var(--s)); padding:calc(16 * var(--s)) 12px 12px; background:#182220} /* đáy video cách mép bằng 2 bên (12px; trước 12 × --s, máy thấp chỉ còn ~10) */
   .travel__intro{position:static; flex:1; gap:calc(24 * var(--s))}
   .hero__org{display:block; margin:0 0 auto; padding-bottom:calc(24 * var(--s)); color:#f4f3eb; font-weight:500; font-size:max(11px, calc(16 * var(--s))); line-height:.98; letter-spacing:-.02em;
     text-transform:uppercase; text-box:trim-both cap alphabetic; --tb:1}
