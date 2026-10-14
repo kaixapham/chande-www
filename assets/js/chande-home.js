@@ -1049,8 +1049,7 @@
         }
       }
       let active = null
-      foot.addEventListener('pointerover', (e) => {
-        const nm = e.target.closest('.nm')
+      const show = (nm) => {
         if (!nm || nm === active || !nm.dataset.photo) return
         active?.classList.remove('is-active')
         active = nm
@@ -1061,7 +1060,30 @@
           img.src = want
           face.classList.add('is-on')
         } else pump()
-      })
+      }
+      foot.addEventListener('pointerover', (e) => show(e.target.closest('.nm')))
+      // Màn cảm ứng (không rê chuột được): ô ảnh vào màn thì tự chạy lần lượt từng tên — tên sáng lên,
+      // ảnh đổi bằng đoàn shape như lúc hover; ra khỏi màn thì dừng.
+      if (matchMedia('(hover: none)').matches) {
+        const AUTO = 2400 // ms mỗi người
+        let k = -1
+        let timer = 0
+        const step = () => {
+          if (!face.isConnected) return void (clearInterval(timer), io.disconnect())
+          const list = nms.filter((nm) => nm.dataset.photo)
+          if (!list.length) return
+          k = (k + 1) % list.length
+          show(list[k])
+        }
+        const io = new IntersectionObserver(([e]) => {
+          clearInterval(timer)
+          timer = 0
+          if (!e.isIntersecting) return
+          step()
+          timer = setInterval(step, AUTO)
+        }, { threshold: 0.2 })
+        io.observe(face) // (khối cha .hs-foot__col trên mobile là display:contents — không quan sát được)
+      }
       foot.querySelectorAll('.names').forEach((block) =>
         block.addEventListener('pointerleave', () => {
           active?.classList.remove('is-active')

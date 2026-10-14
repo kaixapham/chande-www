@@ -81,6 +81,7 @@
       el.src = shown(p.img)
       el.draggable = false
       el.dataset.i = i
+      if (mode === 'mobile' && p.key === 'atom') el.style.zIndex = 2 // như trang: tem vịt nằm trên cụm sticker ở bản mobile
       el.addEventListener('load', () => (aspect.set(p.img, el.naturalHeight / el.naturalWidth), placeHandles()), { once: true })
       place(el, p)
       board.append(el)

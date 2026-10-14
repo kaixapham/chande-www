@@ -656,6 +656,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-land .hs-land__bg:not(.hs-land__bg--m){display:none}
   .hs-land__piece{left:calc(50% + (var(--mx) - 187.5) * var(--s)); top:calc(var(--my) * var(--s)); width:calc(var(--mw) * var(--s))}
   .hs-land__piece > img{rotate:calc(var(--mr) * 1deg)}
+  .hs-land__piece[data-land-key="atom"]{z-index:2} /* khung 580 chật hơn Figma: tem vịt nằm TRÊN cụm sticker, chữ "46 designers" không bị ảnh đè */
 
   /* 7. Poster — bản mobile TĨNH (chande-poster.js không dựng chồng giấy 3D dưới 900px): các tờ là ảnh
      đặt theo khung 375 × 748·n (n = data-m-screens, mặc định 2), co theo BỀ NGANG (--mq = 1px khổ 375) để
@@ -812,10 +813,6 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .cta span{padding-left:calc(24 * var(--q)); gap:3px}
   .cta span small{font-size:max(9px, calc(11 * var(--q)))}
   /* ô chấm: 7 chấm mũi tên dồn thành 4 chấm 2 × 2 như Figma (rê / chạm thì vẫn bay mũi tên như desktop) */
-  .hs-foot .cta i svg.cta__arr{width:15px; height:15px}
-  .hs-foot .cta__arr:not(.cta__arr--in) circle:nth-child(2){transform:translate(-7px, 0) !important}
-  .hs-foot .cta__arr:not(.cta__arr--in) circle:nth-child(4){transform:translate(0, -7px) !important}
-  .hs-foot .cta__arr:not(.cta__arr--in) circle:nth-child(6){transform:translate(-7px, 7px) !important}
   .hs-foot__cta1{grid-row:2}
   .hs-foot__cta2{grid-row:3; flex-direction:row-reverse; justify-content:space-between}
   .hs-foot__panel{grid-row:4 / 6; width:100%; height:auto; background:none; border-bottom:1px solid rgba(255,255,255,.08)}
