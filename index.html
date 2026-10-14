@@ -28,10 +28,10 @@
 <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/vendor/lenis.css">
-<link rel="stylesheet" href="assets/css/site.css?v=202610132152">
-<link rel="stylesheet" href="assets/css/home.css?v=202610132152">
-<link rel="stylesheet" href="assets/css/gallery.css?v=202610132152">
-<link rel="stylesheet" href="assets/css/form.css?v=202610132152">
+<link rel="stylesheet" href="assets/css/site.css?v=202610140704">
+<link rel="stylesheet" href="assets/css/home.css?v=202610140704">
+<link rel="stylesheet" href="assets/css/gallery.css?v=202610140704">
+<link rel="stylesheet" href="assets/css/form.css?v=202610140704">
 <!-- Khung hình đầu: màn loading do JS dựng ở cuối trang, nên trước đó tô nền tối + ẩn
      nội dung (không chớp nền kem). chande-loading.js gỡ cl-boot ngay khi đã gắn màn loading. -->
 <style>html.cl-boot,html.cl-boot body{background:#182220}html.cl-boot body>:not(.cl){visibility:hidden}</style>
@@ -348,23 +348,31 @@
         </div>
         <h2 data-tilt class="d106 agenda__head" data-day="02|Oct|D-1|12-20"><span>Kick-off</span><span>Settle in</span><span>Get to know each other</span><span class="hot">Workshop-001: DAS</span><span class="hot">by Lumen Stu.</span><span class="hot">Chan-party</span></h2>
         <!-- Ảnh ngày 1: thanh process ở mép trên, chạy hết thì tự đổi sang ảnh kế tiếp trong data-photos
-             (chande-home.js). Ảnh đầu = ảnh trong <img> (CMS: "Ảnh ngày 1"). -->
-        <figure class="agenda__shot" style="margin:0" data-agenda-auto
-                data-photos='["assets/img/register/hero.webp","assets/img/home/agenda-1.webp","assets/img/partner/hero.webp","assets/img/about/event-meetup.webp","assets/img/home/story-walk.webp"]'>
-          <img data-cms="agenda-1" data-cms-label="Ảnh ngày 1 (cả mảng ảnh)" data-cms-w="685" src="assets/img/cms/index/agenda-1-muye74sc.webp" alt="Leo núi cùng nhau" loading="lazy">
+             (chande-home.js; CMS: danh sách "Ảnh ngày 1"). Ảnh đầu danh sách = ảnh hiện lúc mở trang. -->
+        <figure class="agenda__shot" style="margin:0" data-agenda-auto data-cms-list="agenda-day1" data-cms-label="Ảnh ngày 1 — đổi lần lượt theo thanh process" data-cms-w="685"
+                data-photos='["assets/img/cms/index/agenda-1-muye74sc.webp","assets/img/cms/index/agenda-day1-2-mv7r2j6n.webp","assets/img/cms/index/agenda-day1-3-mv7r2o4d.webp","assets/img/cms/index/agenda-day1-4-mv7r2qwi.webp","assets/img/cms/index/agenda-day1-5-mv7r2w9i.webp","assets/img/cms/index/agenda-day1-6-mv7r2ysl.webp","assets/img/cms/index/agenda-day1-7-mv7r31oe.webp","assets/img/cms/index/agenda-day1-8-mv7r3aol.webp"]'>
+          <img src="assets/img/cms/index/agenda-1-muye74sc.webp" alt="Leo núi cùng nhau" loading="lazy">
           <div class="field" data-field></div>
         </figure>
         <h2 data-tilt class="d106 agenda__head agenda__head--wrap" data-day="03|Oct|D-2|8-23"><span>Wake up</span><span>Join me in nature</span><span>Workshop-002: AI era by Everfit</span><span>Chande-night</span></h2>
         <div class="agenda__pair">
-          <!-- Nút ‹ › hai bên đổi cặp ảnh này (chande-home.js). Danh sách ảnh mỗi bên ở
-               data-photos (CMS sửa được); ảnh đầu = ảnh hiện lúc mở trang. -->
-          <figure class="agenda__shot" style="margin:0" data-agenda-slides data-cms-list="agenda-left" data-cms-label="Ảnh ngày 2 — trái (nút ‹ › đổi lần lượt)" data-cms-w="685"
-                  data-photos='["assets/img/cms/index/agenda-left-1-muxzvonn.webp","assets/img/home/agenda-1.webp","assets/img/home/about-photo.webp","assets/img/register/hero.webp","assets/img/about/event-meetup.webp","assets/img/about/event-tdc.webp"]'>
+          <!-- Nút ‹ › hai bên đổi sang CẶP ảnh kế tiếp (chande-home.js). Danh sách cặp (trái · phải) ở
+               <script data-agenda-pairs> (CMS: mỗi cặp một hàng 2 ảnh); cặp đầu = ảnh hiện lúc mở trang. -->
+          <script type="application/json" data-agenda-pairs data-cms-list="agenda-pairs" data-cms-label="Ảnh ngày 2 — từng cặp trái · phải (nút ‹ › đổi cả cặp)" data-cms-w="685" data-cms-images="left:Trái:685|right:Phải:570" data-cms-fields="num:Cặp" data-cms-layout="pairs">
+      [
+        {"num":"01","left":"assets/img/cms/index/agenda-left-1-muxzvonn.webp","right":"assets/img/cms/index/agenda-right-1-muxzxmt3.webp"},
+        {"num":"02","left":"assets/img/cms/index/agenda-pairs-2-left-mv7q74ue.webp","right":"assets/img/cms/index/agenda-pairs-2-right-mv7q778n.webp"},
+        {"num":"03","left":"assets/img/cms/index/agenda-pairs-3-left-mv7q7c0d.webp","right":"assets/img/cms/index/agenda-pairs-3-right-mv7q7fqf.webp"},
+        {"num":"04","left":"assets/img/cms/index/agenda-pairs-4-left-mv7q7nxf.webp","right":"assets/img/cms/index/agenda-pairs-4-right-mv7q7qmv.webp"},
+        {"num":"05","left":"assets/img/cms/index/agenda-pairs-5-left-mv7q7v1r.webp","right":"assets/img/cms/index/agenda-pairs-5-right-mv7q7xmq.webp"},
+        {"num":"06","left":"assets/img/cms/index/agenda-pairs-6-left-mv7q81je.webp","right":"assets/img/cms/index/agenda-pairs-6-right-mv7q83hm.webp"}
+      ]
+      </script>
+          <figure class="agenda__shot" style="margin:0" data-agenda-slides>
             <img src="assets/img/home/agenda-2.webp" alt="Chande Bootcamp agenda moment" loading="lazy">
             <div class="field" data-field data-field-shift="0.3"></div>
           </figure>
-          <div class="agenda__house" data-agenda-slides data-cms-list="agenda-right" data-cms-label="Ảnh ngày 2 — phải (nút ‹ › đổi lần lượt)" data-cms-w="570"
-               data-photos='["assets/img/cms/index/agenda-right-1-muxzxmt3.webp","assets/img/partner/hero.webp","assets/img/about/event-visual-workshop.webp","assets/img/about/event-fpt.webp","assets/img/home/story-walk.webp"]'>
+          <div class="agenda__house" data-agenda-slides>
             <img src="assets/img/home/agenda-3.webp" alt="Ảnh ngày 2" loading="lazy">
             <div class="bar"></div>
             <div class="pillrun pillrun--sm" data-marquee aria-hidden="true"><div class="pillrun__track"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
@@ -436,11 +444,11 @@
               data-cms-fields="name:Tên|sign:Chữ ký (trống = tự lấy theo tên)|role:Vai trò|url:Website cá nhân|text:Lời cảm nhận:area"
               data-cms-images="img:Ảnh thẻ|bg:Ảnh nền:492">
       [
-        {"num":"02","name":"Huy Phan","role":"Awwwards jury - Creative web designer","url":"https://huyml.co/","text":"“3 days filled with memories, I am the king of creative web design in Vietnam, it's been a long time since I've felt such a sense of belonging. Thank you everyone for the memories here. These will be unforgettable memories for me. I love Chan De Bootcamp, siuuuuu.”","img":"assets/img/home/quote-card.webp","bg":"assets/img/cms/index/quote-strip-muz5xcj4.webp","sign":"HuyP"},
-        {"num":"03","name":"Kaixa","url":"https://www.instagram.com/kaixa.219/","text":"“I can say with confidence that the two seasons of Chande have been among the most meaningful moments of my design journey. Thank you to everyone who took part — these experiences will stay with me for the rest of my life.”","img":"assets/img/cms/index/quotes-2-muz8zm7s.webp","bg":"assets/img/cms/index/quotes-2-bg-muz6iare.webp","role":"Awwwards Jury - Host Chande Bootcamp","sign":"Kaixa"},
-        {"num":"04","name":"Leno & Annie","role":"Co-founder Lumen Studio","url":"https://www.lumen-studio.co/","text":"“Chande's free spirit shows in the unguarded moments: the games, the half-formed ideas, laughing at ourselves. Meeting the people who make this field showed us what the design community is really like - generous, curious, and deeply human.”","img":"assets/img/cms/index/quotes-3-muz6j042.webp","bg":"assets/img/cms/index/quotes-3-bg-muz6jhvl.webp","sign":"Lenoannie"},
-        {"num":"05","name":"HIEU TWO KAY","role":"UIUX DESIGNER - TAROT REader - Writer","url":"https://hieuttplayground.substack.com/","text":"“Thank you for the fact that, amidst life's countless possibilities, we were there—together—at that very moment. Thank you that the moment didn't need to last forever to be meaningful.”","img":"assets/img/cms/index/quotes-4-muz7qabz.webp","bg":"assets/img/cms/index/quotes-4-bg-muz6jkgl.webp","sign":"Hieu2K"},
-        {"num":"05","name":"LONG HAI","img":"assets/img/cms/index/quotes-5-muz7unl1.webp","sign":"Messi10","role":"Creative Developer","url":"https://www.instagram.com/laniac._/","text":"“My first time ever spending almost 3 days with people I really admire in this industry. No competitions, no challenges, just playing, talking and sharing stories with all the passion, happiness and love. Can't wait for the next season! (hopefully).”","bg":"assets/img/cms/index/quotes-5-bg-muz7xh4f.webp"},
+        {"num":"01","name":"Huy Phan","role":"Awwwards jury - Creative web designer","url":"https://huyml.co/","text":"“Three days at Chande reminded me why I fell in love with design. No egos, no titles, just people sharing honestly. I came to teach but left learning more. Strangers became friends by sunset. Count me in next year. SIUUUUUUU”","img":"assets/img/home/quote-card.webp","bg":"assets/img/cms/index/quote-strip-muz5xcj4.webp","sign":"HuyP"},
+        {"num":"02","name":"Kaixa","url":"https://www.instagram.com/kaixa.219/","text":"“I can say with confidence that the two seasons of Chande have been among the most meaningful moments of my design journey. Thank you to everyone who took part — these experiences will stay with me for the rest of my life.”","img":"assets/img/cms/index/quotes-2-muz8zm7s.webp","bg":"assets/img/cms/index/quotes-2-bg-muz6iare.webp","role":"Awwwards Jury - Host Chande Bootcamp","sign":"Kaixa"},
+        {"num":"03","name":"Leno & Annie","role":"Co-founder Lumen Studio","url":"https://www.lumen-studio.co/","text":"“Chande's free spirit shows in the unguarded moments: the games, the half-formed ideas, laughing at ourselves. Meeting the people who make this field showed us what the design community is really like - generous, curious, and deeply human.”","img":"assets/img/cms/index/quotes-3-muz6j042.webp","bg":"assets/img/cms/index/quotes-3-bg-muz6jhvl.webp","sign":"Lenoannie"},
+        {"num":"04","name":"HIEU TWO KAY","role":"UIUX DESIGNER - TAROT REader - Writer","url":"https://hieuttplayground.substack.com/","text":"“Thank you for the fact that, amidst life's countless possibilities, we were there—together—at that very moment. Thank you that the moment didn't need to last forever to be meaningful.”","img":"assets/img/cms/index/quotes-4-muz7qabz.webp","bg":"assets/img/cms/index/quotes-4-bg-muz6jkgl.webp","sign":"Hieu2K"},
+        {"num":"05","name":"LONG HAI","img":"assets/img/cms/index/quotes-5-mv7ojri3.webp","sign":"Messi10","role":"Creative Developer","url":"https://www.instagram.com/laniac._/","text":"“My first time ever spending almost 3 days with people I really admire in this industry. No competitions, no challenges, just playing, talking and sharing stories with all the passion, happiness and love. Can't wait for the next season! (hopefully).”","bg":"assets/img/cms/index/quotes-5-bg-muz7xh4f.webp"},
         {"num":"06","name":"DJ Thai Hoang","img":"assets/img/cms/index/quotes-6-muz8v3cs.webp","sign":"HoangT","role":"UIUX Designer - Figma Mentor","url":"https://www.linkedin.com/in/hoang-nguyen-thai-69913821b/","bg":"assets/img/cms/index/quotes-6-bg-muz8wzcb.webp","text":"\"Da Bac's mountains — high and grand,\nGreat minds unite — drinks in hand.\nThree days, two nights — what a show!\nCHANDE's No. 1 — don't you know!\""}
       ]
       </script>
@@ -520,45 +528,45 @@
 <script src="assets/vendor/gsap.min.js"></script>
 <script src="assets/vendor/CustomEase.min.js"></script>
 
-<script src="assets/js/chande-settings.js?v=202610132152"></script>
-<script src="assets/js/chande-film.js?v=202610132152"></script>
-<script src="assets/js/chande-loading.js?v=202610132152"></script>
-<script src="assets/js/chande-textbox.js?v=202610132152"></script>
-<script src="assets/js/chande-menu.js?v=202610132152"></script>
-<script src="assets/js/chande-transition.js?v=202610132152"></script>
-<script src="assets/js/chande-reveal.js?v=202610132152"></script>
-<script src="assets/js/chande-hero.js?v=202610132152"></script>
-<script src="assets/js/chande-entrance.js?v=202610132152"></script>
-<script src="assets/js/chande-field.js?v=202610132152"></script>
-<script src="assets/js/chande-home.js?v=202610132152"></script>
-<script src="assets/js/chande-wall.js?v=202610132152"></script>
-<script src="assets/js/chande-cursor.js?v=202610132152"></script>
-<script src="assets/js/chande-bubble.js?v=202610132152"></script>
-<script src="assets/js/chande-tilt.js?v=202610132152"></script>
-<script src="assets/js/chande-imgtiles.js?v=202610132152"></script>
-<script src="assets/js/chande-parallax.js?v=202610132152"></script>
-<script src="assets/js/chande-titlefx.js?v=202610132152"></script>
-<script src="assets/js/chande-eye.js?v=202610132152"></script>
-<script src="assets/js/chande-chips.js?v=202610132152"></script>
-<script src="assets/js/chande-story.js?v=202610132152"></script>
-<script src="assets/js/chande-circles.js?v=202610132152"></script>
-<script src="assets/js/chande-steps.js?v=202610132152"></script>
-<script src="assets/js/chande-members.js?v=202610132152"></script>
-<script src="assets/js/chande-scramble.js?v=202610132152"></script>
-<script src="assets/js/chande-sign.js?v=202610132152"></script>
-<script src="assets/js/chande-gallery.js?v=202610132152"></script>
-<script src="assets/js/chande-form.js?v=202610132152"></script>
+<script src="assets/js/chande-settings.js?v=202610140704"></script>
+<script src="assets/js/chande-film.js?v=202610140704"></script>
+<script src="assets/js/chande-loading.js?v=202610140704"></script>
+<script src="assets/js/chande-textbox.js?v=202610140704"></script>
+<script src="assets/js/chande-menu.js?v=202610140704"></script>
+<script src="assets/js/chande-transition.js?v=202610140704"></script>
+<script src="assets/js/chande-reveal.js?v=202610140704"></script>
+<script src="assets/js/chande-hero.js?v=202610140704"></script>
+<script src="assets/js/chande-entrance.js?v=202610140704"></script>
+<script src="assets/js/chande-field.js?v=202610140704"></script>
+<script src="assets/js/chande-home.js?v=202610140704"></script>
+<script src="assets/js/chande-wall.js?v=202610140704"></script>
+<script src="assets/js/chande-cursor.js?v=202610140704"></script>
+<script src="assets/js/chande-bubble.js?v=202610140704"></script>
+<script src="assets/js/chande-tilt.js?v=202610140704"></script>
+<script src="assets/js/chande-imgtiles.js?v=202610140704"></script>
+<script src="assets/js/chande-parallax.js?v=202610140704"></script>
+<script src="assets/js/chande-titlefx.js?v=202610140704"></script>
+<script src="assets/js/chande-eye.js?v=202610140704"></script>
+<script src="assets/js/chande-chips.js?v=202610140704"></script>
+<script src="assets/js/chande-story.js?v=202610140704"></script>
+<script src="assets/js/chande-circles.js?v=202610140704"></script>
+<script src="assets/js/chande-steps.js?v=202610140704"></script>
+<script src="assets/js/chande-members.js?v=202610140704"></script>
+<script src="assets/js/chande-scramble.js?v=202610140704"></script>
+<script src="assets/js/chande-sign.js?v=202610140704"></script>
+<script src="assets/js/chande-gallery.js?v=202610140704"></script>
+<script src="assets/js/chande-form.js?v=202610140704"></script>
 <!-- Module: tự nạp paper-stack.js + three (assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-poster.js?v=202610132152"></script>
+<script type="module" src="assets/js/chande-poster.js?v=202610140704"></script>
 <!-- Module: vịt patin 3D trên lưới gallery (three ở assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-duck.js?v=202610132152"></script>
+<script type="module" src="assets/js/chande-duck.js?v=202610140704"></script>
 <!-- Module: thảm cỏ 3D dưới lưới gallery (preset data-floor="grass-3d"). -->
-<script type="module" src="assets/js/chande-grass.js?v=202610132152"></script>
+<script type="module" src="assets/js/chande-grass.js?v=202610140704"></script>
 <!-- Module: cá koi 3D bơi trong lõi vòng tròn About khi bubble ở tâm (three nạp động). -->
-<script type="module" src="assets/js/chande-koi.js?v=202610132152"></script>
+<script type="module" src="assets/js/chande-koi.js?v=202610140704"></script>
 <!-- Module: bướm bay ra khỏi vòng 1, bay theo cuộn tới cuối trang chủ (three nạp động). -->
-<script type="module" src="assets/js/chande-flyer.js?v=202610132152"></script>
+<script type="module" src="assets/js/chande-flyer.js?v=202610140704"></script>
 <!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
-<script src="assets/js/chande-devtools.js?v=202610132152"></script>
+<script src="assets/js/chande-devtools.js?v=202610140704"></script>
 </body>
 </html>

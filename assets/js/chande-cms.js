@@ -115,6 +115,7 @@
           label: l.dataset.cmsLabel || l.dataset.cmsList,
           w,
           kind: isScript ? 'objects' : 'paths',
+          layout: l.dataset.cmsLayout || '', // 'pairs' = mỗi mục một hàng, các ô ảnh đứng cạnh nhau
           items,
           fields,
           images,
@@ -447,7 +448,7 @@
     if (list.kind === 'objects') {
       // danh sách người ở hero: đổi 4 người mỗi lượt -> chia hàng 4 thẻ, mỗi hàng ghi "Lượt n"
       const rounds = list.key === 'hero-people'
-      h += `<div class="cards${rounds ? ' cards--rounds' : ''}" data-list="${esc(list.key)}">`
+      h += `<div class="cards${rounds ? ' cards--rounds' : ''}${list.layout === 'pairs' ? ' cards--pairs' : ''}" data-list="${esc(list.key)}">`
       items.forEach((it, i) => {
         if (rounds && i % 4 === 0) h += `<div class="round-label">Lượt ${i / 4 + 1}<small>${pad2(i + 1)}–${pad2(Math.min(i + 4, items.length))}</small></div>`
         h += `<div class="card" data-i="${i}" draggable="true" title="Kéo thả để đổi vị trí">
@@ -597,10 +598,12 @@
       if (e.target.closest('[data-add]')) {
         const op = listOp(page.file, list)
         const at = op.items.length
+        // ô ảnh đầu của mục (danh sách cặp: 'left') — mục mới chỉ có các khoá ảnh của danh sách
+        const k0 = list.images?.[0]?.k || 'img'
         return pick(async (f) => {
-          op.items.push(list.kind === 'objects' ? { num: pad2(at + 1), name: 'Tên', img: '' } : '')
+          op.items.push(list.kind === 'objects' ? (k0 === 'img' ? { num: pad2(at + 1), name: 'Tên', img: '' } : { num: pad2(at + 1) }) : '')
           renum(list, op.items)
-          await listReplaceImage(page.file, list, at, f)
+          await listReplaceImage(page.file, list, at, f, k0)
         })
       }
       if (e.target.closest('[data-pick-i]')) {

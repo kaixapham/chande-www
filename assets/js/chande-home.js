@@ -305,16 +305,21 @@
           show(i)
         })
       }
-      // Nút ‹ › hai bên: đổi cặp ảnh ngày 2 ([data-agenda-slides], danh sách ở
-      // data-photos), quay vòng, hai bên lệch nhau một nhịp. Hiệu ứng = đoàn shape
-      // của 4 ảnh hero (CHANDE_REVEAL.play): ảnh cũ / mới vẽ kiểu cover thành canvas
-      // đúng cỡ khung ảnh, đoàn shape chạy trong một khung tạm chồng khít lên ảnh
-      // (chèn ngay sau ảnh nên graphic xung quanh vẫn nằm trên). Không có
-      // CHANDE_REVEAL / giảm chuyển động thì ảnh mới quét vào theo hướng bấm.
-      const slides = [...agenda.querySelectorAll('[data-agenda-slides]')].map((box) => {
+      // Nút ‹ › hai bên: đổi sang cặp ảnh ngày 2 kế tiếp ([data-agenda-slides]), quay vòng. Đoàn shape màu
+      // chạy từ góc dưới phải (prepCorner / runCorner); giảm chuyển động thì quét ngang theo hướng bấm.
+      // danh sách CẶP (trái · phải) ở <script data-agenda-pairs> — CMS sửa từng cặp; bên nào trống thì
+      // lấy ảnh bên kia. Không có thì đọc data-photos riêng từng bên như trước.
+      let pairs = null
+      try {
+        pairs = JSON.parse(agenda.querySelector('script[data-agenda-pairs]')?.textContent || 'null')
+      } catch {}
+      if (!Array.isArray(pairs) || !pairs.length) pairs = null
+      const slides = [...agenda.querySelectorAll('[data-agenda-slides]')].map((box, side) => {
         let list = []
         try {
-          list = JSON.parse(box.dataset.photos || '[]')
+          list = pairs
+            ? pairs.map((p) => (side ? p.right || p.left : p.left || p.right)).filter(Boolean)
+            : JSON.parse(box.dataset.photos || '[]')
         } catch {}
         const img = box.querySelector('img')
         if (list[0] && img.getAttribute('src') !== list[0]) img.src = list[0]
@@ -324,22 +329,6 @@
       let slideIdx = 0
       let sliding = false
       const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
-      const cover = (src, w, h) =>
-        new Promise((res) => {
-          const im = new Image()
-          im.onload = () => {
-            const c = document.createElement('canvas')
-            c.width = w
-            c.height = h
-            const k = Math.max(w / im.naturalWidth, h / im.naturalHeight)
-            const dw = im.naturalWidth * k
-            const dh = im.naturalHeight * k
-            c.getContext('2d').drawImage(im, (w - dw) / 2, (h - dh) / 2, dw, dh)
-            res(c)
-          }
-          im.onerror = () => res(null)
-          im.src = src
-        })
       // Parallax ảnh (chande-parallax.js) phóng + dịch + cắt ảnh bằng translate /
       // scale / clip-path: khung tạm chép theo từng khung hình để khớp ảnh bên dưới.
       const follow = (img, el) => {
@@ -353,28 +342,6 @@
         copy()
         return () => cancelAnimationFrame(raf)
       }
-      const swapShapes = async (R, img, src, delay) => {
-        const dpr = Math.min(devicePixelRatio || 1, 2)
-        const w = Math.max(1, Math.round(img.offsetWidth * dpr))
-        const h = Math.max(1, Math.round(img.offsetHeight * dpr))
-        const [from, to] = await Promise.all([cover(img.currentSrc || img.src, w, h), cover(src, w, h)])
-        if (!to) return
-        const box = document.createElement('div')
-        Object.assign(box.style, {
-          position: 'absolute', left: `${img.offsetLeft}px`, top: `${img.offsetTop}px`,
-          width: `${img.offsetWidth}px`, height: `${img.offsetHeight}px`, pointerEvents: 'none',
-        })
-        img.after(box)
-        const stop = follow(img, box)
-        try {
-          await R.play(box, { from, to, levels: 0, delay }).finished
-          img.src = src
-          await img.decode?.().catch(() => {})
-        } finally {
-          stop()
-          box.remove()
-        }
-      }
       // ảnh kế tiếp của một bên. Bên nào có < 2 ảnh (CMS mới nhập 1) thì mượn thêm ảnh của bên kia
       // (ảnh của chính nó đứng đầu) -> bấm ‹ › lúc nào cũng đổi CẢ HAI ảnh; trùng ảnh bên kia thì nhảy tiếp
       const pick = (s, avoid) => {
@@ -385,10 +352,59 @@
         for (let k = 1; avoid.has(src) && k < pool.length; k++) src = at(slideIdx + k)
         return src
       }
+      // Đổi ảnh: đoàn shape màu của hero (CHANDE_REVEAL.play) chạy từ góc dưới phải, toa cuối là ảnh mới
+      // (phóng mượt — ảnh chụp thường, không dither). Ảnh cũ / mới vẽ kiểu cover
+      // (đúng object-position của ảnh thật) thành canvas cỡ khung; khung tạm chép parallax (follow).
+      const cover = (src, w, h, pos) =>
+        new Promise((res) => {
+          const im = new Image()
+          im.onload = () => {
+            const c = document.createElement('canvas')
+            c.width = w
+            c.height = h
+            const k = Math.max(w / im.naturalWidth, h / im.naturalHeight)
+            const dw = im.naturalWidth * k
+            const dh = im.naturalHeight * k
+            const x = c.getContext('2d')
+            x.imageSmoothingQuality = 'high'
+            x.drawImage(im, (w - dw) * pos[0], (h - dh) * pos[1], dw, dh)
+            res(c)
+          }
+          im.onerror = () => res(null)
+          im.src = src
+        })
+      // chuẩn bị (nạp + vẽ ảnh cũ / mới) rồi trả về run() — cặp ảnh chuẩn bị xong cả hai mới cùng chạy
+      const prepCorner = async (img, src) => {
+        const R = window.CHANDE_REVEAL
+        if (!R?.play) return () => ((img.src = src), Promise.resolve())
+        const dpr = Math.min(devicePixelRatio || 1, 2)
+        const w = Math.max(1, Math.round(img.offsetWidth * dpr))
+        const h = Math.max(1, Math.round(img.offsetHeight * dpr))
+        const op = getComputedStyle(img).objectPosition.split(/\s+/).map((v) => (/%$/.test(v) ? parseFloat(v) / 100 : 0.5))
+        const pos = [op[0] ?? 0.5, op[1] ?? 0.5]
+        const [from, to] = await Promise.all([cover(img.currentSrc || img.src, w, h, pos), cover(src, w, h, pos)])
+        if (!to) return () => ((img.src = src), Promise.resolve())
+        return () => runCorner(R, img, src, from, to)
+      }
+      const runCorner = async (R, img, src, from, to) => {
+        const box = document.createElement('div')
+        Object.assign(box.style, {
+          position: 'absolute', left: `${img.offsetLeft}px`, top: `${img.offsetTop}px`,
+          width: `${img.offsetWidth}px`, height: `${img.offsetHeight}px`, pointerEvents: 'none',
+        })
+        img.after(box) // ngay sau ảnh: lớp graphic phía sau (thanh, dải viên, ô khảm) vẫn nằm trên
+        const stop = follow(img, box)
+        try {
+          await R.play(box, { from, to, levels: 0, smooth: true }).finished
+          img.src = src
+          await img.decode?.().catch(() => {})
+        } finally {
+          stop()
+          box.remove()
+        }
+      }
       const swap = ({ img }, d, delay, src) => {
         if (!src || src === img.getAttribute('src')) return Promise.resolve()
-        const R = window.CHANDE_REVEAL
-        if (R?.play && !reducedMotion) return swapShapes(R, img, src, delay)
         const top = img.cloneNode()
         top.removeAttribute('loading')
         top.src = src
@@ -421,7 +437,13 @@
           used.add(src)
           return src
         })
-        Promise.all(slides.map((s, i) => swap(s, d, i * 150, srcs[i]))).finally(() => (sliding = false))
+        // hai ảnh chạy CÙNG LÚC: chuẩn bị xong cả hai rồi mới bấm chạy (giảm chuyển động: quét ngang)
+        const go = reducedMotion
+          ? Promise.all(slides.map((s, i) => swap(s, d, 0, srcs[i])))
+          : Promise.all(slides.map((s, i) => (srcs[i] && srcs[i] !== s.img.getAttribute('src') ? prepCorner(s.img, srcs[i]) : null))).then((runs) =>
+              Promise.all(runs.map((run) => run?.())),
+            )
+        go.catch(() => {}).finally(() => (sliding = false))
       }
       // Ảnh ngày 1 ([data-agenda-auto]): thanh process neon ở mép trên, chạy hết (AUTO ms) thì tự đổi
       // sang ảnh kế tiếp (ảnh trong <img> + data-photos, quay vòng; hiệu ứng như cặp ảnh ngày 2) rồi
@@ -434,7 +456,10 @@
         try {
           alist = JSON.parse(auto.dataset.photos || '[]')
         } catch {}
-        alist = [...new Set([aimg.getAttribute('src'), ...alist])]
+        // danh sách (CMS) là nguồn: ảnh đầu danh sách hiện trước; danh sách trống thì giữ ảnh trong <img>
+        alist = [...new Set(alist.filter(Boolean))]
+        if (!alist.length) alist = [aimg.getAttribute('src')]
+        else if (aimg.getAttribute('src') !== alist[0]) aimg.src = alist[0]
         preloadLater(alist.slice(1))
         if (alist.length > 1) {
           let ai = 0
@@ -448,8 +473,7 @@
           const advance = () => {
             ai = (ai + 1) % alist.length
             const src = alist[ai]
-            const R = window.CHANDE_REVEAL
-            if (R?.play && !reducedMotion) return swapShapes(R, aimg, src, 0).catch(() => {})
+            if (!reducedMotion) return prepCorner(aimg, src).then((run) => run()).catch(() => {})
             aimg.src = src
           }
           const run = () => {
@@ -549,8 +573,8 @@
       const setImg = (src) => {
         if (src && q.img.getAttribute('src') !== src) q.img.src = src
       }
-      // Đổi ảnh thẻ bằng đoàn shape của 4 ảnh hero (CHANDE_REVEAL.play) — như cặp
-      // ảnh Agenda: ảnh cũ / mới vẽ cover thành canvas đúng cỡ khung, shape chạy
+      // Đổi ảnh thẻ bằng đoàn shape của 4 ảnh hero (CHANDE_REVEAL.play):
+      // ảnh cũ / mới vẽ cover thành canvas đúng cỡ khung, shape chạy
       // trong khung tạm chồng khít lên ảnh. Không có REVEAL / giảm chuyển động thì
       // đổi thẳng.
       const coverCanvas = (src, w, h) =>

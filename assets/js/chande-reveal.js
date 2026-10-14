@@ -24,8 +24,10 @@
  *   window.CHANDE_REVEAL = {
  *     config, defaults, refresh(),
  *     timing() -> { anim, coverAt }          // ms
- *     play(box, { from, to, levels, delay, fromLeft }) -> { finished, cancel() }
+ *     play(box, { from, to, levels, delay, fromLeft, plain, smooth }) -> { finished, cancel() }
  *       fromLeft: đoàn bay từ góc dưới-TRÁI lên trên-phải (lật ngang hướng mặc định)
+ *       plain: bỏ các lớp màu — chỉ khối ảnh mới chạy ra từ góc
+ *       smooth: toa ảnh phóng mượt (ảnh chụp thường — ảnh ngày Agenda), mặc định lấy mẫu điểm
  *     renderAt(canvas, t, { from, to, levels, fromLeft })  // vẽ đúng frame tại t ms
  *   }
  *   `from` / `to`: canvas hoặc ảnh đã nạp, cùng tỉ lệ với `box`. Lớp phủ là một
@@ -85,8 +87,9 @@
   // Đoàn tàu: shape 1 → … → shape n → [ảnh mới]. cum[j] = khoảng cách từ toa
   // đầu tới toa j; head chạy từ -1 (toa đầu còn ngoài khung) tới tail (toa ảnh
   // khớp khung).
-  function timing() {
-    const n = Math.max(1, CONFIG.colors.length)
+  // nColors: số lớp màu (plain = 0: chỉ còn toa ảnh mới chạy ra từ góc)
+  function timing(nColors = CONFIG.colors.length) {
+    const n = Math.max(0, nColors)
     const speed = Math.max(0.05, CONFIG.speed)
     const dur = CONFIG.duration / speed
     const cum = [0]
@@ -224,7 +227,7 @@
     return { w: iw * s, h: ih * s, x: (W - iw * s) / 2, y: (H - ih * s) / 2 }
   }
 
-  function drawFrame(ctx, W, H, T, local, from, to, fills, fromLeft = false) {
+  function drawFrame(ctx, W, H, T, local, from, to, fills, fromLeft = false, smooth = false) {
     const head = headAt(T, local)
     const dir = direction(W, H)
     if (fromLeft) dir.x = -dir.x
@@ -259,8 +262,9 @@
       ctx.drawImage(to, b.x, b.y, b.w, b.h)
     } else {
       // Ảnh đã dither mà phóng / thu mượt thì hạt nhoè thành mảng xám —
-      // lấy mẫu điểm gần nhất cho hạt vẫn sắc trong lúc toa lớn dần.
-      ctx.imageSmoothingEnabled = false
+      // lấy mẫu điểm gần nhất cho hạt vẫn sắc trong lúc toa lớn dần. Ảnh chụp thường (smooth) thì làm mịn.
+      ctx.imageSmoothingEnabled = smooth
+      if (smooth) ctx.imageSmoothingQuality = 'high'
       const b = cover(to, vw, vh)
       ctx.drawImage(to, left + b.x, top + b.y, b.w, b.h)
     }
@@ -268,8 +272,11 @@
   }
 
   /* ------------------------------------------------------------- Play ---- */
-  function play(box, { from = null, to, levels = 4, delay = 0, fromLeft = false } = {}) {
-    const T = timing()
+  // plain: không có lớp màu — chỉ khối ảnh mới (góc cạnh) chạy ra từ góc. smooth: toa ảnh phóng mượt
+  // (ảnh chụp thường; mặc định lấy mẫu điểm cho ảnh dither của hero). plain thì luôn mượt.
+  function play(box, { from = null, to, levels = 4, delay = 0, fromLeft = false, plain = false, smooth = plain } = {}) {
+    const colors = plain ? [] : CONFIG.colors
+    const T = timing(colors.length)
     const [W, H] = to ? sizeOf(to) : [box.clientWidth, box.clientHeight]
     const canvas = document.createElement('canvas')
     canvas.width = W
@@ -277,7 +284,7 @@
     canvas.setAttribute('aria-hidden', 'true')
     canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none'
     const ctx = canvas.getContext('2d')
-    const fills = CONFIG.colors.map((hex) =>
+    const fills = colors.map((hex) =>
       CONFIG.dither && levels >= 2 ? ctx.createPattern(tile(hex, levels), 'repeat') : hex,
     )
 
@@ -299,7 +306,7 @@
       elapsed += Math.min(100, now - last)
       last = now
       if (elapsed >= 0 && !canvas.isConnected) box.append(canvas)
-      if (elapsed >= 0) drawFrame(ctx, W, H, T, Math.min(elapsed, T.anim), from, to, fills, fromLeft)
+      if (elapsed >= 0) drawFrame(ctx, W, H, T, Math.min(elapsed, T.anim), from, to, fills, fromLeft, smooth)
       if (elapsed >= T.anim) {
         done = true
         resolve()

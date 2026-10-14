@@ -13,8 +13,8 @@
  *   - gỡ / dựng lại khi Barba đổi trang;
  *   - khung vẽ lấy đúng tỉ lệ khối dính (ratio 'custom') để OUTRO của tool (vòng
  *     màu nở phủ màn sau tờ cuối) phủ full màn;
- *   - cụm ngày hai bên của Agenda (.agenda__dates) nằm "dưới" các vòng: cắt theo
- *     hình tròn của vòng TRONG CÙNG (màu kem), vòng nở tới đâu chữ lộ tới đó.
+ *   - 2 tag Agenda / Bootcamp nằm "dưới" các vòng: cắt theo hình tròn của vòng TRONG
+ *     CÙNG (màu kem), vòng nở tới đâu lộ tới đó (cụm ngày thì không — luôn hiện đủ).
  *
  * LƯU Ý api.applyParams(patch): runtime ghép patch vào RUNTIME_DEFAULTS chứ không
  * vào thông số đang chạy — gửi thiếu là mọi khoá khác bị reset (đã dính: đổi một
@@ -140,8 +140,9 @@ function mount(scope = document) {
   }
   me.ro = new ResizeObserver(() => me.fit())
   me.ro.observe(pin)
-  // cụm ngày + 2 tag Agenda / Bootcamp nằm DƯỚI các vòng: chỉ lộ trong vòng trong cùng
-  me.under = [scope.querySelector('.agenda__dates > div'), scope.querySelector('.agenda .pills')].map((el) => underRings(api, pin, el))
+  // 2 tag Agenda / Bootcamp nằm DƯỚI các vòng: chỉ lộ trong vòng trong cùng. Cụm ngày (.agenda__dates)
+  // thì KHÔNG cắt nữa — luôn hiện đủ (Kaixa bỏ 2026-10-14: chữ lộ dần theo vòng bị cắt dở)
+  me.under = [scope.querySelector('.agenda .pills')].map((el) => underRings(api, pin, el))
   live = me
   // Chỉ đổi sang bản chạy khi ảnh đã nạp xong — trước đó vẫn là ảnh tĩnh, không nháy trắng.
   api.ready

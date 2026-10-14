@@ -520,11 +520,14 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 /* rê vào: mũi tên đang có trượt ra góc trên phải, đồng thời bản thứ hai trượt vào từ góc dưới trái
    (cùng lúc, cùng đường cong — liền mạch, không giật); rời chuột thì trượt ngược lại. Ô neon cắt phần tràn.
    Chấm đứng yên (đè hiệu ứng giãn 4 chấm của .cta) */
-.cta:has(.cta__arr) i{position:relative; overflow:hidden}
+.cta:has(.cta__arr) i{position:relative; overflow:hidden; container-type:size}
 .cta i svg.cta__arr circle, .cta:hover i svg.cta__arr circle{transform:none !important}
 .cta i svg.cta__arr{transition:translate .55s cubic-bezier(.65,0,.35,1)}
-.cta i svg.cta__arr--in{position:absolute; left:50%; top:50%; margin:-10px 0 0 -10px; translate:-64px 64px}
-.cta:hover i svg.cta__arr{translate:64px -64px}
+/* mũi tên chờ / mũi tên đã bay đi nằm HẲN ngoài ô: lệch nửa ô + nửa icon (+ 4 px). Lệch cố định 64 px thì ô rộng
+   (màn lớn: ô co theo --u) còn lọt một chấm ở góc. cqw / cqh = cỡ ô (container); dòng px là dự phòng. */
+.cta i svg.cta__arr--in{position:absolute; left:50%; top:50%; margin:-10px 0 0 -10px; translate:-64px 64px;
+  translate:calc(-50cqw - 14px) calc(50cqh + 14px)}
+.cta:hover i svg.cta__arr{translate:64px -64px; translate:calc(50cqw + 14px) calc(-50cqh - 14px)}
 .cta:hover i svg.cta__arr--in{translate:0 0}
 @media (prefers-reduced-motion:reduce){ .cta i svg.cta__arr{transition:none} }
 .hs-foot__cta1 span, .hs-foot__cta2 span{justify-content:center; padding-left:calc(32 * var(--u))}

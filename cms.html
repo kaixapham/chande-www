@@ -113,6 +113,13 @@ a{color:var(--lime)}
 .round-label small{font-weight:400; color:var(--muted)}
 .cards--rounds .addbox{grid-column:2}
 .card{position:relative; display:flex; flex-direction:column; gap:6px; padding:6px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2)}
+/* danh sách cặp (ảnh ngày 2 trái · phải): mỗi cặp một hàng, 2 ảnh cạnh nhau */
+.cards--pairs{grid-template-columns:minmax(0, 560px)}
+.cards--pairs .card{flex-direction:row; align-items:stretch}
+.cards--pairs .card .phs{flex:1}
+.cards--pairs .card .ph{aspect-ratio:4/3}
+.cards--pairs .card .ph small{font-size:11px}
+.cards--pairs .card .fields{width:56px}
 .card[draggable=true]{cursor:grab}
 .card.is-moving{opacity:.35}
 .card.is-changed{border-color:var(--warn)}
@@ -191,6 +198,6 @@ input[type=file]{display:none}
 <div class="toast" data-toast></div>
 <input type="file" accept="image/*" data-file>
 
-<script src="assets/js/chande-cms.js?v=202610132152"></script>
+<script src="assets/js/chande-cms.js?v=202610140704"></script>
 </body>
 </html>
