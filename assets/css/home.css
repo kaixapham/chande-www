@@ -821,7 +821,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
                cụm tên 1 · cụm tên 2 · (giãn) · ảnh mặt 117 × 135 · cụm tên 3 · kẻ · bản quyền
      Phần trên Figma cao 628 -> min-height = 628q + V để phần dưới tròn một màn. */
   .hs-foot{--q:calc(100vw / 375); --V:calc(var(--vp) - var(--bar)); display:grid; grid-template-columns:100%; gap:0; padding:0;
-    min-height:calc(628 * var(--q) + var(--V));
+    min-height:calc(var(--foot-top, calc(628 * var(--q))) + var(--V)); /* --foot-top: đỉnh hàng logo, chande-home.js đo -> cuộn hết trang thì logo cách header đúng 12px */
     grid-template-rows:calc(96 * var(--q)) calc(64 * var(--q)) calc(64 * var(--q)) auto auto auto auto auto minmax(calc(12 * var(--s)), 1fr) auto auto auto}
   .hs-foot__col{display:contents}
   .hs-foot > *, .hs-foot__col > *{margin:0; grid-column:1}
@@ -848,7 +848,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-foot__end{flex-direction:column-reverse; justify-content:flex-start; gap:calc(16 * var(--q)); align-self:stretch}
   .hs-foot__end .hs-foot__credit{white-space:normal; font-size:max(9px, calc(10 * var(--q))); line-height:1.4; text-box:none} /* ghi công model 3D (CC BY 4.0) */
   .hs-foot__end .hs-foot__credit a{font-size:inherit}
-  .hs-foot__logo{grid-row:6; justify-self:center; width:calc(100% - 24px); max-width:none; height:auto; margin:calc(12 * var(--q)) 12px 0} /* logo luôn đủ bề ngang (trước co theo chiều cao màn để cả cụm vừa một màn -> iPhone thấp thì logo hẹp) */
+  .hs-foot__logo{grid-row:6; justify-self:center; width:calc(100% - 24px); max-width:none; height:auto; margin:12px 12px 0} /* logo luôn đủ bề ngang (trước co theo chiều cao màn để cả cụm vừa một màn -> iPhone thấp thì logo hẹp) */
   /* tên co theo BỀ NGANG (--q) như logo -> dòng dài nhất dài đúng bằng logo ở mọi máy; không dưới 14px */
   .names{width:auto; gap:calc(4 * var(--q)); font-size:max(14px, calc(14 * var(--q))); line-height:.9; letter-spacing:-.02em; white-space:nowrap; color:#838b89}
   .hs-foot__n1{grid-row:7; margin:calc(16 * var(--q)) 12px 0}

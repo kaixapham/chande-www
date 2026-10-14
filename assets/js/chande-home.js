@@ -938,6 +938,22 @@
 
     // Footer: bọc từng tên (tách theo " / ") thành .nm; hover tên nào thì ô ảnh hiện
     // ảnh người đó, rời khỏi khối tên thì ô ảnh thu lại.
+    // Footer mobile: cụm logo → bản quyền = một màn (CSS: min-height = --foot-top + màn − header). Đo đúng đỉnh hàng logo
+    // (các khối trên — nút, Social, Site index — cao theo chữ, ước lượng 628 lệch vài px) -> cuộn hết trang logo cách header 12px
+    const footEl = scope.querySelector('.hs-foot')
+    const footLogo = footEl?.querySelector('.hs-foot__logo')
+    if (footLogo) {
+      const fit = () => {
+        if (!footEl.isConnected) return removeEventListener('resize', fit)
+        if (!matchMedia('(max-width: 899px)').matches) return footEl.style.removeProperty('--foot-top')
+        const top = footLogo.getBoundingClientRect().top - footEl.getBoundingClientRect().top - (parseFloat(getComputedStyle(footLogo).marginTop) || 0)
+        footEl.style.setProperty('--foot-top', `${top.toFixed(1)}px`)
+      }
+      fit()
+      addEventListener('resize', fit)
+      document.fonts?.ready.then(fit)
+    }
+
     const face = scope.querySelector('[data-name-photo]')
     if (face) {
       const img = face.querySelector('img')
