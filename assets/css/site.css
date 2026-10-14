@@ -526,22 +526,49 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
    từng ô theo toạ độ chuột (style inline: đánh tức thì, đọng, rồi tối dần) */
 
 
+.cmenu__m{display:none}
+/* Mobile (Figma 688:53293, khổ 375): bản riêng — chữ lớn Home / Gallery / About / Contact + Become a partner
+   dồn xuống dưới (khoảng trống phía trên co giãn theo chiều cao máy), ô kẻ 2 cột mạng xã hội | Register,
+   dòng credit ở đáy. Lưới desktop (ô member, nút lớn) ẩn. Màn thấp (máy ngang) thì cuộn được. */
 @media (max-width:899px){
-  .cmenu{overflow:auto}
-  .cmenu__lines{display:none}
-  .cmenu__items{position:relative; left:auto; right:auto; top:auto; bottom:auto; margin-top:var(--bar); padding:1.25rem;
-    grid-template-columns:repeat(3, 1fr); grid-template-rows:none; grid-auto-rows:auto}
-  .cmenu__items > *{grid-row:auto !important; grid-column:auto !important}
-  .cmenu__items > .cmenu__num{display:none}
-  .cmenu__big, .cmenu__contact{grid-column:1 / -1 !important; padding:.6rem 0; font-size:clamp(2rem, 10vw, 3rem)}
-  .cmenu__big{order:-3; margin:0}
-  .cmenu__contact{order:-2; margin:0; flex-direction:row; align-items:flex-end; gap:.75rem}
-  .cmenu__huge{font-size:clamp(2rem, 10vw, 3rem)}
-  .cmenu__social{order:-1; padding:.9rem 0; gap:.6rem}
-  .cmenu__credit{order:-1; grid-column:1 / -1 !important; padding:.9rem 0}
-  .cmenu__member{aspect-ratio:1; margin:0; border:1px solid rgba(233,226,200,.2); margin:-1px 0 0 -1px}
-  .cmenu__member span{left:.6rem; bottom:.6rem; font-size:.75rem; white-space:normal}
-  .cmenu__member--empty{display:none}
+  .cmenu{background:#121212; overflow:auto; overscroll-behavior:contain}
+  .cmenu__lines, .cmenu__items{display:none}
+  .cmenu__m{display:flex; flex-direction:column; min-height:calc(var(--vp, 100svh)); padding-top:var(--bar)}
+  .cmenu__mmain{flex:1; display:flex; flex-direction:column; justify-content:flex-end; gap:42px; padding:40px 24px 40px}
+  .cmenu__mlinks{display:flex; flex-direction:column; gap:8px; margin:0; padding:0; list-style:none}
+  .cmenu__mlinks a, .cmenu__mpartner{display:block; width:max-content; max-width:100%; color:#f4f3eb; text-decoration:none;
+    font-weight:700; font-size:clamp(40px, 12.8vw, 64px); line-height:.78; letter-spacing:-.02em; text-transform:uppercase;
+    text-box:trim-both cap alphabetic; transition:color .2s ease; -webkit-tap-highlight-color:transparent}
+  .cmenu__mlinks a:active, .cmenu__mpartner:active{color:var(--lime)}
+  @media (hover:hover){ .cmenu__mlinks a:hover, .cmenu__mpartner:hover{color:var(--lime)} }
+  .cmenu__mgrid{display:grid; grid-template-columns:1fr 1fr; border-block:1px solid rgba(255,255,255,.12)}
+  .cmenu__msocial{display:flex; flex-direction:column; gap:16px; margin:0; padding:24px; list-style:none}
+  .cmenu__msocial a, .cmenu__mreg, .cmenu__mfoot a{color:#fff; text-decoration:none; -webkit-tap-highlight-color:transparent;
+    font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:14px; line-height:.96; letter-spacing:-.02em; text-transform:uppercase}
+  .cmenu__msocial a{display:block; width:max-content; opacity:.3; transition:opacity .2s ease, color .2s ease}
+  .cmenu__msocial span, .cmenu__mreg > span{display:block; text-box:trim-both cap alphabetic}
+  .cmenu__mreg{display:flex; flex-direction:column; justify-content:space-between; gap:20px; padding:24px 20px;
+    border-left:1px solid rgba(255,255,255,.12)}
+  .cmenu__mreg > span{opacity:.3; transition:opacity .2s ease, color .2s ease}
+  .cmenu__mreg .cmenu__arr{width:14px; height:14px; min-width:0; min-height:0; color:#595959; transition:color .2s ease}
+  .cmenu__mfoot{display:flex; justify-content:space-between; gap:16px; padding:32px 24px calc(32px + env(safe-area-inset-bottom, 0px))}
+  .cmenu__mfoot a{opacity:.3; white-space:nowrap; text-box:trim-both cap alphabetic; transition:opacity .2s ease, color .2s ease}
+  .cmenu__msocial a:active, .cmenu__mfoot a:active, .cmenu__mreg:active > span{opacity:1; color:var(--lime)}
+  .cmenu__mreg:active .cmenu__arr{color:var(--lime)}
+  .cmenu__mreg:active .cmenu__arr circle{transform:none} /* chạm: 4 chấm toả thành mũi tên */
+  @media (hover:hover){
+    .cmenu__msocial a:hover, .cmenu__mfoot a:hover, .cmenu__mreg:hover > span{opacity:1; color:var(--lime)}
+    .cmenu__mreg:hover .cmenu__arr{color:var(--lime)}
+    .cmenu__mreg:hover .cmenu__arr circle{transform:none}
+  }
+  /* mở menu: chữ lớn trồi lên từng dòng (.cmenu__ln — cùng kiểu desktop, trễ theo --d); ô kẻ + credit hiện sau */
+  .cmenu__mgrid, .cmenu__mfoot{opacity:0; transform:translateY(12px); transition:opacity .45s ease, transform .6s cubic-bezier(.2,.7,.2,1)}
+  .cmenu.is-open .cmenu__mgrid{opacity:1; transform:none; transition-delay:.6s}
+  .cmenu.is-open .cmenu__mfoot{opacity:1; transform:none; transition-delay:.7s}
+  /* thanh header lúc mở menu: ô thương hiệu nền tối, chữ kem. Nền ô do animation dock (chande-loading.js) ghi
+     — Chrome tô animation màu nền trên GPU, bỏ qua !important -> phủ màu bằng bóng inset (như hover ô nav) */
+  .cl.is-done .cl__cell--brand{transition:box-shadow .3s ease}
+  html.menu-open .cl.is-done .cl__cell--brand{box-shadow:inset 0 0 0 100vmax #192423; outline:1px solid #192423; outline-offset:-1px; color:#f4f3eb !important}
 }
 
 /* khung xem video đầy đủ (chande-home.js — bấm ô có data-video) */

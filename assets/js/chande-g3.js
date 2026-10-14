@@ -232,6 +232,27 @@ function mount(root = document) {
   const textureCache = new Map()
   const imageLoader = new THREE.ImageLoader()
 
+  // mẫu bóng: chữ nhật đủ lớn để giữa bóng phẳng (≥ 1.6 × độ nhoè mỗi bên), lề = lề canvas tem (bóng cắt ở đó
+  // như bản nhoè thật); vẽ chữ nhật ra ngoài canvas, chỉ bóng (shadowOffsetX) rơi vào
+  const shadowSprites = new Map()
+  function shadowSprite(blur, pad) {
+    const key = `${pad}|${blur.toFixed(2)}`
+    let sp = shadowSprites.get(key)
+    if (sp) return sp
+    const R = 2 * Math.ceil(1.6 * blur) + 2
+    const S = 2 * pad + R
+    const c = document.createElement('canvas')
+    c.width = c.height = S
+    const x = c.getContext('2d')
+    x.shadowColor = 'rgba(0, 0, 0, 0.2)'
+    x.shadowBlur = blur
+    x.shadowOffsetX = S * 2
+    x.fillStyle = '#000'
+    x.fillRect(pad - S * 2, pad, R, R)
+    sp = { c, S, cs: pad + R / 2 - 1 }
+    shadowSprites.set(key, sp)
+    return sp
+  }
   function makeStamp(img, max = STAMP_MAX) {
     const k = Math.min(1, max / Math.max(img.width, img.height))
     const iw = Math.round(img.width * k)
@@ -239,17 +260,34 @@ function mount(root = document) {
     const paper = paperStamp(img, iw, ih, Math.max(iw, ih) / STAMP_REF)
     const W = paper.width
     const H = paper.height
-    // bóng: X 0, Y 2, nhoè 50, #000 20% — cho tem cạnh dài 512 px
+    // bóng: X 0, Y 2, nhoè 50, #000 20% — cho tem cạnh dài 512 px. Nhoè bóng bằng canvas mỗi tem ~8 ms trên máy
+    // yếu -> dùng mẫu bóng của một chữ nhật (dựng một lần) cắt 9 mảnh kéo giãn cho vừa tem: lệch ≤ 6/255 so với
+    // nhoè thật (lỗ răng cưa quá nhỏ so với độ nhoè), gần như không tốn gì
     const sc = Math.max(W, H) / 512
     const pad = Math.ceil(56 * sc)
     const out = document.createElement('canvas')
     out.width = W + 2 * pad
     out.height = H + 2 * pad
     const oc = out.getContext('2d')
-    oc.shadowColor = 'rgba(0, 0, 0, 0.2)'
-    oc.shadowBlur = 50 * sc
-    oc.shadowOffsetY = 2 * sc
-    oc.drawImage(paper, pad, pad)
+    const sp = shadowSprite(50 * sc, pad)
+    const cs = sp.cs
+    const dy = 2 * sc
+    const X = [0, cs, out.width - cs]
+    const XW = [cs, out.width - 2 * cs, cs]
+    const Y = [dy, dy + cs, out.height - cs + dy]
+    const YH = [cs, out.height - 2 * cs, cs]
+    const SX = [0, cs, sp.S - cs]
+    const SW = [cs, sp.S - 2 * cs, cs]
+    if (XW[1] > 0 && YH[1] > 0) {
+      for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) oc.drawImage(sp.c, SX[i], SX[j], SW[i], SW[j], X[i], Y[j], XW[i], YH[j])
+      oc.drawImage(paper, pad, pad)
+    } else {
+      // tem quá dẹt (mẫu không đủ chỗ cắt 9 mảnh): nhoè thật như cũ
+      oc.shadowColor = 'rgba(0, 0, 0, 0.2)'
+      oc.shadowBlur = 50 * sc
+      oc.shadowOffsetY = dy
+      oc.drawImage(paper, pad, pad)
+    }
     out.stampPad = pad
     out.sourceImage = img
     return out
@@ -276,6 +314,9 @@ function mount(root = document) {
         tex.anisotropy = 4
         tex.colorSpace = THREE.SRGBColorSpace
         tex.needsUpdate = true
+        // đẩy lên GPU ngay lúc dựng (rải theo nhịp ảnh tải về) — không để dồn vào khung đầu tiên tem hiện ra
+        // giữa lúc đang bay (hàng chục tem mới cùng lúc -> khựng)
+        renderer.initTexture(tex)
         entry.loaded = true
         entry.cbs.forEach((cb) => {
           try {
@@ -301,17 +342,20 @@ function mount(root = document) {
   const hiCache = new Map() // ảnh full -> { tex, loaded, users: Set<plane>, used }
   let hiFrame = 0
   function makeHiStamp(img, lo) {
-    const paper = makeStamp(img, STAMP_HI)
+    // chỉ dựng TỜ GIẤY ở độ phân giải cao (không bóng — trước đây gọi makeStamp, nhoè bóng ~140 px trên tấm
+    // 1.500 px rồi bỏ đi: vài chục ms vô ích); bóng lấy từ bản thường phóng lên
+    const k = Math.min(1, STAMP_HI / Math.max(img.width, img.height))
+    const iw = Math.round(img.width * k)
+    const ih = Math.round(img.height * k)
+    const paper = paperStamp(img, iw, ih, Math.max(iw, ih) / STAMP_REF)
     const pad = lo.stampPad
-    const s = (paper.width - 2 * paper.stampPad) / (lo.width - 2 * pad)
+    const s = paper.width / (lo.width - 2 * pad)
     const out = document.createElement('canvas')
     out.width = Math.round(lo.width * s)
     out.height = Math.round(lo.height * s)
     const oc = out.getContext('2d')
     oc.drawImage(lo, 0, 0, out.width, out.height) // bóng (và tờ giấy cũ, sẽ bị phủ)
-    const pw = paper.width - 2 * paper.stampPad
-    const ph = paper.height - 2 * paper.stampPad
-    oc.drawImage(paper, paper.stampPad, paper.stampPad, pw, ph, pad * s, pad * s, out.width - 2 * pad * s, out.height - 2 * pad * s)
+    oc.drawImage(paper, pad * s, pad * s, out.width - 2 * pad * s, out.height - 2 * pad * s)
     out.stampPad = pad * s
     out.sourceImage = img
     return out
@@ -356,6 +400,7 @@ function mount(root = document) {
         tex.generateMipmaps = true
         tex.anisotropy = 4
         tex.colorSpace = THREE.SRGBColorSpace
+        renderer.initTexture(tex)
         entry.tex = tex
         entry.loaded = true
         for (const u of [...entry.users]) if (u.dead) entry.users.delete(u)
@@ -374,9 +419,15 @@ function mount(root = document) {
   }
   // mỗi 8 khung, lúc camera gần như đứng yên (đang bay vèo qua thì không ai thấy nhoè — khỏi tải ảnh lớn của mọi
   // tem lướt qua): tem đang hiện mà to hơn texture của nó ~15% (theo pixel thật của canvas) thì xin bản nét
+  let stillSince = 0
   function checkHi(now) {
     if ((hiFrame = (hiFrame + 1) % 8)) return
-    if (Math.hypot(s.velocity.x, s.velocity.y, s.velocity.z) > 0.12 || lbOpen) return
+    // đứng yên hẳn ~0.35 s mới dựng (chậm lại giữa hai lần lăn chuột không tính)
+    if (Math.hypot(s.velocity.x, s.velocity.y, s.velocity.z) > 0.12 || lbOpen) {
+      stillSince = now
+      return
+    }
+    if (now - stillSince < 350) return
     const H = renderer.domElement.height
     for (const c of chunks.values())
       for (const p of c.planes) {
@@ -483,8 +534,22 @@ function mount(root = document) {
   const cameraGrid = { cx: 0, cy: 0, cz: 0, camZ: INITIAL_CAMERA_Z }
   const idle = window.requestIdleCallback ? (f) => ({ id: requestIdleCallback(f, { timeout: 100 }), idle: true }) : (f) => ({ id: setTimeout(f, 0), idle: false })
 
+  // Vật liệu dùng lại: mỗi vật liệu MỚI lần đầu vẽ là three.js dựng bộ tham số shader (getParameters /
+  // getProgramCacheKey — vài ms mỗi cái trên máy yếu); bay sang khối mới là hàng trăm cái cùng lúc -> giật
+  // tới vài trăm ms. Khối bị gỡ thì cất vật liệu vào kho, tem mới lấy ra dùng lại chỉ đổi map / opacity.
+  const matPool = []
+  const takeMaterial = (tex) => {
+    // forceSinglePass: vật liệu trong suốt + hai mặt thì three vẽ HAI lượt (mặt sau rồi mặt trước), mỗi lượt đặt
+    // needsUpdate -> mỗi khung dựng lại tham số shader cho MỌI tem đang hiện (getParameters — thủ phạm giật chính).
+    // Tem là tấm phẳng, camera không bao giờ ra sau -> một lượt là đủ, hình y hệt.
+    const m = matPool.pop() || new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, forceSinglePass: true, depthWrite: false, alphaTest: 0.004 })
+    m.map = tex
+    m.opacity = 0
+    return m
+  }
   function buildChunk(cx, cy, cz) {
     const chunk = { cx, cy, cz, group: new THREE.Group(), planes: [], dead: false }
+    chunk.group.matrixAutoUpdate = false
     scene.add(chunk.group)
     chunk.idle = idle(() => {
       if (chunk.dead || !media.length) return
@@ -493,12 +558,15 @@ function mount(root = document) {
         if (!item) continue
         getTexture(item.url, (tex) => {
           if (chunk.dead) return
-          const material = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, alphaTest: 0.004 })
+          const material = takeMaterial(tex)
           const mesh = new THREE.Mesh(PLANE_GEOMETRY, material)
           const aspect = tex.image.width / tex.image.height
           mesh.position.set(p.x, p.y, p.z)
           mesh.scale.set(p.size * aspect, p.size, 1)
           mesh.rotation.z = p.rot
+          // tem đứng yên: tính ma trận một lần (không để three tính lại ~1.700 ma trận mỗi khung)
+          mesh.matrixAutoUpdate = false
+          mesh.updateMatrix()
           mesh.visible = false
           mesh.userData = { item, stamp: tex.image }
           chunk.group.add(mesh)
@@ -526,7 +594,8 @@ function mount(root = document) {
     for (const p of chunk.planes) {
       p.dead = true
       p.hi?.users.delete(p)
-      p.material.dispose()
+      if (matPool.length < 900) matPool.push(p.material)
+      else p.material.dispose()
     }
     scene.remove(chunk.group)
   }
@@ -571,6 +640,7 @@ function mount(root = document) {
         for (const p of c.planes) {
           p.mesh.position.set(p.x, p.y, p.z)
           p.mesh.scale.set(p.sx, p.sy, 1)
+          p.mesh.updateMatrix()
         }
     }
   }
@@ -593,6 +663,7 @@ function mount(root = document) {
       p.mesh.position.set(p.x, p.y, p.z)
       p.mesh.scale.set(p.sx, p.sy, 1)
     }
+    p.mesh.updateMatrix()
     return raw
   }
 
@@ -1426,7 +1497,7 @@ function mount(root = document) {
     const tex = new THREE.TextureLoader().load(BF_IMG)
     tex.colorSpace = THREE.SRGBColorSpace
     tex.anisotropy = 4
-    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.04, side: THREE.DoubleSide, depthWrite: false, fog: false })
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.04, side: THREE.DoubleSide, forceSinglePass: true, depthWrite: false, fog: false })
     const geos = []
     const half = (sd) => {
       const geo = new THREE.PlaneGeometry(0.5, BF_ASPECT)
@@ -1793,6 +1864,8 @@ function mount(root = document) {
       for (const e of hiCache.values()) e.tex?.dispose()
       hiCache.clear()
       bf.obj?.dispose()
+      for (const m of matPool) m.dispose()
+      matPool.length = 0
       PLANE_GEOMETRY.dispose()
       renderer.dispose()
       renderer.forceContextLoss()

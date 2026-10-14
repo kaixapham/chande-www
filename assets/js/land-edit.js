@@ -26,6 +26,8 @@
   const round = (v, d = 1) => Math.round(v * 10 ** d) / 10 ** d
 
   let mode = 'desktop'
+  let bgSrc = { desktop: '', mobile: '' }
+  const bgFor = () => (mode === 'mobile' && bgSrc.mobile) || bgSrc.desktop
   let pieces = [] // { key, name, img, x, y, w, r, mx, my, mw, mr }
   let saved = []
   let sel = -1
@@ -293,6 +295,7 @@
     b.addEventListener('click', () => {
       mode = b.dataset.mode
       document.querySelectorAll('[data-mode]').forEach((x) => x.classList.toggle('is-on', x === b))
+      if (bgSrc.desktop && bg.getAttribute('src') !== bgFor()) bg.src = bgFor()
       all()
     }),
   )
@@ -467,7 +470,10 @@
       saved = parse(html)
       if (!saved.length) throw new Error('không thấy món nào (data-land-key)')
       pieces = clone(saved)
-      bg.src = html.match(/<img\b[^>]*class="[^"]*hs-land__bg[^"]*"[^>]*\bsrc="([^"]*)"/)?.[1] || html.match(/<img\b[^>]*\bsrc="([^"]*)"[^>]*class="[^"]*hs-land__bg/)?.[1] || ''
+      // nền theo chế độ: desktop = data-cms="land-bg", mobile = data-cms="land-bg-m" (thiếu thì dùng nền desktop)
+      const src = (key) => html.match(new RegExp(`<img\\b[^>]*data-cms="${key}"[^>]*>`))?.[0].match(/\ssrc="([^"]*)"/)?.[1] || ''
+      bgSrc = { desktop: src('land-bg'), mobile: src('land-bg-m') }
+      bg.src = bgFor()
       all()
       msg('Kéo để dời, Shift + kéo để xoay, kéo góc / lăn chuột để đổi cỡ. Desktop và Mobile chỉnh riêng.')
     } catch (e) {

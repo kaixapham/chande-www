@@ -145,6 +145,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 /* ---------------------------------------------------------------- 5. LAND */
 .hs-land{height:calc(1028 * var(--u)); overflow:visible; z-index:1}
 .hs-land__bg{inset:0; width:100%; height:100%; object-fit:cover}
+.hs-land .hs-land__bg--m{display:none} /* nền riêng cho mobile (ảnh dọc) — bật ở khổ < 900px */
 /* trong lúc ảnh nền tải: bản thu nhỏ 32px (nhoè) thay cho nền trắng — ảnh thật phủ lên khi xong */
 .hs-land__bg{background:#4a3520 url("data:image/webp;base64,UklGRuwAAABXRUJQVlA4IOAAAABQBgCdASogABIAPu1mqk2ppaQiMAgBMB2JQBWDat23/ugA2YB5PdlQ3LdfycTmg2Frvb8OICxNt5zOAAD+7qFPAKbgvVlk+8Ea+lGRfQ+8ao/IZuJLKpHIbIUvLdYro8qxXzBDJJd3JakAXi6Bh1RrznDHVaNZBsS+juPco9IGWy9IcGqeaibAyUSwgm7l47fCvDl5/Qgnpni3e8K4i+luP+GT03gMFEv4H5ZNSn1ckM7X8mNNLJC4msrpT/MzrkF4kzQN2zvgdCYj8LIW72z8N8KRX3qaCXCLShN29BwAAA==") center / cover no-repeat}
 /* Ghim 1 màn (chande-home.js gắn .is-staged khi chạy được): section dài thêm
@@ -617,6 +618,8 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .strip__run .pillrun__track > i{width:calc(108 * var(--q)); height:calc(42 * var(--q))}
   .hs-land.is-staged .hs-land__frame{--s:min(calc(100vw / 375), calc((var(--vp) - var(--bar)) / 748)); inset:var(--bar) 0 0; top:var(--bar); height:auto;
     transform:none; overflow:hidden}
+  .hs-land .hs-land__bg--m{display:block}
+  .hs-land .hs-land__bg:not(.hs-land__bg--m){display:none}
   .hs-land__piece{left:calc(50% + (var(--mx) - 187.5) * var(--s)); top:calc(var(--my) * var(--s)); width:calc(var(--mw) * var(--s))}
   .hs-land__piece > img{rotate:calc(var(--mr) * 1deg)}
 

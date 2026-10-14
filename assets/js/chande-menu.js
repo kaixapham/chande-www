@@ -9,6 +9,9 @@
  *   • 03 Become a partner · 04 Register for the next event · 05 Contact
  *   • hàng cuối: Facebook / YouTube / Instagram / LinkedIn / Made by Lumen Studio / Patreon
  * Bấm nút menu: lưới trượt mở từ trên xuống; bấm lại / Esc / bấm link thì đóng.
+ * Mobile (< 900px — Figma 688:53293): bản riêng .cmenu__m, không dùng lưới — Home / Gallery / About /
+ * Contact + Become a partner chữ lớn; ô kẻ 2 cột (mạng xã hội | Register for the next event); dòng
+ * credit Kaixa / Lumen Studio ở đáy. Thanh header lúc mở menu chuyển nền tối (site.css).
  * Menu nằm ngoài container Barba nên dùng chung mọi trang. Mở thì khoá cuộn (Lenis).
  *
  * API: window.CHANDE_MENU = { open(), close(), toggle(), get isOpen() }
@@ -17,6 +20,10 @@
   'use strict'
 
   const LINKS = {
+    home: './',
+    gallery: 'gallery',
+    about: 'about',
+    kaixa: 'https://www.instagram.com/kaixa.219/',
     partner: 'partner',
     register: 'register',
     contact: 'mailto:phap22011994@gmail.com',
@@ -98,6 +105,29 @@
       <a class="cmenu__big" style="${at(5, 2, 1, 4)}; --d:.47s" href="${esc(LINKS.register)}"><span class="cmenu__bt">${lines('Register for', 'the next event')}</span>${dots2}</a>
       ${socials}
       <a class="cmenu__contact" style="${at(6, 10, 1, 3)}" href="${esc(LINKS.contact)}"><span class="cmenu__num">05</span><span class="cmenu__huge" style="--d:.6s">${lines('Contact')}</span>${dots2}</a>
+    </div>
+    <div class="cmenu__m">
+      <div class="cmenu__mmain">
+        <ul class="cmenu__mlinks">
+          ${[['Home', LINKS.home], ['Gallery', LINKS.gallery], ['About', LINKS.about], ['Contact', LINKS.contact]]
+            .map(([t, u], i) => `<li><a href="${esc(u)}" style="--d:${(0.3 + i * 0.06).toFixed(2)}s">${lines(t)}</a></li>`)
+            .join('')}
+        </ul>
+        <a class="cmenu__mpartner" href="${esc(LINKS.partner)}" style="--d:.56s">${lines('Become a', 'partner')}</a>
+      </div>
+      <div class="cmenu__mgrid">
+        <ul class="cmenu__msocial">
+          ${LINKS.social
+            .filter((x) => Array.isArray(x) && x[0] !== 'Patreon')
+            .map(([t, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener"><span>${esc(t)}</span></a></li>`)
+            .join('')}
+        </ul>
+        <a class="cmenu__mreg" href="${esc(LINKS.register)}">${dots2}<span>Register for<br>the next event</span></a>
+      </div>
+      <div class="cmenu__mfoot mono">
+        <a href="${esc(LINKS.kaixa)}" target="_blank" rel="noopener" data-scramble>[ Kaixa ]</a>
+        <a href="https://www.lumen-studio.co/" target="_blank" rel="noopener" data-scramble>[ Made by Lumen Studio ]</a>
+      </div>
     </div>`
   document.body.appendChild(root)
   // lớp chữ ĐEN trùng khít, lộ ra theo đúng vệt quét của nền neon lúc rê (clip-path cùng nhịp với
@@ -214,7 +244,7 @@
   function codeIn() {
     const run = window.CHANDE_SCRAMBLE?.run
     if (!run || !isOpen) return
-    const els = [...root.querySelectorAll('.cmenu__member > span, .cmenu__num, .cmenu__social > span:last-child')]
+    const els = [...root.querySelectorAll(mobile() ? '.cmenu__msocial span, .cmenu__mreg > span' : '.cmenu__member > span, .cmenu__num, .cmenu__social > span:last-child')]
     els
       .map((el) => ({ el, r: el.getBoundingClientRect() }))
       .forEach(({ el, r }) => run(el, 250 + (r.left / innerWidth) * 260 + (r.top / innerHeight) * 320))
@@ -246,12 +276,16 @@
 
   let isOpen = false
   let closeT = 0
+  // mobile dùng bản .cmenu__m (không có ô member) -> không dựng / tải ảnh chân dung member
+  const mobileMQ = matchMedia('(max-width: 899px)')
+  const mobile = () => mobileMQ.matches
+  mobileMQ.addEventListener?.('change', () => isOpen && !mobile() && fill())
   const btn = () => document.querySelector('.cl__menu')
   function open() {
     if (isOpen) return
     isOpen = true
     clearTimeout(closeT)
-    fill().then(codeIn)
+    ;(mobile() ? Promise.resolve() : fill()).then(codeIn)
     root.hidden = false
     root.getBoundingClientRect() // để transition chạy từ trạng thái đóng
     root.classList.add('is-open')
