@@ -1290,17 +1290,21 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-story > *, .ab-story .ab-col > *{min-width:0; grid-column:1} /* cột cố định: 2 khối cùng hàng (ảnh + ghi chú) chồng vào một ô, không đẻ thêm cột */
   .ab-story > .dotrun{grid-row:1; margin:0 calc(-12 * var(--q))}
   .ab-say{margin:0; font-size:calc(32 * var(--q)); line-height:.78; letter-spacing:-.04em}
-  .ab-story .ab-say--1{grid-row:2; margin-top:calc(16 * var(--q)); width:calc(333 * var(--q))}
+  /* Figma 697:55120: đoạn chữ 1 · đoạn chữ 2 · ảnh + ghi chú = đúng MỘT màn thấy được (12 trên, 12 dưới); khoảng giữa 2 đoạn
+     co giãn = màn − 587 (12 + đoạn 1 222 + đoạn 2 147 + 32 + ảnh 162 + 12, chữ theo --q nên đúng ở mọi bề ngang), tối thiểu 32 */
+  /* màn thấp không đủ 619 (587 + khoảng tối thiểu 32): cả cụm này thu theo chiều cao (--q riêng cho 2 đoạn chữ + ảnh + ghi chú) */
+  .ab-story .ab-say, .ab-story .ab-founder__pin, .ab-story .ab-note{--q:min(calc(100vw / 375), calc((var(--vp, 100svh) - var(--bar)) / 619))}
+  .ab-story .ab-say--1{grid-row:2; margin-top:calc(12 * var(--q)); width:calc(333 * var(--q))}
   .ab-say--1 .ab-say__in{padding-left:3.05em}
-  .ab-story .ab-say--2{grid-row:3; margin-top:calc(64 * var(--q)); width:calc(293 * var(--q))}
+  .ab-story .ab-say--2{grid-row:3; margin-top:max(calc(32 * var(--q)), calc(var(--vp, 100svh) - var(--bar) - 587 * var(--q))); width:calc(293 * var(--q))}
   /* ảnh + ghi chú cùng một ô lưới: ảnh trái, ghi chú phải, chân thẳng nhau */
-  .ab-story .ab-founder__pin{grid-row:4; justify-self:start; width:calc(117 * var(--q)); height:auto; margin-top:calc(64 * var(--q))}
+  .ab-story .ab-founder__pin{grid-row:4; justify-self:start; width:calc(117 * var(--q)); height:auto; margin-top:calc(32 * var(--q))}
   .ab-story .ab-founder{position:static; width:100%; height:calc(162 * var(--q)); aspect-ratio:auto}
   .ab-story .ab-note{grid-row:4; justify-self:end; align-self:end; z-index:2; width:calc(175 * var(--q)); flex-direction:row; justify-content:space-between;
     align-items:flex-end; gap:0; font-weight:500; font-size:max(12px, calc(14 * var(--q))); line-height:.98; letter-spacing:-.02em; text-transform:uppercase;
     color:#fff; white-space:nowrap}
   .ab-note__in{padding-left:0}
-  .ab-story .ab-circles{grid-row:5; display:flex; justify-content:space-between; width:calc(352 * var(--q)); margin-top:calc(72 * var(--q))}
+  .ab-story .ab-circles{grid-row:5; display:flex; justify-content:space-between; width:calc(352 * var(--q)); margin-top:calc(84 * var(--q))} /* 12 hết màn + 72 */
   .ab-circles .circle{width:calc(176 * var(--q)); height:calc(176 * var(--q)); aspect-ratio:auto}
   .ab-circles .circle__t{position:absolute; inset:0; display:grid; place-items:center; font-family:'Geist Mono',ui-monospace,monospace; font-weight:500;
     font-size:13px; line-height:1; letter-spacing:-.02em; text-transform:uppercase; pointer-events:none}
