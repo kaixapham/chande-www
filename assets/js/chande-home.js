@@ -442,7 +442,11 @@
         // hai ảnh chạy CÙNG LÚC: chuẩn bị xong cả hai rồi mới bấm chạy (giảm chuyển động: quét ngang)
         const go = reducedMotion
           ? Promise.all(slides.map((s, i) => swap(s, d, 0, srcs[i])))
-          : Promise.all(slides.map((s, i) => (srcs[i] && srcs[i] !== s.img.getAttribute('src') ? prepCorner(s.img, srcs[i]) : null))).then((runs) =>
+          : Promise.all(slides.map((s, i) => {
+              if (!srcs[i] || srcs[i] === s.img.getAttribute('src')) return null
+              if (!s.img.getClientRects().length) return void (s.img.src = srcs[i]) // bên đang ẩn (mobile chỉ hiện ảnh phải): đổi thẳng
+              return prepCorner(s.img, srcs[i])
+            })).then((runs) =>
               Promise.all(runs.map((run) => run?.())),
             )
         go.catch(() => {}).finally(() => (sliding = false))
@@ -494,6 +498,39 @@
           }).observe(auto)
           run()
         }
+      }
+      // Ảnh ngày 3 (chỉ bản mobile, [data-agenda-night]): nút ‹ › trên dải effect đổi lần lượt ảnh trong
+      // data-photos (CMS "Ảnh ngày 3"), quay vòng, cùng hiệu ứng đoàn shape như ảnh ngày 1 / cặp ảnh ngày 2.
+      const night = agenda.querySelector('[data-agenda-night]')
+      if (night) {
+        const nimg = night.querySelector('img')
+        let nlist = []
+        try {
+          nlist = JSON.parse(night.dataset.photos || '[]')
+        } catch {}
+        nlist = [...new Set(nlist.filter(Boolean))]
+        if (!nlist.length) nlist = [nimg.getAttribute('src')]
+        else if (nimg.getAttribute('src') !== nlist[0]) nimg.src = nlist[0]
+        const navs = night.querySelectorAll('[data-night-nav]')
+        if (nlist.length < 2) navs.forEach((b) => (b.hidden = true))
+        let ni = 0
+        let busy = false
+        const go = (d) => {
+          if (busy || nlist.length < 2) return
+          busy = true
+          ni = (ni + d + nlist.length) % nlist.length
+          const src = nlist[ni]
+          const run = reducedMotion ? Promise.resolve((nimg.src = src)) : prepCorner(nimg, src).then((r) => r())
+          run.catch(() => {}).finally(() => (busy = false))
+        }
+        navs.forEach((b) => b.addEventListener('click', () => go(+b.dataset.nightNav)))
+        // nạp trước các ảnh kế khi khung sắp vào màn (desktop ẩn khung -> không nạp)
+        const nio = new IntersectionObserver(([e]) => {
+          if (!e.isIntersecting || !night.getClientRects().length) return
+          nio.disconnect()
+          preloadLater(nlist.slice(1))
+        }, { rootMargin: '100% 0px' })
+        nio.observe(night)
       }
       prev?.addEventListener('click', () => slide(-1))
       next?.addEventListener('click', () => slide(1))

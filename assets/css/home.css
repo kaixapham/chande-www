@@ -184,6 +184,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .hs-about__statement .gap{height:.8em}
 @media (min-width:900px){ .hs-about__statement br.m{display:none} } /* xuống dòng chỉ ở mobile */
 .hs-about__grass{left:calc(960 * var(--u)); top:calc(721 * var(--u)); width:calc(359 * var(--u)); height:calc(269 * var(--u)); object-fit:cover}
+.hs-about img.hs-about__grass--m{display:none} /* ảnh dọc riêng cho mobile */
 .hs-about__note{left:calc(1662 * var(--u)); top:calc(942 * var(--u)); margin:0; white-space:nowrap}
 .hs-about__note span{display:block}
 .hs-about .dash{position:absolute; left:calc(24 * var(--u)); width:calc(1872 * var(--u))}
@@ -198,6 +199,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .circle .core{left:calc(72 * var(--u)); top:calc(72 * var(--u)); width:calc(324 * var(--u)); height:calc(324 * var(--u))}
 .circle .peek{display:none} /* ảnh nguồn (CMS) — vẽ thành lưới ô lên .peek-cv (chande-circles.js) */
 .circle .peek-cv{position:absolute; inset:0; width:100%; height:100%; border-radius:50%; pointer-events:none}
+.circle__t{display:none} /* chữ giữa vòng 2 / 3 — chỉ bản mobile */
 /* Đoạn chữ trái / ảnh giữa / danh sách vai trò: BẰNG ĐÁY nhau, cách đường kẻ đứt
    (top 1930) 16 -> đáy ở 1914 = bottom 3090 − 1914 = 1176. Neo theo đáy nên chữ
    (cỡ rem, không co theo màn) dài ra thì mọc lên trên, không lấn qua đường kẻ. */
@@ -691,14 +693,24 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-agenda .agenda__shot > img:first-child{height:auto; aspect-ratio:1709 / 1436}
   .hs-agenda .agenda__shot > .field{height:auto; aspect-ratio:685 / 136}
   .hs-agenda .agenda__pair{width:calc(351 * var(--q)); margin-top:calc(32 * var(--q)); display:block}
-  .agenda__pair > .agenda__shot, .agenda__pair > .agenda__stamp, .agenda__pair > .agenda__nav{display:none}
+  .agenda__pair > .agenda__shot, .agenda__pair > .agenda__stamp{display:none}
+  /* nút ‹ › đổi ảnh (Figma 697:54117 / 697:54070): ô kem 32, mũi tên 12 — ngày 2 ở 2 góc dưới ảnh (ngay trên thanh viên
+     thuốc), ngày 3 ở 2 góc trên dải effect. Ngày 2 dùng lại nút đổi cặp ảnh của desktop. */
+  .hs-agenda .agenda__pair > .agenda__nav, .agenda__nnav{position:absolute; top:calc(371 * var(--q)); bottom:auto; width:calc(32 * var(--q)); height:calc(32 * var(--q));
+    min-width:0; min-height:0; display:grid; place-items:center; padding:0; border:0; background:#f5f0e3; cursor:pointer; z-index:3}
+  .hs-agenda .agenda__pair > .agenda__nav--prev, .agenda__nnav--prev{left:0; right:auto}
+  .hs-agenda .agenda__pair > .agenda__nav--next, .agenda__nnav--next{right:0; left:auto}
+  .agenda__nnav{top:calc(100% - 96 * var(--q))}
+  .agenda__nnav img{width:37.5%; height:37.5%}
+  .agenda__nnav--prev img{transform:rotate(180deg)}
+  .hs-agenda .agenda__nav:hover img, .agenda__nnav img{translate:none}
   .hs-agenda .agenda__house{width:100%; height:auto}
   .hs-agenda .agenda__house > img{height:calc(403 * var(--q)); object-position:50% 50%}
   .agenda__house .bar{position:relative; height:calc(48 * var(--q)); background:#1b2524}
   .hs-agenda .agenda__house .pillrun{left:0; right:0; width:auto; top:calc(413 * var(--q)); height:calc(28 * var(--q))}
   .agenda__house .pillrun__track{gap:1px; animation-name:hs-pills-ag}
   .agenda__house .pillrun--sm .pillrun__track > i, .agenda__house .pillrun__track > i{width:calc(72 * var(--q)); height:calc(28 * var(--q))}
-  .hs-agenda .agenda__night{display:block; width:100%; margin-top:calc(32 * var(--q))}
+  .hs-agenda .agenda__night{display:block; position:relative; width:100%; margin-top:calc(32 * var(--q))}
   .agenda__night > img{width:100%; height:auto; aspect-ratio:375 / 316; object-fit:cover}
   .agenda__night > .field{height:calc(96 * var(--q))}
 
@@ -718,15 +730,17 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   /* 6. About — Figma Section-Poster mobile (628:610, khổ 375; --q = 1px khổ 375, co theo bề ngang).
      Một cột giữa, xếp lại thứ tự bằng `order` (các khối vẫn là con trực tiếp; .circles / nav pills
      `display: contents` để từng vòng tròn / từng nút vào thẳng cột):
-       đoạn chữ · ảnh khung bướm (tràn ngang 540) · vòng 1 + câu "We don't say…" nằm giữa vòng ·
+       đoạn chữ · ảnh khung bướm (tràn ngang 660, ảnh dọc riêng) · vòng 1 + câu "We don't say…" nằm giữa vòng ·
        gạch đứt · đoạn mono · gạch đứt · ảnh "who" 211 + chú thích · danh sách vai trò + nút About us ·
-       vòng 2, vòng 3 · dải màu 9 × 60 · ảnh gốm 440 + nút Explore gallery đè góc dưới trái ·
+       vòng 2 + vòng 3 cạnh nhau (176) · dải màu 9 × 44.4 · ảnh gốm 440 + nút Explore gallery đè góc dưới trái ·
        mảng gạch neon 212 · dải tròn lime 96 · thanh tối "(12) Events at bootcamp". */
   .hs-about{--q:calc(100vw / 375); display:flex; flex-direction:column; align-items:center; gap:0; padding:calc(16 * var(--q)) calc(12 * var(--q)) 0}
   .hs-about > *, .hs-about .circle{flex:none}
   .hs-about .circles, .hs-about .circles > div:not(.circle), .hs-about__pills{display:contents}
   .hs-about .hs-about__statement{order:1; align-self:stretch; width:auto; font-size:calc(36 * var(--q)); line-height:.8; letter-spacing:-.02em; color:#0d0d0d}
-  .hs-about__grass{order:2; width:100vw; height:calc(540 * var(--q)); margin-top:calc(143 * var(--q)); aspect-ratio:auto}
+  .hs-about__grass{order:2; width:100vw; height:calc(660 * var(--q)); margin-top:calc(27 * var(--q)); aspect-ratio:auto}
+  .hs-about img.hs-about__grass--m{display:block}
+  .hs-about img.hs-about__grass:not(.hs-about__grass--m){display:none}
   /* vòng tròn: 351 (vạch 339 lệch 6, lõi 243 lệch 54 — đúng tỉ lệ bản desktop 468 / 452 / 324) */
   .hs-about .circle{width:calc(351 * var(--q)); height:calc(351 * var(--q))}
   .hs-about .circle .tex{left:1.71%; top:1.71%; width:96.58%; height:96.58%}
@@ -741,19 +755,23 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .hs-about__roots{order:6; width:calc(294 * var(--q)); margin:40px 0; font-size:14px; line-height:.96; letter-spacing:-.02em;
     text-align:center; text-transform:uppercase; color:#000; opacity:1; text-box:trim-both cap alphabetic; --tb:1}
   .hs-about .dash:nth-of-type(3){order:7}
-  .hs-about__friends{order:8; width:calc(211 * var(--q)); height:auto; aspect-ratio:2909 / 3878; margin-top:calc(88 * var(--q))}
+  .hs-about__roots span{display:none} /* "[ For everyone ]" chỉ có ở desktop */
+  .hs-about__friends{order:8; width:calc(211 * var(--q)); height:auto; aspect-ratio:2909 / 3878; margin-top:calc(94 * var(--q))}
   .hs-about__who{order:9; margin-top:12px; font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:14px; line-height:.96;
     letter-spacing:-.02em; text-align:center; white-space:nowrap}
   .hs-about__roles{order:10; width:auto; align-items:center; gap:4px; margin-top:calc(92 * var(--q))}
   .hs-about__roles li{font-size:calc(40 * var(--q)); line-height:.78; letter-spacing:-.02em; text-align:center; white-space:nowrap; text-box:trim-both cap alphabetic; --tb:1}
   .hs-about__pills .pill--lime{order:11; width:144px; height:52px; margin-top:12px}
   .hs-about__pills .pill{font-size:14px; letter-spacing:-.02em; min-height:0}
-  .hs-about .circle[data-creature="koi"]{order:12; margin-top:calc(96 * var(--q))}
-  .hs-about .circle[data-creature="frog"]{order:12; margin-top:calc(14 * var(--q))}
-  .hs-about .hs-about__passion{order:10; position:relative; right:auto; bottom:auto; margin-top:calc(40 * var(--q)); text-align:center; font-size:calc(40 * var(--q))}
+  /* vòng 2 + 3 đứng cạnh nhau, mỗi vòng 176 (hàng 352), cách nút About us 120 (Figma 697:53991) */
+  .hs-about .circles > div:not(.circle){display:flex; order:12; width:calc(352 * var(--q)); justify-content:space-between; margin-top:calc(120 * var(--q))}
+  .hs-about .circle[data-creature="koi"], .hs-about .circle[data-creature="frog"]{width:calc(176 * var(--q)); height:calc(176 * var(--q)); margin:0}
+  .hs-about .circle__t{position:absolute; inset:0; display:grid; place-items:center; font-family:'Geist Mono',ui-monospace,monospace; font-weight:500;
+    font-size:13px; line-height:1; letter-spacing:-.02em; text-transform:uppercase; color:#0f1513; pointer-events:none}
+  .hs-about .hs-about__passion{display:none} /* Figma mobile không có câu "All you need is passion" */
   /* phần dưới tràn hết bề ngang */
-  .hs-about__scheme{order:13; width:100vw; margin-top:calc(16 * var(--q))}
-  .hs-about__scheme .scheme > i, .hs-about__scheme > i{height:calc(60 * var(--q))}
+  .hs-about__scheme{order:13; width:100vw; margin-top:calc(8 * var(--q))}
+  .hs-about__scheme .scheme > i, .hs-about__scheme > i{height:calc(400 / 9 * var(--q))} /* 9 hàng = 400 */
   /* ảnh gốm 440 + gạch neon 212 + dải chấm 96 = 748 = đúng một màn thấy được dưới header (--v) */
   .hs-about{--v:calc((var(--vp) - var(--bar)) / 748)}
   .hs-about__rock{order:14; width:100vw; height:calc(440 * var(--v)); aspect-ratio:auto}
