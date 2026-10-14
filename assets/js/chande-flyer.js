@@ -454,6 +454,8 @@ function mount(root = document) {
   function tick(now) {
     raf = 0
     if (live !== me || !gl) return
+    // vòng tròn trang chủ đã rời trang (chuyển trang lỡ không gỡ) -> tự huỷ, không bay sang trang khác
+    if (!circle.isConnected) return destroy()
     const dt = lastT ? Math.min(0.05, (now - lastT) / 1000) : 0
     lastT = now
     t += dt

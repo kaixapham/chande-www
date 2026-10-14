@@ -1,110 +1,245 @@
 /* =============================================================================
- * GALLERY — lưới ảnh vô tận (chande-gallery.js)
- * Bố cục theo 197historiasilustradas.com: ô vuông, cột cách ~2 ô, ô cột lẻ lệch
- * xuống tạo nhịp zigzag, mỗi hàng lệch ngang một đoạn khác nhau. Caption dùng
- * đúng kiểu chữ thân trang chủ (.b16: Phudu 500, hoa, letter-spacing -.02em).
- * Link ở cả ba trang (Barba thay container nên CSS phải có sẵn).
+ * GALLERY — không gian 3D vô tận các tem ảnh (chande-g3.js)
+ * Dựng trên Infinite Canvas của Edoardo Lunardi (MIT). Kéo / lăn chuột / vuốt / phím mũi tên + W A S D
+ * để bay trong không gian, bấm một tem để mở lớn; mặt sau tem là tường lời nhắn (khi có kho lưu).
+ * Mọi class mang tiền tố g3- (site đã có .field, .card, .bar, .grid… dùng cho việc khác).
+ * Link ở mọi trang (Barba thay container nên CSS phải có sẵn).
  * ========================================================================== */
 .page--gallery{height:100vh; min-height:0; padding:0; overflow:hidden}
+html.g3-on, html.g3-on body{overflow:hidden; overscroll-behavior:none}
 
-.gal{
-  --g-size:var(--gal-size, 10rem); /* cạnh ô ảnh — CONFIG.size của chande-gallery.js; JS đọc qua .gal__probe */
-  --g-cap:1.75rem;            /* chỗ cho caption phía trên ảnh */
-  position:fixed; inset:0; overflow:hidden;
-  touch-action:none; user-select:none; -webkit-user-select:none;
-  cursor:grab; background:var(--cream);
+.g3{
+  --g3-floor:#ECE5CF;   /* nền của không gian 3D (scene đọc biến này) */
+  --g3-ink:#0f1513;
+  --g3-green:#236c3c;
+  --g3-lime:#68f12b;
+  --g3-cream:#f4f3eb;
+  --g3-danger:#c4372b;
+  --g3-hair:rgba(15, 21, 19, .18);
+  --g3-mute:rgba(15, 21, 19, .55);
+  --g3-mono:'Geist Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  --g3-display:'Phudu', ui-sans-serif, system-ui, sans-serif;
+  --g3-gutter:24px;
+  position:fixed; inset:0; background:var(--g3-floor); color:var(--g3-ink);
+  font-family:var(--g3-display); font-weight:600; font-size:12px; text-transform:uppercase;
+  -webkit-font-smoothing:antialiased;
 }
-.gal.is-dragging{cursor:grabbing}
-.gal__world{position:absolute; inset:0; isolation:isolate} /* z-index của ảnh (tấm to đè tấm nhỏ) không trồi lên trên lớp cỏ / vịt */
-.gal__probe{position:absolute; width:var(--g-size); height:var(--g-cap); visibility:hidden; pointer-events:none}
+.g3 *, .g3 *::before, .g3 *::after{box-sizing:border-box}
+.g3-stage{position:absolute; inset:0; touch-action:none}
+.g3-stage canvas{display:block; width:100%; height:100%; touch-action:none; cursor:grab}
+.g3-empty{position:absolute; inset:0; z-index:5; display:grid; place-items:center; padding:var(--g3-gutter);
+  font:500 13px/1.4 var(--g3-mono); letter-spacing:-.02em; color:var(--g3-mute); text-align:center}
+.g3-hint{position:absolute; z-index:10; left:var(--g3-gutter); bottom:calc(20px + env(safe-area-inset-bottom, 0px));
+  max-width:calc(100% - 200px); font:500 11px/1.3 var(--g3-mono); letter-spacing:-.02em; color:var(--g3-mute); pointer-events:none}
 
-.gal__item{
-  /* --k: tỉ lệ cỡ ảnh của ô (kiểu ngẫu nhiên to nhỏ) — chỉ khung ảnh đổi cỡ,
-     chữ caption giữ nguyên */
-  --gk:calc(var(--g-size) * var(--k, 1));
-  position:absolute; top:0; left:0; display:block; width:var(--gk);
-  text-decoration:none; color:var(--green); will-change:transform;
-  /* xoay (kiểu rải rác) quanh tâm ẢNH, không phải tâm cả khối caption + ảnh */
-  transform-origin:50% calc(100% - var(--gk) / 2);
-  -webkit-user-drag:none;
+/* ---------- Lightbox: tem bay từ chỗ của nó trên canvas ra giữa màn; mặt sau là tường lời nhắn ---------- */
+.g3-lb{
+  position:fixed; inset:0; z-index:45;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  padding:calc(var(--bar) + 12px) var(--g3-gutter) calc(16px + env(safe-area-inset-bottom, 0px));
+  cursor:zoom-out; --lb-ms:500ms;
 }
-.gal__card{transition:transform .5s cubic-bezier(.16,1,.3,1)}
+/* nền lúc xem chi tiết ảnh (Figma 581:42816): vân bản đồ trên #FFFEF8 — cùng ảnh nền chồng poster trang
+   chủ; hiện dần theo nhịp tem bay ra. Nền đặc nên không cần làm mờ phía sau (nhẹ hơn hẳn, nhất là Safari). */
+.g3-lb::before{content:''; position:absolute; inset:0; z-index:-1; background:#fffef8 url("../img/home/poster-bg.webp") center / cover no-repeat;
+  opacity:0; transition:opacity var(--lb-ms) ease}
+.g3-lb.is-open::before{opacity:1}
+.g3-lb__frame{flex:none; position:relative; max-width:100%; transform-origin:0 0; perspective:2400px;
+  transition:width .75s cubic-bezier(.65, 0, .25, 1), height .75s cubic-bezier(.65, 0, .25, 1)}
+.g3-card{position:absolute; inset:0; transform-style:preserve-3d}
+.g3-lb.is-chat .g3-card{transform:rotateY(180deg)}
+.g3-card__face{position:absolute; inset:0; -webkit-backface-visibility:hidden; backface-visibility:hidden}
+.g3-card__front{filter:drop-shadow(0 2px 25px rgba(0, 0, 0, .2))}
+.g3-card__front canvas{display:block; width:100%; height:100%}
+.g3-card__back{transform:rotateY(180deg); cursor:auto; filter:drop-shadow(0 2px 25px rgba(0, 0, 0, .2))}
+.g3-lb__caption{display:none} /* tên ảnh chỉ để làm tên của hộp thoại (đọc màn hình) */
+/* note lời nhắn rải hai bên tem (Figma 688:48951): giấy trắng 176 · lỗ chấm · emoji · lời · tên */
+.g3-notes{position:absolute; inset:0; pointer-events:none; z-index:1}
+.g3-pn{position:absolute; left:0; top:0; width:176px; --pn-bg:#fff; --pn-fiber:#fbfaf4;
+  /* bóng như tấm tem ở lightbox — drop-shadow (không phải box-shadow) để ôm đúng mép rách */
+  filter:drop-shadow(0 4px 24px rgba(0, 0, 0, .1)); /* nhạt, toả rộng cho mịn */
+  pointer-events:auto; cursor:pointer; transform-origin:50% 50%; will-change:transform}
+/* lõi xơ giấy lộ ra ở mép rách (rách sâu hơn tờ giấy một chút) */
+.g3-pn::before{content:''; position:absolute; inset:0; background:var(--pn-fiber); clip-path:var(--tear-fiber, none)}
+/* tờ giấy: màu + vân giấy (ô vân dựng bằng canvas ở chande-g3.js), cắt theo mép rách */
+.g3-pn__sheet{position:relative; display:flex; flex-direction:column; gap:32px; padding:12px;
+  background-color:var(--pn-bg); background-image:var(--g3-paper, none); background-size:160px 160px; background-blend-mode:multiply;
+  clip-path:var(--tear, none)}
+.g3-pn--tear-b .g3-pn__sheet{padding-bottom:24px} /* rách to ở mép dưới: đệm đáy gấp đôi */
+.g3-pn__holes{display:block; width:154px; height:10px}
+.g3-pn__body{display:flex; flex-direction:column; gap:24px; margin:0; color:#101513; font:500 14px/.96 var(--g3-display);
+  letter-spacing:-.02em; text-transform:uppercase; overflow-wrap:anywhere}
+.g3-pn__body p{margin:0; max-width:75%} /* chữ chỉ chiếm 3 / 4 lưới 4 cột của note (114 / 152 px) */
+.g3-pn__text{white-space:pre-line}
+/* 5 màu giấy (chande-g3.js chọn theo nội dung): 3 sáng chữ đen · 2 tối chữ + lỗ trắng, vân giấy riêng */
+.g3-pn--cream{--pn-bg:#F5F0E3}
+.g3-pn--beige{--pn-bg:#E9E2C8}
+.g3-pn--white{--pn-bg:#FFFFFF}
+.g3-pn--slate{--pn-bg:#2C3A38; --pn-fiber:#d9dcd6}
+.g3-pn--green{--pn-bg:#396B41; --pn-fiber:#dfe6d6}
+.g3-pn--slate .g3-pn__sheet, .g3-pn--green .g3-pn__sheet{background-image:var(--g3-paper-dark, none); background-blend-mode:overlay}
+.g3-pn--slate .g3-pn__body, .g3-pn--green .g3-pn__body{color:#FFFFFF}
+.g3-pn--slate .g3-pn__holes, .g3-pn--green .g3-pn__holes{filter:invert(1)} /* lỗ đen -> trắng */
+
+/* thanh nút dưới ảnh */
+.g3-bar{display:flex; align-items:center; gap:6px; margin-top:14px; padding:6px; border-radius:999px; background:#fff; cursor:auto;
+  box-shadow:0 2px 50px rgba(0, 0, 0, .2); opacity:0; transform:translateY(8px); transition:opacity .3s ease, transform .3s ease}
+.g3-lb.is-open .g3-bar{opacity:1; transform:none; transition-delay:.35s}
+.g3-bar__btn{display:inline-flex; align-items:center; justify-content:center; gap:9px; height:48px; min-width:48px; padding:0 12px;
+  border:0; border-radius:999px; background:transparent; color:var(--g3-ink); cursor:pointer; transition:background-color .2s ease}
+.g3-bar__btn:hover{background:#f1efe7}
+/* nhãn nói rõ nút khi hover (máy có chuột; không theo focus vì mở ảnh là nút Close được focus sẵn; nút lời nhắn đang mở thì đã có nhãn riêng) */
+.g3-bar__btn[data-tip]{position:relative}
+.g3-bar__btn[data-tip]::after{content:attr(data-tip); position:absolute; left:50%; bottom:calc(100% + 14px); padding:8px 12px; border-radius:999px;
+  background:var(--g3-ink); color:#fff; font:600 12px/1 var(--g3-mono); text-transform:uppercase; letter-spacing:-.01em; white-space:nowrap;
+  pointer-events:none; opacity:0; transform:translate(-50%, 6px); transition:opacity .18s ease, transform .18s ease}
 @media (hover:hover){
-  .gal:not(.is-dragging) .gal__item:hover .gal__card{transform:scale(1.08)}
+  .g3-bar__btn[data-tip]:hover::after{opacity:1; transform:translate(-50%, 0); transition-delay:.12s}
+}
+.g3-bar__chat[aria-pressed="true"]::after{display:none}
+.g3-bar__btn:focus-visible{outline:2px solid var(--g3-green); outline-offset:2px}
+.g3-bar__btn:disabled{opacity:.45; cursor:progress}
+.g3-bar__chat{gap:0; transition:background-color .35s ease, padding .55s cubic-bezier(.65, 0, .35, 1)}
+.g3-bar__lblwrap{display:grid; grid-template-columns:0fr; transition:grid-template-columns .55s cubic-bezier(.65, 0, .35, 1)}
+.g3-bar__label{min-width:0; overflow:hidden; white-space:nowrap; padding-left:0; font:600 14px/1.25 var(--g3-mono); text-transform:uppercase; letter-spacing:-.01em;
+  transition:padding-left .55s cubic-bezier(.65, 0, .35, 1)} /* đệm trái chỉ khi nhãn mở — thu gọn thì icon nằm đúng giữa nút */
+.g3-bar__chat[aria-pressed="true"] .g3-bar__label{padding-left:9px}
+.g3-bar__label i{display:inline-block; font-style:normal; opacity:0; transform:translateY(70%); transition:opacity .18s ease, transform .18s ease}
+.g3-bar__chat[aria-pressed="true"]{background:var(--g3-lime); padding:0 18px 0 14px}
+.g3-bar__chat[aria-pressed="true"] .g3-bar__lblwrap{grid-template-columns:1fr}
+.g3-bar__chat[aria-pressed="true"] .g3-bar__label i{opacity:1; transform:none;
+  transition:opacity .35s ease calc(.2s + var(--i) * 18ms), transform .55s cubic-bezier(.16, 1, .3, 1) calc(.2s + var(--i) * 18ms)}
+
+/* mặt lời nhắn: giấy răng cưa như mặt ảnh */
+.g3-stamp{--r:7px; --step:22px; height:100%; background:#fff; padding:14px;
+  -webkit-mask:radial-gradient(circle var(--r) at 50% 50%, #0000 97%, #000) calc(var(--step) / -2) calc(var(--step) / -2) / var(--step) var(--step) round, linear-gradient(#000 0 0) content-box;
+  mask:radial-gradient(circle var(--r) at 50% 50%, #0000 97%, #000) calc(var(--step) / -2) calc(var(--step) / -2) / var(--step) var(--step) round, linear-gradient(#000 0 0) content-box}
+.g3-chat__inner{position:relative; display:grid; grid-template-columns:minmax(0, 1fr) 280px; height:100%; background:var(--g3-cream); text-transform:uppercase}
+.g3-chat__sign{position:absolute; right:0; bottom:0; width:280px; height:160px; pointer-events:none; user-select:none}
+.g3-chat__seal{position:absolute; right:15px; bottom:13px; width:120px; height:120px; mix-blend-mode:multiply}
+.g3-chat__sig{position:absolute; right:30px; bottom:6px; width:190px; height:auto; mix-blend-mode:multiply}
+@media (max-width:44em), (max-height:680px){ .g3-chat__sign{display:none} }
+.g3-chat__wall-wrap{min-width:0; overflow-y:auto; padding:20px; overscroll-behavior:contain}
+.g3-chat__wall{columns:2 220px; column-gap:10px}
+.g3-note{break-inside:avoid; margin:0 0 10px; padding:14px 15px 16px; background:#fff; border:1px solid rgba(15, 21, 19, .1); border-radius:10px}
+.g3-note__name{font:500 11px/1 var(--g3-mono); letter-spacing:-.02em; color:rgba(15, 21, 19, .42); margin-bottom:9px; overflow-wrap:anywhere}
+.g3-note__text{margin:0; font:600 15px/1.12 var(--g3-display); letter-spacing:-.02em; color:var(--g3-ink); overflow-wrap:anywhere; white-space:pre-line}
+.g3-chat__empty{margin:0; font:500 12px/1.4 var(--g3-mono); letter-spacing:-.02em; color:var(--g3-mute)}
+.g3-chat__form{display:flex; flex-direction:column; gap:22px; padding:28px 20px; border-left:1px solid var(--g3-hair); min-width:0}
+.g3-in{display:flex; flex-direction:column; gap:9px}
+.g3-in__label{font:500 14px/.98 var(--g3-display); letter-spacing:-.02em; color:var(--g3-ink)}
+.g3-in input, .g3-in textarea{font:500 13px/1.3 var(--g3-mono); letter-spacing:-.02em; text-transform:uppercase; color:var(--g3-ink); caret-color:var(--g3-green);
+  border:0; border-bottom:1px solid rgba(15, 21, 19, .25); background:transparent; padding:4px 0 11px; resize:none; outline:none; border-radius:0}
+.g3-in input::placeholder, .g3-in textarea::placeholder{color:rgba(15, 21, 19, .3)}
+/* hàng chọn avatar (Figma 688:49086): nền trắng · đệm 8 · cách 8 · emoji 16 px */
+.g3-avatars{display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:8px; background:#fff; width:fit-content; max-width:100%}
+.g3-avatars button{display:grid; place-items:center; width:24px; height:24px; margin:-4px; padding:0; border:0; border-radius:4px; background:transparent;
+  font:500 16px/.96 var(--g3-display); cursor:pointer; transition:background-color .2s, transform .2s cubic-bezier(.3, 1.4, .5, 1)}
+.g3-avatars button:hover{transform:scale(1.18)}
+.g3-avatars button[aria-checked="true"]{background:var(--g3-lime)}
+.g3-avatars button:focus-visible{outline:2px solid var(--g3-green); outline-offset:1px}
+.g3-in input:focus, .g3-in textarea:focus{border-bottom-color:var(--g3-ink)}
+.g3-send{display:flex; align-items:stretch; margin-top:6px; padding:0; border:0; cursor:pointer; min-height:52px;
+  background:var(--g3-green); color:#fff; font:600 16px/.9 var(--g3-display); text-transform:uppercase; letter-spacing:-.01em; text-align:left}
+.g3-send > span:first-child{flex:1; display:flex; align-items:center; padding:0 16px}
+.g3-send__icon{display:grid; place-items:center; width:52px; background:var(--g3-lime)}
+.g3-send__icon svg{width:24px; height:24px; transition:translate .35s cubic-bezier(.65, 0, .35, 1)}
+.g3-send:hover .g3-send__icon svg, .g3-send:focus-visible .g3-send__icon svg{translate:5px 0}
+.g3-send:focus-visible{outline:2px solid var(--g3-green); outline-offset:3px}
+.g3-send:disabled{opacity:.6; cursor:default}
+.g3-chat__status{margin:0; font:500 11px/1.4 var(--g3-mono); letter-spacing:-.02em; color:var(--g3-mute); min-height:1.4em}
+.g3-toast{position:absolute; left:50%; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%);
+  background:var(--g3-ink); color:#fff; padding:10px 14px; font:500 12px/1.3 var(--g3-mono); text-transform:uppercase}
+@media (max-width:44em){
+  .g3-chat__inner{grid-template-columns:1fr; grid-template-rows:auto minmax(0, 1fr)}
+  .g3-chat__form{order:-1; border-left:0; border-bottom:1px solid var(--g3-hair); padding:16px; gap:14px}
+  .g3-in textarea{min-height:52px; height:52px}
+  .g3-chat__wall-wrap{padding:14px}
+}
+@media (max-width:599px){ .g3{--g3-gutter:16px} }
+@media (prefers-reduced-motion:reduce){
+  .g3-bar__chat, .g3-bar__lblwrap, .g3-bar__label i, .g3-bar__btn[data-tip]::after{transition:none !important}
 }
 
-.gal__cap{
-  display:flex; align-items:flex-end; gap:.5rem; height:var(--g-cap); padding-bottom:.5rem;
-  font-weight:500; font-size:1rem; line-height:.98; letter-spacing:-.02em;
-  text-transform:uppercase; white-space:nowrap; overflow:hidden;
-}
-.gal__num{flex:none; font-variant-numeric:tabular-nums}
-.gal__name{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; text-align:right}
-
-.gal__media{width:var(--gk); height:var(--gk); overflow:hidden; background:#e6e4d8}
-.gal__media img{display:block; width:100%; height:100%; object-fit:cover; pointer-events:none}
-
-/* ---- Sàn thảm cỏ — ảnh như ảnh in nằm trên cỏ ----
-   data-floor="grass-3d": cỏ 3D do chande-grass.js vẽ lên canvas .gal__grass
-   data-floor="grass-pixel": ô cỏ pixel chande-gallery.js gắn làm nền */
-.gal[data-floor="grass-3d"]{background-color:#21451a}
-.gal[data-floor="grass-pixel"]{background-color:#367531; background-repeat:repeat; image-rendering:pixelated}
-.gal__grass{position:absolute; top:0; left:0; pointer-events:none}
-.gal[data-floor^="grass"] .gal__media{
-  box-shadow:0 0 0 3px var(--cream), 0 8px 14px rgba(12,32,10,.45), 0 2px 3px rgba(12,32,10,.35);
-  transition:box-shadow .5s cubic-bezier(.16,1,.3,1);
-}
-.gal[data-floor^="grass"] .gal__cap{color:var(--cream); text-shadow:0 1px 2px rgba(10,30,10,.55)}
-@media (hover:hover){
-  .gal[data-floor^="grass"]:not(.is-dragging) .gal__item:hover .gal__media{
-    box-shadow:0 0 0 3px var(--cream), 0 22px 30px rgba(12,32,10,.42), 0 6px 10px rgba(12,32,10,.3)}
-}
-
-/* ---- Viền tem răng cưa (CONFIG.stamp của chande-gallery.js) ----
-   Khung ảnh tô màu viền + padding = độ dày viền; mép ngoài khoét nửa tròn bằng
-   mask: lớp 1 là lưới lỗ tròn tâm nằm đúng trên mép (`round` -> mỗi cạnh luôn
-   đủ số răng nguyên, ảnh to nhỏ đều khớp), lớp 2 lấp kín phần trong để chỉ
-   còn lỗ ở mép. Mask cắt cả box-shadow nên bóng chuyển sang drop-shadow của
-   .gal__card. Mọi số tính theo cạnh ảnh (--gk) nên ảnh to thì răng to theo. */
-.gal[data-stamp] .gal__media{
-  --sr:calc(var(--gk) * var(--stamp-r, .028));
-  --sd:calc(var(--sr) * var(--stamp-gap, 3));
-  padding:calc(var(--gk) * var(--stamp-b, .06));
-  background:var(--stamp-color, #333);
-  -webkit-mask:
-    radial-gradient(var(--sr) at var(--sr) var(--sr), #0000 97%, #000) calc(-1 * var(--sr)) calc(-1 * var(--sr)) / var(--sd) var(--sd) round,
-    linear-gradient(#000 0 0) 50% / calc(100% - 2 * var(--sr)) calc(100% - 2 * var(--sr)) no-repeat;
-  mask:
-    radial-gradient(var(--sr) at var(--sr) var(--sr), #0000 97%, #000) calc(-1 * var(--sr)) calc(-1 * var(--sr)) / var(--sd) var(--sd) round,
-    linear-gradient(#000 0 0) 50% / calc(100% - 2 * var(--sr)) calc(100% - 2 * var(--sr)) no-repeat;
-}
-.gal[data-stamp][data-floor^="grass"] .gal__media,
-.gal[data-stamp][data-floor^="grass"]:not(.is-dragging) .gal__item:hover .gal__media{box-shadow:none}
-.gal[data-stamp][data-floor^="grass"] .gal__card{filter:drop-shadow(0 6px 8px rgba(12,32,10,.42))}
-
-/* Vịt patin 3D (chande-duck.js) — phủ lên lưới, không ăn chuột */
-.gal__duck{position:absolute; inset:0; pointer-events:none}
-/* Vệt rẽ cỏ (chande-duck.js) — dưới lưới ảnh, phóng pixel từ canvas độ phân giải ô cỏ */
-.gal__trail{position:absolute; top:0; left:0; pointer-events:none; image-rendering:pixelated}
-
-/* ---- Lightbox ---- */
-.gal-lb{
-  position:fixed; inset:0; z-index:900; display:grid; place-items:center;
-  background:rgba(244,243,235,.94); cursor:zoom-out;
-}
-.gal-lb__fig{margin:0; display:flex; flex-direction:column; gap:.75rem; align-items:flex-start}
-.gal-lb__img{display:block; max-width:min(80vw, 70rem); max-height:calc(100vh - 14rem); width:auto; height:auto; transform-origin:0 0}
-.gal-lb__cap{
-  display:flex; gap:1rem; color:var(--green);
-  font-weight:500; font-size:1rem; line-height:.98; letter-spacing:-.02em; text-transform:uppercase;
-}
-
-/* Tablet: rem của site co lại -> giữ ô ảnh không nhỏ hơn 116px */
-@media (min-width:768px) and (max-width:1199px){
-  .gal{--g-size:max(var(--gal-size, 10rem), 116px)}
-}
-@media (max-width:767px){
-  .gal{--g-size:88px; --g-cap:1.25rem}
-  .gal__cap{font-size:10px; padding-bottom:.35rem}
-  .gal-lb__img{max-width:90vw}
-}
+/* ---------- Ngăn "Quản lý ảnh" (chỉ admin — chande-g3-admin.js dựng) ---------- */
+.g3a-edit{position:absolute; z-index:30; right:var(--g3-gutter); bottom:calc(20px + env(safe-area-inset-bottom, 0px));
+  display:flex; align-items:stretch; height:52px; padding:0; border:0; cursor:pointer;
+  background:var(--g3-ink); color:#fff; font:600 15px/.9 var(--g3-display); text-transform:uppercase; letter-spacing:-.01em}
+.g3a-edit[hidden]{display:none}
+.g3a-edit span{display:flex; align-items:center; padding:0 20px}
+.g3a-edit i{width:52px; display:grid; place-items:center; background:var(--g3-lime); color:var(--g3-ink)}
+.g3a-edit svg{width:16px; height:16px; overflow:visible}
+.g3a-edit circle{transition:transform .35s cubic-bezier(.3, 1.4, .5, 1)}
+.g3a-edit:hover circle:nth-child(1){transform:translate(-2px, -2px)}
+.g3a-edit:hover circle:nth-child(2){transform:translate(2px, -2px)}
+.g3a-edit:hover circle:nth-child(3){transform:translate(-2px, 2px)}
+.g3a-edit:hover circle:nth-child(4){transform:translate(2px, 2px)}
+.g3a-drawer{position:fixed; z-index:40; top:0; right:0; bottom:0; width:min(460px, 100%);
+  background:var(--g3-cream); color:var(--g3-ink); border-left:1px solid var(--g3-hair); box-shadow:-12px 0 40px rgba(15, 21, 19, .12);
+  display:flex; flex-direction:column; padding-top:var(--bar); text-transform:none;
+  transform:translateX(105%); transition:transform .35s cubic-bezier(.2, .8, .2, 1)}
+.g3a-drawer.is-open{transform:none}
+.g3a-drawer__head{display:flex; align-items:center; gap:12px; padding:20px 24px; border-bottom:1px solid var(--g3-hair)}
+.g3a-drawer__head h2{flex:1; margin:0; font:700 30px/.85 var(--g3-display); letter-spacing:-.04em; color:var(--g3-green); text-transform:uppercase}
+.g3a-icon{border:0; background:none; color:var(--g3-ink); cursor:pointer; width:40px; height:40px; display:grid; place-items:center}
+.g3a-icon:hover{background:rgba(15, 21, 19, .07)}
+.g3a-save{border:0; background:var(--g3-lime); color:var(--g3-ink); padding:10px 16px; cursor:pointer; font:600 13px/1 var(--g3-mono); text-transform:uppercase}
+.g3a-save:disabled{opacity:.5; cursor:progress}
+.g3a-drawer__body{flex:1; overflow-y:auto; padding:0 24px calc(24px + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; overscroll-behavior:contain}
+.g3a-sec{min-width:0; padding:20px 0; border-bottom:1px solid var(--g3-hair)}
+.g3a-head{display:flex; gap:14px; align-items:center; width:100%; padding:4px 0; border:0; background:none; color:inherit; text-align:left; cursor:pointer; font:inherit}
+.g3a-head b{font:500 12px/1 var(--g3-mono); color:rgba(15, 21, 19, .5)}
+.g3a-head span{font:600 17px/1 var(--g3-display); letter-spacing:-.01em; flex:1; text-transform:uppercase}
+.g3a-head__chev{flex:none; transition:transform .35s cubic-bezier(.65, 0, .35, 1)}
+.g3a-head[aria-expanded="false"] .g3a-head__chev{transform:rotate(-90deg)}
+.g3a-sec__body{display:grid; grid-template-rows:1fr; transition:grid-template-rows .4s cubic-bezier(.65, 0, .35, 1)}
+.g3a-sec__inner{min-height:0; overflow:hidden; display:flex; flex-direction:column; gap:14px; padding:14px 2px 2px; margin:0 -2px; transition:opacity .3s ease}
+.g3a-sec.is-collapsed .g3a-sec__body{grid-template-rows:0fr}
+.g3a-sec.is-collapsed .g3a-sec__inner{opacity:0}
+.g3a-sub{font:500 11px/1.45 var(--g3-mono); letter-spacing:-.02em; color:var(--g3-mute); margin:0; text-transform:none}
+.g3a-drop{position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:8px; padding:22px 20px;
+  border:1px dashed rgba(15, 21, 19, .35); cursor:pointer; transition:border-color .2s, background-color .2s}
+.g3a-drop:hover, .g3a-drop.is-over{border-color:var(--g3-ink); background:rgba(104, 241, 43, .16)}
+.g3a-drop strong{font:600 16px/1 var(--g3-display); letter-spacing:-.01em; text-transform:uppercase}
+.g3a-drop input{position:absolute; width:1px; height:1px; opacity:0; pointer-events:none}
+.g3a-queue{display:flex; flex-direction:column; gap:6px; font:500 11px/1.4 var(--g3-mono); color:var(--g3-mute)}
+.g3a-queue .is-bad, .g3a-note.is-bad{color:var(--g3-danger)}
+.g3a-count{font:500 11px/1.4 var(--g3-mono); color:var(--g3-mute); font-variant-numeric:tabular-nums}
+.g3a-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:14px 12px}
+.g3a-tile{display:flex; flex-direction:column; gap:6px; min-width:0}
+.g3a-tile__img{aspect-ratio:1; overflow:hidden; background:#e6e4d8}
+.g3a-tile__img img{width:100%; height:100%; object-fit:cover; display:block}
+.g3a-tile__name{width:100%; padding:4px 0; border:0; border-bottom:1px solid var(--g3-hair); background:transparent; border-radius:0;
+  font:500 12px/1.2 var(--g3-mono); letter-spacing:-.02em; color:var(--g3-ink); outline:none}
+.g3a-tile__name:focus{border-bottom-color:var(--g3-ink)}
+.g3a-tile__meta{display:flex; justify-content:space-between; align-items:center; gap:6px; font:500 11px/1 var(--g3-mono); color:var(--g3-mute)}
+.g3a-tile__meta button{border:0; background:none; cursor:pointer; padding:2px 3px; color:var(--g3-mute); font:500 11px/1 var(--g3-mono); text-transform:uppercase}
+.g3a-tile__meta button:hover, .g3a-del.is-armed{color:var(--g3-danger)}
+.g3a-note{margin:0; padding-top:16px; font:500 11px/1.5 var(--g3-mono); letter-spacing:-.02em; color:var(--g3-mute)}
+.g3a-note a{color:inherit}
+.g3a-anim{display:flex; flex-direction:column; gap:12px; padding:16px 0; border-top:1px solid var(--g3-hair)}
+.g3a-anim__head{display:flex; flex-direction:column; gap:4px}
+.g3a-anim__head strong{font:600 15px/1 var(--g3-display); letter-spacing:-.01em; text-transform:uppercase}
+.g3a-anim__row{display:flex; gap:14px; align-items:flex-start}
+.g3a-anim__fields{flex:1; min-width:0; display:flex; flex-direction:column; gap:14px}
+.g3a-f{display:flex; flex-direction:column; gap:6px; min-width:0}
+.g3a-f > span{font:500 11px/1 var(--g3-mono); letter-spacing:-.02em; color:var(--g3-mute); text-transform:uppercase; display:flex; justify-content:space-between; gap:8px}
+.g3a-f b{font-weight:500; color:var(--g3-ink); font-variant-numeric:tabular-nums}
+.g3a-f select, .g3a-f input[type="number"]{width:100%; padding:6px 0; border:0; border-bottom:1px solid rgba(15, 21, 19, .35); border-radius:0; background:transparent; color:var(--g3-ink); font:500 13px/1.2 var(--g3-mono); outline:none}
+.g3a-f input[type="range"]{width:100%; accent-color:var(--g3-green); margin:4px 0 0}
+.g3a-opts{display:flex; flex-direction:column; gap:8px}
+.g3a-opt{position:relative; cursor:pointer; display:block}
+.g3a-opt input{position:absolute; opacity:0; pointer-events:none}
+.g3a-opt > span{display:block; padding:14px 20px; border:1px solid rgba(15, 21, 19, .3); border-radius:999px;
+  font:600 14px/1 var(--g3-display); letter-spacing:-.01em; text-transform:uppercase; transition:background-color .2s, border-color .2s}
+.g3a-opt:hover > span{border-color:var(--g3-ink)}
+.g3a-opt input:checked + span{background:var(--g3-lime); border-color:var(--g3-lime)}
+.g3a-opt input:focus-visible + span{outline:2px solid var(--g3-ink); outline-offset:2px}
+.g3a-bez{display:grid; grid-template-columns:repeat(4, 1fr); gap:8px}
+.g3a-bez[hidden]{display:none}
+.g3a-reset{align-self:flex-start; border:1px solid rgba(15, 21, 19, .3); background:transparent; padding:10px 16px; cursor:pointer; font:500 11px/1 var(--g3-mono); text-transform:uppercase; color:var(--g3-ink)}
+.g3a-reset:hover{border-color:var(--g3-ink); background:rgba(104, 241, 43, .16)}
+.g3a-gh{display:flex; flex-direction:column; gap:8px; padding-top:16px}
+.g3a-gh[hidden]{display:none}
+.g3a-gh input[name]{padding:8px; border:1px solid var(--g3-hair); background:#fff; font:500 12px/1.2 var(--g3-mono)}
+@media (prefers-reduced-motion:reduce){ .g3a-drawer, .g3a-sec__body, .g3a-head__chev{transition:none} }

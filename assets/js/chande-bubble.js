@@ -89,7 +89,7 @@
     shrinkFrom: '.hs-intro', // section đầu tiên sau hero -> rời hero là co
     shrinkScale: 0.5,
     // Con trỏ nằm trong các section này thì giọt tan đi (ra khỏi thì hiện lại)
-    hideIn: '.hs-land, .hs-poster, .cmenu', // .cmenu: trang menu — bubble bẻ cong ảnh member thành hình tròn
+    hideIn: '.hs-land, .hs-poster, .cmenu, .g3', // .cmenu: trang menu — bubble bẻ cong ảnh member thành hình tròn; .g3: gallery 3D
     zoneOn: true, // giọt theo chuột CHỈ sống trong vùng zoneSel: chuột ra ngoài thì mờ hẳn, giọt không ra khỏi vùng
     zoneSel: '.hs-about .circles, .ab-circles, .ab-member', // dải 3 vòng tròn About trang chủ / 2 vòng tròn + vòng Key members trang About
     zonePad: 24, // nới vùng ra mỗi phía (px ở khổ 1920) — tới đúng hai đường gạch

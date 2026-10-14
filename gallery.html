@@ -22,10 +22,10 @@
 <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/vendor/lenis.css">
-<link rel="stylesheet" href="assets/css/site.css?v=202610140704">
-<link rel="stylesheet" href="assets/css/home.css?v=202610140704">
-<link rel="stylesheet" href="assets/css/gallery.css?v=202610140704">
-<link rel="stylesheet" href="assets/css/form.css?v=202610140704">
+<link rel="stylesheet" href="assets/css/site.css?v=202610140919">
+<link rel="stylesheet" href="assets/css/home.css?v=202610140919">
+<link rel="stylesheet" href="assets/css/gallery.css?v=202610140919">
+<link rel="stylesheet" href="assets/css/form.css?v=202610140919">
 <!-- Khung hình đầu: màn loading do JS dựng ở cuối trang, nên trước đó tô nền tối + ẩn
      nội dung (không chớp nền kem). chande-loading.js gỡ cl-boot ngay khi đã gắn màn loading. -->
 <style>html.cl-boot,html.cl-boot body{background:#182220}html.cl-boot body>:not(.cl){visibility:hidden}</style>
@@ -47,127 +47,178 @@
 
 <main data-barba="container" data-barba-namespace="gallery">
   <div class="page page--gallery">
-    <!-- Lưới ảnh vô tận (chande-gallery.js): kéo / lăn chuột / vuốt để đi mọi
-         hướng, bấm một ô để xem ảnh lớn. Bố cục theo 197historiasilustradas.com.
-         `img` = thumb vuông (ô lưới), `full` = ảnh gốc mở ở lightbox (bỏ trống
-         thì dùng `img`). Thứ tự trong danh sách = số thứ tự trên caption.
+    <!-- Gallery 3D (chande-g3.js, dựng trên Infinite Canvas của Edoardo Lunardi — MIT): bay trong không gian
+         vô tận các tem ảnh — kéo / lăn chuột / vuốt, phím W A S D · mũi tên · Q E; bấm một tem để mở lớn.
+         Danh sách: `img` = bản vừa giữ tỉ lệ (≤ 720 px) làm tem, `full` = ảnh lớn mở ở lightbox.
          Ảnh: album "Chande - Billy" trên Playbook (thành viên team chụp). -->
-    <section class="gal" data-gallery data-floor="grass-3d" data-lenis-prevent aria-label="Gallery">
+    <section class="g3" data-g3 data-g3 data-g3-anim='{"open":{"ms":680,"preset":"expoOut","bez":[0.16,1,0.3,1]},"close":{"ms":520,"preset":"quartInOut","bez":[0.76,0,0.24,1]}}' data-g3-layout='{"far":"fade","density":9,"size":1}'-anim='{"open":{"ms":680,"preset":"expoOut","bez":[0.16,1,0.3,1]},"close":{"ms":520,"preset":"quartInOut","bez":[0.76,0,0.24,1]}}' data-lenis-prevent data-cms-section="Gallery 3D" aria-label="Gallery">
       <h1 class="sr-only">Gallery — photos from Chande Bootcamp</h1>
       <p class="sr-only">Moments from Chande Bootcamp, a retreat for Vietnamese designers at Ke Retreat, Hanoi: the people, talks, workshops and landscapes.</p>
-      <div class="gal__world" data-gallery-world></div>
-      <script type="application/json" data-gallery-items data-cms-list="gallery" data-cms-label="Ảnh gallery — lưới vô tận" data-cms-w="200">
+      <div class="g3-stage" data-g3-stage aria-label="Chande Bootcamp gallery: an endless 3D space of photos"></div>
+      <div class="g3-empty" data-g3-empty hidden>No photos yet.</div>
+
+      <div class="g3-lb" data-g3-lb role="dialog" aria-modal="true" aria-labelledby="g3-title" hidden>
+        <div class="g3-lb__caption"><strong id="g3-title" data-g3-title></strong></div>
+        <!-- lời nhắn của ảnh đang mở: các mẩu note rải hai bên tem (chande-g3.js dựng) -->
+        <div class="g3-notes" data-g3-notes aria-label="Messages on this photo"></div>
+        <div class="g3-lb__frame" data-g3-frame>
+          <div class="g3-card" data-g3-card>
+            <div class="g3-card__face g3-card__front"><canvas data-g3-lbcanvas></canvas></div>
+            <section class="g3-card__face g3-card__back" data-g3-chat aria-label="Messages for this photo" inert>
+              <div class="g3-stamp">
+                <div class="g3-chat__inner">
+                  <div class="g3-chat__wall-wrap">
+                    <div class="g3-chat__wall" data-g3-wall></div>
+                    <p class="g3-chat__empty" data-g3-wallempty hidden></p>
+                  </div>
+                  <form class="g3-chat__form" data-g3-form autocomplete="off">
+                    <input data-g3-hp type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+                    <label class="g3-in">
+                      <span class="g3-in__label">Your name</span>
+                      <input data-g3-name type="text" maxlength="40" placeholder="Enter your name">
+                    </label>
+                    <div class="g3-in" role="radiogroup" aria-label="Your avatar">
+                      <span class="g3-in__label">Your avatar</span>
+                      <div class="g3-avatars" data-g3-avatars>
+                        <button type="button" role="radio" aria-checked="true" aria-label="Wolf">🐺</button><button type="button" role="radio" aria-checked="false" aria-label="Bear">🐻</button><button type="button" role="radio" aria-checked="false" aria-label="Fox">🦊</button><button type="button" role="radio" aria-checked="false" aria-label="Tiger">🐯</button><button type="button" role="radio" aria-checked="false" aria-label="Dog">🐶</button><button type="button" role="radio" aria-checked="false" aria-label="Fish">🐟</button><button type="button" role="radio" aria-checked="false" aria-label="Pig">🐷</button><button type="button" role="radio" aria-checked="false" aria-label="Farmer">👨‍🌾</button>
+                      </div>
+                    </div>
+                    <label class="g3-in">
+                      <span class="g3-in__label">Share your heart</span>
+                      <textarea data-g3-text rows="4" maxlength="500" placeholder="Nhập lz gì cũng được"></textarea>
+                    </label>
+                    <button class="g3-send" data-g3-send type="submit">
+                      <span>Send the love</span>
+                      <span class="g3-send__icon" aria-hidden="true"><svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="3" r="2.4" fill="#0F1513"/><circle cx="21" cy="9" r="2.4" fill="#0F1513"/><circle cx="3" cy="15" r="2.4" fill="#0F1513"/><circle cx="9" cy="15" r="2.4" fill="#0F1513"/><circle cx="15" cy="15" r="2.4" fill="#0F1513"/><circle cx="21" cy="15" r="2.4" fill="#0F1513"/><circle cx="27" cy="15" r="2.4" fill="#0F1513"/><circle cx="21" cy="21" r="2.4" fill="#0F1513"/><circle cx="15" cy="27" r="2.4" fill="#0F1513"/></svg></span>
+                    </button>
+                    <p class="g3-chat__status" data-g3-status role="status"></p>
+                  </form>
+                  <div class="g3-chat__sign" aria-hidden="true">
+                    <img class="g3-chat__seal" src="assets/img/gallery/seal.svg" alt="" loading="lazy">
+                    <img class="g3-chat__sig" src="assets/img/gallery/signature.png" alt="" loading="lazy">
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+        <div class="g3-bar">
+          <button class="g3-bar__btn g3-bar__chat" data-g3-chatbtn type="button" aria-pressed="false" aria-label="Messages" data-tip="Comment" hidden>
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1 0 12 3.5Z"/><path d="M8.5 10.5h7M8.5 14h4.5"/></svg>
+            <span class="g3-bar__lblwrap" aria-hidden="true"><span class="g3-bar__label" data-g3-label>Spread the warmth</span></span>
+          </button>
+          <button class="g3-bar__btn" data-g3-download type="button" aria-label="Download photo" data-tip="Download">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v8M8.5 12.5 12 16l3.5-3.5"/></svg>
+          </button>
+          <button class="g3-bar__btn" data-g3-close type="button" aria-label="Close" data-tip="Close">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </button>
+        </div>
+        <div class="g3-toast" data-g3-toast role="status" hidden></div>
+      </div>
+
+      <script type="application/json" data-g3-items data-cms-list="gallery" data-cms-label="Ảnh gallery — không gian 3D (tem · ảnh lớn)" data-cms-w="360" data-cms-images="img:Ảnh tem:360|full:Ảnh lớn:800" data-cms-fields="name:Tên">
       [
-        {"name":"Billy","img":"assets/img/gallery/billy/001.webp","full":"assets/img/gallery/billy/001-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/002.webp","full":"assets/img/gallery/billy/002-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/003.webp","full":"assets/img/gallery/billy/003-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/004.webp","full":"assets/img/gallery/billy/004-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/005.webp","full":"assets/img/gallery/billy/005-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/006.webp","full":"assets/img/gallery/billy/006-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/007.webp","full":"assets/img/gallery/billy/007-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/008.webp","full":"assets/img/gallery/billy/008-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/009.webp","full":"assets/img/gallery/billy/009-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/010.webp","full":"assets/img/gallery/billy/010-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/011.webp","full":"assets/img/gallery/billy/011-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/012.webp","full":"assets/img/gallery/billy/012-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/013.webp","full":"assets/img/gallery/billy/013-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/014.webp","full":"assets/img/gallery/billy/014-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/015.webp","full":"assets/img/gallery/billy/015-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/016.webp","full":"assets/img/gallery/billy/016-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/017.webp","full":"assets/img/gallery/billy/017-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/018.webp","full":"assets/img/gallery/billy/018-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/019.webp","full":"assets/img/gallery/billy/019-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/020.webp","full":"assets/img/gallery/billy/020-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/021.webp","full":"assets/img/gallery/billy/021-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/022.webp","full":"assets/img/gallery/billy/022-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/023.webp","full":"assets/img/gallery/billy/023-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/024.webp","full":"assets/img/gallery/billy/024-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/025.webp","full":"assets/img/gallery/billy/025-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/026.webp","full":"assets/img/gallery/billy/026-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/027.webp","full":"assets/img/gallery/billy/027-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/028.webp","full":"assets/img/gallery/billy/028-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/029.webp","full":"assets/img/gallery/billy/029-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/030.webp","full":"assets/img/gallery/billy/030-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/031.webp","full":"assets/img/gallery/billy/031-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/032.webp","full":"assets/img/gallery/billy/032-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/033.webp","full":"assets/img/gallery/billy/033-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/034.webp","full":"assets/img/gallery/billy/034-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/035.webp","full":"assets/img/gallery/billy/035-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/036.webp","full":"assets/img/gallery/billy/036-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/037.webp","full":"assets/img/gallery/billy/037-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/038.webp","full":"assets/img/gallery/billy/038-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/039.webp","full":"assets/img/gallery/billy/039-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/040.webp","full":"assets/img/gallery/billy/040-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/041.webp","full":"assets/img/gallery/billy/041-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/042.webp","full":"assets/img/gallery/billy/042-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/043.webp","full":"assets/img/gallery/billy/043-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/044.webp","full":"assets/img/gallery/billy/044-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/045.webp","full":"assets/img/gallery/billy/045-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/046.webp","full":"assets/img/gallery/billy/046-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/047.webp","full":"assets/img/gallery/billy/047-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/048.webp","full":"assets/img/gallery/billy/048-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/049.webp","full":"assets/img/gallery/billy/049-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/050.webp","full":"assets/img/gallery/billy/050-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/051.webp","full":"assets/img/gallery/billy/051-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/052.webp","full":"assets/img/gallery/billy/052-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/053.webp","full":"assets/img/gallery/billy/053-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/054.webp","full":"assets/img/gallery/billy/054-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/055.webp","full":"assets/img/gallery/billy/055-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/056.webp","full":"assets/img/gallery/billy/056-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/057.webp","full":"assets/img/gallery/billy/057-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/058.webp","full":"assets/img/gallery/billy/058-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/059.webp","full":"assets/img/gallery/billy/059-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/060.webp","full":"assets/img/gallery/billy/060-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/061.webp","full":"assets/img/gallery/billy/061-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/062.webp","full":"assets/img/gallery/billy/062-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/063.webp","full":"assets/img/gallery/billy/063-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/064.webp","full":"assets/img/gallery/billy/064-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/065.webp","full":"assets/img/gallery/billy/065-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/066.webp","full":"assets/img/gallery/billy/066-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/067.webp","full":"assets/img/gallery/billy/067-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/068.webp","full":"assets/img/gallery/billy/068-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/069.webp","full":"assets/img/gallery/billy/069-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/070.webp","full":"assets/img/gallery/billy/070-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/071.webp","full":"assets/img/gallery/billy/071-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/072.webp","full":"assets/img/gallery/billy/072-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/073.webp","full":"assets/img/gallery/billy/073-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/074.webp","full":"assets/img/gallery/billy/074-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/075.webp","full":"assets/img/gallery/billy/075-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/076.webp","full":"assets/img/gallery/billy/076-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/077.webp","full":"assets/img/gallery/billy/077-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/078.webp","full":"assets/img/gallery/billy/078-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/079.webp","full":"assets/img/gallery/billy/079-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/080.webp","full":"assets/img/gallery/billy/080-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/081.webp","full":"assets/img/gallery/billy/081-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/082.webp","full":"assets/img/gallery/billy/082-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/083.webp","full":"assets/img/gallery/billy/083-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/084.webp","full":"assets/img/gallery/billy/084-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/085.webp","full":"assets/img/gallery/billy/085-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/086.webp","full":"assets/img/gallery/billy/086-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/087.webp","full":"assets/img/gallery/billy/087-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/088.webp","full":"assets/img/gallery/billy/088-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/089.webp","full":"assets/img/gallery/billy/089-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/090.webp","full":"assets/img/gallery/billy/090-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/091.webp","full":"assets/img/gallery/billy/091-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/092.webp","full":"assets/img/gallery/billy/092-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/093.webp","full":"assets/img/gallery/billy/093-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/094.webp","full":"assets/img/gallery/billy/094-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/095.webp","full":"assets/img/gallery/billy/095-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/096.webp","full":"assets/img/gallery/billy/096-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/097.webp","full":"assets/img/gallery/billy/097-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/098.webp","full":"assets/img/gallery/billy/098-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/099.webp","full":"assets/img/gallery/billy/099-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/100.webp","full":"assets/img/gallery/billy/100-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/101.webp","full":"assets/img/gallery/billy/101-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/102.webp","full":"assets/img/gallery/billy/102-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/103.webp","full":"assets/img/gallery/billy/103-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/104.webp","full":"assets/img/gallery/billy/104-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/105.webp","full":"assets/img/gallery/billy/105-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/106.webp","full":"assets/img/gallery/billy/106-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/107.webp","full":"assets/img/gallery/billy/107-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/108.webp","full":"assets/img/gallery/billy/108-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/109.webp","full":"assets/img/gallery/billy/109-full.webp"},
-        {"name":"Billy","img":"assets/img/gallery/billy/110.webp","full":"assets/img/gallery/billy/110-full.webp"}
+        {"name":"Billy","img":"assets/img/gallery/billy/001-m.webp","full":"assets/img/gallery/billy/001-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/002-m.webp","full":"assets/img/gallery/billy/002-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/003-m.webp","full":"assets/img/gallery/billy/003-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/004-m.webp","full":"assets/img/gallery/billy/004-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/006-m.webp","full":"assets/img/gallery/billy/006-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/007-m.webp","full":"assets/img/gallery/billy/007-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/008-m.webp","full":"assets/img/gallery/billy/008-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/009-m.webp","full":"assets/img/gallery/billy/009-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/010-m.webp","full":"assets/img/gallery/billy/010-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/012-m.webp","full":"assets/img/gallery/billy/012-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/013-m.webp","full":"assets/img/gallery/billy/013-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/014-m.webp","full":"assets/img/gallery/billy/014-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/015-m.webp","full":"assets/img/gallery/billy/015-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/017-m.webp","full":"assets/img/gallery/billy/017-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/018-m.webp","full":"assets/img/gallery/billy/018-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/019-m.webp","full":"assets/img/gallery/billy/019-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/020-m.webp","full":"assets/img/gallery/billy/020-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/021-m.webp","full":"assets/img/gallery/billy/021-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/022-m.webp","full":"assets/img/gallery/billy/022-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/023-m.webp","full":"assets/img/gallery/billy/023-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/024-m.webp","full":"assets/img/gallery/billy/024-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/025-m.webp","full":"assets/img/gallery/billy/025-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/026-m.webp","full":"assets/img/gallery/billy/026-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/027-m.webp","full":"assets/img/gallery/billy/027-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/028-m.webp","full":"assets/img/gallery/billy/028-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/029-m.webp","full":"assets/img/gallery/billy/029-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/030-m.webp","full":"assets/img/gallery/billy/030-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/031-m.webp","full":"assets/img/gallery/billy/031-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/032-m.webp","full":"assets/img/gallery/billy/032-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/033-m.webp","full":"assets/img/gallery/billy/033-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/034-m.webp","full":"assets/img/gallery/billy/034-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/035-m.webp","full":"assets/img/gallery/billy/035-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/036-m.webp","full":"assets/img/gallery/billy/036-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/037-m.webp","full":"assets/img/gallery/billy/037-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/038-m.webp","full":"assets/img/gallery/billy/038-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/039-m.webp","full":"assets/img/gallery/billy/039-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/040-m.webp","full":"assets/img/gallery/billy/040-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/041-m.webp","full":"assets/img/gallery/billy/041-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/042-m.webp","full":"assets/img/gallery/billy/042-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/043-m.webp","full":"assets/img/gallery/billy/043-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/044-m.webp","full":"assets/img/gallery/billy/044-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/045-m.webp","full":"assets/img/gallery/billy/045-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/046-m.webp","full":"assets/img/gallery/billy/046-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/047-m.webp","full":"assets/img/gallery/billy/047-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/048-m.webp","full":"assets/img/gallery/billy/048-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/049-m.webp","full":"assets/img/gallery/billy/049-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/050-m.webp","full":"assets/img/gallery/billy/050-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/051-m.webp","full":"assets/img/gallery/billy/051-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/052-m.webp","full":"assets/img/gallery/billy/052-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/053-m.webp","full":"assets/img/gallery/billy/053-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/054-m.webp","full":"assets/img/gallery/billy/054-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/055-m.webp","full":"assets/img/gallery/billy/055-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/056-m.webp","full":"assets/img/gallery/billy/056-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/057-m.webp","full":"assets/img/gallery/billy/057-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/058-m.webp","full":"assets/img/gallery/billy/058-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/059-m.webp","full":"assets/img/gallery/billy/059-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/060-m.webp","full":"assets/img/gallery/billy/060-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/061-m.webp","full":"assets/img/gallery/billy/061-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/063-m.webp","full":"assets/img/gallery/billy/063-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/064-m.webp","full":"assets/img/gallery/billy/064-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/065-m.webp","full":"assets/img/gallery/billy/065-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/066-m.webp","full":"assets/img/gallery/billy/066-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/067-m.webp","full":"assets/img/gallery/billy/067-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/068-m.webp","full":"assets/img/gallery/billy/068-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/071-m.webp","full":"assets/img/gallery/billy/071-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/072-m.webp","full":"assets/img/gallery/billy/072-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/073-m.webp","full":"assets/img/gallery/billy/073-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/074-m.webp","full":"assets/img/gallery/billy/074-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/075-m.webp","full":"assets/img/gallery/billy/075-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/078-m.webp","full":"assets/img/gallery/billy/078-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/079-m.webp","full":"assets/img/gallery/billy/079-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/080-m.webp","full":"assets/img/gallery/billy/080-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/081-m.webp","full":"assets/img/gallery/billy/081-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/082-m.webp","full":"assets/img/gallery/billy/082-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/083-m.webp","full":"assets/img/gallery/billy/083-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/084-m.webp","full":"assets/img/gallery/billy/084-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/085-m.webp","full":"assets/img/gallery/billy/085-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/087-m.webp","full":"assets/img/gallery/billy/087-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/088-m.webp","full":"assets/img/gallery/billy/088-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/089-m.webp","full":"assets/img/gallery/billy/089-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/090-m.webp","full":"assets/img/gallery/billy/090-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/091-m.webp","full":"assets/img/gallery/billy/091-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/092-m.webp","full":"assets/img/gallery/billy/092-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/093-m.webp","full":"assets/img/gallery/billy/093-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/094-m.webp","full":"assets/img/gallery/billy/094-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/096-m.webp","full":"assets/img/gallery/billy/096-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/097-m.webp","full":"assets/img/gallery/billy/097-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/098-m.webp","full":"assets/img/gallery/billy/098-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/099-m.webp","full":"assets/img/gallery/billy/099-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/100-m.webp","full":"assets/img/gallery/billy/100-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/101-m.webp","full":"assets/img/gallery/billy/101-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/102-m.webp","full":"assets/img/gallery/billy/102-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/103-m.webp","full":"assets/img/gallery/billy/103-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/104-m.webp","full":"assets/img/gallery/billy/104-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/105-m.webp","full":"assets/img/gallery/billy/105-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/106-m.webp","full":"assets/img/gallery/billy/106-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/107-m.webp","full":"assets/img/gallery/billy/107-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/108-m.webp","full":"assets/img/gallery/billy/108-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/109-m.webp","full":"assets/img/gallery/billy/109-full.webp"},
+        {"name":"Billy","img":"assets/img/gallery/billy/110-m.webp","full":"assets/img/gallery/billy/110-full.webp"}
       ]
       </script>
     </section>
@@ -181,44 +232,41 @@
 <script src="assets/vendor/gsap.min.js"></script>
 <script src="assets/vendor/CustomEase.min.js"></script>
 
-<script src="assets/js/chande-settings.js?v=202610140704"></script>
-<script src="assets/js/chande-film.js?v=202610140704"></script>
-<script src="assets/js/chande-loading.js?v=202610140704"></script>
-<script src="assets/js/chande-textbox.js?v=202610140704"></script>
-<script src="assets/js/chande-menu.js?v=202610140704"></script>
-<script src="assets/js/chande-transition.js?v=202610140704"></script>
-<script src="assets/js/chande-reveal.js?v=202610140704"></script>
-<script src="assets/js/chande-hero.js?v=202610140704"></script>
-<script src="assets/js/chande-field.js?v=202610140704"></script>
-<script src="assets/js/chande-home.js?v=202610140704"></script>
-<script src="assets/js/chande-wall.js?v=202610140704"></script>
-<script src="assets/js/chande-cursor.js?v=202610140704"></script>
-<script src="assets/js/chande-bubble.js?v=202610140704"></script>
-<script src="assets/js/chande-tilt.js?v=202610140704"></script>
-<script src="assets/js/chande-imgtiles.js?v=202610140704"></script>
-<script src="assets/js/chande-parallax.js?v=202610140704"></script>
-<script src="assets/js/chande-titlefx.js?v=202610140704"></script>
-<script src="assets/js/chande-eye.js?v=202610140704"></script>
-<script src="assets/js/chande-chips.js?v=202610140704"></script>
-<script src="assets/js/chande-story.js?v=202610140704"></script>
-<script src="assets/js/chande-circles.js?v=202610140704"></script>
-<script src="assets/js/chande-steps.js?v=202610140704"></script>
-<script src="assets/js/chande-members.js?v=202610140704"></script>
-<script src="assets/js/chande-scramble.js?v=202610140704"></script>
-<script src="assets/js/chande-sign.js?v=202610140704"></script>
-<script src="assets/js/chande-gallery.js?v=202610140704"></script>
-<script src="assets/js/chande-form.js?v=202610140704"></script>
+<script src="assets/js/chande-settings.js?v=202610140919"></script>
+<script src="assets/js/chande-film.js?v=202610140919"></script>
+<script src="assets/js/chande-loading.js?v=202610140919"></script>
+<script src="assets/js/chande-textbox.js?v=202610140919"></script>
+<script src="assets/js/chande-menu.js?v=202610140919"></script>
+<script src="assets/js/chande-transition.js?v=202610140919"></script>
+<script src="assets/js/chande-reveal.js?v=202610140919"></script>
+<script src="assets/js/chande-hero.js?v=202610140919"></script>
+<script src="assets/js/chande-field.js?v=202610140919"></script>
+<script src="assets/js/chande-home.js?v=202610140919"></script>
+<script src="assets/js/chande-wall.js?v=202610140919"></script>
+<script src="assets/js/chande-cursor.js?v=202610140919"></script>
+<script src="assets/js/chande-bubble.js?v=202610140919"></script>
+<script src="assets/js/chande-tilt.js?v=202610140919"></script>
+<script src="assets/js/chande-imgtiles.js?v=202610140919"></script>
+<script src="assets/js/chande-parallax.js?v=202610140919"></script>
+<script src="assets/js/chande-titlefx.js?v=202610140919"></script>
+<script src="assets/js/chande-eye.js?v=202610140919"></script>
+<script src="assets/js/chande-chips.js?v=202610140919"></script>
+<script src="assets/js/chande-story.js?v=202610140919"></script>
+<script src="assets/js/chande-circles.js?v=202610140919"></script>
+<script src="assets/js/chande-steps.js?v=202610140919"></script>
+<script src="assets/js/chande-members.js?v=202610140919"></script>
+<script src="assets/js/chande-scramble.js?v=202610140919"></script>
+<script src="assets/js/chande-sign.js?v=202610140919"></script>
+<script src="assets/js/chande-form.js?v=202610140919"></script>
 <!-- Module: tự nạp paper-stack.js + three (assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-poster.js?v=202610140704"></script>
-<!-- Module: vịt patin 3D trên lưới gallery (three ở assets/vendor/three/). -->
-<script type="module" src="assets/js/chande-duck.js?v=202610140704"></script>
-<!-- Module: thảm cỏ 3D dưới lưới gallery (preset data-floor="grass-3d"). -->
-<script type="module" src="assets/js/chande-grass.js?v=202610140704"></script>
+<script type="module" src="assets/js/chande-poster.js?v=202610140919"></script>
+<!-- Module: gallery 3D — không gian vô tận các tem ảnh (trang gallery; three ở assets/vendor/three/). -->
+<script type="module" src="assets/js/chande-g3.js?v=202610140919"></script>
 <!-- Module: cá koi 3D bơi trong lõi vòng tròn About khi bubble ở tâm (three nạp động). -->
-<script type="module" src="assets/js/chande-koi.js?v=202610140704"></script>
+<script type="module" src="assets/js/chande-koi.js?v=202610140919"></script>
 <!-- Module: bướm bay ra khỏi vòng 1, bay theo cuộn tới cuối trang chủ (three nạp động). -->
-<script type="module" src="assets/js/chande-flyer.js?v=202610140704"></script>
+<script type="module" src="assets/js/chande-flyer.js?v=202610140919"></script>
 <!-- XOÁ DÒNG DƯỚI LÀ BÀN GIAO ĐƯỢC — hai hiệu ứng trên chạy độc lập. -->
-<script src="assets/js/chande-devtools.js?v=202610140704"></script>
+<script src="assets/js/chande-devtools.js?v=202610140919"></script>
 </body>
 </html>
