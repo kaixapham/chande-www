@@ -81,6 +81,8 @@ function cms(req, res, url) {
 // /api/messages chạy trên Vercel (api/messages.js -> Google Sheet). Chạy local thì giả lập trong bộ nhớ
 // (mất khi tắt server) để thử bình luận của Gallery 3D — chỉ nhận từ máy này.
 const devMsgs = []
+// trùng = cùng ảnh + tên + nội dung (bỏ hoa / thường, dấu cách) — giống api/messages.js
+const devKey = (m) => [m.image, m.name, m.text].map((v) => String(v ?? '').replace(/\s+/g, ' ').trim().toLowerCase()).join('|')
 function devMessages(req, res) {
   const send = (code, obj) => {
     res.writeHead(code, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
@@ -91,7 +93,9 @@ function devMessages(req, res) {
   if (req.method === 'GET') {
     if (u.searchParams.get('ping')) return send(200, { ok: true, dev: true })
     const image = u.searchParams.get('image') || ''
-    return send(200, { ok: true, messages: devMsgs.filter((m) => m.image === image).slice().reverse() })
+    const seen = new Set()
+    const list = devMsgs.filter((m) => m.image === image).slice().reverse().filter((m) => !seen.has(devKey(m)) && seen.add(devKey(m)))
+    return send(200, { ok: true, messages: list })
   }
   const chunks = []
   req.on('data', (c) => chunks.push(c))
@@ -99,7 +103,9 @@ function devMessages(req, res) {
     try {
       const b = JSON.parse(Buffer.concat(chunks).toString('utf8'))
       if (!b.text) return send(400, { ok: false, error: 'bad request' })
-      devMsgs.push({ image: String(b.image), name: String(b.name || 'Anonymous').slice(0, 40), avatar: String(b.avatar || ''), text: String(b.text).slice(0, 500), createdAt: Date.now() })
+      const m = { image: String(b.image), name: String(b.name || 'Anonymous').slice(0, 40), avatar: String(b.avatar || ''), text: String(b.text).slice(0, 500), createdAt: Date.now() }
+      if (devMsgs.some((x) => devKey(x) === devKey(m) && m.createdAt - x.createdAt < 600000)) return send(200, { ok: true, dup: true })
+      devMsgs.push(m)
       send(200, { ok: true })
     } catch {
       send(400, { ok: false })

@@ -12,12 +12,22 @@
 //
 // Chống spam như form: ô bẫy hp phải trống, form mở ít nhất 2 s trước khi gửi, giới hạn độ dài, và giới
 // hạn số lần gửi theo IP (trong bộ nhớ của từng máy chủ — chặn được người gửi dồn dập là chính).
+// Chống trùng: cùng lời nhắn gửi lại trong 10 phút không ghi thêm; đọc ra thì lời nhắn trùng chỉ hiện một.
 // =============================================================================
 
 const IMAGE = /^assets\/img\/[\w\-/.]+\.(webp|jpe?g|png|gif)$/i
 const AVATARS = ['🐺', '🐻', '🦊', '🐯', '🐶', '🐟', '🐷', '👨‍🌾'] // khớp hàng chọn avatar ở gallery.html
 const clip = (s, n) => String(s ?? '').replace(/\s+\n/g, '\n').trim().slice(0, n)
 const hits = new Map() // ip -> [mốc gửi gần đây]
+// Trùng lời nhắn = cùng ảnh + cùng tên + cùng nội dung (bỏ khác biệt hoa / thường, dấu cách thừa).
+const norm = (s) => String(s ?? '').replace(/\s+/g, ' ').trim().toLowerCase()
+const dupKey = (image, name, text) => `${image}|${norm(name)}|${norm(text)}`
+// Gửi trùng (bấm hai lần, gửi lại sau khi Sheet chậm báo lỗi mà thật ra đã ghi): cùng lời nhắn trong 10 phút thì
+// coi như đã nhận, không ghi thêm dòng; đang gửi dở thì đợi chính lần gửi đó. Nhớ trong bộ nhớ máy chủ (như
+// giới hạn theo IP) — trang còn tự kiểm tra Sheet trước khi gửi lại, và lúc đọc ra thì lời nhắn trùng chỉ hiện một.
+const DUP_MS = 10 * 60 * 1000
+const sent = new Map() // dupKey -> mốc đã ghi
+const inflight = new Map() // dupKey -> Promise lần đang gửi
 // tối đa 10 lời nhắn / 7 phút / IP (5 / 10 phút như trước thì người thật viết được vài ảnh là bị chặn)
 const LIMIT = { n: 10, ms: 7 * 60 * 1000 }
 
@@ -68,8 +78,16 @@ module.exports = async function handler(req, res) {
       const image = String(req.query.image || '')
       if (!IMAGE.test(image)) return res.status(400).json({ ok: false, error: 'bad image' })
       const j = await sheetGet(sheet, { action: 'messages', image })
+      // lời nhắn trùng (kể cả các dòng trùng đã lỡ vào Sheet) chỉ hiện một — giữ bản mới nhất (Sheet trả mới trước)
+      const seen = new Set()
+      const messages = (Array.isArray(j.messages) ? j.messages : []).filter((m) => {
+        const k = dupKey(image, m?.name, m?.text)
+        if (seen.has(k)) return false
+        seen.add(k)
+        return true
+      })
       res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=60')
-      return res.status(200).json({ ok: true, messages: Array.isArray(j.messages) ? j.messages : [] })
+      return res.status(200).json({ ok: true, messages })
     } catch (e) {
       console.error('[messages] GET', reason(e))
       return res.status(502).json({ ok: false, error: 'messages unavailable', reason: reason(e) })
@@ -96,19 +114,34 @@ module.exports = async function handler(req, res) {
   const text = clip(body.text, 500)
   const avatar = AVATARS.includes(body.avatar) ? body.avatar : ''
   if (!IMAGE.test(image) || !text) return res.status(400).json({ ok: false, error: 'bad request' })
+  const key = dupKey(image, name, text)
+  const now = Date.now()
+  for (const [k, t] of sent) if (now - t > DUP_MS) sent.delete(k)
+  if (sent.has(key)) return res.status(200).json({ ok: true, dup: true })
   const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown'
-  if (limited(ip)) return res.status(429).json({ ok: false, error: 'rate_limited' })
+  if (!inflight.has(key) && limited(ip)) return res.status(429).json({ ok: false, error: 'rate_limited' })
 
   try {
-    const r = await fetch(sheet, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ kind: 'message', image, name, text, avatar }),
-      redirect: 'follow',
-      signal: AbortSignal.timeout(9000),
-    })
-    const j = await r.json().catch(() => null)
-    if (!r.ok || !j?.ok) throw new Error(j?.error || `sheet ${r.status}${j ? '' : ' (not json)'}`)
+    let job = inflight.get(key)
+    if (!job) {
+      job = (async () => {
+        // Apps Script có lúc mất vài giây (khởi động + khoá ghi) — chờ đủ lâu để khỏi báo lỗi oan rồi người
+        // dùng gửi lại thành hai dòng
+        const r = await fetch(sheet, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ kind: 'message', image, name, text, avatar }),
+          redirect: 'follow',
+          signal: AbortSignal.timeout(25000),
+        })
+        const j = await r.json().catch(() => null)
+        if (!r.ok || !j?.ok) throw new Error(j?.error || `sheet ${r.status}${j ? '' : ' (not json)'}`)
+        sent.set(key, Date.now())
+      })()
+      inflight.set(key, job)
+      job.catch(() => {}).finally(() => inflight.delete(key))
+    }
+    await job
     return res.status(200).json({ ok: true })
   } catch (e) {
     console.error('[messages] POST', reason(e))

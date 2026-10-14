@@ -908,6 +908,14 @@ function mount(root = document) {
   let chatPoll = 0
   let chatAt = 0
   let chatLocal = [] // lời nhắn vừa gửi: hiện ngay, không đợi Sheet / bộ đệm CDN
+  // lời nhắn trùng (cùng tên + cùng nội dung, bỏ khác biệt hoa / thường, dấu cách) chỉ hiện một — khớp api/messages.js
+  const msgKey = (m) => `${String(m.name || 'Anonymous').replace(/\s+/g, ' ').trim().toLowerCase()}|${String(m.text || '').replace(/\s+/g, ' ').trim().toLowerCase()}`
+  const uniqMsgs = (list) => {
+    const seen = new Set()
+    return list.filter((m) => !seen.has(msgKey(m)) && seen.add(msgKey(m)))
+  }
+  let sending = false // đang gửi: bấm thêm / Enter thêm không gửi lần nữa
+  let unsure = null // lần gửi trước báo lỗi (có thể Sheet đã ghi): { key, k } — gửi lại y nguyên thì kiểm tra Sheet trước
   const chatEl = q('[data-g3-chat]')
   const wall = q('[data-g3-wall]')
   const wallEmpty = q('[data-g3-wallempty]')
@@ -995,9 +1003,9 @@ function mount(root = document) {
       if (!chatOpen || lbItem?.key !== key) return
       const got = Array.isArray(j.messages) ? j.messages : []
       // bản vừa gửi chưa có trong Sheet (bộ đệm 10 s) thì giữ ở đầu
-      const seen = new Set(got.map((m) => `${m.name}|${m.text}`))
-      chatLocal = chatLocal.filter((m) => m.image === key && !seen.has(`${m.name}|${m.text}`) && Date.now() - m.createdAt < 120000)
-      renderWall([...chatLocal, ...got])
+      const seen = new Set(got.map(msgKey))
+      chatLocal = chatLocal.filter((m) => m.image === key && !seen.has(msgKey(m)) && Date.now() - m.createdAt < 120000)
+      renderWall(uniqMsgs([...chatLocal, ...got]))
     } catch {
       if (chatOpen && !ac.signal.aborted && !wall.children.length) renderWall([])
     }
@@ -1038,7 +1046,7 @@ function mount(root = document) {
   on(chatBtn, 'click', () => (chatOpen ? closeChat() : openChat()))
   on(q('[data-g3-form]'), 'submit', async (e) => {
     e.preventDefault()
-    if (!msgOn || !lbItem) return
+    if (!msgOn || !lbItem || sending) return
     const name = chatName.value.trim().slice(0, 40)
     const text = chatText.value.trim().slice(0, 500)
     if (!text) {
@@ -1046,17 +1054,13 @@ function mount(root = document) {
       chatText.focus()
       return
     }
+    sending = true
     chatSend.disabled = true
     chatStatus.textContent = 'Sending…'
     const key = lbItem.key
-    try {
-      const r = await fetch(MSG_API, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ image: key, name, text, avatar, hp: chatHp?.value || '', t: Date.now() - chatAt }),
-      })
-      const j = await r.json().catch(() => ({}))
-      if (!r.ok || !j.ok) throw Object.assign(new Error(), { code: j.error })
+    const k = msgKey({ name, text })
+    const done = () => {
+      unsure = null
       chatText.value = ''
       chatStatus.textContent = 'Sent.'
       chatLocal.unshift({ image: key, name: name || 'Anonymous', text, avatar, createdAt: Date.now() })
@@ -1064,9 +1068,27 @@ function mount(root = document) {
       try {
         localStorage.setItem('ic-name', name)
       } catch {}
+    }
+    try {
+      // lần trước báo lỗi mà gửi lại y nguyên: Sheet chậm có khi vẫn đã ghi -> xem trên Sheet trước (bỏ qua bộ đệm)
+      if (unsure && unsure.key === key && unsure.k === k) {
+        const r0 = await fetch(`${MSG_API}?image=${encodeURIComponent(key)}&fresh=${Date.now()}`)
+        const j0 = await r0.json().catch(() => ({}))
+        if ((j0.messages || []).some((m) => msgKey(m) === k)) return done()
+      }
+      const r = await fetch(MSG_API, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ image: key, name, text, avatar, hp: chatHp?.value || '', t: Date.now() - chatAt }),
+      })
+      const j = await r.json().catch(() => ({}))
+      if (!r.ok || !j.ok) throw Object.assign(new Error(), { code: j.error })
+      done()
     } catch (err) {
+      if (err.code !== 'rate_limited') unsure = { key, k }
       chatStatus.textContent = err.code === 'rate_limited' ? 'Too many messages — try again in a few minutes.' : 'Could not send. Try again in a few seconds.'
     } finally {
+      sending = false
       chatSend.disabled = false
     }
   })
@@ -1183,8 +1205,8 @@ function mount(root = document) {
       const r = await fetch(`${MSG_API}?image=${encodeURIComponent(item.key)}`, { signal: ac.signal })
       list = (await r.json()).messages || []
     } catch {}
-    const seen = new Set(list.map((m) => `${m.name}|${m.text}`))
-    list = [...chatLocal.filter((m) => m.image === item.key && !seen.has(`${m.name}|${m.text}`)), ...list].slice(0, MAX_NOTES)
+    const seen = new Set(list.map(msgKey))
+    list = uniqMsgs([...chatLocal.filter((m) => m.image === item.key && !seen.has(msgKey(m))), ...list]).slice(0, MAX_NOTES)
     if (token !== notesToken || !lbOpen || chatOpen || lbItem !== item || !list.length) return
     notesFor = item
     paperTiles()
