@@ -1055,12 +1055,25 @@ function mount(root = document) {
       if (chatOpen && !ac.signal.aborted && !wall.children.length) renderWall([])
     }
   }
+  // Cỡ mặt lời nhắn: vừa khoảng giữa thanh nav trên cùng và thanh nút dưới (chừa khoảng thở hai đầu — trước đây
+  // cố định cao 624 / màn − 140 nên trên điện thoại đè nav, lọt xuống dưới thanh nút). Rộng / cao làm tròn xuống
+  // bội số bước răng cưa (--step 22 px): mask răng cưa co giãn ô cho vừa, không chia hết là hàng lỗ mép dưới lệch
+  // khỏi mép -> trông như răng cưa ngược.
+  const PERF_STEP = 22
+  function chatSize() {
+    const cs = getComputedStyle(lb)
+    const bar = q('.g3-bar')
+    const air = innerWidth < 600 ? 12 : 24
+    const free = innerHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0) - (bar.offsetHeight || 60) - (parseFloat(getComputedStyle(bar).marginTop) || 14) - air * 2
+    const snap = (v) => Math.floor(v / PERF_STEP) * PERF_STEP
+    return [snap(Math.min(920, innerWidth - 32)), snap(Math.max(264, Math.min(624, free)))]
+  }
   function openChat() {
     if (!lbItem || lbBusy || !msgOn) return
     chatOpen = true
     hideNotes()
     chatAt = Date.now()
-    setFrameSize(Math.min(920, innerWidth - 32), Math.max(320, Math.min(624, innerHeight - 140)), !reduceMotion)
+    setFrameSize(...chatSize(), !reduceMotion)
     flipCard(true)
     lb.classList.add('is-chat')
     chatEl.inert = false
@@ -1252,11 +1265,31 @@ function mount(root = document) {
       list = await getMessages(item.key)
     } catch {}
     const seen = new Set(list.map(msgKey))
-    list = uniqMsgs([...chatLocal.filter((m) => m.image === item.key && !seen.has(msgKey(m))), ...list]).slice(0, MAX_NOTES)
+    const all = uniqMsgs([...chatLocal.filter((m) => m.image === item.key && !seen.has(msgKey(m))), ...list])
+    list = all.slice(0, MAX_NOTES)
     if (token !== notesToken || !lbOpen || chatOpen || lbItem !== item || !list.length) return
     notesFor = item
     paperTiles()
-    placeNotes(list.map(noteEl), item, frame, delay)
+    // màn hẹp (điện thoại) không còn chỗ dán note quanh tem -> nhãn "N messages on this photo" phía trên tem,
+    // bấm vào là lật sang mặt lời nhắn
+    if (!placeNotes(list.map(noteEl), item, frame, delay)) countTag(all.length, frame, delay)
+  }
+  function countTag(n, frame, delay) {
+    const tag = document.createElement('button')
+    tag.type = 'button'
+    tag.className = 'g3-count'
+    tag.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1 0 12 3.5Z"/><path d="M8.5 10.5h7M8.5 14h4.5"/></svg><span>${n} message${n > 1 ? 's' : ''} on this photo</span>`
+    notesBox.appendChild(tag)
+    // phía trên tem nếu đủ chỗ (dưới thanh nav), không thì dán ở mép trên của tem
+    const top = parseFloat(getComputedStyle(lb).paddingTop) || 76
+    const h = tag.offsetHeight
+    const y = frame.top - 14 - h >= top - 8 ? frame.top - 14 - h : frame.top + 12
+    tag.style.transform = `translate(${Math.round(frame.left + frame.width / 2 - tag.offsetWidth / 2)}px, ${Math.round(y)}px)`
+    tag.addEventListener('click', (e) => {
+      e.stopPropagation()
+      openChat()
+    })
+    if (!reduceMotion) tag.animate([{ opacity: 0, translate: '0 8px' }, { opacity: 1, translate: '0 0' }], { duration: 420, delay, easing: 'cubic-bezier(.16, 1, .3, 1)', fill: 'backwards' })
   }
   function placeNotes(els, item, frame, delay) {
     const vw = innerWidth
@@ -1357,12 +1390,16 @@ function mount(root = document) {
       }
       k++
     }
+    return placed.length
   }
   // đổi cỡ cửa sổ lúc đang mở: rải lại theo khung mới
   let notesRz = 0
   on(window, 'resize', () => {
     clearTimeout(notesRz)
-    notesRz = setTimeout(() => lbOpen && !chatOpen && notesFor && showNotes(notesFor, lbFrame.getBoundingClientRect(), 0), 250)
+    notesRz = setTimeout(() => {
+      if (lbOpen && chatOpen) setFrameSize(...chatSize(), false)
+      else if (lbOpen && notesFor) showNotes(notesFor, lbFrame.getBoundingClientRect(), 0)
+    }, 250)
   })
 
   const toastEl = q('[data-g3-toast]')

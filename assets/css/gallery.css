@@ -68,6 +68,11 @@ html.g3-on, html.g3-on body{overflow:hidden; overscroll-behavior:none}
   clip-path:var(--tear, none)}
 .g3-pn--tear-b .g3-pn__sheet{padding-bottom:24px} /* rách to ở mép dưới: đệm đáy gấp đôi */
 .g3-pn__holes{display:block; width:154px; height:10px}
+/* điện thoại (không đủ chỗ dán note): nhãn số lời nhắn phía trên tem — bấm để lật sang mặt lời nhắn */
+.g3-count{position:absolute; left:0; top:0; display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 14px 0 12px;
+  border:0; border-radius:999px; background:#fff; color:var(--g3-ink); box-shadow:0 2px 24px rgba(0, 0, 0, .14);
+  font:600 12px/1 var(--g3-mono); text-transform:uppercase; letter-spacing:-.01em; white-space:nowrap; pointer-events:auto; cursor:pointer}
+.g3-count:focus-visible{outline:2px solid var(--g3-green); outline-offset:2px}
 .g3-pn__body{display:flex; flex-direction:column; gap:24px; margin:0; color:#101513; font:500 14px/.96 var(--g3-display);
   letter-spacing:-.02em; text-transform:uppercase; overflow-wrap:anywhere}
 .g3-pn__body p{margin:0; max-width:75%} /* chữ chỉ chiếm 3 / 4 lưới 4 cột của note (114 / 152 px) */
