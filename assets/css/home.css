@@ -581,38 +581,64 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 
 
   /* 1. Intro */
-  .hs-intro{display:flex; flex-direction:column; gap:1.25rem; padding:3.5rem 1.25rem 3rem}
-  .hs-intro__a{width:auto}
-  .hs-intro__a span:last-child{padding-left:0}
-  .hs-intro__b{align-self:flex-end; text-align:right; white-space:normal}
-  .hs-intro .chip, .hs-intro__eye{display:none}
+  /* 1. Intro — Figma mobile (688:53370, khổ 375, cao 284): tiêu đề 40 / .76 cách đầu 120; "Show" cùng hàng
+     "Listen & share" (canh phải), "(The love)" dưới; hàng 3 viên màu 48 × 26 (cam có con mắt) ngay dưới chữ */
+  .hs-intro{--q:calc(100vw / 375); display:block; height:calc(284 * var(--q)); padding:0}
+  .hs-intro > .hs-intro__a, .hs-intro > .hs-intro__b{position:absolute; margin:0; font-size:calc(40 * var(--q)); line-height:.76; letter-spacing:-.04em;
+    text-box:trim-both cap alphabetic; --tb:1}
+  .hs-intro > .hs-intro__a{left:12px; top:calc(120 * var(--q)); width:auto}
+  .hs-intro__a span, .hs-intro__a span:last-child{white-space:nowrap; padding-left:0}
+  .hs-intro > .hs-intro__b{right:12px; top:calc(210 * var(--q)); text-align:right; white-space:nowrap}
+  .hs-intro .chip{display:block; top:calc(242 * var(--q)); width:calc(48 * var(--q)); height:calc(26 * var(--q))}
+  .hs-intro .chip::after{inset:calc(4 * var(--q))}
+  .hs-intro .chip--orange{left:12px}
+  .hs-intro .chip--yellow{left:calc(12px + 50 * var(--q))}
+  .hs-intro .chip--green{left:calc(12px + 100 * var(--q))}
+  .hs-intro .chip__icon{display:none} /* sóng / miệng là trò nền tối của desktop; mobile chỉ con mắt như Figma */
+  .hs-intro > .hs-intro__eye{position:absolute; display:block; left:calc(12px + 11 * var(--q)); top:calc(247 * var(--q)); width:calc(27 * var(--q)); height:calc(16 * var(--q))}
+  .hs-intro > .hs-intro__eye .hs-eye{opacity:1} /* thắng style chande-chips.js chèn sau (ẩn mắt khi chưa vào nền tối) */
 
   /* 2. Story — Figma Section 3 mobile (620:13441, khổ 375): ảnh 413 tràn ngang (ảnh 2 vẫn nở từ
      góc dưới trái khi cuộn — chande-story.js dính ảnh ngay dưới header), dưới là 2 khung chữ 335
      xếp dọc (tiêu đề 40, chữ mono 14), rồi dải màu 9 × 60 (section Scheme, đen trên → kem dưới). */
   /* --v = 1px chiều cao Figma (748 = màn thấy được dưới header, đã trừ thanh trình duyệt): ảnh 413 +
      khung chữ 1 (335) = đúng một màn */
-  .hs-story, .hs-story.is-zoom{--q:calc(100vw / 375); --v:calc((var(--vp) - var(--bar)) / 748); --sh:calc(413 * var(--v)); height:auto; padding-bottom:var(--story-pin, 0px)}
+  /* Figma mobile 688:53370: xếp thẳng ảnh 412 · khung 06 years 345 · ảnh 412 · khung Chande. 375 (không dính /
+     nở ảnh — chande-story.js tắt zoom dưới 900px). Khung ảnh + cột chữ thành display:contents để 2 ảnh và 2
+     khung chữ xen kẽ trong một lưới. */
+  .hs-story, .hs-story.is-zoom{--q:calc(100vw / 375); --v:calc((var(--vp) - var(--bar)) / 748); --sh:calc(413 * var(--v)); height:auto; padding:0;
+    display:grid; grid-template-columns:100%}
   .hs-story > .abs{position:relative; left:auto; right:auto; top:auto; bottom:auto}
-  .hs-story__band{display:none}
-  .hs-story__media{width:100%; height:calc(413 * var(--v))}
-  .hs-story.is-zoom .hs-story__col, .hs-story__col{top:auto; width:100%}
-  .hs-story__panel{height:auto; min-height:calc(335 * var(--v)); padding:calc(20 * var(--s)) 12px calc(20 * var(--s))}
+  .hs-story__band, .hs-story__band-c{display:none}
+  .hs-story__media, .hs-story.is-zoom .hs-story__col, .hs-story__col{display:contents}
+  .hs-story .hs-story__photo, .hs-story .hs-story__small{position:relative; left:auto; top:auto; width:100%; height:calc(412 * var(--q));
+    object-fit:cover; object-position:50% 69%; transform:none}
+  .hs-story .hs-story__photo{grid-row:1}
+  .hs-story__panel:first-child{grid-row:2}
+  .hs-story .hs-story__small{grid-row:3; object-position:50% 50%}
+  .hs-story__panel:last-child{grid-row:4}
+  .hs-story__panel{height:auto; min-height:calc(345 * var(--v)); padding:calc(20 * var(--s)) 12px calc(20 * var(--s)); background:#161d1d !important}
+  .hs-story__panel:last-child{min-height:calc(375 * var(--v))} /* Figma: khung Chande. cao 375 */
   .hs-story .hs-story__panel h3{font-size:calc(40 * var(--s)); line-height:.78; letter-spacing:-.02em; text-box:trim-both cap alphabetic; --tb:1}
-  .hs-story__text{width:auto; min-width:0; min-height:0; gap:calc(24 * var(--s)); margin-top:calc(98 * var(--s))}
+  .hs-story__panel{justify-content:flex-start} /* Figma: chữ canh trên, cách đầu khung 144 */
+  .hs-story__text{width:calc(263 * var(--s)); max-width:100%; min-width:0; min-height:0; gap:calc(24 * var(--s)); margin-top:calc(93 * var(--s))}
   .hs-story__text div{gap:calc(24 * var(--s))}
   .hs-story__text p{font-size:max(10px, calc(14 * var(--s))); line-height:.96; letter-spacing:-.02em; text-box:trim-both cap alphabetic; --tb:1}
-  .hs-scheme{height:auto}
+  .hs-story__panel:last-child .hs-story__text div p:last-child{font-size:max(11px, calc(16 * var(--s)))} /* Figma: đoạn Chande. 16 */
+  /* 3–4. Figma mobile (688:53370): gạch neon 94 -> dải màu 9 × 44.44 -> hàng viên thuốc 72. Gạch neon thuộc
+     section Strip (ngay sau) -> chừa 94 ở đầu dải màu rồi kéo gạch neon của Strip lên lấp vào */
+  .hs-scheme{height:auto; padding-top:calc(94 * 100vw / 375)}
   .hs-scheme .scheme{position:relative; left:0; flex-direction:column}
-  .hs-scheme .scheme > i{height:calc(60 * 100vw / 375)}
+  .hs-scheme .scheme > i{height:calc(400 / 9 * 100vw / 375)}
 
   /* 4–5. Strip + Land — Figma mobile (628:46260, khổ 375). Strip: mảng gạch neon 94 trên, hàng viên
      thuốc 108 × 42 (nền tối, cao 72) dưới. Land: khung 748 ngay dưới header (cao = màn − header), 3 món
      dán theo số đo Figma; --s = 1px khổ 375 nhưng không quá khung cao 748 (màn thấp thì cả cụm thu lại,
      canh giữa ngang). Hiệu ứng dán từng món khi cuộn giữ nguyên (chande-home.js). */
-  .hs-strip{--q:calc(100vw / 375); height:calc(166 * var(--q))}
+  .hs-strip{--q:calc(100vw / 375); height:calc(72 * var(--q)); overflow:visible}
   .strip{flex-direction:column; height:auto}
   .strip__field{width:100%; height:calc(94 * var(--q))}
+  .hs-strip .strip__field{position:absolute; left:0; top:calc(-494 * var(--q))}
   .strip__run{width:100%; height:calc(72 * var(--q))}
   .strip__run .pillrun{left:0; right:0; width:auto; top:calc(15 * var(--q)); height:calc(42 * var(--q))}
   .strip__run .pillrun__track{gap:calc(1.5 * var(--q)); animation-name:hs-pills-m}

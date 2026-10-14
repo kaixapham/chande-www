@@ -32,7 +32,7 @@
   const api = { config: CONFIG, mount() {}, destroy() {} }
   window.CHANDE_STORY = api
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  // chạy ở MỌI cỡ màn (chưa có thiết kế mobile — Story hiện đúng bố cục desktop co theo bề ngang)
+  // desktop: dính + nở ảnh; mobile (< 900px) xếp thẳng theo Figma 688:53370 (xem measure)
 
   let live = null
 
@@ -77,15 +77,21 @@
     let seed = [0, 0, 0, 0] // ô ảnh nhỏ lúc đầu: x, y, w, h (trong khung)
 
     // Đo ô ảnh nhỏ theo CSS gốc (gỡ style tự đặt trước khi đo)
+    // Mobile (< 900px, Figma 688:53370): xếp thẳng ảnh 1 · 06 years · ảnh 2 · Chande. — không dính / nở ảnh
+    const mobileMQ = matchMedia('(max-width: 899px)')
     const measure = () => {
-      const on = true
+      const on = !mobileMQ.matches
       section.classList.toggle('is-zoom', on)
       for (const el of [...imgs, ...cells]) el.style.cssText = ''
       for (const b of bands) b.style.visibility = 'hidden'
       media.style.transform = ''
       if (col) col.style.transform = ''
       section.classList.toggle('is-cells', on)
-      if (!on) return
+      if (!on) {
+        pin = 0
+        section.style.removeProperty('--story-pin')
+        return
+      }
       W = media.clientWidth
       H = media.clientHeight
       // desktop: khung ảnh cao bằng màn dưới header -> dính khi đáy khung chạm đáy màn. Mobile (Figma

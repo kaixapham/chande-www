@@ -50,7 +50,8 @@
     // mắt Intro: chỉ mở khi đã vào nền tối (html.hero-row-dark) — trước đó mắt còn ẩn (chande-chips.js);
     // mắt trong viên cam trang About: nền luôn tối -> mở được ngay
     const intro = box.classList.contains('hs-intro__eye')
-    live = run(box, () => !intro || document.documentElement.classList.contains('hero-row-dark'))
+    // mobile (< 900px, Figma 688:53370): không có nền tối -> mắt trong viên cam mở luôn khi cuộn tới
+    live = run(box, () => !intro || matchMedia('(max-width: 899px)').matches || document.documentElement.classList.contains('hero-row-dark'))
   }
 
   // Một con mắt trong khung `box`; ready() = điều kiện được mở mắt. Trả về { on, stop() }.
