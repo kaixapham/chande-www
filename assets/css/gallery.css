@@ -9,7 +9,7 @@
 html.g3-on, html.g3-on body{overflow:hidden; overscroll-behavior:none}
 
 .g3{
-  --g3-floor:#ECE5CF;   /* nền của không gian 3D (scene đọc biến này) */
+  --g3-floor:#F7F3ED;   /* màu trung bình của nền topo (poster-bg.webp) — sương của scene cũng đọc biến này */
   --g3-ink:#0f1513;
   --g3-green:#236c3c;
   --g3-lime:#68f12b;
@@ -25,7 +25,8 @@ html.g3-on, html.g3-on body{overflow:hidden; overscroll-behavior:none}
   -webkit-font-smoothing:antialiased;
 }
 .g3 *, .g3 *::before, .g3 *::after{box-sizing:border-box}
-.g3-stage{position:absolute; inset:0; touch-action:none}
+.g3-stage{position:absolute; inset:0; touch-action:none;
+  background:var(--g3-floor) url("../img/home/poster-bg.webp") center / cover no-repeat} /* nền topo nằm yên sau canvas trong suốt */
 .g3-stage canvas{display:block; width:100%; height:100%; touch-action:none; cursor:grab}
 .g3-empty{position:absolute; inset:0; z-index:5; display:grid; place-items:center; padding:var(--g3-gutter);
   font:500 13px/1.4 var(--g3-mono); letter-spacing:-.02em; color:var(--g3-mute); text-align:center}
@@ -128,8 +129,8 @@ html.g3-on, html.g3-on body{overflow:hidden; overscroll-behavior:none}
 .g3-chat__form{display:flex; flex-direction:column; gap:22px; padding:28px 20px; border-left:1px solid var(--g3-hair); min-width:0}
 .g3-in{display:flex; flex-direction:column; gap:9px}
 .g3-in__label{font:500 14px/.98 var(--g3-display); letter-spacing:-.02em; color:var(--g3-ink)}
-.g3-in input, .g3-in textarea{font:500 13px/1.3 var(--g3-mono); letter-spacing:-.02em; text-transform:uppercase; color:var(--g3-ink); caret-color:var(--g3-green);
-  border:0; border-bottom:1px solid rgba(15, 21, 19, .25); background:transparent; padding:4px 0 11px; resize:none; outline:none; border-radius:0}
+.g3-in input, .g3-in textarea{font:500 16px/1.2 var(--g3-display); letter-spacing:-.01em; text-transform:uppercase; color:var(--g3-ink); caret-color:var(--g3-green);
+  border:0; border-bottom:1px solid rgba(15, 21, 19, .25); background:transparent; padding:4px 0 11px; resize:none; outline:none; border-radius:0} /* Phudu: đủ dấu tiếng Việt; 16px để iOS không tự phóng to khi gõ */
 .g3-in input::placeholder, .g3-in textarea::placeholder{color:rgba(15, 21, 19, .3)}
 /* hàng chọn avatar (Figma 688:49086): nền trắng · đệm 8 · cách 8 · emoji 16 px */
 .g3-avatars{display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:8px; background:#fff; width:fit-content; max-width:100%}
@@ -197,6 +198,7 @@ html.g3-on, html.g3-on body{overflow:hidden; overscroll-behavior:none}
 .g3a-sec.is-collapsed .g3a-sec__body{grid-template-rows:0fr}
 .g3a-sec.is-collapsed .g3a-sec__inner{opacity:0}
 .g3a-sub{font:500 11px/1.45 var(--g3-mono); letter-spacing:-.02em; color:var(--g3-mute); margin:0; text-transform:none}
+small.g3a-sub{display:block}
 .g3a-drop{position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:8px; padding:22px 20px;
   border:1px dashed rgba(15, 21, 19, .35); cursor:pointer; transition:border-color .2s, background-color .2s}
 .g3a-drop:hover, .g3a-drop.is-over{border-color:var(--g3-ink); background:rgba(104, 241, 43, .16)}
@@ -237,6 +239,9 @@ html.g3-on, html.g3-on body{overflow:hidden; overscroll-behavior:none}
 .g3a-opt input:focus-visible + span{outline:2px solid var(--g3-ink); outline-offset:2px}
 .g3a-bez{display:grid; grid-template-columns:repeat(4, 1fr); gap:8px}
 .g3a-bez[hidden]{display:none}
+.g3a-row{display:flex; flex-wrap:wrap; gap:8px}
+.g3a-hero{display:flex; flex-direction:column; gap:14px; margin-top:6px; padding:14px 0 2px 16px; border-left:2px solid var(--g3-lime)}
+.g3a-hero[hidden]{display:none}
 .g3a-reset{align-self:flex-start; border:1px solid rgba(15, 21, 19, .3); background:transparent; padding:10px 16px; cursor:pointer; font:500 11px/1 var(--g3-mono); text-transform:uppercase; color:var(--g3-ink)}
 .g3a-reset:hover{border-color:var(--g3-ink); background:rgba(104, 241, 43, .16)}
 .g3a-gh{display:flex; flex-direction:column; gap:8px; padding-top:16px}

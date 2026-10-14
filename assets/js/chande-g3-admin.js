@@ -1,11 +1,15 @@
 /* =============================================================================
  * CHANDE — Ngăn "Quản lý ảnh" của Gallery 3D (chỉ admin; chande-g3.js nạp khi chạy local / ?admin=1)
  * -----------------------------------------------------------------------------
- *   01 Animation khi bấm ảnh — easing (có sẵn / tự nhập cubic-bezier) + thời lượng cho lúc tem bay ra
- *      và lúc bay về; chỉnh là thấy ngay.
+ *   01 Animation — easing (có sẵn / tự nhập cubic-bezier) + thời lượng cho lúc tem bay ra
+ *      và lúc bay về; chỉnh là thấy ngay. Vào trang: tem toả từ tâm ra mép (easing, thời lượng mỗi tem,
+ *      thời gian toả hết ra mép, nút chạy lại để xem).
  *   02 Ảnh — kéo thả / chọn nhiều ảnh: mỗi ảnh nén 2 bản (tem ≤ 720 px, ảnh lớn ≤ 1600 px), thêm vào
  *      không gian ngay; đổi tên, xoá (bấm 2 lần), ↑ ↓ đổi thứ tự.
- *   03 Bố cục ảnh — ảnh ở xa mờ dần vào sương / chỉ bé đi (giữ rõ nét), mật độ tem, cỡ tem.
+ *   03 Bố cục ảnh — ảnh ở xa mờ dần vào sương / chỉ bé đi, ảnh đè nhau (tự do / chỉ đè mép / không đè /
+ *      không đè trừ ảnh chính — số ảnh chính, mỗi ảnh chính đè tối đa mấy ảnh), tránh xếp thẳng hàng, mật độ,
+ *      độ rải đều, cỡ tem, chênh lệch cỡ, xoay ngẫu nhiên, tầm nhìn xa; bướm bay (bật / tắt, cỡ); xáo lại bố
+ *      cục (seed), về mặc định.
  *   Lưu — ghi danh sách ảnh (<script data-g3-items>) + animation (data-g3-anim) + bố cục (data-g3-layout) vào gallery.html cùng
  *   các file ảnh mới: chạy local (node serve.mjs) thì POST /__cms/save; trên site thì commit qua token
  *   GitHub đã nhập ở CMS (localStorage chande-cms-gh), chưa có thì hiện ô nhập.
@@ -31,9 +35,14 @@ const EASINGS = [
 const ANIM_DEFAULTS = {
   open: { ms: 680, preset: 'expoOut', bez: [0.16, 1, 0.3, 1] },
   close: { ms: 520, preset: 'quartInOut', bez: [0.76, 0, 0.24, 1] },
+  intro: { ms: 1200, preset: 'expoOut', bez: [0.16, 1, 0.3, 1], spread: 900 },
 }
 const LIMITS = { min: 100, max: 3000 }
-const GROUPS = [['open', 'Mở rộng', 'Ảnh bay từ canvas ra giữa màn hình'], ['close', 'Thu nhỏ', 'Ảnh bay ngược về vị trí cũ']]
+const GROUPS = [
+  ['open', 'Mở rộng', 'Ảnh bay từ canvas ra giữa màn hình'],
+  ['close', 'Thu nhỏ', 'Ảnh bay ngược về vị trí cũ'],
+  ['intro', 'Vào trang', 'Ảnh hiện lần lượt từ tâm toả ra mép (Duration = thời gian mỗi tem)'],
+]
 const SIZES = { img: 720, full: 1600 }
 const GH_KEY = 'chande-cms-gh'
 const PAGE = 'gallery.html'
@@ -49,6 +58,16 @@ function cleanAnim(raw, base) {
   bez = [clamp(bez[0], 0, 1), bez[1], clamp(bez[2], 0, 1), bez[3]]
   return { ms: clamp(Math.round(num(o.ms, base.ms)), LIMITS.min, LIMITS.max), preset, bez }
 }
+// thẻ <section ... data-g3 ...> của gallery.html: ghi lại data-g3-anim / data-g3-layout. Gỡ sạch mọi bản cũ
+// (kể cả mảnh "-anim='…'" / "-layout='…'" do bản lưu lỗi trước để lại) rồi gắn một bộ mới ngay sau class.
+// Lưu ý: không dùng \bdata-g3\b — "-" cũng là ranh giới từ nên nó khớp nhầm vào giữa data-g3-anim.
+const G3_TAG = /<section\b[^>]*\sdata-g3[\s>-][^>]*>/
+function g3Tag(tag, anim, layout) {
+  const attr = (o) => esc(JSON.stringify(o)).replace(/&quot;/g, '"')
+  const t = tag.replace(/\s*(?:data-g3)?-(?:anim|layout)='[^']*'/g, '').replace(/\s+data-g3(?=[\s>])/g, '')
+  const add = ` data-g3 data-g3-anim='${attr(anim)}' data-g3-layout='${attr(layout)}'`
+  return /\sclass="[^"]*"/.test(t) ? t.replace(/(\sclass="[^"]*")/, `$1${add}`) : t.replace(/^<section\b/, `<section${add}`)
+}
 function curveSvg(b) {
   const X = (x) => 8 + x * 56
   const Y = (y) => 8 + 14 + (1 - y) * 56
@@ -63,7 +82,23 @@ const DOTS = '<svg viewBox="0 0 20 20" fill="currentColor"><circle cx="3" cy="3"
 const CHEV = '<svg class="g3a-head__chev" viewBox="0 0 12 8" width="14" height="10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg>'
 const CLOSE = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>'
 
-export function mountAdmin({ el, config, getItems, setItems, setLayout }) {
+// [khoá, nhãn, min, max, bước, cách hiện số, gợi ý]
+// thanh trượt riêng của chế độ 'hero' (nằm ngay dưới lựa chọn đè nhau, chỉ hiện khi chọn chế độ đó)
+const HERO_SLIDERS = [
+  ['heroes', '', 1, 4, 1, (v) => `${v} ảnh`],
+  ['heroHits', '', 1, 4, 1, (v) => `${v} ảnh`],
+  ['bfSize', '', 0.5, 2, 0.05, (v) => `× ${(+v).toFixed(2)}`], // nằm ở mục bướm bay, cùng cách nối
+]
+const SLIDERS = [
+  ['density', 'Mật độ ảnh', 3, 9, 1, (v) => `${v} / khối`],
+  ['even', 'Rải đều', 0, 1, 0.05, (v) => `${Math.round(v * 100)}%`, '0% = ngẫu nhiên hoàn toàn (dễ có chỗ dồn cục, chỗ trống) · 100% = trải đều khắp không gian'],
+  ['size', 'Cỡ tem', 0.6, 1.6, 0.05, (v) => `× ${(+v).toFixed(2)}`],
+  ['vary', 'Chênh lệch cỡ', 0, 0.6, 0.05, (v) => `± ${Math.round(v * 100)}%`, '0% = mọi tem bằng nhau'],
+  ['tilt', 'Xoay ngẫu nhiên', 0, 15, 1, (v) => `± ${v}°`],
+  ['depth', 'Tầm nhìn xa', 160, 300, 10, (v) => `${v}`, 'Nhỏ = chỉ thấy ảnh gần, thoáng hơn · lớn = thấy cả ảnh rất xa'],
+]
+
+export function mountAdmin({ el, config, getItems, setItems, setLayout, layoutDefaults = {}, replayIntro }) {
   const ac = new AbortController()
   const on = (t, type, fn, opt = {}) => t.addEventListener(type, fn, { ...opt, signal: ac.signal })
   let items = structuredClone(getItems())
@@ -71,14 +106,18 @@ export function mountAdmin({ el, config, getItems, setItems, setLayout }) {
   let anim = {
     open: cleanAnim({ ms: config.open.ms, preset: config.open.preset, bez: config.open.bez }, ANIM_DEFAULTS.open),
     close: cleanAnim({ ms: config.close.ms, preset: config.close.preset, bez: config.close.bez }, ANIM_DEFAULTS.close),
+    intro: {
+      ...cleanAnim({ ms: config.intro?.ms, preset: config.intro?.preset, bez: config.intro?.bez }, ANIM_DEFAULTS.intro),
+      spread: clamp(Math.round(num(config.intro?.spread, ANIM_DEFAULTS.intro.spread)), 0, 2500),
+    },
   }
   let savedAnim = JSON.stringify(anim)
-  let layout = { far: config.layout.far === 'shrink' ? 'shrink' : 'fade', density: +config.layout.density || 5, size: +config.layout.size || 1 }
+  let layout = { ...layoutDefaults, ...config.layout }
   let savedLayout = JSON.stringify(layout)
   const pending = new Map() // đường dẫn -> { blob, url } — ảnh mới chưa lưu
   const shown = (p) => pending.get(p)?.url || p
   const applyAnim = () => {
-    for (const k of ['open', 'close']) config[k] = { ms: anim[k].ms, ease: `cubic-bezier(${anim[k].bez.join(',')})`, bez: anim[k].bez, preset: anim[k].preset }
+    for (const k of ['open', 'close', 'intro']) config[k] = { ...config[k], ...anim[k], ease: `cubic-bezier(${anim[k].bez.join(',')})` }
   }
 
   // ---------- khung ----------
@@ -96,7 +135,7 @@ export function mountAdmin({ el, config, getItems, setItems, setLayout }) {
       <button class="g3a-icon" type="button" data-close aria-label="Đóng">${CLOSE}</button></div>
     <div class="g3a-drawer__body">
       <section class="g3a-sec" data-sec="anim">
-        <button class="g3a-head" type="button" aria-expanded="true"><b>01</b><span>Animation khi bấm ảnh</span>${CHEV}</button>
+        <button class="g3a-head" type="button" aria-expanded="true"><b>01</b><span>Animation</span>${CHEV}</button>
         <div class="g3a-sec__body"><div class="g3a-sec__inner"><div data-anim></div></div></div>
       </section>
       <section class="g3a-sec" data-sec="photos">
@@ -115,11 +154,41 @@ export function mountAdmin({ el, config, getItems, setItems, setLayout }) {
         <div class="g3a-sec__body"><div class="g3a-sec__inner">
           <div class="g3a-f"><span>Ảnh ở xa</span>
             <div class="g3a-opts" role="radiogroup" aria-label="Ảnh ở xa">
-              <label class="g3a-opt"><input type="radio" name="g3-far" value="fade"><span>Mờ dần vào sương</span></label>
-              <label class="g3a-opt"><input type="radio" name="g3-far" value="shrink"><span>Chỉ bé đi (giữ rõ nét)</span></label>
+              <label class="g3a-opt"><input type="radio" name="g3-far" value="fade"><span>Sương (ảnh xa ám màu nền)</span></label>
+              <label class="g3a-opt"><input type="radio" name="g3-far" value="shrink"><span>Không sương · ảnh nào cũng rõ</span></label>
             </div></div>
-          <label class="g3a-f"><span>Mật độ ảnh <b data-densv></b></span><input data-density type="range" min="3" max="9" step="1"></label>
-          <label class="g3a-f"><span>Cỡ tem <b data-sizev></b></span><input data-size type="range" min="0.6" max="1.6" step="0.05"></label>
+          <div class="g3a-f"><span>Ảnh đè nhau</span>
+            <div class="g3a-opts" role="radiogroup" aria-label="Ảnh đè nhau">
+              <label class="g3a-opt"><input type="radio" name="g3-overlap" value="free"><span>Tự do</span></label>
+              <label class="g3a-opt"><input type="radio" name="g3-overlap" value="edge"><span>Chỉ đè mép · tối đa 3 ảnh</span></label>
+              <label class="g3a-opt"><input type="radio" name="g3-overlap" value="none"><span>Không đè</span></label>
+              <label class="g3a-opt"><input type="radio" name="g3-overlap" value="hero"><span>Không đè · trừ ảnh chính</span></label>
+            </div>
+            <div class="g3a-hero" data-hero-opts>
+              <label class="g3a-f"><span>Số ảnh chính <b data-lv="heroes"></b></span><input data-l="heroes" type="range" min="1" max="4" step="1">
+                <small class="g3a-sub">Ảnh chính = những tem to nhất đang hiện trên màn (đủ lớn mới tính).</small></label>
+              <label class="g3a-f"><span>Mỗi ảnh chính đè tối đa <b data-lv="heroHits"></b></span><input data-l="heroHits" type="range" min="1" max="4" step="1"></label>
+            </div>
+            <small class="g3a-sub">Ảnh gần luôn được giữ; ảnh xa bị che nhiều thì mờ đi, camera dịch đi là hiện lại.</small></div>
+          <div class="g3a-f"><span>Xếp thẳng hàng</span>
+            <div class="g3a-opts" role="radiogroup" aria-label="Xếp thẳng hàng">
+              <label class="g3a-opt"><input type="radio" name="g3-align" value="avoid"><span>Tránh · lệch là lệch hẳn</span></label>
+              <label class="g3a-opt"><input type="radio" name="g3-align" value="free"><span>Để tự nhiên</span></label>
+            </div>
+            <small class="g3a-sub">Hai tem đứng gần (trên dưới / cạnh nhau) mà mép hoặc tâm gần thẳng hàng thì tem xa hơn ẩn đi.</small></div>
+          ${SLIDERS.map(([k, label, min, max, step, , hint]) => `<label class="g3a-f"><span>${label} <b data-lv="${k}"></b></span><input data-l="${k}" type="range" min="${min}" max="${max}" step="${step}">${hint ? `<small class="g3a-sub">${hint}</small>` : ''}</label>`).join('')}
+          <div class="g3a-f"><span>Bướm bay</span>
+            <div class="g3a-opts" role="radiogroup" aria-label="Bướm bay">
+              <label class="g3a-opt"><input type="radio" name="g3-bf" value="on"><span>Có bướm lượn</span></label>
+              <label class="g3a-opt"><input type="radio" name="g3-bf" value="off"><span>Không</span></label>
+            </div></div>
+          <label class="g3a-f"><span>Cỡ bướm <b data-lv="bfSize"></b></span><input data-l="bfSize" type="range" min="0.5" max="2" step="0.05"></label>
+          <div class="g3a-f"><span>Cách rải <b data-seedv></b></span>
+            <div class="g3a-row">
+              <button class="g3a-reset" type="button" data-shuffle>Xáo lại bố cục</button>
+              <button class="g3a-reset" type="button" data-lreset>Về mặc định</button>
+            </div>
+            <small class="g3a-sub">Mỗi lần xáo ra một cách rải khác (cùng các setting trên) — xáo tới khi ưng thì Lưu.</small></div>
           <span class="g3a-sub">Chỉnh là thấy ngay trên không gian phía sau; bấm Lưu để ghi.</span>
         </div></div>
       </section>
@@ -194,13 +263,17 @@ export function mountAdmin({ el, config, getItems, setItems, setLayout }) {
         <label class="g3a-f"><span>Easing</span><select data-ease>${EASINGS.map(([id, label]) => `<option value="${id}">${label}</option>`).join('')}</select></label>
         <div class="g3a-bez" data-bez hidden>${[0, 1, 2, 3].map((i) => `<label class="g3a-f"><span>${['x1', 'y1', 'x2', 'y2'][i]}</span><input data-b="${i}" type="number" step="0.01" ${i % 2 === 0 ? 'min="0" max="1"' : 'min="-3" max="3"'}></label>`).join('')}</div>
         <label class="g3a-f"><span>Duration <b data-msv></b></span><input data-ms type="range" min="${LIMITS.min}" max="${LIMITS.max}" step="10"></label>
+        ${key === 'intro' ? `<label class="g3a-f"><span>Toả từ tâm ra mép trong <b data-spv></b></span><input data-spread type="range" min="0" max="2500" step="50"></label>
+        <button class="g3a-reset" type="button" data-replay>Chạy lại để xem</button>` : ''}
       </div><div class="g3a-anim__curve" data-curve></div></div>`
     animBox.appendChild(g)
     const c = { ease: g.querySelector('[data-ease]'), bez: g.querySelector('[data-bez]'), b: [...g.querySelectorAll('[data-b]')], ms: g.querySelector('[data-ms]'), msv: g.querySelector('[data-msv]'), curve: g.querySelector('[data-curve]') }
     ctl[key] = c
     const read = () => {
       const preset = c.ease.value
+      const spread = anim[key].spread
       anim[key] = cleanAnim({ ms: +c.ms.value, preset, bez: preset === 'custom' ? c.b.map((x, i) => num(x.value, anim[key].bez[i])) : null }, anim[key])
+      if (spread != null) anim[key].spread = spread
       paint(key, preset === 'custom')
       applyAnim()
       markDirty()
@@ -211,6 +284,21 @@ export function mountAdmin({ el, config, getItems, setItems, setLayout }) {
     })
     on(c.ms, 'input', read)
     c.b.forEach((x) => on(x, 'input', read))
+    if (key === 'intro') {
+      const sp = g.querySelector('[data-spread]')
+      const spv = g.querySelector('[data-spv]')
+      c.paintSpread = () => {
+        sp.value = anim.intro.spread
+        spv.textContent = `${anim.intro.spread} ms`
+      }
+      on(sp, 'input', () => {
+        anim.intro.spread = +sp.value
+        c.paintSpread()
+        applyAnim()
+        markDirty()
+      })
+      on(g.querySelector('[data-replay]'), 'click', () => replayIntro?.())
+    }
   }
   const reset = document.createElement('button')
   reset.type = 'button'
@@ -232,31 +320,45 @@ export function mountAdmin({ el, config, getItems, setItems, setLayout }) {
     if (document.activeElement !== c.ms) c.ms.value = a.ms
     c.msv.textContent = `${a.ms} ms`
     c.curve.innerHTML = curveSvg(a.bez)
+    c.paintSpread?.()
   }
   for (const [k] of GROUPS) paint(k, false)
 
   // ---------- 03 bố cục ----------
-  const farInputs = [...drawer.querySelectorAll('input[name="g3-far"]')]
-  const dens = $('[data-density]')
-  const size = $('[data-size]')
+  const radios = (name) => [...drawer.querySelectorAll(`input[name="${name}"]`)]
+  const farInputs = radios('g3-far')
+  const olInputs = radios('g3-overlap')
+  const alInputs = radios('g3-align')
+  const bfInputs = radios('g3-bf')
   const paintLayout = () => {
     farInputs.forEach((x) => (x.checked = x.value === layout.far))
-    dens.value = layout.density
-    size.value = layout.size
-    $('[data-densv]').textContent = `${layout.density} / khối`
-    $('[data-sizev]').textContent = `× ${(+layout.size).toFixed(2)}`
+    olInputs.forEach((x) => (x.checked = x.value === layout.overlap))
+    alInputs.forEach((x) => (x.checked = x.value === layout.align))
+    bfInputs.forEach((x) => (x.checked = x.value === layout.butterfly))
+    $('[data-hero-opts]').hidden = layout.overlap !== 'hero'
+    for (const [k, , , , , fmt] of [...HERO_SLIDERS, ...SLIDERS]) {
+      $(`[data-l="${k}"]`).value = layout[k]
+      $(`[data-lv="${k}"]`).textContent = fmt(layout[k])
+    }
+    $('[data-seedv]').textContent = +layout.seed ? `#${layout.seed}` : 'gốc'
   }
   const changeLayout = (patch) => {
     layout = { ...layout, ...patch }
     paintLayout()
-    setLayout?.(layout)
+    setLayout?.(patch)
     markDirty()
   }
   farInputs.forEach((x) => on(x, 'change', () => x.checked && changeLayout({ far: x.value })))
-  on(dens, 'change', () => changeLayout({ density: +dens.value }))
-  on(dens, 'input', () => ($('[data-densv]').textContent = `${dens.value} / khối`))
-  on(size, 'change', () => changeLayout({ size: +size.value }))
-  on(size, 'input', () => ($('[data-sizev]').textContent = `× ${(+size.value).toFixed(2)}`))
+  olInputs.forEach((x) => on(x, 'change', () => x.checked && changeLayout({ overlap: x.value })))
+  alInputs.forEach((x) => on(x, 'change', () => x.checked && changeLayout({ align: x.value })))
+  bfInputs.forEach((x) => on(x, 'change', () => x.checked && changeLayout({ butterfly: x.value })))
+  for (const [k, , , , , fmt] of [...HERO_SLIDERS, ...SLIDERS]) {
+    const inp = $(`[data-l="${k}"]`)
+    on(inp, 'input', () => ($(`[data-lv="${k}"]`).textContent = fmt(+inp.value)))
+    on(inp, 'change', () => changeLayout({ [k]: +inp.value })) // thả tay mới dựng lại không gian
+  }
+  on($('[data-shuffle]'), 'click', () => changeLayout({ seed: 1 + Math.floor(Math.random() * 9999) }))
+  on($('[data-lreset]'), 'click', () => changeLayout({ ...layoutDefaults }))
   paintLayout()
 
   // ---------- 02 ảnh ----------
@@ -379,11 +481,7 @@ export function mountAdmin({ el, config, getItems, setItems, setLayout }) {
     if (!ITEMS_RE.test(html)) throw new Error('không thấy danh sách ảnh (data-g3-items) trong gallery.html')
     const json = `[\n${items.map((it) => `        ${JSON.stringify({ name: it.name || '', img: it.img, full: it.full || it.img })}`).join(',\n')}\n      ]`
     html = html.replace(ITEMS_RE, (_, a, __, c) => `${a}\n      ${json}\n      ${c}`)
-    const attr = (o) => esc(JSON.stringify(o)).replace(/&quot;/g, '"')
-    return html.replace(/(<section\b[^>]*\bdata-g3\b)([^>]*>)/, (all, a, b) => {
-      const rest = b.replace(/\s+data-g3-anim='[^']*'/, '').replace(/\s+data-g3-layout='[^']*'/, '')
-      return `${a} data-g3-anim='${attr(anim)}' data-g3-layout='${attr(layout)}'${rest}`
-    })
+    return html.replace(G3_TAG, (tag) => g3Tag(tag, anim, layout))
   }
   async function imageFiles() {
     const used = new Set(items.flatMap((it) => [it.img, it.full]))
