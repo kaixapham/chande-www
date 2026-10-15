@@ -985,7 +985,7 @@ function mount(root = document) {
     const seen = new Set()
     return list.filter((m) => !seen.has(msgKey(m)) && seen.add(msgKey(m)))
   }
-  let sending = false // đang gửi: bấm thêm / Enter thêm không gửi lần nữa
+  let pending = 0 // số lời nhắn đang gửi ngầm
   let unsure = null // lần gửi trước báo lỗi (có thể Sheet đã ghi): { key, k } — gửi lại y nguyên thì kiểm tra Sheet trước
   const chatEl = q('[data-g3-chat]')
   const wall = q('[data-g3-wall]')
@@ -994,7 +994,6 @@ function mount(root = document) {
   const chatStatus = q('[data-g3-status]')
   const chatName = q('[data-g3-name]')
   const chatText = q('[data-g3-text]')
-  const chatSend = q('[data-g3-send]')
   const chatHp = q('[data-g3-hp]')
   // avatar người viết (Figma 688:49086) — thành emoji trên note; nhớ lựa chọn ở máy này
   const AVATARS = ['🐺', '🐻', '🦊', '🐯', '🐶', '🐟', '🐷', '👨‍🌾']
@@ -1115,23 +1114,35 @@ function mount(root = document) {
       wall.append(card)
     }
   }
+  // tường lời nhắn = lời nhắn vừa gửi ở máy này (hiện ngay, cả lúc đang gửi) + bản lấy về gần nhất
+  let wallGot = { key: null, list: null }
+  function paintWall(key) {
+    const got = wallGot.key === key ? wallGot.list : msgAll ? msgAll[key] || [] : null
+    const mine = chatLocal.filter((m) => m.image === key)
+    renderWall(got || mine.length ? uniqMsgs([...mine, ...(got || [])]) : null)
+  }
   async function loadWall(key) {
     try {
       const r = await fetch(`${MSG_API}?image=${encodeURIComponent(key)}`, { signal: ac.signal })
       const j = await r.json()
       if (!chatOpen || lbItem?.key !== key) return
-      const got = Array.isArray(j.messages) ? j.messages : []
-      if (j.ok) {
-        if (msgAll) msgAll[key] = got
-        else msgCache.set(key, { at: Date.now(), p: Promise.resolve(got) })
-      }
-      // bản vừa gửi chưa có trong Sheet (bộ đệm 10 s) thì giữ ở đầu
+      // lỗi thì giữ bản đang hiện (trước đây lượt làm mới lỗi là tường thành "No messages")
+      if (!j.ok || !Array.isArray(j.messages)) return wallFail(key)
+      const got = j.messages
+      if (msgAll) msgAll[key] = got
+      else msgCache.set(key, { at: Date.now(), p: Promise.resolve(got) })
+      wallGot = { key, list: got }
+      // bản vừa gửi đã có trong Sheet thì thôi giữ riêng; chưa có (bộ đệm CDN) thì giữ ở đầu tối đa 10 phút
       const seen = new Set(got.map(msgKey))
-      chatLocal = chatLocal.filter((m) => m.image === key && !seen.has(msgKey(m)) && Date.now() - m.createdAt < 120000)
-      renderWall(uniqMsgs([...chatLocal, ...got]))
+      chatLocal = chatLocal.filter((m) => m.pending || m.image !== key || (!seen.has(msgKey(m)) && Date.now() - m.createdAt < 600000))
+      paintWall(key)
     } catch {
-      if (chatOpen && !ac.signal.aborted && !wall.children.length) renderWall([])
+      if (chatOpen && lbItem?.key === key && !ac.signal.aborted) wallFail(key)
     }
+  }
+  // lấy lỗi mà chưa có gì để hiện (đang "Loading…") thì báo trống; có rồi thì giữ nguyên
+  function wallFail(key) {
+    if (wallGot.key !== key && !msgAll && !chatLocal.some((m) => m.image === key)) renderWall([])
   }
   // Cỡ mặt lời nhắn: vừa khoảng giữa thanh nav trên cùng và thanh nút dưới (chừa khoảng thở hai đầu — trước đây
   // cố định cao 624 / màn − 140 nên trên điện thoại đè nav, lọt xuống dưới thanh nút). Rộng / cao làm tròn xuống
@@ -1156,9 +1167,9 @@ function mount(root = document) {
     lb.classList.add('is-chat')
     chatEl.inert = false
     chatBtn.setAttribute('aria-pressed', 'true')
-    renderWall(null)
-    chatStatus.textContent = ''
+    chatStatus.textContent = pending ? 'Sending…' : ''
     const key = lbItem.key
+    paintWall(key) // có sẵn bộ "mọi lời nhắn" thì hiện ngay, lấy bản mới sau
     loadWall(key)
     clearInterval(chatPoll)
     chatPoll = setInterval(() => chatOpen && loadWall(key), 15000)
@@ -1180,53 +1191,73 @@ function mount(root = document) {
     chatBtn.setAttribute('aria-pressed', 'false')
   }
   on(chatBtn, 'click', () => (chatOpen ? closeChat() : openChat()))
+  // Gửi: lời nhắn hiện lên tường ngay, ô nhập trống luôn — gửi chạy ngầm, lỗi thoáng qua (Sheet chậm / Google
+  // báo lỗi vài giây) thì tự thử lại (trước đây người dùng phải bấm gửi 2–3 lần). Thử lại mà lần trước có thể đã
+  // ghi thì xem Sheet trước; máy chủ cũng bỏ qua lời nhắn trùng. Hỏng hẳn thì gỡ note, trả chữ về ô nhập.
+  async function postMessage(msg, t) {
+    const k = msgKey(msg)
+    let code = ''
+    for (let i = 0; i < 3 && !ac.signal.aborted; i++) {
+      try {
+        if (i || (unsure && unsure.key === msg.image && unsure.k === k)) {
+          if (i) await wait(1500 * i)
+          const j0 = await fetch(`${MSG_API}?image=${encodeURIComponent(msg.image)}&fresh=${Date.now()}`).then((r) => r.json()).catch(() => ({}))
+          if ((j0.messages || []).some((m) => msgKey(m) === k)) return ''
+        }
+        const r = await fetch(MSG_API, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ image: msg.image, name: msg.name === 'Anonymous' ? '' : msg.name, text: msg.text, avatar: msg.avatar, hp: chatHp?.value || '', t }),
+        })
+        const j = await r.json().catch(() => ({}))
+        if (r.ok && j.ok) return ''
+        code = j.error || 'error'
+        if (code === 'rate_limited' || r.status === 400) return code
+      } catch {
+        code = 'network'
+      }
+    }
+    return code || 'error'
+  }
   on(q('[data-g3-form]'), 'submit', async (e) => {
     e.preventDefault()
-    if (!msgOn || !lbItem || sending) return
+    if (!msgOn || !lbItem) return
     const name = chatName.value.trim().slice(0, 40)
     const text = chatText.value.trim().slice(0, 500)
     if (!text) {
+      if (pending) return // vừa bấm gửi (ô đã trống) -> bấm thêm không làm gì
       chatStatus.textContent = 'Write a few words first.'
       chatText.focus()
       return
     }
-    sending = true
-    chatSend.disabled = true
-    chatStatus.textContent = 'Sending…'
     const key = lbItem.key
-    const k = msgKey({ name, text })
-    const done = () => {
-      unsure = null
-      chatText.value = ''
-      chatStatus.textContent = 'Sent.'
-      chatLocal.unshift({ image: key, name: name || 'Anonymous', text, avatar, createdAt: Date.now() })
-      if (chatOpen && lbItem?.key === key) loadWall(key)
-      try {
-        localStorage.setItem('ic-name', name)
-      } catch {}
-    }
+    const msg = { image: key, name: name || 'Anonymous', text, avatar, createdAt: Date.now(), pending: true }
+    if (chatLocal.some((m) => m.pending && m.image === key && msgKey(m) === msgKey(msg))) return
+    chatLocal.unshift(msg)
+    chatText.value = ''
+    pending++
+    chatStatus.textContent = 'Sending…'
+    if (chatOpen && lbItem?.key === key) paintWall(key)
     try {
-      // lần trước báo lỗi mà gửi lại y nguyên: Sheet chậm có khi vẫn đã ghi -> xem trên Sheet trước (bỏ qua bộ đệm)
-      if (unsure && unsure.key === key && unsure.k === k) {
-        const r0 = await fetch(`${MSG_API}?image=${encodeURIComponent(key)}&fresh=${Date.now()}`)
-        const j0 = await r0.json().catch(() => ({}))
-        if ((j0.messages || []).some((m) => msgKey(m) === k)) return done()
-      }
-      const r = await fetch(MSG_API, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ image: key, name, text, avatar, hp: chatHp?.value || '', t: Date.now() - chatAt }),
-      })
-      const j = await r.json().catch(() => ({}))
-      if (!r.ok || !j.ok) throw Object.assign(new Error(), { code: j.error })
-      done()
-    } catch (err) {
-      if (err.code !== 'rate_limited') unsure = { key, k }
-      chatStatus.textContent = err.code === 'rate_limited' ? 'Too many messages — try again in a few minutes.' : 'Could not send. Try again in a few seconds.'
-    } finally {
-      sending = false
-      chatSend.disabled = false
+      localStorage.setItem('ic-name', name)
+    } catch {}
+    const code = await postMessage(msg, Date.now() - chatAt)
+    pending--
+    msg.pending = false
+    const here = chatOpen && lbItem?.key === key
+    if (!code) {
+      if (unsure?.key === key && unsure.k === msgKey(msg)) unsure = null
+      if (!pending) chatStatus.textContent = 'Sent.'
+      if (here) loadWall(key)
+      return
     }
+    chatLocal = chatLocal.filter((m) => m !== msg)
+    if (code !== 'rate_limited') unsure = { key, k: msgKey(msg) }
+    if (here) {
+      paintWall(key)
+      if (!chatText.value.trim()) chatText.value = text
+    }
+    chatStatus.textContent = code === 'rate_limited' ? 'Too many messages — try again in a few minutes.' : 'Could not send. Try again in a few seconds.'
   })
   try {
     chatName.value = localStorage.getItem('ic-name') || ''

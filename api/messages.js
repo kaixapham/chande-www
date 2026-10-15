@@ -6,6 +6,8 @@
 //   GET  /api/messages?all=1                  -> { ok, all: { ảnh: [lời nhắn…] } } — mọi ảnh một lần (cần Apps
 //        Script bản có action=all; bản cũ thì lỗi -> trang quay về lấy theo từng ảnh)
 //   POST /api/messages  { image, name, text, avatar, hp, t }  -> { ok }   (avatar: một trong 8 emoji)
+//   Đọc (all / image) lấy từ bản đệm "mọi lời nhắn" trong máy chủ + CDN (20 s, cũ vẫn trả trong lúc làm mới) —
+//   Apps Script chậm / lỗi thoáng qua không làm trang chờ hay mất note. Thêm &fresh=… để đọc thẳng Sheet.
 //
 // Lưu vào CÙNG Google Sheet với form (Apps Script scripts/form-sheet.gs, biến SHEET_WEBHOOK_URL trên
 // Vercel): tab "Messages" — Time · Image · Name · Avatar · Message · Hide. Gõ x vào cột Hide để ẩn một lời nhắn
@@ -69,12 +71,63 @@ function sheetUrl() {
 // lý do lỗi gửi kèm cho dễ dò — không bao giờ chứa đường link (lỗi URL của fetch có in nguyên link ra)
 const reason = (e) => (e instanceof TypeError ? `fetch: ${e.cause?.code || 'bad url or network'}` : String(e?.message || e).slice(0, 80))
 
+// Apps Script hay chậm (3–10 s) và có lúc trả 404 ("không mở được tệp" của Google) dù link đúng -> lỗi nhanh
+// (404, không phải JSON, rớt mạng) thì thử lại một lần; treo quá hạn thì không (lượt sau đọc bản đệm).
 async function sheetGet(sheet, params) {
-  const r = await fetch(`${sheet}?${new URLSearchParams(params)}`, { redirect: 'follow', signal: AbortSignal.timeout(9000) })
-  const j = await r.json().catch(() => null)
-  if (!r.ok || !j?.ok) throw new Error(j?.error || `sheet ${r.status}${j ? '' : ' (not json)'}`)
-  return j
+  const t0 = Date.now()
+  for (let i = 0; ; i++) {
+    try {
+      const r = await fetch(`${sheet}?${new URLSearchParams(params)}`, { redirect: 'follow', signal: AbortSignal.timeout(8000) })
+      const j = await r.json().catch(() => null)
+      if (!r.ok || !j?.ok) throw Object.assign(new Error(j?.error || `sheet ${r.status}${j ? '' : ' (not json)'}`), { sheet: !!j })
+      return j
+    } catch (e) {
+      if (i || e.sheet || e.name === 'TimeoutError' || Date.now() - t0 > 5000) throw e
+      await new Promise((r) => setTimeout(r, 400))
+    }
+  }
 }
+
+// Bản đệm "mọi lời nhắn" trong máy chủ (Vercel giữ máy ấm giữa các lượt): mọi lượt đọc — cả theo từng ảnh —
+// lấy từ đây, mỗi FRESH_MS mới đọc Sheet một lần (nhiều lượt cùng lúc chung một lần đọc). Sheet chậm thì chờ tối đa
+// WAIT_MS rồi trả bản cũ (lần đọc vẫn chạy tiếp cho lượt sau); Sheet lỗi thì trả bản cũ — note cũ vài phút vẫn hơn
+// trang trống / nút gửi báo lỗi.
+const FRESH_MS = 20 * 1000
+const WAIT_MS = 2500
+let snap = null // { at, all: { ảnh: [lời nhắn…] } }
+let loading = null
+function loadAll(sheet, force) {
+  if (snap && !force && Date.now() - snap.at < FRESH_MS) return Promise.resolve(snap)
+  if (!loading) {
+    const t0 = Date.now()
+    loading = sheetGet(sheet, { action: 'all' })
+      .then((j) => {
+        const all = {}
+        for (const [image, list] of Object.entries(j.all || {})) if (IMAGE.test(image)) all[image] = uniq(image, Array.isArray(list) ? list : [])
+        // lời nhắn ghi xong ở máy này trong lúc đang đọc (Sheet trả bản chưa có) -> giữ lại
+        for (const m of fresh) {
+          const list = (all[m.image] ||= [])
+          if (m.createdAt > t0 - 3000 && !list.some((x) => dupKey(m.image, x.name, x.text) === dupKey(m.image, m.name, m.text))) list.unshift(m.msg)
+        }
+        snap = { at: Date.now(), all }
+        return snap
+      })
+      .finally(() => (loading = null))
+  }
+  const job = loading.catch((e) => {
+    if (snap) return snap
+    throw e
+  })
+  if (!snap || force) return job
+  return Promise.race([job, new Promise((r) => setTimeout(() => r(snap), WAIT_MS))])
+}
+const fresh = [] // lời nhắn ghi xong ở máy này gần đây: { image, name, text, createdAt, msg }
+function remember(image, msg) {
+  if (snap) (snap.all[image] ||= []).unshift(msg)
+  fresh.unshift({ image, name: msg.name, text: msg.text, createdAt: msg.createdAt, msg })
+  fresh.length = Math.min(fresh.length, 50)
+}
+const CACHE = 'public, s-maxage=20, stale-while-revalidate=86400'
 
 module.exports = async function handler(req, res) {
   const sheet = sheetUrl()
@@ -83,25 +136,32 @@ module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       if (req.query.ping) {
-        await sheetGet(sheet, { action: 'ping' })
+        if (!snap) await loadAll(sheet).catch(() => sheetGet(sheet, { action: 'ping' }))
         res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
         return res.status(200).json({ ok: true })
       }
+      const force = !!req.query.fresh // trang kiểm tra lời nhắn đã vào Sheet chưa -> đọc Sheet thật
       if (req.query.all) {
-        const j = await sheetGet(sheet, { action: 'all' })
-        const all = {}
-        for (const [image, list] of Object.entries(j.all || {})) if (IMAGE.test(image)) all[image] = uniq(image, Array.isArray(list) ? list : [])
-        res.setHeader('Cache-Control', 'public, s-maxage=15, stale-while-revalidate=120')
-        return res.status(200).json({ ok: true, all })
+        const s = await loadAll(sheet, force)
+        res.setHeader('Cache-Control', CACHE)
+        return res.status(200).json({ ok: true, all: s.all })
       }
       const image = String(req.query.image || '')
       if (!IMAGE.test(image)) return res.status(400).json({ ok: false, error: 'bad image' })
-      const j = await sheetGet(sheet, { action: 'messages', image })
-      const messages = uniq(image, Array.isArray(j.messages) ? j.messages : [])
-      res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=60')
+      let messages
+      try {
+        messages = (await loadAll(sheet, force)).all[image] || []
+      } catch (e) {
+        if (!e.sheet) throw e
+        // Apps Script bản cũ chưa có action=all -> hỏi theo ảnh
+        const j = await sheetGet(sheet, { action: 'messages', image })
+        messages = uniq(image, Array.isArray(j.messages) ? j.messages : [])
+      }
+      res.setHeader('Cache-Control', CACHE)
       return res.status(200).json({ ok: true, messages })
     } catch (e) {
       console.error('[messages] GET', reason(e))
+      res.setHeader('Cache-Control', 'no-store')
       return res.status(502).json({ ok: false, error: 'messages unavailable', reason: reason(e) })
     }
   }
@@ -138,17 +198,27 @@ module.exports = async function handler(req, res) {
     if (!job) {
       job = (async () => {
         // Apps Script có lúc mất vài giây (khởi động + khoá ghi) — chờ đủ lâu để khỏi báo lỗi oan rồi người
-        // dùng gửi lại thành hai dòng
-        const r = await fetch(sheet, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ kind: 'message', image, name, text, avatar }),
-          redirect: 'follow',
-          signal: AbortSignal.timeout(25000),
-        })
-        const j = await r.json().catch(() => null)
-        if (!r.ok || !j?.ok) throw new Error(j?.error || `sheet ${r.status}${j ? '' : ' (not json)'}`)
+        // dùng gửi lại thành hai dòng. Lỗi nhanh (404 thoáng qua của Google, rớt mạng) thì thử lại một lần.
+        const t0 = Date.now()
+        for (let i = 0; ; i++) {
+          try {
+            const r = await fetch(sheet, {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ kind: 'message', image, name, text, avatar }),
+              redirect: 'follow',
+              signal: AbortSignal.timeout(Math.max(5000, 26000 - (Date.now() - t0))),
+            })
+            const j = await r.json().catch(() => null)
+            if (!r.ok || !j?.ok) throw Object.assign(new Error(j?.error || `sheet ${r.status}${j ? '' : ' (not json)'}`), { sheet: !!j })
+            break
+          } catch (e) {
+            if (i || e.sheet || e.name === 'TimeoutError' || Date.now() - t0 > 6000) throw e
+            await new Promise((r) => setTimeout(r, 500))
+          }
+        }
         sent.set(key, Date.now())
+        remember(image, { name, avatar, text, createdAt: Date.now() })
       })()
       inflight.set(key, job)
       job.catch(() => {}).finally(() => inflight.delete(key))
