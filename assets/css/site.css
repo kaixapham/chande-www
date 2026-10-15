@@ -463,7 +463,11 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
 /* Become a partner / Register: cả ô 4 cột là nút. Rê vào: nền lime quét từ trái phủ kín ô (chừa
    1px đường kẻ), chữ chuyển đen, 4 chấm 2×2 hiện ở góc trên phải */
 .cmenu__big{position:relative; display:flex; align-items:center; margin:1px 0 0 1px; padding:0 calc(20 * var(--u));
-  color:#fff; white-space:nowrap; font-weight:700; font-size:6rem; line-height:.74; letter-spacing:-.04em; transition:color .3s ease}
+  color:#fff; white-space:nowrap; font-weight:700; line-height:.74; letter-spacing:-.04em; transition:color .3s ease;
+  /* 96px ở 1920 × 1080; màn hẹp / thấp hơn (iPad ngang, khung xem trước Muzli 1196 × 538–718) thì co theo bề ngang
+     (96u) VÀ theo chiều cao ô lưới (ô 1/6 phần dưới header: 96 / 166.7) — cỡ cố định thì chữ tràn sang ô tên */
+  font-size:min(6rem, calc(96 * var(--u)), calc((100vh - var(--bar)) * .096));
+  font-size:min(6rem, calc(96 * var(--u)), calc((100dvh - var(--bar)) * .096))}
 .cmenu__big::before, .cmenu__contact::before{content:''; position:absolute; inset:0; background:var(--lime); transform:scaleX(0); transform-origin:0 50%;
   transition:transform .45s cubic-bezier(.65,0,.35,1)}
 .cmenu__bt{position:relative; text-box:trim-both cap alphabetic; --tb:1}
@@ -488,7 +492,7 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
 .cmenu__contact{position:relative; display:flex; flex-direction:column; justify-content:space-between; margin:1px 0 0 1px;
   padding:calc(14 * var(--u)) calc(14 * var(--u)) calc(16 * var(--u)); color:#fff; transition:color .3s ease}
 .cmenu__contact .cmenu__num{position:relative; padding:0; color:inherit}
-.cmenu__huge{position:relative; font-weight:700; font-size:6.6687rem; line-height:.72; letter-spacing:-.04em; text-box:trim-both cap alphabetic; --tb:1}
+.cmenu__huge{position:relative; font-weight:700; font-size:min(6.6687rem, calc(106.7 * var(--u)), calc((100dvh - var(--bar)) * .1067)); /* co như .cmenu__big */ line-height:.72; letter-spacing:-.04em; text-box:trim-both cap alphabetic; --tb:1}
 .cmenu__social:hover{color:var(--lime)}
 /* ô credit (cột 5 hàng cuối): chữ mono mờ như dòng credit ở footer, rê vào neon + giải mã */
 .cmenu__credit{display:flex; align-items:flex-end; margin:0; padding:calc(26 * var(--u)) calc(16 * var(--u)) calc(20 * var(--u)); font-size:.875rem; line-height:1.2; color:rgba(255,255,255,.3)}

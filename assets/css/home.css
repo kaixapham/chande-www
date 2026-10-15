@@ -1387,6 +1387,16 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-journey__cap, .ab-journey__cap *{font-size:14px}
   .ab-note{left:auto; right:calc(24 * var(--u))}
   .ab-member .mono{white-space:normal}
+  /* 2 khung Visual focus / Sharing & learning (cao 400u theo bề ngang): chữ 14px trong cột 462u vỡ nhiều dòng, tràn
+     xuống gạch neon (khung Muzli 1196). Giữ đúng 5 dòng như Figma (16px / 462 -> 14px / 404px) và neo ĐÁY cách đáy
+     khung 46u như bản 1920 */
+  .ab-panel__text{top:auto; bottom:calc(46 * var(--u))}
+  .ab-panel__text p:last-child{width:max(calc(462 * var(--u)), 404px)}
+  .ab-panel--b .ab-panel__text p:last-child{width:max(calc(452 * var(--u)), 396px)}
+  /* [ 2020-2026 ] … [ An exciting journey ]: 14px không vừa khung 468u -> mỗi nhãn vỡ 2 dòng; giữ một dòng, khung
+     rộng ra theo chữ khi cần */
+  .ab-journey__cap{min-width:max-content; gap:24px}
+  .ab-journey__cap span{white-space:nowrap}
 }
 
 /* dải ảnh hành trình About: rê vào chữ chỉ chạy hiệu ứng code, không gạch chân */
