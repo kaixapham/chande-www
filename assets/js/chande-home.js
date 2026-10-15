@@ -992,7 +992,7 @@
       // Ảnh riêng cho tên footer KHÔNG có trong danh sách hero
       const OWN = {
         'nhatminh p': 'assets/img/home/foot-nhatminh-p.webp',
-        'tuyen n': 'assets/img/home/foot-tuyen-n.webp',
+        'tuyen n': 'assets/img/home/foot-tuyen-n-v2.webp',
         'duongg vu': 'assets/img/home/foot-duongg-vu.webp', // Duongg Vu (2 chữ g) — khác Duong Vu ở hero
         justhiutwokay: 'assets/img/home/foot-justhiutwokay.webp',
       }

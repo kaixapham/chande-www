@@ -250,10 +250,18 @@
       .forEach(({ el, r }) => run(el, 250 + (r.left / innerWidth) * 260 + (r.top / innerHeight) * 320))
   }
 
+  // Người có ở footer nhưng không có trong danh sách hero (CMS) -> thêm vào cuối lưới menu cho kín các ô member
+  // (ảnh riêng như footer — chande-home.js OWN). Tên trùng người đã có trong danh sách thì bỏ qua.
+  const MENU_EXTRA = [
+    { name: 'Tuyen.N', img: 'assets/img/home/foot-tuyen-n-v2.webp' },
+    { name: 'Nhatminh P', img: 'assets/img/home/foot-nhatminh-p.webp' },
+  ]
   async function fill() {
     if (filled) return
     filled = true
-    const list = await people()
+    const base = await people()
+    const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+    const list = [...base, ...MENU_EXTRA.filter((x) => !base.some((p) => norm(p.name) === norm(x.name)))]
     const html = memberSlots
       .slice(0, list.length)
       .map(([r, c], i) => {
