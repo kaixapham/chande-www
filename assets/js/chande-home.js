@@ -3,7 +3,6 @@
  * -----------------------------------------------------------------------------
  *   • [data-marquee]   dải chạy ngang (CSS animation) — ngoài màn hình thì gắn
  *                      .is-off để dừng, đỡ việc cho trình duyệt
- *   • tab AGENDA / BOOTCAMP — đổi aria-selected (nội dung mới có một bộ)
  *   • Agenda: ngày dính (sticky) đổi theo ngày đang đọc (data-day trên từng
  *     .agenda__head: "ngày|tháng|D-x|giờ"); nút ‹ › đổi cặp ảnh ngày 2
  *     ([data-agenda-slides], danh sách ảnh ở data-photos — CMS sửa được)
@@ -1146,14 +1145,6 @@
         }),
       )
     }
-
-    scope.querySelectorAll('[role=tablist]').forEach((list) =>
-      list.addEventListener('click', (e) => {
-        const tab = e.target.closest('[role=tab]')
-        if (!tab) return
-        list.querySelectorAll('[role=tab]').forEach((t) => t.setAttribute('aria-selected', String(t === tab)))
-      }),
-    )
 
     scope.querySelectorAll('[data-back-top]').forEach((a) =>
       a.addEventListener('click', (e) => {

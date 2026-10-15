@@ -25,18 +25,16 @@
 .pills{display:flex; gap:2px}
 .pill{display:grid; place-items:center; width:calc(144 * var(--u)); min-width:7rem; height:calc(56 * var(--u)); min-height:2.6rem;
   border-radius:99px; font-size:.875rem; text-decoration:none; color:var(--ink); background:var(--cream); border:0; cursor:pointer}
-/* 2 nút Agenda / Bootcamp là <button>: không tự kế thừa font (ra Arial) -> lấy kiểu chữ mono của khối cha */
-.pills button.pill{font-family:inherit; font-weight:inherit; text-transform:inherit; letter-spacing:inherit; line-height:inherit}
 .pill--lime{background:var(--lime)}
 .pill--green{background:#236c3c; color:#f5f0e3}
-.pill[aria-selected=false]{background:#f5f0e3}
+.pill--off{background:#f5f0e3}
+.pills--static .pill{cursor:default; user-select:none}
 /* hover nút viên (link): màu mới quét trái -> phải đổ đầy nút, chữ đổi màu theo */
 a.pill{--fill:var(--ink); --on:var(--lime); background-image:linear-gradient(var(--fill), var(--fill)); background-repeat:no-repeat; background-position:left center; background-size:0% 100%;
   transition:background-size .45s cubic-bezier(.65, 0, .35, 1), color .3s ease}
 a.pill--green{--fill:var(--lime); --on:var(--ink)}
 a.pill--lime{--fill:#0f1513; --on:var(--lime)}
 a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
-.pill[aria-selected=true]{background:var(--lime)}
 
 /* Dải viên thuốc chạy ngang (marquee) — chỉ dịch transform, không đụng layout */
 .pillrun{overflow:hidden}
