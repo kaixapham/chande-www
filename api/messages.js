@@ -41,6 +41,7 @@ function uniq(image, list) {
   })
 }
 const sent = new Map() // dupKey -> mốc đã ghi
+const maybe = new Map() // dupKey -> mốc lần gửi lỗi mà có thể Sheet đã ghi
 const inflight = new Map() // dupKey -> Promise lần đang gửi
 // tối đa 10 lời nhắn / 7 phút / IP (5 / 10 phút như trước thì người thật viết được vài ảnh là bị chặn)
 const LIMIT = { n: 10, ms: 7 * 60 * 1000 }
@@ -69,18 +70,30 @@ function sheetUrl() {
   return v
 }
 // lý do lỗi gửi kèm cho dễ dò — không bao giờ chứa đường link (lỗi URL của fetch có in nguyên link ra)
-const reason = (e) => (e instanceof TypeError ? `fetch: ${e.cause?.code || 'bad url or network'}` : String(e?.message || e).slice(0, 80))
+const reason = (e) => (e instanceof TypeError ? `fetch: ${e.cause?.code || 'bad url or network'}` : String(e?.message || e).slice(0, 120))
+// Apps Script trả trang HTML thay vì JSON: lấy <title> cho log dễ dò (bỏ mọi đường link)
+const htmlTitle = (t) => {
+  const m = /<title>([^<]{1,80})<\/title>/i.exec(t || '')
+  return m ? `: ${m[1].replace(/https?:\S+/g, '').trim()}` : ''
+}
+// đọc trả lời của Apps Script: JSON { ok: true } mới là được; lỗi có e.sheet = Apps Script tự báo lỗi (JSON ok:false)
+async function sheetJSON(r) {
+  const txt = await r.text()
+  let j = null
+  try {
+    j = JSON.parse(txt)
+  } catch {}
+  if (!r.ok || !j?.ok) throw Object.assign(new Error(j?.error || `sheet ${r.status}${j ? '' : ` (not json${htmlTitle(txt)})`}`), { sheet: !!j })
+  return j
+}
 
 // Apps Script hay chậm (3–10 s) và có lúc trả 404 ("không mở được tệp" của Google) dù link đúng -> lỗi nhanh
 // (404, không phải JSON, rớt mạng) thì thử lại một lần; treo quá hạn thì không (lượt sau đọc bản đệm).
-async function sheetGet(sheet, params) {
+async function sheetGet(sheet, params, ms = 8000) {
   const t0 = Date.now()
   for (let i = 0; ; i++) {
     try {
-      const r = await fetch(`${sheet}?${new URLSearchParams(params)}`, { redirect: 'follow', signal: AbortSignal.timeout(8000) })
-      const j = await r.json().catch(() => null)
-      if (!r.ok || !j?.ok) throw Object.assign(new Error(j?.error || `sheet ${r.status}${j ? '' : ' (not json)'}`), { sheet: !!j })
-      return j
+      return await sheetJSON(await fetch(`${sheet}?${new URLSearchParams(params)}`, { redirect: 'follow', signal: AbortSignal.timeout(ms) }))
     } catch (e) {
       if (i || e.sheet || e.name === 'TimeoutError' || Date.now() - t0 > 5000) throw e
       await new Promise((r) => setTimeout(r, 400))
@@ -88,44 +101,84 @@ async function sheetGet(sheet, params) {
   }
 }
 
-// Bản đệm "mọi lời nhắn" trong máy chủ (Vercel giữ máy ấm giữa các lượt): mọi lượt đọc — cả theo từng ảnh —
-// lấy từ đây, mỗi FRESH_MS mới đọc Sheet một lần (nhiều lượt cùng lúc chung một lần đọc). Sheet chậm thì chờ tối đa
-// WAIT_MS rồi trả bản cũ (lần đọc vẫn chạy tiếp cho lượt sau); Sheet lỗi thì trả bản cũ — note cũ vài phút vẫn hơn
-// trang trống / nút gửi báo lỗi.
+// Bản đệm trong máy chủ (Vercel giữ máy ấm giữa các lượt): "mọi lời nhắn" (khoá '*') và — khi Apps Script còn là
+// bản cũ chưa có action=all — lời nhắn theo từng ảnh. Mỗi FRESH_MS mới đọc Sheet một lần / khoá (nhiều lượt cùng lúc
+// chung một lần đọc). Sheet chậm thì chờ tối đa WAIT_MS rồi trả bản cũ (lần đọc vẫn chạy tiếp cho lượt sau); Sheet
+// lỗi thì trả bản cũ — note cũ vài chục giây vẫn hơn trang trống / chờ 10 s.
 const FRESH_MS = 20 * 1000
 const WAIT_MS = 2500
-let snap = null // { at, all: { ảnh: [lời nhắn…] } }
-let loading = null
-function loadAll(sheet, force) {
-  if (snap && !force && Date.now() - snap.at < FRESH_MS) return Promise.resolve(snap)
-  if (!loading) {
-    const t0 = Date.now()
-    loading = sheetGet(sheet, { action: 'all' })
-      .then((j) => {
-        const all = {}
-        for (const [image, list] of Object.entries(j.all || {})) if (IMAGE.test(image)) all[image] = uniq(image, Array.isArray(list) ? list : [])
-        // lời nhắn ghi xong ở máy này trong lúc đang đọc (Sheet trả bản chưa có) -> giữ lại
-        for (const m of fresh) {
-          const list = (all[m.image] ||= [])
-          if (m.createdAt > t0 - 3000 && !list.some((x) => dupKey(m.image, x.name, x.text) === dupKey(m.image, m.name, m.text))) list.unshift(m.msg)
-        }
-        snap = { at: Date.now(), all }
-        return snap
+const snaps = new Map() // khoá -> { at, data }
+const loads = new Map() // khoá -> Promise lần đọc đang chạy
+function cached(key, read, force) {
+  const s = snaps.get(key)
+  if (s && !force && Date.now() - s.at < FRESH_MS) return Promise.resolve(s.data)
+  let job = loads.get(key)
+  if (!job) {
+    job = read(Date.now())
+      .then((data) => {
+        if (snaps.size > 1000) snaps.clear()
+        snaps.set(key, { at: Date.now(), data })
+        return data
       })
-      .finally(() => (loading = null))
+      .finally(() => loads.delete(key))
+    loads.set(key, job)
   }
-  const job = loading.catch((e) => {
-    if (snap) return snap
+  const safe = job.catch((e) => {
+    const old = snaps.get(key)
+    if (old) return old.data
     throw e
   })
-  if (!snap || force) return job
-  return Promise.race([job, new Promise((r) => setTimeout(() => r(snap), WAIT_MS))])
+  if (!s || force) return safe
+  return Promise.race([safe, new Promise((r) => setTimeout(() => r(s.data), WAIT_MS))])
 }
-const fresh = [] // lời nhắn ghi xong ở máy này gần đây: { image, name, text, createdAt, msg }
+// lời nhắn ghi xong ở máy này trong lúc đang đọc (Sheet trả bản chưa có) -> giữ lại
+const fresh = [] // { image, createdAt, msg }
+function withFresh(image, list, t0) {
+  for (const m of fresh) {
+    if (m.image !== image || m.createdAt < t0 - 3000) continue
+    if (!list.some((x) => dupKey(image, x.name, x.text) === dupKey(image, m.msg.name, m.msg.text))) list.unshift(m.msg)
+  }
+  return list
+}
 function remember(image, msg) {
-  if (snap) (snap.all[image] ||= []).unshift(msg)
-  fresh.unshift({ image, name: msg.name, text: msg.text, createdAt: msg.createdAt, msg })
+  const all = snaps.get('*')?.data
+  if (all) (all[image] ||= []).unshift(msg)
+  snaps.get(image)?.data.unshift(msg)
+  fresh.unshift({ image, createdAt: msg.createdAt, msg })
   fresh.length = Math.min(fresh.length, 50)
+}
+const loadAll = (sheet, force) =>
+  cached(
+    '*',
+    async (t0) => {
+      const j = await sheetGet(sheet, { action: 'all' })
+      const all = {}
+      for (const [image, list] of Object.entries(j.all || {})) if (IMAGE.test(image)) all[image] = uniq(image, Array.isArray(list) ? list : [])
+      for (const m of fresh) all[m.image] = withFresh(m.image, all[m.image] || [], t0)
+      return all
+    },
+    force,
+  )
+// Apps Script bản cũ chưa có action=all (trả "bad request") -> 10 phút không hỏi lại, đọc theo từng ảnh
+const NO_ALL_MS = 10 * 60 * 1000
+let noAllAt = 0
+async function loadImage(sheet, image, force) {
+  if (Date.now() - noAllAt > NO_ALL_MS) {
+    try {
+      return (await loadAll(sheet, force))[image] || []
+    } catch (e) {
+      if (!e.sheet) throw e
+      noAllAt = Date.now()
+    }
+  }
+  return cached(
+    image,
+    async (t0) => {
+      const j = await sheetGet(sheet, { action: 'messages', image })
+      return withFresh(image, uniq(image, Array.isArray(j.messages) ? j.messages : []), t0)
+    },
+    force,
+  )
 }
 const CACHE = 'public, s-maxage=20, stale-while-revalidate=86400'
 
@@ -136,27 +189,20 @@ module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       if (req.query.ping) {
-        if (!snap) await loadAll(sheet).catch(() => sheetGet(sheet, { action: 'ping' }))
+        if (!snaps.size) await loadAll(sheet).catch(() => sheetGet(sheet, { action: 'ping' }))
         res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
         return res.status(200).json({ ok: true })
       }
       const force = !!req.query.fresh // trang kiểm tra lời nhắn đã vào Sheet chưa -> đọc Sheet thật
       if (req.query.all) {
-        const s = await loadAll(sheet, force)
+        if (Date.now() - noAllAt < NO_ALL_MS) throw new Error('bad request')
+        const all = await loadAll(sheet, force)
         res.setHeader('Cache-Control', CACHE)
-        return res.status(200).json({ ok: true, all: s.all })
+        return res.status(200).json({ ok: true, all })
       }
       const image = String(req.query.image || '')
       if (!IMAGE.test(image)) return res.status(400).json({ ok: false, error: 'bad image' })
-      let messages
-      try {
-        messages = (await loadAll(sheet, force)).all[image] || []
-      } catch (e) {
-        if (!e.sheet) throw e
-        // Apps Script bản cũ chưa có action=all -> hỏi theo ảnh
-        const j = await sheetGet(sheet, { action: 'messages', image })
-        messages = uniq(image, Array.isArray(j.messages) ? j.messages : [])
-      }
+      const messages = await loadImage(sheet, image, force)
       res.setHeader('Cache-Control', CACHE)
       return res.status(200).json({ ok: true, messages })
     } catch (e) {
@@ -189,6 +235,7 @@ module.exports = async function handler(req, res) {
   const key = dupKey(image, name, text)
   const now = Date.now()
   for (const [k, t] of sent) if (now - t > DUP_MS) sent.delete(k)
+  for (const [k, t] of maybe) if (now - t > DUP_MS) maybe.delete(k)
   if (sent.has(key)) return res.status(200).json({ ok: true, dup: true })
   const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown'
   if (!inflight.has(key) && limited(ip)) return res.status(429).json({ ok: false, error: 'rate_limited' })
@@ -197,26 +244,42 @@ module.exports = async function handler(req, res) {
     let job = inflight.get(key)
     if (!job) {
       job = (async () => {
-        // Apps Script có lúc mất vài giây (khởi động + khoá ghi) — chờ đủ lâu để khỏi báo lỗi oan rồi người
-        // dùng gửi lại thành hai dòng. Lỗi nhanh (404 thoáng qua của Google, rớt mạng) thì thử lại một lần.
+        // Apps Script hay báo lỗi OAN: dòng đã vào Sheet mà trả về trang HTML (đo trên live 2026-10-15: "sheet 200
+        // (not json)" nhưng lời nhắn có trong Sheet), 404 thoáng qua, hay ghi xong mới quá hạn chờ — trước đây vì vậy
+        // trang báo "Could not send", người dùng bấm lại 2–3 lần. Gặp vậy thì đọc lại Sheet: đã có lời nhắn -> gửi
+        // được; chưa có mà còn thời gian thì gửi lại một lần. Apps Script báo lỗi rõ (JSON ok:false) = chưa ghi.
         const t0 = Date.now()
-        for (let i = 0; ; i++) {
-          try {
-            const r = await fetch(sheet, {
-              method: 'POST',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({ kind: 'message', image, name, text, avatar }),
-              redirect: 'follow',
-              signal: AbortSignal.timeout(Math.max(5000, 26000 - (Date.now() - t0))),
-            })
-            const j = await r.json().catch(() => null)
-            if (!r.ok || !j?.ok) throw Object.assign(new Error(j?.error || `sheet ${r.status}${j ? '' : ' (not json)'}`), { sheet: !!j })
-            break
-          } catch (e) {
-            if (i || e.sheet || e.name === 'TimeoutError' || Date.now() - t0 > 6000) throw e
-            await new Promise((r) => setTimeout(r, 500))
-          }
+        const left = () => 27000 - (Date.now() - t0)
+        const written = async () => {
+          if (left() < 3000) return false
+          const j = await sheetGet(sheet, { action: 'messages', image }, Math.min(9000, left())).catch(() => null)
+          return !!j?.messages?.some((m) => dupKey(image, m.name, m.text) === key)
         }
+        // lần trước chưa rõ đã ghi chưa (máy này) -> xem Sheet trước khi ghi thêm
+        if (!(maybe.has(key) && (await written())))
+          for (let i = 0; ; i++) {
+            try {
+              await sheetJSON(
+                await fetch(sheet, {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ kind: 'message', image, name, text, avatar }),
+                  redirect: 'follow',
+                  signal: AbortSignal.timeout(Math.min(i ? 12000 : 16000, left())),
+                }),
+              )
+              break
+            } catch (e) {
+              if (e.sheet) throw e
+              console.warn('[messages] POST', reason(e), '-> đọc lại Sheet')
+              if (await written()) break
+              if (i || left() < 12000) {
+                maybe.set(key, Date.now())
+                throw e
+              }
+            }
+          }
+        maybe.delete(key)
         sent.set(key, Date.now())
         remember(image, { name, avatar, text, createdAt: Date.now() })
       })()

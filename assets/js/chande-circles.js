@@ -8,8 +8,8 @@
  * lõi, mép so le theo từng ô. Bubble đè lên lõi tới đâu thì lộ ảnh tới đó, chạm mép cũng thấy vài ô.
  *
  * Máy cảm ứng (không có chuột): con bướm (chande-flyer.js) bay qua lõi vòng 2 / 3 thì DẮT bubble
- * theo bướm (CHANDE_BUBBLE.lead) -> hiện giọt + ảnh bên trong như rê chuột; vòng vạch (.tex) của
- * cả 3 vòng xoay theo cuộn (scrollSpin độ / px).
+ * theo bướm (CHANDE_BUBBLE.lead) -> hiện giọt + ảnh bên trong như rê chuột — chỉ ở trang chủ, trang About
+ * thì tắt (Kaixa 2026-10-15); vòng vạch (.tex) của cả 3 vòng xoay theo cuộn (scrollSpin độ / px).
  *
  * API: window.CHANDE_CIRCLES = { config, mount(root), destroy() }
  * ========================================================================== */
@@ -169,7 +169,7 @@
       const F = window.CHANDE_FLYER?.state
       if (!F || !(F.a > 0.3)) return null
       for (const o of circles) {
-        if (o.c.dataset.creature === 'butterfly') continue
+        if (o.c.dataset.creature === 'butterfly' || o.c.closest('.ab-circles, .ab-member')) continue // About: không dắt giọt
         const k = o.core.getBoundingClientRect()
         const kr = k.width / 2
         if (Math.hypot(F.x - (k.left + kr), F.y - (k.top + kr)) < kr * CONFIG.flyNear) return F
