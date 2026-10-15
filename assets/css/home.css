@@ -883,12 +883,13 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
  * TRANG ABOUT — Hero (Figma node 594:47170, khổ 1920×1080)
  * `--u` = 1px bản thiết kế khổ 1920 (theo bề rộng .page). Hai hàng cao bằng nhau,
  * mỗi hàng nửa phần viewport dưới header (500 ở 1080), không thấp hơn 360u:
- *   trên  [0..960] ảnh nhà sàn (trên nền tối dither) | [960..1920] mảng tối dither,
+ *   trên  [0..960] ảnh nhà sàn (trên nền tối) | [960..1920] mảng tối,
  *         chữ giới thiệu ở cột 1428, chân cách đáy hàng 40
- *   dưới  [0..960] mảng kem dither, tiêu đề + (©26) chân cách đáy 24
+ *   dưới  [0..960] mảng kem, tiêu đề + (©26) chân cách đáy 24
  *         | [960..1920] mảng gạch neon
- * Mảng dither do chande-hero.js gắn tile (data-hero-dither), gạch neon do
- * chande-field.js (cả stage là một field-root: một canvas).
+ * Các mảng là màu phẳng (Kaixa 2026-10-16 tắt Dither — muốn bật lại thì thêm data-hero-dither="#màu"
+ * data-levels="8" vào thẻ ở about.html, chande-hero.js gắn tile); gạch neon do chande-field.js (cả stage là
+ * một field-root: một canvas).
  * ========================================================================== */
 .ab-hero{background:var(--cream)}
 .ab-hero__stage{
@@ -946,7 +947,7 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .ab-hero__stage{--hq:min(calc(100vw / 375), calc((var(--vp, 100svh) - var(--bar)) / 577)); height:auto; min-height:calc(var(--vp, 100svh) - var(--bar)); display:flex; flex-direction:column}
   .ab-hero__photo, .ab-hero__dark, .ab-hero__cream, .ab-hero__field{position:relative; left:auto; right:auto; top:auto; width:auto}
   .ab-hero__cream{order:1; flex:1 0 auto; height:auto; display:flex; flex-direction:column; gap:0;
-    padding:calc(12 * var(--hq)) calc(12 * var(--hq)) 0; background:#fff !important} /* Figma: nền trắng, không dither kem */
+    padding:calc(12 * var(--hq)) calc(12 * var(--hq)) 0; background:#fff !important} /* Figma: nền trắng */
   .ab-hero__title{order:1}
   .ab-hero__year{order:2; margin:auto 0 calc(11 * var(--hq)); padding-top:calc(8 * var(--hq))}
   /* thanh tối + dải viên chạy ở đáy mảng trắng, ngay trên khối tối (Figma 697:54815, như ảnh ngày 2 Agenda) */
