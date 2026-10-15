@@ -553,7 +553,10 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   .names{font-size:max(14px, calc(19.153 * var(--u)))}
   .b16, .mono, .pill, .cta, .links, .hs-foot__legal, .hero-card__cap, .hero__scroll, .hero__recap,
   .hero__intro-text, .hs-quote__name, .hs-about__roots, .hero__recap figcaption, .hs-story__text p, .hs-quote__by p{font-size:14px}
-  .hero__intro-text{white-space:normal} /* 14px rộng hơn cột: xuống dòng (2 lớp sáng / tối cùng cỡ nên vẫn khớp) */
+  /* 14px rộng hơn cột 234: KHÔNG xuống dòng thêm (chỉ ngắt ở <br> như Figma) mà cho khối chữ rộng ra quá cột (tới
+     ~392u ở 900px, vẫn trong mảng tối 492u, không đè nội dung các section nó trôi qua) — trước đây chữ vỡ 9 dòng,
+     khối cao lên đụng thanh process ở màn thấp (khung xem trước Muzli 1196 × 538–718) */
+  .hero__intro-text{width:max-content}
 }
 /* tablet / iPad (900–1365): hàng chân quá chật -> bỏ dòng credit (Made by Lumen · Design by Kaixa),
    các ô còn lại không xuống dòng */
@@ -565,6 +568,9 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
   /* chữ to hơn (≥ 14px): ghi chú About neo mép phải; cột Site index giữ khung, phần ghi công
      model 3D bên phải được xuống dòng (căn phải) thay vì tràn mép */
   .hs-about__note{left:auto; right:calc(32 * var(--u))}
+  /* chữ 14px cao hơn khoảng 942 -> 1006 (vạch đứt) của thiết kế: neo ĐÁY chữ cách vạch như Figma (17u, ít nhất
+     12px) thay vì neo đỉnh — không thì chữ đè lên vạch (khung Muzli 1196) */
+  .hs-about__note{top:calc(1006 * var(--u) - max(12px, 17 * var(--u))); translate:0 -100%}
   .hs-foot__index{gap:1rem}
   .hs-foot__end{min-width:0; flex:1 1 auto}
   .hs-foot__end .hs-foot__credit{white-space:normal}
