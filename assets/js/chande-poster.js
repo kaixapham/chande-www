@@ -190,9 +190,9 @@ function mount(scope = document) {
   }
   me.ro = new ResizeObserver(() => me.fit())
   me.ro.observe(pin)
-  // 2 tag Agenda / Bootcamp nằm DƯỚI các vòng: chỉ lộ trong vòng trong cùng. Cụm ngày (.agenda__dates)
-  // thì KHÔNG cắt nữa — luôn hiện đủ (Kaixa bỏ 2026-10-14: chữ lộ dần theo vòng bị cắt dở)
-  me.under = [scope.querySelector('.agenda .pills')].map((el) => underRings(api, pin, el))
+  // 2 tag Agenda / Bootcamp + cụm ngày dính 2 bên (02 Oct · D-1 12-20) nằm DƯỚI các vòng: chỉ lộ trong vòng trong cùng
+  // (Kaixa 2026-10-15: cụm ngày phải nằm dưới vòng tròn — bật lại sau khi từng bỏ ngày 14)
+  me.under = [scope.querySelector('.agenda .pills'), scope.querySelector('.agenda__dates > div')].map((el) => underRings(api, pin, el))
   live = me
   // Chỉ đổi sang bản chạy khi ảnh đã nạp xong — trước đó vẫn là ảnh tĩnh, không nháy trắng.
   api.ready

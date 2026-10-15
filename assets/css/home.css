@@ -320,6 +320,10 @@ a.pill:hover, a.pill:focus-visible{background-size:100% 100%; color:var(--on)}
 .dc__f, .dc__b{display:block; backface-visibility:hidden; text-box:trim-both cap alphabetic; --tb:1}
 .dc__f{transform:translateZ(calc(var(--dh, 0px) / 2))}
 .dc__b{position:absolute; inset:0}
+/* mặt sau rộng theo CHỮ MỚI, neo đúng mép của cụm (trái / phải) — trước bó trong bề rộng chữ cũ: chữ mới dài hơn tràn
+   sang phải rồi lật xong nhảy về chỗ (cụm phải "D-1 12-20" thò ra thụt vào khi cuộn ngược) */
+.agenda__dates p .dc__b{width:max-content; right:auto}
+.agenda__dates p:last-child .dc__b{left:auto; right:0}
 .dc__b.is-down{transform:rotateX(-90deg) translateZ(calc(var(--dh, 0px) / 2))}
 .dc__b.is-up{transform:rotateX(90deg) translateZ(calc(var(--dh, 0px) / 2))}
 
