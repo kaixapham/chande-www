@@ -195,7 +195,7 @@ if (/^((?!chrome|chromium|crios|fxios|edgios|android).)*safari/i.test(navigator.
     lineHeight: 0.9,
     // Bù cap-height được ĐO TỪ FONT THẬT lúc chạy (xem measure()), không đoán.
     labelGap: 4, // khoảng cách 01 <-> WORKJAM
-    flipGap: 1, // hở giữa hai mặt chữ trong ô cuộn — xem ghi chú ở .cl__flip-in
+    flipGap: 4, // hở giữa hai mặt chữ trong ô cuộn — xem ghi chú ở .cl__flip-in và .cl__flip (phải > phần nới trên)
     menuSize: 80,
     dotsW: 20,
     dotsH: 6,
@@ -423,7 +423,11 @@ html.menu-open .cl__eye{opacity:1; visibility:visible; transition:opacity .4s ea
 /* flipper: 2 mặt xếp chồng, trượt lên 1 mặt khi dock */
 /* --cl-cap* là em của .cl (16px-thiết-kế), nên .cl__flip / .cl__flip-face phải
    giữ font-size gốc — .cl__t nằm BÊN TRONG mặt chữ, không phải chính nó. */
-.cl__flip{overflow:hidden; height:var(--cl-cap2)}
+.cl__flip{height:var(--cl-cap2);
+  /* cắt bằng clip-path thay cho overflow:hidden, NỚI lên trên + hai bên 3px-thiết-kế: cửa sổ cao đúng cap-height
+     nên đỉnh chữ tròn (G, O, C… nhô quá cap) + khử răng cưa bị cắt phẳng (GALLERY / ABOUT trên thanh menu).
+     Mép dưới giữ nguyên (mặt sau nằm dưới); phần nới (3) < flipGap (4) nên mặt trước lật lên không lọt vào. */
+  clip-path:inset(-${em(3)} -${em(3)} 0 -${em(3)})}
 /* Hở flipGap giữa hai mặt: mặt sau nằm SÁT mép dưới cửa sổ thì làm tròn
    sub-pixel để lọt một vệt ink mờ vào khung. Quãng lật cộng luôn khoảng hở này. */
 .cl__flip-in{display:flex; flex-direction:column; gap:${em(S.flipGap)}}
