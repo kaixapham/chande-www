@@ -840,10 +840,63 @@ function mount(root = document) {
   // từng vòng (mobile: .circles là display: contents, không có khung -> không bao giờ "giao")
   circles.forEach((o) => io.observe(o.c))
 
+  // Dựng sẵn lúc rảnh khi cụm vòng còn cách ~3 màn: renderer + mọi sinh vật của trang + biên dịch shader
+  // (compileAsync — Chrome biên dịch ở luồng nền). Trước đây làm đúng lúc bubble / con bướm (mobile) chạm vòng
+  // đầu tiên -> đứng hình 100–300 ms giữa lúc đang cuộn / rê chuột.
+  let warmed = false
+  const rest = () => new Promise((r) => (window.requestIdleCallback ? requestIdleCallback(() => r(), { timeout: 3000 }) : setTimeout(r, 300)))
+  const isLive = () => live && live.el === circles[0].c
+  const prewarm = async () => {
+    if (warmed) return
+    warmed = true
+    // About trên máy cảm ứng: không có gì dắt bubble vào vòng (chande-circles.js) -> sinh vật không bao giờ hiện
+    if (!fine.matches && circles[0].c.closest('.ab-circles')) return
+    try {
+      await loadThree()
+      const T = window.CHANDE_TRANSITION
+      if (T?.moving) await new Promise((r) => T.afterMove(r))
+      await rest()
+      if (!isLive()) return
+      if (!three) setup()
+      const kinds = [...new Set(circles.map((o) => o.kind))]
+      for (const k of kinds)
+        if (!three.made[k]) {
+          three.made[k] = BUILD[k]()
+          three.made[k].group.visible = false
+          three.scene.add(three.made[k].group)
+        }
+      // chim / hoa (About) tải model GLB: đợi mesh gắn vào rồi mới biên dịch
+      await Promise.all([kinds.includes('bird') && loadBird(), kinds.includes('flower') && loadFlower()]).catch(() => {})
+      await new Promise((r) => setTimeout(r, 0))
+      await rest()
+      if (!isLive()) return
+      const r = three.renderer
+      await (r.compileAsync ? r.compileAsync(three.scene, three.camera) : r.compile(three.scene, three.camera))
+      // vẽ nháp từng sinh vật một lần (canvas chưa gắn vào trang): GPU (ANGLE / Metal) chỉ dựng pipeline ở lần VẼ
+      // đầu — đo Chrome: chỉ biên dịch thì lần rê vào vòng đầu tiên vẫn đứng ~170 ms
+      const D = circles[0].core.getBoundingClientRect().width || 300
+      const dpr = Math.min(devicePixelRatio || 1, 2)
+      if (three.canvas.width !== Math.round(D * dpr)) {
+        r.setPixelRatio(dpr)
+        r.setSize(D, D, false)
+      }
+      for (const k of kinds) {
+        await rest()
+        if (!isLive() || three.owner) return // đã có vòng đang hiện sinh vật: thôi, khỏi đụng vào
+        Object.entries(three.made).forEach(([kk, c]) => (c.group.visible = kk === k))
+        r.render(three.scene, three.camera)
+      }
+      Object.values(three.made).forEach((c) => (c.group.visible = false))
+    } catch {}
+  }
+  const warmIO = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && (warmIO.disconnect(), prewarm()), { rootMargin: '300% 0px' })
+  circles.forEach((o) => warmIO.observe(o.c))
+
   live = {
     el: circles[0].c,
     stop() {
       io.disconnect()
+      warmIO.disconnect()
       cancelAnimationFrame(raf)
       if (three) {
         three.canvas.remove()

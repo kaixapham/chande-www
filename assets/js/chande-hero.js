@@ -222,9 +222,62 @@
   // Ảnh có dither ([data-dither="số mức"], vd. ảnh lớn cả nhóm trang About — Figma: Bayer 16×16,
   // 4 mức, pixel 1): tải ảnh thường, vẽ kiểu cover vào canvas gấp `scale` lần cỡ khung, dither đúng
   // phép tính shader Figma, rồi thay src bằng ảnh đã dither (CMS đọc HTML gốc nên không ảnh hưởng).
-  // Việc nặng (đọc / ghi từng điểm ảnh) chia nhỏ theo dải hàng chạy lúc rảnh, làm một lần cho mỗi bề
-  // ngang khung — không giật lúc cuộn. Ảnh gốc giữ ở data-dither-src.
-  const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 400 }) : setTimeout(() => fn({ timeRemaining: () => 8 }), 16))
+  // Việc nặng (đọc / ghi từng điểm ảnh, mã hoá PNG) chạy ở LUỒNG NỀN (Worker + OffscreenCanvas); trình duyệt
+  // không có thì chia nhỏ theo dải hàng chạy lúc rảnh trên luồng chính. Làm một lần cho mỗi bề ngang khung.
+  // Ảnh gốc giữ ở data-dither-src. (Đo Safari 2026-10-16: bản cũ đứng trang 260 ms khi cuộn tới phần Câu chuyện —
+  // Safari không có requestIdleCallback, bản thay thế báo "còn 8 ms" mãi nên cả ảnh tính một mạch.)
+  const idle = (fn) =>
+    window.requestIdleCallback
+      ? requestIdleCallback(fn, { timeout: 400 })
+      : setTimeout(() => {
+          const end = performance.now() + 8
+          fn({ timeRemaining: () => Math.max(0, end - performance.now()) })
+        }, 16)
+  const DITHER_WORKER = `self.onmessage = async (e) => {
+    const { id, src, w, h, levels, N, bayer } = e.data
+    try {
+      const bm = await createImageBitmap(await (await fetch(src)).blob())
+      const c = new OffscreenCanvas(w, h)
+      const ctx = c.getContext('2d', { willReadFrequently: true })
+      const k = Math.max(w / bm.width, h / bm.height)
+      ctx.drawImage(bm, (w - bm.width * k) / 2, (h - bm.height * k) / 2, bm.width * k, bm.height * k)
+      bm.close && bm.close()
+      const data = ctx.getImageData(0, 0, w, h)
+      const d = data.data
+      const L = levels - 1
+      for (let y = 0; y < h; y++)
+        for (let x = 0, i = y * w * 4; x < w; x++, i += 4) {
+          const off = (bayer[(y % N) * N + (x % N)] - 0.5) / L
+          for (let ch = 0; ch < 3; ch++) {
+            const v = Math.round((d[i + ch] / 255 + off) * L) / L
+            d[i + ch] = v <= 0 ? 0 : v >= 1 ? 255 : Math.round(v * 255)
+          }
+        }
+      ctx.putImageData(data, 0, 0)
+      self.postMessage({ id, blob: await c.convertToBlob({ type: 'image/png' }) })
+    } catch (err) {
+      self.postMessage({ id, error: String(err) })
+    }
+  }`
+  let ditherWorker = null
+  let ditherJob = 0
+  const ditherJobs = new Map()
+  function ditherOffThread(src, w, h, levels) {
+    if (typeof Worker !== 'function' || typeof OffscreenCanvas !== 'function' || typeof createImageBitmap !== 'function') return Promise.reject(new Error('no worker'))
+    if (!ditherWorker) {
+      ditherWorker = new Worker(URL.createObjectURL(new Blob([DITHER_WORKER], { type: 'text/javascript' })))
+      ditherWorker.onmessage = (e) => {
+        const job = ditherJobs.get(e.data.id)
+        ditherJobs.delete(e.data.id)
+        if (job) e.data.blob ? job.res(e.data.blob) : job.rej(new Error(e.data.error))
+      }
+    }
+    const id = ++ditherJob
+    return new Promise((res, rej) => {
+      ditherJobs.set(id, { res, rej })
+      ditherWorker.postMessage({ id, src: new URL(src, document.baseURI).href, w, h, levels, N: CONFIG.bayer, bayer: BAYER })
+    })
+  }
   function ditherImg(img) {
     const src = img.dataset.ditherSrc || img.getAttribute('src')
     img.dataset.ditherSrc = src
@@ -233,6 +286,15 @@
     const h = Math.round(img.clientHeight * CONFIG.scale)
     if (!w || !h || img.dataset.ditherW === `${w}`) return
     img.dataset.ditherW = `${w}`
+    const show = (b) => {
+      if (!b || img.dataset.ditherW !== `${w}`) return
+      const old = img.dataset.ditherUrl
+      img.dataset.ditherUrl = img.src = URL.createObjectURL(b)
+      if (old) setTimeout(() => URL.revokeObjectURL(old), 1000)
+    }
+    ditherOffThread(src, w, h, levels).then(show, () => ditherOnMain(img, src, w, h, levels, show))
+  }
+  function ditherOnMain(img, src, w, h, levels, show) {
     loadImage(src).then((im) => {
       const c = document.createElement('canvas')
       c.width = w
@@ -259,12 +321,7 @@
         } while (y < h && (y % 64 || dl.timeRemaining() > 2))
         if (y < h) return idle(step)
         ctx.putImageData(data, 0, 0)
-        c.toBlob((b) => {
-          if (!b || img.dataset.ditherW !== `${w}`) return
-          const old = img.dataset.ditherUrl
-          img.dataset.ditherUrl = img.src = URL.createObjectURL(b)
-          if (old) setTimeout(() => URL.revokeObjectURL(old), 1000)
-        }, 'image/png')
+        c.toBlob(show, 'image/png')
       }
       idle(step)
     }).catch(() => {})
