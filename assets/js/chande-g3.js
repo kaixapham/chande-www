@@ -306,30 +306,52 @@ function mount(root = document) {
       url,
       (img) => {
         if (ac.signal.aborted) return
-        const tex = new THREE.CanvasTexture(makeStamp(img))
-        entry.tex = tex
-        tex.minFilter = THREE.LinearMipmapLinearFilter
-        tex.magFilter = THREE.LinearFilter
-        tex.generateMipmaps = true
-        tex.anisotropy = 4
-        tex.colorSpace = THREE.SRGBColorSpace
-        tex.needsUpdate = true
-        // đẩy lên GPU ngay lúc dựng (rải theo nhịp ảnh tải về) — không để dồn vào khung đầu tiên tem hiện ra
-        // giữa lúc đang bay (hàng chục tem mới cùng lúc -> khựng)
-        renderer.initTexture(tex)
-        entry.loaded = true
-        entry.cbs.forEach((cb) => {
-          try {
-            cb(tex)
-          } catch (e) {
-            console.error(e)
-          }
-        })
-        entry.cbs.clear()
+        // giải mã ở luồng nền trước (vẽ lên canvas một ảnh chưa giải mã = giải mã ngay trên luồng chính), rồi
+        // xếp hàng dựng tem
+        ;(img.decode ? img.decode() : Promise.resolve()).catch(() => {}).then(() => queueStamp(() => buildStamp(entry, img)))
       },
       undefined,
       () => textureCache.delete(url),
     )
+  }
+  // Dựng tem (giấy răng cưa + bóng vẽ lên canvas, 5–17 ms / tem) theo HÀNG ĐỢI, mỗi lượt rảnh ~6 ms — trước đây
+  // dựng ngay khi từng ảnh tải xong: ~160 tem dồn vào 1–2 s đầu, Safari / Firefox khựng liên tục 30–58 ms (đo 2026-10-16)
+  const stampQueue = []
+  let stampT = 0
+  function queueStamp(job) {
+    stampQueue.push(job)
+    if (!stampT) stampT = window.requestIdleCallback ? requestIdleCallback(pumpStamps, { timeout: 150 }) : setTimeout(pumpStamps, 16)
+  }
+  function pumpStamps(dl) {
+    stampT = 0
+    if (ac.signal.aborted) return void (stampQueue.length = 0)
+    const end = performance.now() + 6
+    do stampQueue.shift()()
+    while (stampQueue.length && performance.now() < end && (!dl?.timeRemaining || dl.timeRemaining() > 3))
+    if (stampQueue.length) stampT = window.requestIdleCallback ? requestIdleCallback(pumpStamps, { timeout: 150 }) : setTimeout(pumpStamps, 16)
+  }
+  function buildStamp(entry, img) {
+    if (ac.signal.aborted) return
+    const tex = new THREE.CanvasTexture(makeStamp(img))
+    entry.tex = tex
+    tex.minFilter = THREE.LinearMipmapLinearFilter
+    tex.magFilter = THREE.LinearFilter
+    tex.generateMipmaps = true
+    tex.anisotropy = 4
+    tex.colorSpace = THREE.SRGBColorSpace
+    tex.needsUpdate = true
+    // đẩy lên GPU ngay lúc dựng (rải theo nhịp ảnh tải về) — không để dồn vào khung đầu tiên tem hiện ra
+    // giữa lúc đang bay (hàng chục tem mới cùng lúc -> khựng)
+    renderer.initTexture(tex)
+    entry.loaded = true
+    entry.cbs.forEach((cb) => {
+      try {
+        cb(tex)
+      } catch (e) {
+        console.error(e)
+      }
+    })
+    entry.cbs.clear()
   }
 
   // ---------- tem to trên màn: đổi sang bản nét ----------
@@ -339,6 +361,7 @@ function mount(root = document) {
   // tem đang dùng nó quay về bản thường).
   const STAMP_HI = isTouch ? 960 : 1400
   const HI_MAX = isTouch ? 4 : 8
+  const HI_STALE = 1500 // ms — bản nét không tem nào xin trong khoảng này = không còn hiện to, bỏ được
   const hiCache = new Map() // ảnh full -> { tex, loaded, users: Set<plane>, used }
   let hiFrame = 0
   function makeHiStamp(img, lo) {
@@ -386,13 +409,17 @@ function mount(root = document) {
       return
     }
     for (const e of hiCache.values()) if (!e.loaded) return // dựng lần lượt từng bản, khỏi dồn việc vào một khung
+    // đầy chỗ mà bản nào cũng đang dùng (tem đang hiện to): thôi, KHÔNG bỏ bản đang dùng để dựng bản mới — trước đây
+    // hơn HI_MAX tem cùng to trên màn là bỏ / dựng lại vòng tròn (đo Firefox: 49 lần dựng trong 5 s, mỗi lần 15–50 ms)
+    if (hiCache.size >= HI_MAX && ![...hiCache.values()].some((e) => now - e.used > HI_STALE)) return
     const url = item.full
     entry = { tex: null, loaded: false, users: new Set([p]), used: now }
     hiCache.set(url, entry)
     const img = new Image()
     img.decoding = 'async'
+    // giải mã ở luồng nền trước khi vẽ lên canvas (không thì vẽ lần đầu = giải mã ngay trên luồng chính, 20–30 ms)
     img.onload = () =>
-      idle(() => {
+      (img.decode ? img.decode() : Promise.resolve()).catch(() => {}).then(() => idle(() => {
         if (ac.signal.aborted || hiCache.get(url) !== entry) return
         const tex = new THREE.CanvasTexture(makeHiStamp(img, p.lo.image))
         tex.minFilter = THREE.LinearMipmapLinearFilter
@@ -413,7 +440,7 @@ function mount(root = document) {
           hiCache.delete(old[0])
           dropHi(old[1])
         }
-      })
+      }))
     img.onerror = () => hiCache.delete(url)
     img.src = url
   }
