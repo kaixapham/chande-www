@@ -653,6 +653,10 @@ void main () {
     output.remove()
     return
   }
+  // Khung bị trình duyệt huỷ (quá số khung WebGL của trang — Chromium Android chỉ cho 8 — hay GPU reset): canvas
+  // phủ cả màn này có máy vẽ thành mảng TRẮNG che hết trang (S23 Ultra Chrome, 2026-10-16) -> gỡ hẳn, mất giọt
+  // còn hơn mất trang.
+  output.addEventListener('webglcontextlost', () => output.remove(), { once: true })
 
   function compile(type, text) {
     const s = gl.createShader(type)

@@ -695,14 +695,43 @@ void main() {
     }
   }
 
-  function ensureRenderer(g) {
+  // Trình duyệt chỉ cho một trang giữ số khung WebGL có hạn — Chromium trên Android: 8 cho CẢ trang, quá là khung
+  // CŨ NHẤT bị huỷ (2026-10-16: S23 Ultra Chrome trắng xoá dưới thanh menu — trang chủ mobile mở 10 khung, lớp
+  // bubble phủ màn tạo đầu tiên bị huỷ); desktop / iPhone: 16. Gạch neon giữ tối đa MAX_LIVE khung: cần khung mới
+  // thì trả khung của vùng đã khuất lâu nhất (vùng đó về ảnh tĩnh, cuộn lại tới thì dựng lại).
+  const MAX_LIVE = /Android/i.test(navigator.userAgent) ? 4 : 8
+  function freeGroup(g) {
+    g.r?.dispose()
+    g.r = null
+    g.root.classList.remove('is-live')
+    // canvas đã mất context không lấy lại được -> thay canvas mới (giữ class / style)
+    const c = g.canvas
+    g.canvas = c.cloneNode(false)
+    c.remove()
+  }
+  function makeRoom(g, evict) {
+    const live = [...groups].filter((x) => x.r && x !== g)
+    while (live.length >= MAX_LIVE) {
+      if (!evict) return false
+      const off = live.filter((x) => !x.visible).sort((a, b) => (a.seen || 0) - (b.seen || 0))
+      if (!off.length) return false
+      freeGroup(off[0])
+      live.splice(live.indexOf(off[0]), 1)
+    }
+    return true
+  }
+  function ensureRenderer(g, evict = true) {
     if (g.r || g.failed) return
+    if (!makeRoom(g, evict)) return
     try {
       g.r = createRenderer(g.canvas)
     } catch (e) {
       console.warn('[chande-field] WebGL lỗi, giữ ảnh tĩnh:', e)
     }
     if (!g.r) return void (g.failed = true)
+    // trình duyệt tự huỷ khung (quá số khung, GPU reset): về ảnh tĩnh, lần tới hiện lại thì dựng khung mới
+    const cv = g.canvas
+    cv.addEventListener('webglcontextlost', () => g.canvas === cv && g.r && freeGroup(g), { once: true })
     // Root nhóm: canvas nằm DƯỚI mọi lớp khác của root. Vùng lẻ: phủ trong chính nó.
     if (g.root.hasAttribute('data-field-root')) g.root.prepend(g.canvas)
     else g.root.appendChild(g.canvas)
@@ -717,6 +746,7 @@ void main() {
             const g = e.target.__fieldGroup
             if (!g) return
             g.visible = e.isIntersecting
+            g.seen = performance.now()
             if (g.visible) {
               const go = () => {
                 if (!g.visible || !g.root.isConnected) return
@@ -769,11 +799,10 @@ void main() {
       // bỏ qua vùng đang ẩn (display:none — phần chỉ có ở desktop / chỉ có ở mobile): không tốn context WebGL
       const g = [...groups].find((x) => !x.r && !x.failed && x.root.isConnected && x.root.getClientRects().length)
       if (!g) return
-      ensureRenderer(g)
-      if (g.r) {
-        measure(g)
-        drawGroup(g)
-      }
+      ensureRenderer(g, false) // dựng sẵn không được trả khung của vùng khác (hết chỗ thì thôi)
+      if (!g.r) return
+      measure(g)
+      drawGroup(g)
       warmT = idle(step, { timeout: 4000 })
     }
     // đợi trang tải xong + màn loading qua hẳn rồi mới bắt đầu
