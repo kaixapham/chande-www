@@ -247,6 +247,8 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
   white-space:nowrap;
 }
 .hero__intro-text p{margin:0; text-box:trim-both cap alphabetic; --tb:1}
+/* màn thấp: cụm chữ sẽ đè thanh process -> ẩn dòng ngày · địa điểm (chande-home.js gắn .is-short) */
+.travel__col.is-short .hero__intro-text p:first-child{display:none}
 /* Hai lớp chữ chồng khít (chande-home.js dựng): lớp sáng giữ phần TRÊN mép
    dưới hero (--split, px tính từ đỉnh khối chữ), lớp tối giữ phần DƯỚI -> chữ
    đổi màu đúng ranh giới nền, kể cả giữa một dòng. */
@@ -319,7 +321,11 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
 .hero__title,
 .hero__year{
   margin:0; color:#000; font-weight:700;
-  font-size:6.6687rem; line-height:.72; letter-spacing:-.04em;
+  /* màn thấp (khung tiêu đề = --hi, 25% chiều cao màn): 3 dòng tiêu đề cao 2.14em (đỉnh cap -> chân dòng cuối)
+     tràn xuống ảnh 4 / mảng gạch -> co chữ cho chân dòng cuối cách đáy khung đúng lề trái (32u); màn đủ cao
+     giữ cỡ cũ. (©26) co theo để cùng cỡ. Mobile đặt cỡ riêng bên dưới. */
+  font-size:min(6.6687rem, calc((var(--hi) - 32 * var(--u)) / 2.14));
+  line-height:.72; letter-spacing:-.04em;
   text-box:trim-both cap alphabetic; --tb:1;
 }
 .hero__year{white-space:nowrap}

@@ -147,6 +147,27 @@
         const s = Math.round(dark ? t.height + 1 : Math.min(Math.max(edge - t.top, 0), t.height + 1))
         if (s !== split) text.style.setProperty('--split', `${(split = s)}px`)
       })
+      // Màn thấp (desktop): lúc ở đầu trang, cụm chữ (bám đáy màn) chạm / đè thanh process của hero -> ẩn 2 dòng
+      // ngày · địa điểm (2-4 October / Ke Retreat - Hanoi, VN) cho cụm thấp lại (Kaixa 2026-10-17). Mobile: cụm
+      // nằm trong luồng trang, không áp.
+      const prog = stage.querySelector('.hero__progress')
+      const intro = travel.querySelector('.travel__intro')
+      const fitIntro = () => {
+        travel.classList.remove('is-short')
+        if (!prog || !intro || matchMedia('(max-width: 899px)').matches) return
+        const u = stage.getBoundingClientRect().width / 1920
+        const top0 = innerHeight - (parseFloat(getComputedStyle(intro).bottom) || 0) - intro.offsetHeight
+        const bar0 = prog.getBoundingClientRect().bottom + scrollY
+        travel.classList.toggle('is-short', top0 < bar0 + 24 * u)
+      }
+      let fitT = 0
+      const refit = () => {
+        clearTimeout(fitT)
+        fitT = setTimeout(fitIntro, 120)
+      }
+      fitIntro()
+      document.fonts?.ready.then(fitIntro)
+      addEventListener('resize', refit)
     }
 
     // Dải màu 3D [data-flip3d]: vạch i mặt trước màu i, mặt dưới màu (n−1−i). Tâm
