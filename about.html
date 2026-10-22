@@ -43,6 +43,14 @@
     document.head.appendChild(s)
   }
 </script>
+<!-- Vercel Speed Insights: theo dõi hiệu năng (Web Vitals). Chỉ nạp trên domain thật / bản Vercel. -->
+<script type="module">
+  if (/(^|\.)chandebootcamp\.com$|\.vercel\.app$/.test(location.hostname)) {
+    import('https://cdn.jsdelivr.net/npm/@vercel/speed-insights@1/dist/index.mjs').then(({ injectSpeedInsights }) => {
+      injectSpeedInsights();
+    });
+  }
+</script>
 </head>
 <body data-barba="wrapper">
 
