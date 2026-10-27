@@ -617,3 +617,12 @@ html.hero-row-dark .travel__col.is-on-light .hero__intro-text{color:#e1e0d8}
 .vbox__close:hover svg{rotate:90deg}
 .vbox__close:focus-visible{outline:2px solid #fff; outline-offset:-6px}
 @media (prefers-reduced-motion:reduce){ .vbox, .vbox__frame, .vbox__close svg{transition:none} }
+
+/* Ribbon Awwwards (Nominee): vị trí như mã gốc (giữa mép phải, z 999 — dưới thanh menu / menu / loading), màu theo site */
+.aw-ribbon{position:fixed; z-index:999; top:50%; right:0; transform:translateY(-50%); line-height:0}
+.aw-ribbon a{display:block}
+.aw-ribbon svg{display:block}
+.aw-ribbon__bg{fill:var(--lime)}
+.aw-ribbon__text{fill:var(--ink)}
+/* mobile (< 900px): ẩn — ribbon 53px đè lên ảnh / chữ của các khối "một màn" (Kaixa 2026-10-27) */
+@media (max-width:899px){ .aw-ribbon{display:none} }
